@@ -12,6 +12,48 @@ AI 旅遊規劃平台：自動研究、最佳化行程、驗證時間與預算�
 4. 驗證並修復不合理的 itinerary。
 5. 以單一結構化 Trip 資料生成 mobile-first 旅遊網站。
 
+## Local setup and planning command
+
+This project uses only the Python standard library at runtime.  For production
+research, export these documented provider credentials before running a plan:
+
+```sh
+export GOOGLE_MAPS_API_KEY='...'
+export YOUTUBE_API_KEY='...'
+export AMADEUS_CLIENT_ID='...'
+export AMADEUS_CLIENT_SECRET='...'
+export OPENROUTESERVICE_API_KEY='...'
+```
+
+Run the end-user entrypoint with a natural-language request:
+
+```sh
+python -m src.cli plan --request '幫我規劃 5 天 4 夜德島＋神戶，2 大 1 個 2 歲小孩，台北出發，自駕，不要太累，預算 8 萬。'
+```
+
+Missing credentials return an explicit `configuration_missing` result.  The
+command never silently replaces production providers with fixture data.  For a
+local recorded demonstration only, add `--demo`; it writes
+`trips/<trip-id>/trip.json` and `site/<trip-id>/index.html`:
+
+```sh
+python -m src.cli plan --demo --trip-id tokushima-kobe --request '德島＋神戶五天四夜，2大1個2歲小孩，自駕，預算8萬'
+open site/tokushima-kobe/index.html
+```
+
+The current provider adapters are Google Places, YouTube Data API, Amadeus
+Self-Service, and OpenRouteService.  Provider responses remain unverified
+until retrieved; no automatic booking or payment is performed.  CI uses
+recorded/mock data and never calls these APIs.
+
+## Deployment
+
+GitHub Pages is deployed from the canonical fixture on every push to `main`.
+The public site is https://jackytsai70113.github.io/ai-travel-planner/ .  Pages
+must be configured with the GitHub Actions build source; the workflow enables
+that setting and uses `configure-pages`, `upload-pages-artifact`, and
+`deploy-pages`.
+
 ## Canonical Trip data contract
 
 [`Trip V1`](docs/canonical-trip-v1.md) 是 planner、validator、renderer、trip storage、map 與 budget 的唯一 source of truth。候選研究資料位於 `candidate_sets`，而最終行程只透過 ID 參照並保留在 `days`，兩者不可混用。
