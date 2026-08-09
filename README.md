@@ -12,6 +12,10 @@ AI 旅遊規劃平台：自動研究、最佳化行程、驗證時間與預算�
 4. 驗證並修復不合理的 itinerary。
 5. 以單一結構化 Trip 資料生成 mobile-first 旅遊網站。
 
+## Canonical Trip data contract
+
+[`Trip V1`](docs/canonical-trip-v1.md) 是 planner、validator、renderer、trip storage、map 與 budget 的唯一 source of truth。候選研究資料位於 `candidate_sets`，而最終行程只透過 ID 參照並保留在 `days`，兩者不可混用。
+
 ## Architecture principles
 
 - **Trip data is the source of truth**：網站、地圖、預算與列印內容都從同一份 Trip schema 產生。
