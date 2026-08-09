@@ -78,8 +78,8 @@ def prioritize_by_authority(candidates: Iterable[tuple[str, dict[str, Any]]]) ->
 class GooglePlacesAdapter(SourceAdapter):
     """Google Places API (New) text search adapter for POI and restaurants.
 
-    The adapter intentionally requests a narrow published field mask and never
-    exports Google-specific rating/review fields into the canonical schema.
+    The adapter requests only normalized discovery and restaurant-operational
+    facts; Google raw payloads never leave this boundary.
     """
 
     name = "google-places"
@@ -104,7 +104,7 @@ class GooglePlacesAdapter(SourceAdapter):
                 headers={
                     "Content-Type": "application/json",
                     "X-Goog-Api-Key": self.api_key,
-                    "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location,places.googleMapsUri,places.regularOpeningHours,places.websiteUri",
+                    "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location,places.googleMapsUri,places.regularOpeningHours,places.websiteUri,places.rating,places.userRatingCount,places.primaryType",
                 },
                 body={"textQuery": f"{text} in {query.destination}", "languageCode": "ja"},
             )
@@ -134,7 +134,18 @@ class GooglePlacesAdapter(SourceAdapter):
         hours = raw.get("regularOpeningHours")
         if isinstance(hours, Mapping) and isinstance(hours.get("weekdayDescriptions"), list):
             candidate["opening_hours_note"] = "; ".join(value for value in hours["weekdayDescriptions"] if isinstance(value, str))
-        return {"place": candidate, "provenance": provenance, "wait_risk": "unknown"} if restaurant else candidate
+        if not restaurant:
+            return candidate
+        restaurant_candidate = {"place": candidate, "provenance": provenance, "wait_risk": "unknown"}
+        if isinstance(raw.get("rating"), (int, float)):
+            restaurant_candidate["rating"] = float(raw["rating"])
+            restaurant_candidate["rating_source"] = "Google Places"
+        if isinstance(raw.get("userRatingCount"), int):
+            restaurant_candidate["review_count"] = raw["userRatingCount"]
+        if isinstance(raw.get("primaryType"), str):
+            restaurant_candidate["cuisine"] = raw["primaryType"]
+        restaurant_candidate["opening_hours"] = _google_opening_hours(hours)
+        return restaurant_candidate
 
 
 class YouTubeEvidenceAdapter:
@@ -180,6 +191,23 @@ class YouTubeEvidenceAdapter:
 def result_or_empty(payload: Mapping[str, Any], key: str) -> list[Mapping[str, Any]]:
     value = payload.get(key, [])
     return [item for item in value if isinstance(item, Mapping)] if isinstance(value, list) else []
+
+
+def _google_opening_hours(hours: object) -> dict[str, object]:
+    if not isinstance(hours, Mapping):
+        return {"status": "unverified", "intervals": []}
+    intervals = []
+    for period in result_or_empty(hours, "periods"):
+        opening, closing = period.get("open"), period.get("close")
+        if not isinstance(opening, Mapping) or not isinstance(closing, Mapping):
+            continue
+        try:
+            if int(opening["day"]) != int(closing["day"]):
+                continue
+            intervals.append({"weekday": (int(opening["day"]) - 1) % 7, "opens_at": f"{int(opening.get('hour', 0)):02}:{int(opening.get('minute', 0)):02}", "closes_at": f"{int(closing.get('hour', 0)):02}:{int(closing.get('minute', 0)):02}"})
+        except (KeyError, TypeError, ValueError):
+            continue
+    return {"status": "fresh" if intervals else "unverified", "intervals": intervals}
 
 
 def _provenance(candidate: Mapping[str, Any]) -> Mapping[str, Any]:
