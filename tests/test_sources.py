@@ -18,6 +18,7 @@ from src.sources.providers import (
     YouTubeEvidenceAdapter,
     prioritize_by_authority,
 )
+from src.restaurant_intelligence import restaurant_intelligence
 
 
 NOW = datetime(2026, 8, 10, 8, 0, tzinfo=timezone.utc)
@@ -91,6 +92,38 @@ class ProductionProviderAdapterTests(unittest.TestCase):
         self.assertEqual("unknown", restaurant["wait_risk"])
         self.assertEqual("POST", client.calls[0][0])
         self.assertNotIn("test-key", str(client.calls[0][3]))
+
+    def test_google_restaurant_normalizes_rating_reviews_and_split_opening_hours(self):
+        restaurant_recording = {
+            "places": [{
+                "id": "ChIJ-restaurant", "displayName": {"text": "水曜日定休食堂"},
+                "rating": 4.6, "userRatingCount": 321, "primaryType": "japanese_restaurant",
+                "regularOpeningHours": {"periods": [
+                    {"open": {"day": 1, "hour": 11, "minute": 30}, "close": {"day": 1, "hour": 14, "minute": 0}},
+                    {"open": {"day": 1, "hour": 17, "minute": 30}, "close": {"day": 1, "hour": 21, "minute": 0}},
+                ]},
+            }]
+        }
+        client = RecordedHttpClient([self.google_recording, restaurant_recording])
+        restaurant = list(GooglePlacesAdapter("test-key", http_client=client, now=NOW).fetch(QUERY))[1][1]
+        self.assertEqual(4.6, restaurant["rating"])
+        self.assertEqual("Google Places", restaurant["rating_source"])
+        self.assertEqual(321, restaurant["review_count"])
+        self.assertEqual("japanese_restaurant", restaurant["cuisine"])
+        self.assertEqual({"status": "fresh", "intervals": [
+            {"weekday": 0, "opens_at": "11:30", "closes_at": "14:00"},
+            {"weekday": 0, "opens_at": "17:30", "closes_at": "21:00"},
+        ]}, restaurant["opening_hours"])
+        self.assertNotIn("regularOpeningHours", str(restaurant))
+
+    def test_recommended_dishes_require_explicit_source_provenance(self):
+        candidate = {"place": {"id": "restaurant", "name": "Restaurant", "kind": "restaurant"}}
+        enriched = restaurant_intelligence(candidate, recommended_dishes=(
+            {"name": "鯛めし", "note": "晚餐限定", "provenance": {"provider": "Official menu", "retrieved_at": NOW.isoformat(), "source_type": "official", "status": "confirmed", "confidence": 0.9}},
+            {"name": "無來源料理"},
+        ))
+        self.assertEqual("鯛めし", enriched["recommended_dishes"][0]["name"])
+        self.assertNotIn("無來源料理", str(enriched))
 
     def test_missing_credentials_and_provider_errors_are_isolated(self):
         with self.assertRaises(ProviderConfigurationError):

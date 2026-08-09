@@ -7,7 +7,7 @@ it never reads provider payloads or mutates a final itinerary.
 from __future__ import annotations
 
 from datetime import datetime, time
-from typing import Iterable, Mapping
+from typing import Iterable, Mapping, Sequence
 
 from src.validator import OpeningInterval
 
@@ -25,6 +25,35 @@ def opening_intervals(candidate: Mapping[str, object]) -> tuple[OpeningInterval,
         except (KeyError, TypeError, ValueError):
             continue
     return tuple(intervals)
+
+
+def restaurant_intelligence(
+    candidate: Mapping[str, object], *, recommended_dishes: Sequence[Mapping[str, object]] = ()
+) -> dict[str, object]:
+    """Return a canonical restaurant candidate with evidence-bound dish facts.
+
+    Places providers are authoritative for operational facts such as ratings and
+    hours, but they do not generally supply a reliable menu.  Callers may add
+    dish recommendations only with their own canonical provenance record.  The
+    helper deliberately rejects provider-specific payloads and never upgrades
+    reported community evidence into a confirmed operational fact.
+    """
+    normalized = dict(candidate)
+    accepted: list[dict[str, object]] = []
+    for dish in recommended_dishes:
+        name = dish.get("name")
+        provenance = dish.get("provenance")
+        if not isinstance(name, str) or not name.strip() or not isinstance(provenance, Mapping):
+            continue
+        if not isinstance(provenance.get("provider"), str) or not isinstance(provenance.get("retrieved_at"), str):
+            continue
+        item: dict[str, object] = {"name": name.strip(), "provenance": dict(provenance)}
+        if isinstance(dish.get("note"), str):
+            item["note"] = dish["note"]
+        accepted.append(item)
+    if accepted:
+        normalized["recommended_dishes"] = accepted
+    return normalized
 
 
 def meal_eligible(candidate: Mapping[str, object], start: datetime, end: datetime) -> bool:
