@@ -1,0 +1,10 @@
+{
+  "provider": "fixture-routing",
+  "retrieved_at": "2026-01-15T11:00:00+09:00",
+  "purpose": "Deterministic route data for local tests; absent entries represent unknown routes.",
+  "routes": [
+    {"mode": "driving", "origin_place_id": "ohori-park", "destination_place_id": "dazaifu", "duration_seconds": 2100, "distance_meters": 17000},
+    {"mode": "transit", "origin_place_id": "hakata-hotel", "destination_place_id": "ohori-park", "duration_seconds": 1500, "distance_meters": 5200},
+    {"mode": "walking", "origin_place_id": "hakata-hotel", "destination_place_id": "canal-city", "duration_seconds": 900, "distance_meters": 1100}
+  ]
+}
