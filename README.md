@@ -20,6 +20,12 @@ AI 旅遊規劃平台：自動研究、最佳化行程、驗證時間與預算�
 
 路由與 POI 排序使用 provider-neutral 的 [`Routing and optimizer V1`](docs/routing-optimizer-v1.md)。路程查無資料會明確保留為 `unknown` 並交給 validator，不會被當成零分鐘。
 
+## Natural-language request parsing
+
+[`Travel intent contract`](docs/travel-intent-contract.md) keeps free-form user
+requests separate from research and itinerary construction. The parser extracts
+only explicit request facts and records field-level source provenance.
+
 ## Architecture principles
 
 - **Trip data is the source of truth**：網站、地圖、預算與列印內容都從同一份 Trip schema 產生。
