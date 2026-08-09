@@ -39,6 +39,28 @@ class RouteMatrix:
         self._cache[key] = (route, self._now())
         return route
 
+    def routes(self, places: list[PlaceRef] | tuple[PlaceRef, ...], mode: RouteMode) -> tuple[Route, ...]:
+        """Warm and return a multi-POI directed matrix, using provider batching when possible."""
+        refs = tuple(places)
+        missing = [(origin, destination) for origin in refs for destination in refs if origin != destination
+                   if (mode.value, origin.place_id, destination.place_id) not in self._cache or self._expired(self._cache[(mode.value, origin.place_id, destination.place_id)][1])]
+        if missing:
+            supplied = self.provider.fetch_matrix(refs, mode)
+            for origin, destination in missing:
+                key = (mode.value, origin.place_id, destination.place_id)
+                route = supplied.get(key)
+                if route is None or route.cache_key != key:
+                    raise ValueError("routing provider did not return requested matrix route")
+                self._cache[key] = (route, self._now())
+        return tuple(self.route(origin, destination, mode) for origin in refs for destination in refs if origin != destination)
+
+    def invalidate(self, key: tuple[str, str, str] | None = None) -> None:
+        """Explicitly invalidate one entry or the entire shared route snapshot."""
+        if key is None:
+            self._cache.clear()
+        else:
+            self._cache.pop(key, None)
+
     def _expired(self, stored_at: datetime) -> bool:
         return self.ttl is not None and self._now() - stored_at >= self.ttl
 

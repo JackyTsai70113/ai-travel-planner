@@ -16,6 +16,11 @@ class RouteMode(str, Enum):
 class RouteStatus(str, Enum):
     AVAILABLE = "available"
     UNKNOWN = "unknown"
+    NO_ROUTE = "no_route"
+    TIMEOUT = "timeout"
+    RATE_LIMITED = "rate_limited"
+    UNSUPPORTED = "unsupported"
+    ERROR = "error"
 
 
 @dataclass(frozen=True)
@@ -59,7 +64,7 @@ class Route:
             if self.duration_seconds < 0 or self.distance_meters < 0:
                 raise ValueError("route costs cannot be negative")
         elif self.duration_seconds is not None or self.distance_meters is not None:
-            raise ValueError("unknown routes cannot contain guessed duration or distance")
+            raise ValueError("unavailable routes cannot contain guessed duration or distance")
 
     @property
     def cache_key(self) -> tuple[str, str, str]:
