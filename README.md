@@ -26,6 +26,13 @@ AI 旅遊規劃平台：自動研究、最佳化行程、驗證時間與預算�
 requests separate from research and itinerary construction. The parser extracts
 only explicit request facts and records field-level source provenance.
 
+## Flight / hotel search
+
+Flight and hotel candidates use provider-neutral models and retain price
+freshness, provenance, occupancy, and explicit timezones. The current
+production-capable Amadeus adapter, credential handling, limits, and no-booking
+boundary are documented in [`docs/flight-hotel-providers.md`](docs/flight-hotel-providers.md).
+
 ## Architecture principles
 
 - **Trip data is the source of truth**：網站、地圖、預算與列印內容都從同一份 Trip schema 產生。
