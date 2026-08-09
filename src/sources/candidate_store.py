@@ -96,6 +96,21 @@ class CandidateStore:
             raise StaleCandidateError(f"candidate {candidate_id} exceeds freshness limit")
         return record
 
+    def price_status(self, candidate_id: str, max_age: timedelta, now: datetime | None = None) -> str:
+        """Return explicit freshness for a dynamic flight or hotel search price.
+
+        Provider prices start as ``unverified`` because a search response is not a
+        booking guarantee.  Once outside the caller's freshness window, ``stale``
+        takes precedence so UIs and planners cannot present it as current.
+        """
+        record = self._records[candidate_id]
+        if record.collection not in {"flights", "hotels"}:
+            raise ValueError("price status is only defined for flights and hotels")
+        reference = now or datetime.now(timezone.utc)
+        if reference - _parse_retrieved_at(_provenance_for(record)) > max_age:
+            return "stale"
+        return record.candidate.get("price_status", "unverified")
+
     def records(self) -> Iterable[CandidateRecord]:
         return tuple(self._records.values())
 
