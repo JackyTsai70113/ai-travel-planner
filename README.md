@@ -16,6 +16,10 @@ AI 旅遊規劃平台：自動研究、最佳化行程、驗證時間與預算�
 
 [`Trip V1`](docs/canonical-trip-v1.md) 是 planner、validator、renderer、trip storage、map 與 budget 的唯一 source of truth。候選研究資料位於 `candidate_sets`，而最終行程只透過 ID 參照並保留在 `days`，兩者不可混用。
 
+## Routing / ordering
+
+路由與 POI 排序使用 provider-neutral 的 [`Routing and optimizer V1`](docs/routing-optimizer-v1.md)。路程查無資料會明確保留為 `unknown` 並交給 validator，不會被當成零分鐘。
+
 ## Architecture principles
 
 - **Trip data is the source of truth**：網站、地圖、預算與列印內容都從同一份 Trip schema 產生。

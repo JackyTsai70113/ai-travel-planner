@@ -11,6 +11,7 @@ from .itinerary import (
     Violation,
     validate_itinerary,
 )
+from .routing import validate_route_availability
 
 __all__ = [
     "DEFAULT_RULES",
@@ -22,4 +23,5 @@ __all__ = [
     "ValidationResult",
     "Violation",
     "validate_itinerary",
+    "validate_route_availability",
 ]
