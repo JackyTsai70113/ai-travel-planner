@@ -2,6 +2,11 @@
 
 from .adapters import AdapterFailure, FixtureCommunityRestaurantAdapter, FixtureOfficialPoiAdapter, SourceAdapter, SourceQuery, collect_from_adapters
 from .candidate_store import CandidateRecord, CandidateState, CandidateStore, StaleCandidateError
+from .providers import (
+    GooglePlacesAdapter, JsonHttpClient, ProviderConfigurationError,
+    ProviderRequestError, ResearchEvidence, UrllibJsonHttpClient,
+    YouTubeEvidenceAdapter, authority_rank, prioritize_by_authority,
+)
 
 __all__ = [
     "AdapterFailure",
@@ -10,8 +15,17 @@ __all__ = [
     "CandidateStore",
     "FixtureCommunityRestaurantAdapter",
     "FixtureOfficialPoiAdapter",
+    "GooglePlacesAdapter",
+    "JsonHttpClient",
+    "ProviderConfigurationError",
+    "ProviderRequestError",
+    "ResearchEvidence",
     "SourceAdapter",
     "SourceQuery",
     "StaleCandidateError",
+    "UrllibJsonHttpClient",
+    "YouTubeEvidenceAdapter",
+    "authority_rank",
     "collect_from_adapters",
+    "prioritize_by_authority",
 ]

@@ -25,3 +25,34 @@ Use `place.name` and `place.address` as Unicode strings, preserving Japanese plu
 1. Store each independently sourced candidate with its own provenance; do not overwrite a higher-priority fact.
 2. Planner may use `confirmed` official/provider facts for hard constraints. `reported` community facts are soft signals.
 3. Mark a candidate selected only after it has been normalized; the planner then writes the final Trip selection through existing IDs, not by mutating research evidence.
+
+## Production research adapters (Issue #16)
+
+`src.sources.GooglePlacesAdapter` uses the documented Google Places API (New)
+Text Search endpoint for both POI discovery and restaurant discovery. This is the
+compliant Japan-first replacement for any Tabelog-like web scraping dependency:
+it yields canonical place/restaurant candidates only, and deliberately omits
+provider-specific ratings and reviews. Set `GOOGLE_MAPS_API_KEY`; enable Places
+API (New), restrict the key, and set Google Cloud quotas/billing appropriate to
+the deployment. Google may rate-limit or bill requests; adapter failures are
+isolated by `collect_from_adapters`, so fixtures or other providers can still
+return results.
+
+`YouTubeEvidenceAdapter` uses the documented YouTube Data API Search endpoint.
+Set `YOUTUBE_API_KEY` with a restricted API key. It emits `ResearchEvidence`,
+not candidates: title/description-derived signals such as queue, parking, or
+stroller are community `reported` evidence and cannot become confirmed operating
+facts. Respect YouTube Data API quota and display/storage terms; the adapter does
+not scrape pages, comments, or transcripts.
+
+Never commit either key. CI injects recorded JSON through `JsonHttpClient` and
+does not access a live network. If credentials are absent, adapters fail with a
+configuration error that is isolated per provider. If either commercial API is
+unavailable, retain existing official-source candidates and fixture/recorded
+research, then explicitly surface missing coverage rather than inventing facts.
+
+For closures, hours, entry rules, fares, reservations, and temporary controls,
+record the responsible operator or tourism authority URL as an `official` source.
+`prioritize_by_authority` returns independent records in official → provider →
+community order without overwriting lower-priority evidence; consumers must keep
+the provenance record and use official facts for hard constraints.
