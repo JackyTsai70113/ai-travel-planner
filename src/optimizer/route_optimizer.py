@@ -80,7 +80,7 @@ class RouteOptimizer:
         total = 0
         for first, second in zip(chain, chain[1:]):
             route = self.matrix.route(first.place, second.place, self.mode)
-            if route.status is RouteStatus.UNKNOWN:
+            if route.status is not RouteStatus.AVAILABLE:
                 return None
             total += route.duration_seconds or 0
         return total
@@ -90,7 +90,7 @@ class RouteOptimizer:
         unknown: list[tuple[str, str, str]] = []
         for first, second in zip(stops, stops[1:]):
             route = self.matrix.route(first.place, second.place, self.mode)
-            if route.status is RouteStatus.UNKNOWN:
+            if route.status is not RouteStatus.AVAILABLE:
                 unknown.append(route.cache_key)
                 continue
             total_seconds += route.duration_seconds or 0
