@@ -1,0 +1,38 @@
+{
+  "schema_version": "trip-v1",
+  "id": "kyushu-family-2026",
+  "title": "九州五天四夜親子自駕",
+  "local_timezone": "Asia/Tokyo",
+  "date_range": {"start_date": "2026-04-10", "end_date": "2026-04-14"},
+  "traveler_profile": {"adults": 2, "children": [{"age": 2, "notes": "需要午睡"}], "accessibility_needs": ["stroller"]},
+  "preferences": {"hard_constraints": [{"id": "car-seat", "kind": "rental_car", "description": "租車必須提供兒童安全座椅", "value": true}], "soft_preferences": [{"id": "low-fatigue", "kind": "pace", "description": "每日少於三個主要停留點", "value": "low"}]},
+  "candidate_sets": {
+    "places": [
+      {"id": "tpe", "name": "桃園國際機場", "kind": "airport", "provenance": {"source_type": "official", "provider": "Taoyuan Airport", "source_url": "https://www.taoyuan-airport.com/", "retrieved_at": "2026-01-15T09:00:00+08:00", "confidence": 1, "status": "confirmed"}},
+      {"id": "fuk", "name": "福岡機場", "kind": "airport", "provenance": {"source_type": "official", "provider": "Fukuoka Airport", "source_url": "https://www.fukuoka-airport.jp/", "retrieved_at": "2026-01-15T10:00:00+09:00", "confidence": 1, "status": "confirmed"}},
+      {"id": "hakata-hotel", "name": "博多家庭飯店", "kind": "hotel", "address": "福岡市博多區", "provenance": {"source_type": "provider", "provider": "Hotel provider", "source_url": "https://example.com/hotel", "retrieved_at": "2026-01-15T10:05:00+09:00", "confidence": 0.8, "status": "reported"}},
+      {"id": "ohori-park", "name": "大濠公園", "kind": "poi", "provenance": {"source_type": "official", "provider": "Fukuoka City", "source_url": "https://www.city.fukuoka.lg.jp/", "retrieved_at": "2026-01-15T10:10:00+09:00", "confidence": 0.9, "status": "confirmed"}},
+      {"id": "dazaifu", "name": "太宰府天滿宮", "kind": "poi", "provenance": {"source_type": "official", "provider": "Dazaifu Tenmangu", "source_url": "https://www.dazaifutenmangu.or.jp/", "retrieved_at": "2026-01-15T10:15:00+09:00", "confidence": 1, "status": "confirmed"}},
+      {"id": "yufuin", "name": "由布院", "kind": "poi", "provenance": {"source_type": "official", "provider": "Yufu City", "source_url": "https://www.city.yufu.oita.jp/", "retrieved_at": "2026-01-15T10:20:00+09:00", "confidence": 0.8, "status": "reported"}},
+      {"id": "beppu", "name": "別府地獄溫泉", "kind": "poi", "provenance": {"source_type": "official", "provider": "Beppu Tourism", "source_url": "https://beppu-tourism.com/", "retrieved_at": "2026-01-15T10:25:00+09:00", "confidence": 0.9, "status": "confirmed"}},
+      {"id": "canal-city", "name": "博多運河城", "kind": "poi", "provenance": {"source_type": "provider", "provider": "Canal City", "source_url": "https://canalcity.co.jp/", "retrieved_at": "2026-01-15T10:30:00+09:00", "confidence": 0.8, "status": "reported"}},
+      {"id": "ramen-shop", "name": "親子拉麵店", "kind": "restaurant", "provenance": {"source_type": "community", "provider": "Tabelog", "source_url": "https://tabelog.com/", "retrieved_at": "2026-01-15T10:35:00+09:00", "confidence": 0.6, "status": "reported"}}
+    ],
+    "restaurants": [{"place": {"id": "ramen-shop", "name": "親子拉麵店", "kind": "restaurant"}, "price_range": "JPY 1,000-2,000", "reservation_required": false, "wait_risk": "medium", "child_friendly": true, "provenance": {"source_type": "community", "provider": "Tabelog", "source_url": "https://tabelog.com/", "retrieved_at": "2026-01-15T10:35:00+09:00", "confidence": 0.6, "status": "reported"}}],
+    "hotels": [{"place": {"id": "hakata-hotel", "name": "博多家庭飯店", "kind": "hotel"}, "nightly_cost": {"amount": 18000, "currency": "JPY"}, "check_in": "15:00", "check_out": "11:00", "parking_available": true, "child_policy": "2 歲可同床", "provenance": {"source_type": "provider", "provider": "Hotel provider", "source_url": "https://example.com/hotel", "retrieved_at": "2026-01-15T10:05:00+09:00", "confidence": 0.8, "status": "reported"}}],
+    "flights": [{"id": "ci110", "carrier": "China Airlines", "flight_number": "CI110", "departure": {"place_id": "tpe", "at": "2026-04-10T08:00:00+08:00"}, "arrival": {"place_id": "fuk", "at": "2026-04-10T11:15:00+09:00"}, "cost": {"amount": 42000, "currency": "JPY"}, "provenance": {"source_type": "provider", "provider": "Airline", "source_url": "https://example.com/flight", "retrieved_at": "2026-01-15T09:30:00+08:00", "confidence": 0.8, "status": "reported"}}],
+    "transport_legs": [{"id": "fuk-hotel", "mode": "car", "from_place_id": "fuk", "to_place_id": "hakata-hotel", "departure_at": "2026-04-10T12:00:00+09:00", "arrival_at": "2026-04-10T12:30:00+09:00", "cost": {"amount": 1800, "currency": "JPY"}, "provenance": {"source_type": "derived", "provider": "routing fallback", "retrieved_at": "2026-01-15T11:00:00+09:00", "confidence": 0.5, "status": "estimated", "note": "需在出發前重新路由確認"}}]
+  },
+  "selected": {"hotel_place_ids": ["hakata-hotel"], "flight_ids": ["ci110"]},
+  "days": [
+    {"date": "2026-04-10", "summary": "抵達福岡", "items": [{"id": "d1-arrival", "kind": "transport", "place_id": "fuk", "start_at": "2026-04-10T11:15:00+09:00", "end_at": "2026-04-10T12:00:00+09:00", "selection_status": "selected"}, {"id": "d1-checkin", "kind": "check_in", "place_id": "hakata-hotel", "start_at": "2026-04-10T15:00:00+09:00", "end_at": "2026-04-10T15:30:00+09:00", "selection_status": "selected"}]},
+    {"date": "2026-04-11", "summary": "福岡市區", "items": [{"id": "d2-park", "kind": "visit", "place_id": "ohori-park", "start_at": "2026-04-11T10:00:00+09:00", "end_at": "2026-04-11T12:00:00+09:00", "selection_status": "selected"}]},
+    {"date": "2026-04-12", "summary": "太宰府", "items": [{"id": "d3-dazaifu", "kind": "visit", "place_id": "dazaifu", "start_at": "2026-04-12T10:00:00+09:00", "end_at": "2026-04-12T12:30:00+09:00", "selection_status": "selected"}]},
+    {"date": "2026-04-13", "summary": "由布院與別府", "items": [{"id": "d4-yufuin", "kind": "visit", "place_id": "yufuin", "start_at": "2026-04-13T09:30:00+09:00", "end_at": "2026-04-13T12:00:00+09:00", "selection_status": "selected"}, {"id": "d4-beppu", "kind": "visit", "place_id": "beppu", "start_at": "2026-04-13T14:00:00+09:00", "end_at": "2026-04-13T16:00:00+09:00", "selection_status": "selected"}]},
+    {"date": "2026-04-14", "summary": "返程前採買", "items": [{"id": "d5-shopping", "kind": "visit", "place_id": "canal-city", "start_at": "2026-04-14T10:00:00+09:00", "end_at": "2026-04-14T12:00:00+09:00", "selection_status": "selected"}]}
+  ],
+  "budget": {"currency": "JPY", "categories": {"flights": {"amount": 42000, "currency": "JPY"}, "hotel": {"amount": 72000, "currency": "JPY"}, "transport": {"amount": 15000, "currency": "JPY"}, "food": {"amount": 30000, "currency": "JPY"}, "contingency": {"amount": 10000, "currency": "JPY"}}, "total": {"amount": 169000, "currency": "JPY"}},
+  "validation": [],
+  "overrides": [{"id": "keep-hotel", "path": "/selected/hotel_place_ids", "value": ["hakata-hotel"], "preserve_on_replan": true, "provenance": {"source_type": "user_input", "provider": "traveler", "retrieved_at": "2026-01-15T12:00:00+09:00", "confidence": 1, "status": "confirmed"}}],
+  "provenance": {"source_type": "derived", "provider": "planner", "retrieved_at": "2026-01-15T12:05:00+09:00", "confidence": 0.7, "status": "estimated"}
+}
