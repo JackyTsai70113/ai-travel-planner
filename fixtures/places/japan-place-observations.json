@@ -1,0 +1,43 @@
+[
+  {
+    "observation_id": "dazaifu-official",
+    "name": "太宰府天満宮",
+    "kind": "poi",
+    "aliases": ["太宰府天滿宮", "Dazaifu Tenmangu"],
+    "identifiers": {"official_url": "https://www.dazaifutenmangu.or.jp/"},
+    "address": "福岡県太宰府市宰府4丁目7-1",
+    "coordinates": [33.52136, 130.53487],
+    "provenance": {"source_type": "official", "provider": "Dazaifu Tenmangu", "retrieved_at": "2026-08-01T10:00:00+09:00", "status": "confirmed"}
+  },
+  {
+    "observation_id": "dazaifu-video",
+    "name": "Dazaifu Tenmangu",
+    "kind": "poi",
+    "identifiers": {"official_url": "https://www.dazaifutenmangu.or.jp"},
+    "address": "4-7-1 Saifu, Dazaifu, Fukuoka",
+    "provenance": {"source_type": "community", "provider": "travel video", "retrieved_at": "2026-08-02T10:00:00+09:00", "status": "reported"}
+  },
+  {
+    "observation_id": "chain-hakata",
+    "name": "一蘭",
+    "kind": "restaurant",
+    "identifiers": {"google_place_id": "google-ichiran-hakata"},
+    "address": "福岡県福岡市博多区博多駅前2丁目2-1",
+    "provenance": {"source_type": "provider", "provider": "maps", "retrieved_at": "2026-08-01T10:00:00+09:00", "status": "confirmed"}
+  },
+  {
+    "observation_id": "chain-tenjin",
+    "name": "一蘭",
+    "kind": "restaurant",
+    "identifiers": {"google_place_id": "google-ichiran-tenjin"},
+    "address": "福岡県福岡市中央区天神1丁目10-20",
+    "provenance": {"source_type": "provider", "provider": "maps", "retrieved_at": "2026-08-01T10:00:00+09:00", "status": "confirmed"}
+  },
+  {
+    "observation_id": "reservation-hakata",
+    "name": "ICHIRAN reservation",
+    "kind": "restaurant",
+    "identifiers": {"reservation_reference": "reservation:abc123", "google_place_id": "google-ichiran-hakata"},
+    "provenance": {"source_type": "provider", "provider": "reservation service", "retrieved_at": "2026-08-03T10:00:00+09:00", "status": "confirmed"}
+  }
+]

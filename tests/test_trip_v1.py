@@ -44,6 +44,36 @@ class TripV1Tests(unittest.TestCase):
         trip["candidate_sets"]["restaurants"].append(restaurant)
         validate_trip(trip)
 
+    def test_place_navigation_contract_is_additive_and_valid(self):
+        validate_trip(self.trip)
+        place = next(item for item in self.trip["candidate_sets"]["places"] if item["id"] == "dazaifu")
+        self.assertEqual(place["navigation_points"][0]["kind"], "parking")
+        self.assertNotEqual(place["navigation_points"][0].get("coordinates"), place.get("coordinates"))
+
+    def test_navigation_point_requires_a_routing_reference(self):
+        mutations = (
+            lambda point, place: (point.pop("coordinates"), point.pop("mapcode")),
+            lambda point, place: point.update(coordinates={"latitude": 91, "longitude": 130}),
+            lambda point, place: point.update(kind="runway"),
+            lambda point, place: point.update(unexpected=True),
+            lambda point, place: place.update(resolution={"state": "maybe", "confidence": 0.5}),
+            lambda point, place: place.update(resolution={"state": "resolved", "confidence": 1.1}),
+        )
+        for mutate in mutations:
+            with self.subTest(mutation=mutate):
+                trip = copy.deepcopy(self.trip)
+                place = next(item for item in trip["candidate_sets"]["places"] if item["id"] == "dazaifu")
+                mutate(place["navigation_points"][0], place)
+                with self.assertRaises(TripValidationError):
+                    validate_trip(trip)
+
+    def test_empty_field_provenance_is_rejected(self):
+        trip = copy.deepcopy(self.trip)
+        place = next(item for item in trip["candidate_sets"]["places"] if item["id"] == "dazaifu")
+        place["field_provenance"] = {"name": []}
+        with self.assertRaisesRegex(TripValidationError, "non-empty"):
+            validate_trip(trip)
+
 
 if __name__ == "__main__":
     unittest.main()
