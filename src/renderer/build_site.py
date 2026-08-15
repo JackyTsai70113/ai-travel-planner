@@ -10,7 +10,9 @@ from datetime import datetime
 from html import escape
 import json
 from pathlib import Path
+import re
 from typing import Any
+from urllib.parse import urlsplit
 
 
 def build_site(trip: dict[str, Any], derived: dict[str, Any] | None = None) -> str:
@@ -41,7 +43,8 @@ def _render_day(day: dict[str, Any], places: dict[str, dict[str, Any]]) -> str:
     items = []
     for item in day.get("items", []):
         place = places.get(item.get("place_id"), {})
-        items.append(f'<li><time>{escape(_time(item.get("start_at", "")))}</time><strong>{escape(place.get("name", item.get("place_id", "—")))}</strong><span>{escape(item.get("kind", ""))}</span></li>')
+        details = _render_place_details(place)
+        items.append(f'<li><time>{escape(_time(item.get("start_at", "")))}</time><strong>{escape(place.get("name", item.get("place_id", "—")))}</strong><span>{escape(item.get("kind", ""))}</span>{details}</li>')
     return f'<article><p class="eyebrow">{escape(day.get("date", ""))}</p><h3>{escape(day.get("summary", ""))}</h3><ol>{"".join(items)}</ol></article>'
 
 
@@ -75,6 +78,58 @@ def _render_source(item: dict[str, Any]) -> str:
     return f'<article class="source"><strong>{escape(str(item["name"]))}</strong><span class="badge">{escape(str(p.get("status", "unknown")))}</span><p>{provider} · source freshness: {escape(str(p.get("retrieved_at", "unknown")))}</p></article>'
 
 
+def _render_place_details(place: dict[str, Any]) -> str:
+    details: list[str] = []
+    if place.get("address"):
+        details.append(escape(str(place["address"])))
+    if place.get("phone"):
+        phone = escape(str(place["phone"]))
+        safe_phone = _safe_phone(place["phone"])
+        details.append(f'電話：<a href="tel:{escape(safe_phone, quote=True)}">{phone}</a>' if safe_phone else f"電話：{phone}")
+    if place.get("mapcode"):
+        details.append(f'Mapcode：{escape(str(place["mapcode"]))}')
+    if place.get("google_maps_url"):
+        url = _safe_web_url(place["google_maps_url"])
+        details.append(f'<a href="{escape(url, quote=True)}">Google Maps</a>' if url else escape(str(place["google_maps_url"])))
+    for point in place.get("navigation_points", []):
+        label = escape(str(point.get("name") or point.get("kind", "navigation")))
+        details.append(f'導航點：{_navigation_link(point) or label}')
+    resolution = place.get("resolution", {})
+    if resolution.get("state") in {"clarification_required", "unresolved"}:
+        message = resolution.get("clarification") or "此地點需要人工確認。"
+        details.append(f'<span class="clarification">需要確認：{escape(str(message))}</span>')
+    return '<div class="place-details">' + " · ".join(details) + "</div>" if details else ""
+
+
+def _navigation_link(point: dict[str, Any]) -> str | None:
+    label = escape(str(point.get("name") or point.get("kind", "navigation")))
+    if point.get("google_maps_url"):
+        url = _safe_web_url(point["google_maps_url"])
+        return f'<a href="{escape(url, quote=True)}">{label}</a>' if url else None
+    if point.get("phone"):
+        phone = _safe_phone(point["phone"])
+        return f'<a href="tel:{escape(phone, quote=True)}">{label}（電話導航）</a>' if phone else None
+    if point.get("mapcode"):
+        return f'{label}（Mapcode {escape(str(point["mapcode"]))}）'
+    coordinates = point.get("coordinates")
+    if coordinates:
+        latitude, longitude = coordinates.get("latitude"), coordinates.get("longitude")
+        url = f"https://www.google.com/maps/search/?api=1&query={latitude},{longitude}"
+        return f'<a href="{escape(url, quote=True)}">{label}</a>'
+    return None
+
+
+def _safe_web_url(value: Any) -> str | None:
+    value = str(value).strip()
+    parsed = urlsplit(value)
+    return value if parsed.scheme in {"http", "https"} and bool(parsed.netloc) else None
+
+
+def _safe_phone(value: Any) -> str | None:
+    value = str(value).strip()
+    return value if re.fullmatch(r"\+?[0-9][0-9 ()-]{2,24}", value) else None
+
+
 def _warning_text(value: Any) -> str:
     return value if isinstance(value, str) else json.dumps(value, ensure_ascii=False, sort_keys=True)
 
@@ -99,7 +154,7 @@ def main() -> None:
 
 
 _CSS = '''
-:root{--ink:#172033;--muted:#5d6779;--line:#dce1e9;--accent:#0b6e69}*{box-sizing:border-box}body{margin:0;background:#f3f6f8;color:var(--ink);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Noto Sans TC",sans-serif}main{max-width:680px;margin:auto;padding:20px 16px 48px}header,section,article{background:#fff;border:1px solid var(--line);border-radius:16px}header,section{padding:20px;margin-bottom:14px}h1{font-size:28px;line-height:1.2;margin:4px 0 18px}h2{font-size:21px;margin:0 0 16px}h3{font-size:17px;margin:12px 0 8px}.eyebrow{color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.06em;margin:0}.stats{display:grid;gap:8px}.stat{background:#eaf5f3;border-radius:10px;padding:10px 12px}.stat span,.stat strong{display:block}.stat span,.hint,.quiet,.source p,.attribution{color:var(--muted);font-size:14px}nav{display:flex;gap:8px;overflow:auto;position:sticky;top:0;padding:8px 0;background:#f3f6f8;z-index:1}nav a{background:#fff;border:1px solid var(--line);border-radius:999px;color:var(--ink);padding:7px 13px;text-decoration:none;white-space:nowrap}ul,ol{padding-left:20px}.warnings li{color:#9a5200;margin:6px 0}.warnings .quiet{color:var(--muted)}article{padding:14px;margin:10px 0}article h3{margin-top:3px}ol{list-style:none;padding:0;margin:10px 0 0}ol li{display:grid;grid-template-columns:56px 1fr;gap:3px 10px;border-top:1px solid var(--line);padding:10px 0}ol li:first-child{border-top:0}time,ol span{color:var(--muted);font-size:14px}ol span{grid-column:2}.source{display:grid;grid-template-columns:1fr auto;gap:2px 8px}.source p{grid-column:1/-1;margin:2px 0 0}.attribution{margin:12px 0 0}.badge{color:#704400;background:#fff1d6;border-radius:999px;font-size:12px;font-weight:700;padding:2px 8px}table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid var(--line);padding:10px 0;text-align:left}td{text-align:right}tfoot{font-weight:800}@media(max-width:390px){main{padding:12px 10px 32px}header,section{padding:16px}h1{font-size:25px}}
+:root{--ink:#172033;--muted:#5d6779;--line:#dce1e9;--accent:#0b6e69}*{box-sizing:border-box}body{margin:0;background:#f3f6f8;color:var(--ink);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Noto Sans TC",sans-serif}main{max-width:680px;margin:auto;padding:20px 16px 48px}header,section,article{background:#fff;border:1px solid var(--line);border-radius:16px}header,section{padding:20px;margin-bottom:14px}h1{font-size:28px;line-height:1.2;margin:4px 0 18px}h2{font-size:21px;margin:0 0 16px}h3{font-size:17px;margin:12px 0 8px}.eyebrow{color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.06em;margin:0}.stats{display:grid;gap:8px}.stat{background:#eaf5f3;border-radius:10px;padding:10px 12px}.stat span,.stat strong{display:block}.stat span,.hint,.quiet,.source p,.attribution{color:var(--muted);font-size:14px}nav{display:flex;gap:8px;overflow:auto;position:sticky;top:0;padding:8px 0;background:#f3f6f8;z-index:1}nav a{background:#fff;border:1px solid var(--line);border-radius:999px;color:var(--ink);padding:7px 13px;text-decoration:none;white-space:nowrap}ul,ol{padding-left:20px}.warnings li{color:#9a5200;margin:6px 0}.warnings .quiet{color:var(--muted)}article{padding:14px;margin:10px 0}article h3{margin-top:3px}ol{list-style:none;padding:0;margin:10px 0 0}ol li{display:grid;grid-template-columns:56px 1fr;gap:3px 10px;border-top:1px solid var(--line);padding:10px 0}ol li:first-child{border-top:0}time,ol span{color:var(--muted);font-size:14px}ol span{grid-column:2}.place-details{grid-column:2;color:var(--muted);font-size:13px}.place-details a{color:var(--accent)}.clarification{display:inline-block;color:#8a4300;background:#fff1d6;border-radius:6px;padding:2px 6px}.source{display:grid;grid-template-columns:1fr auto;gap:2px 8px}.source p{grid-column:1/-1;margin:2px 0 0}.attribution{margin:12px 0 0}.badge{color:#704400;background:#fff1d6;border-radius:999px;font-size:12px;font-weight:700;padding:2px 8px}table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid var(--line);padding:10px 0;text-align:left}td{text-align:right}tfoot{font-weight:800}@media(max-width:390px){main{padding:12px 10px 32px}header,section{padding:16px}h1{font-size:25px}}
 '''
 
 _HOTPEPPER_ATTRIBUTION = "Powered by ホットペッパーグルメ Webサービス"
