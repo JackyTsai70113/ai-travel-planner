@@ -19,14 +19,14 @@ def test_five_day_handbook_derives_navigation_and_only_canonical_place_reference
 
 
 def test_reservations_are_redacted_and_recheck_list_is_present():
-    private_provenance = {**PROVENANCE, "source_url": "https://booking-token:private-secret@example.test/operations?token=private-token#fragment", "note": "guest 王小明"}
+    private_provenance = {**PROVENANCE, "source_url": "https://booking-token:private-secret@example.test/reservations/ABCDEF1234?token=private-token#fragment", "note": "guest 王小明"}
     handbook = build_handbook(_trip(), {"reservations": [{"kind": "hotel", "place_id": "hakata-hotel", "confirmationCode": "ABCDEF1234", "email": "family@example.test", "phone": "09012345678", "guest_name": "王小明", "passport_number": "A123456789", "nested": {"access_code": "private"}, "provenance": private_provenance}]}, now=NOW)
     reservation = handbook["reservations"][0]
     assert reservation["confirmation_display"] == "…1234"
     rendered = json.dumps(handbook, ensure_ascii=False)
     for secret in ("ABCDEF1234", "family@example.test", "09012345678", "王小明", "A123456789", "private", "private-token", "booking-token", "private-secret", "fragment"):
         assert secret not in rendered
-    assert reservation["provenance"]["source_url"] == "https://example.test/operations"
+    assert "source_url" not in reservation["provenance"]
     assert {check["kind"] for check in handbook["departure_recheck"]} >= {"route", "conditions", "flight", "reservation"}
 
 

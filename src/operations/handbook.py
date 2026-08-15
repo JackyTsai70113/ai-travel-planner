@@ -83,7 +83,7 @@ def _reservation(record: dict[str, Any], places: dict[str, dict[str, Any]], used
     # cannot safely establish the public boundary.
     allowed = {"kind", "place_id", "flight_id", "transport_leg_id", "start_at", "end_at", "status", "recheck_at", "provenance"}
     item = {key: deepcopy(value) for key, value in record.items() if key in allowed}
-    item["provenance"] = _public_provenance(item.get("provenance"))
+    item["provenance"] = _public_provenance(item.get("provenance"), include_source_url=False)
     confirmation = _confirmation_display(record)
     if confirmation:
         item["confirmation_display"] = confirmation
@@ -120,12 +120,12 @@ def _freshness(provenance: Any, reference: datetime, freshness_days: int) -> dic
     return {"state": "stale" if age_days > freshness_days else "fresh", "retrieved_at": provenance["retrieved_at"]}
 
 
-def _public_provenance(provenance: Any) -> dict[str, Any] | None:
+def _public_provenance(provenance: Any, *, include_source_url: bool = True) -> dict[str, Any] | None:
     """Keep only source metadata that is safe for a public static handbook."""
     if not isinstance(provenance, dict):
         return None
     public = {key: deepcopy(provenance[key]) for key in ("source_type", "provider", "retrieved_at", "status", "confidence") if key in provenance}
-    if isinstance(provenance.get("source_url"), str):
+    if include_source_url and isinstance(provenance.get("source_url"), str):
         parsed = urlsplit(provenance["source_url"])
         try:
             port = parsed.port
