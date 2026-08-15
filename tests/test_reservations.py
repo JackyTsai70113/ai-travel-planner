@@ -1,14 +1,14 @@
 import copy
 import json
 from dataclasses import replace
-from datetime import time
+from datetime import datetime, time
 from pathlib import Path
 import unittest
-
-from jsonschema import Draft202012Validator, FormatChecker
+from urllib.parse import urlsplit
 
 from src.planner import PlanState, PlannerInput, plan
 from src.reservations import EvidenceKind, ReservationType, ResolutionIssue, ResolutionState, load_recorded_fixtures, plan_with_reservations
+from src.schemas import validate_trip
 from src.validator import BudgetLimit, OpeningInterval, ValidationContext
 
 
@@ -18,6 +18,25 @@ ROOT = Path(__file__).parents[1]
 class ReservationEvidenceTests(unittest.TestCase):
     def setUp(self):
         self.fixtures = load_recorded_fixtures()
+
+    def assertOverrideContract(self, override):
+        self.assertEqual(set(override), {"id", "path", "value", "preserve_on_replan", "provenance"})
+        self.assertRegex(override["id"], r"^[a-z][a-z0-9_-]*$")
+        self.assertRegex(override["path"], r"^/[^/]+(?:/[^/]+)*$")
+        self.assertTrue(override["preserve_on_replan"])
+        provenance = override["provenance"]
+        self.assertTrue({"source_type", "provider", "retrieved_at", "status"} <= set(provenance))
+        self.assertLessEqual(set(provenance), {"source_type", "provider", "source_url", "retrieved_at", "confidence", "status", "note"})
+        self.assertIn(provenance["source_type"], {"user_input", "official", "provider", "community", "derived"})
+        self.assertTrue(provenance["provider"])
+        self.assertIn(provenance["status"], {"confirmed", "reported", "estimated", "unverified"})
+        self.assertIsNotNone(datetime.fromisoformat(provenance["retrieved_at"]).utcoffset())
+        if "source_url" in provenance:
+            parsed = urlsplit(provenance["source_url"])
+            self.assertIn(parsed.scheme, {"http", "https"})
+            self.assertTrue(parsed.netloc)
+            self.assertIsNone(parsed.username)
+            self.assertIsNone(parsed.password)
 
     def test_recorded_fixtures_cover_types_and_offline_input_kinds(self):
         self.assertEqual({item.reservation_type for item in self.fixtures}, set(ReservationType))
@@ -142,8 +161,9 @@ class ReservationEvidenceTests(unittest.TestCase):
         later = copy.deepcopy(trip["days"][1]["items"][0])
         later.update({"id": "after-reservation", "place_id": "dazaifu", "start_at": "2026-04-11T11:00:00+09:00", "end_at": "2026-04-11T13:00:00+09:00"})
         trip["days"][1]["items"].append(later)
-        schema = json.loads((ROOT / "src/schemas/trip_v1.schema.json").read_text(encoding="utf-8"))
-        Draft202012Validator(schema, format_checker=FormatChecker()).validate(trip)
+        validate_trip(trip)
+        for override in reservation.overrides_for(1, 0):
+            self.assertOverrideContract(override)
         hours = {place: [OpeningInterval(day, time(8), time(22)) for day in range(7)] for place in ("ohori-park", "dazaifu", "yufuin", "beppu", "canal-city")}
         context = ValidationContext(travel_minutes={("ohori-park", "dazaifu"): 30, ("fuk", "hakata-hotel"): 180, ("yufuin", "beppu"): 60}, opening_hours=hours, budget_limit=BudgetLimit(200000, "JPY"))
         result = plan_with_reservations(PlannerInput([trip], context, max_repair_iterations=2), [reservation])
@@ -154,7 +174,9 @@ class ReservationEvidenceTests(unittest.TestCase):
         self.assertEqual(candidate.trip["days"][1]["items"][1]["start_at"], "2026-04-11T12:30:00+09:00")
         self.assertEqual([item["path"] for item in candidate.trip["overrides"][-2:]], ["/days/1/items/0/start_at", "/days/1/items/0/end_at"])
         self.assertIn(legacy_override, candidate.trip["overrides"])
-        Draft202012Validator(schema, format_checker=FormatChecker()).validate(candidate.trip)
+        validate_trip(candidate.trip)
+        for override in candidate.trip["overrides"][-2:]:
+            self.assertOverrideContract(override)
 
     def test_anchor_is_restored_even_when_it_is_the_repair_target_and_plan_fails(self):
         reservation = self.fixtures[0]
