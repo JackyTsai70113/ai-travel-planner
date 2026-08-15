@@ -10,7 +10,7 @@
     1. `Awaji Riverside Terrace in Shizuki`（2 晚）  
     2. `徳島別荘ホテル2`（1 晚）  
     3. `The Royal Park Canvas Kobe Sannomiya`（1 晚）
-  - 租車：`Toyota Alphard`（車型確認）
+  - 租車：`Toyota Alphard`
 
 - 仍待補資訊（未自動填入，非實體確證）
   - 來源網址的可驗證憑證與查核時間
