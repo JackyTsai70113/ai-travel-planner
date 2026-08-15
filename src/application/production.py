@@ -16,6 +16,7 @@ from zoneinfo import ZoneInfo
 
 from src.intent import TravelIntent
 from src.orchestrator import OrchestrationResult, TravelOrchestrator, TravelOrchestratorConfig
+from src.planner import SchedulingInput, schedule
 from src.restaurant_intelligence import eligible_restaurants, reconcile_restaurant_candidates, validation_opening_hours
 from src.sources import (
     AdapterFailure, AmadeusClient, AmadeusFlightAdapter, AmadeusHotelAdapter, FlightSearchQuery,
@@ -23,7 +24,7 @@ from src.sources import (
     YouTubeEvidenceAdapter, collect_from_adapters,
 )
 from src.sources.routing import OpenRouteServiceProvider, PlaceRef, RouteMatrix, RouteMode, RouteStatus
-from src.validator import ValidationContext
+from src.validator import OpeningInterval, ValidationContext
 
 
 REQUIRED_ENVIRONMENT = (
@@ -189,7 +190,7 @@ class _IntentBoundRunner(ProductionPlanningRunner):
         research = _ProductionResearchAdapter(intent, self.google, self.youtube, self.amadeus, self.optional_restaurants)
         config = TravelOrchestratorConfig(
             adapters=(research,),
-            candidate_trip_factory=lambda current, store: _candidate_trips(self.trip_id, current, store.records()),
+            candidate_trip_factory=lambda current, store: _candidate_trips(self.trip_id, current, store.records(), _routing_context(store.records(), self.routing_provider, current)),
             routing_context_factory=lambda current, store: _routing_context(store.records(), self.routing_provider, current),
             optimizer=lambda candidates, context: tuple(candidates),
             output_directory=self.site_directory,
@@ -204,7 +205,7 @@ class _IntentBoundRunner(ProductionPlanningRunner):
         return result
 
 
-def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[object]) -> Sequence[dict]:
+def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[object], routing: ValidationContext) -> Sequence[dict]:
     collections: dict[str, list[dict]] = {name: [] for name in ("places", "restaurants", "hotels", "flights", "transport_legs")}
     for record in records:
         collection, candidate = record.collection, record.candidate  # CandidateRecord protocol; no raw payload crosses here.
@@ -217,53 +218,69 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
     if len(places) < days_count or not restaurants or not hotels or not flights:
         raise ProductionIncompleteError("live provider results are insufficient for a complete trip (need POIs, restaurants, hotel, and flight)")
 
-    tz = ZoneInfo("Asia/Tokyo")
-    itinerary_days = []
-    selected_meals: list[dict] = []
-    for index in range(days_count):
-        current_date = start + timedelta(days=index)
-        visit_start = datetime.combine(current_date, time(10), tz)
-        visit_end = datetime.combine(current_date, time(12), tz)
-        meal_start = datetime.combine(current_date, time(12, 30), tz)
-        meal_end = datetime.combine(current_date, time(13, 30), tz)
-        eligible = eligible_restaurants(restaurants, meal_start, meal_end)
-        if not eligible:
-            raise ProductionIncompleteError(f"no restaurant has fresh verified opening hours for {current_date.isoformat()} lunch")
-        poi, restaurant = places[index], eligible[index % len(eligible)]
-        selected_meals.append(restaurant)
-        itinerary_days.append({"date": current_date.isoformat(), "summary": poi["name"], "items": [
-            {"id": f"day{index + 1}-visit", "kind": "visit", "place_id": poi["id"], "start_at": visit_start.isoformat(), "end_at": visit_end.isoformat(), "selection_status": "selected"},
-            {"id": f"day{index + 1}-meal", "kind": "meal", "place_id": restaurant["place"]["id"], "start_at": meal_start.isoformat(), "end_at": meal_end.isoformat(), "selection_status": "selected"},
-        ]})
-
     all_places = [*collections["places"], *(hotel["place"] for hotel in hotels)]
-    # De-duplicate the restaurant place if Google returned it in both collections.
     seen: set[str] = set()
     canonical_places = []
     for place in [*all_places, *(restaurant["place"] for restaurant in restaurants)]:
         if place["id"] not in seen:
             seen.add(place["id"]); canonical_places.append(place)
+
+    if any(not candidate.get("schedule") for candidate in [*places, *restaurants]):
+        # Backward-compatible path for normalized providers that predate the
+        # scheduler metadata contract.  New production candidates take the
+        # route-aware branch below; this path remains only until those source
+        # adapters publish explicit visit-duration facts.
+        tz = ZoneInfo("Asia/Tokyo")
+        itinerary_days = []
+        for index in range(days_count):
+            current_date = start + timedelta(days=index)
+            visit_start = datetime.combine(current_date, time(10), tz)
+            visit_end = datetime.combine(current_date, time(12), tz)
+            meal_start = datetime.combine(current_date, time(12, 30), tz)
+            meal_end = datetime.combine(current_date, time(13, 30), tz)
+            eligible = eligible_restaurants(restaurants, meal_start, meal_end)
+            if not eligible:
+                raise ProductionIncompleteError(f"no restaurant has fresh verified opening hours for {current_date.isoformat()} lunch")
+            poi, restaurant = places[index], eligible[index % len(eligible)]
+            itinerary_days.append({"date": current_date.isoformat(), "summary": poi["name"], "items": [
+                {"id": f"day{index + 1}-visit", "kind": "visit", "place_id": poi["id"], "start_at": visit_start.isoformat(), "end_at": visit_end.isoformat(), "selection_status": "selected"},
+                {"id": f"day{index + 1}-meal", "kind": "meal", "place_id": restaurant["place"]["id"], "start_at": meal_start.isoformat(), "end_at": meal_end.isoformat(), "selection_status": "selected"},
+            ]})
+        return [_legacy_trip(trip_id, intent, collections, canonical_places, start, end, hotels, flights, itinerary_days)]
+
     currency = _budget_currency(intent, flights[0], hotels[0])
     flight_cost = _money_amount(flights[0].get("cost"), currency)
     hotel_cost = _money_amount(hotels[0].get("total_cost"), currency)
     categories = {"flights": {"amount": flight_cost, "currency": currency}, "hotel": {"amount": hotel_cost, "currency": currency}}
-    return [{
+    shell = {
         "schema_version": "trip-v1", "id": trip_id, "title": " + ".join(intent.destinations) + " 行程",
         "local_timezone": "Asia/Tokyo", "date_range": {"start_date": start.isoformat(), "end_date": end.isoformat()},
         "traveler_profile": {"adults": _adults(intent), "children": [{"age": age} for age in intent.travelers.child_ages]},
         "preferences": {"hard_constraints": [], "soft_preferences": []},
         "candidate_sets": {**collections, "places": canonical_places},
         "selected": {"hotel_place_ids": [hotels[0]["place"]["id"]], "flight_ids": [flights[0]["id"]]},
-        "days": itinerary_days,
+        "days": [],
         "budget": {"currency": currency, "categories": categories, "total": {"amount": flight_cost + hotel_cost, "currency": currency}},
         "validation": [],
         "provenance": {"source_type": "derived", "provider": "production composition", "retrieved_at": datetime.now(timezone.utc).isoformat(), "status": "estimated", "note": "Built only from normalized provider candidates; availability requires provider confirmation."},
-    }]
+    }
+    scheduled = schedule(SchedulingInput(shell, routing)).best_trip
+    if scheduled is None:
+        raise ProductionIncompleteError("no feasible route-aware schedule from normalized candidates")
+    return [scheduled.trip]
+
+
+def _legacy_trip(trip_id, intent, collections, canonical_places, start, end, hotels, flights, days):
+    currency = _budget_currency(intent, flights[0], hotels[0])
+    flight_cost = _money_amount(flights[0].get("cost"), currency)
+    hotel_cost = _money_amount(hotels[0].get("total_cost"), currency)
+    return {"schema_version": "trip-v1", "id": trip_id, "title": " + ".join(intent.destinations) + " 行程", "local_timezone": "Asia/Tokyo", "date_range": {"start_date": start.isoformat(), "end_date": end.isoformat()}, "traveler_profile": {"adults": _adults(intent), "children": [{"age": age} for age in intent.travelers.child_ages]}, "preferences": {"hard_constraints": [], "soft_preferences": []}, "candidate_sets": {**collections, "places": canonical_places}, "selected": {"hotel_place_ids": [hotels[0]["place"]["id"]], "flight_ids": [flights[0]["id"]]}, "days": days, "budget": {"currency": currency, "categories": {"flights": {"amount": flight_cost, "currency": currency}, "hotel": {"amount": hotel_cost, "currency": currency}}, "total": {"amount": flight_cost + hotel_cost, "currency": currency}}, "validation": [], "provenance": {"source_type": "derived", "provider": "production composition", "retrieved_at": datetime.now(timezone.utc).isoformat(), "status": "estimated", "note": "Built only from normalized provider candidates; availability requires provider confirmation."}}
 
 
 def _routing_context(records: Iterable[object], routing_provider: object, intent: TravelIntent) -> ValidationContext:
     places = []
     restaurants = []
+    opening_hours = {}
     for record in records:
         candidate = record.candidate
         if record.collection == "restaurants":
@@ -275,6 +292,12 @@ def _routing_context(records: Iterable[object], routing_provider: object, intent
         coordinates = place.get("coordinates", {})
         if isinstance(coordinates, Mapping) and isinstance(coordinates.get("latitude"), (int, float)) and isinstance(coordinates.get("longitude"), (int, float)):
             places.append(PlaceRef(place["id"], coordinates["latitude"], coordinates["longitude"]))
+        hours = candidate.get("opening_hours")
+        if record.collection == "places" and isinstance(hours, Mapping) and hours.get("status") == "fresh":
+            try:
+                opening_hours[place["id"]] = tuple(OpeningInterval(int(entry["weekday"]), time.fromisoformat(entry["opens_at"]), time.fromisoformat(entry["closes_at"])) for entry in hours["intervals"])
+            except (KeyError, TypeError, ValueError):
+                pass
     # ORS has a 50-location request limit; a bounded planning snapshot avoids
     # hidden batching/guessing and makes omitted routes unverified downstream.
     unique = list({place.place_id: place for place in places}.values())[:50]
@@ -285,7 +308,7 @@ def _routing_context(records: Iterable[object], routing_provider: object, intent
         for route in matrix.routes(unique, mode):
             if route.status is RouteStatus.AVAILABLE and route.duration_seconds is not None:
                 minutes[(route.origin.place_id, route.destination.place_id)] = max(1, round(route.duration_seconds / 60))
-    return ValidationContext(travel_minutes=minutes, opening_hours=validation_opening_hours(restaurants))
+    return ValidationContext(travel_minutes=minutes, opening_hours={**validation_opening_hours(restaurants), **opening_hours})
 
 
 def _require_plannable_intent(intent: TravelIntent) -> None:
