@@ -1,0 +1,12 @@
+{
+  "trip_id": "awaji-naruto-tokushima-kobe-2026",
+  "conditions": [
+    {
+      "place_id": "naruto-whirlpool-viewpoint",
+      "date": "2026-08-28",
+      "weather": "需依潮位窗口調整",
+      "rain_plan": "備援改為淡路南岸室內休息與補充補給"
+    }
+  ],
+  "notes": "含潮汐、溫度、兒童體能與長者步行舒適度的動態檢查需求"
+}

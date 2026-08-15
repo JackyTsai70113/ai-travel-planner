@@ -1,0 +1,24 @@
+{
+  "trip_id": "awaji-naruto-tokushima-kobe-2026",
+  "entries": [
+    {
+      "kind": "flight",
+      "status": "confirmed",
+      "provider": "XiamenAir",
+      "note": "出發與回程航班時間已鎖定，仍以官方時刻表為準"
+    },
+    {
+      "kind": "lodge",
+      "status": "confirmed",
+      "provider": "planner",
+      "note": "住宿保留以確認信件為主，入住/退房時間待與飯店最終核對"
+    },
+    {
+      "kind": "reservation",
+      "status": "unresolved",
+      "provider": "naruto-tourism",
+      "note": "鳴門固定預約活動名稱、是否需現場報到待補"
+    }
+  ],
+  "notes": "issue-52 canonicalization 對應資料基準，非即時最終行程資料"
+}

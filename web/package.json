@@ -1,0 +1,31 @@
+{
+  "name": "awaji-trip-pwa",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build --base /trips/awaji-2026/",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "echo \"lint: skipped\"",
+    "lint:tw": "echo \"lint:tw skipped\"",
+    "validate:data": "python3 ../scripts/check-awaji-contamination.py && python3 ../scripts/build_awaji_public_bundle.py --trip-path ../trips/awaji-naruto-tokushima-kobe-2026/trip.json --output ../trips/awaji-naruto-tokushima-kobe-2026/public-bundle.json",
+    "test": "echo \"No tests in web package\"",
+    "test:e2e": "echo \"e2e not configured in this worktree\"",
+    "screenshots": "echo \"screenshots not configured in this worktree\"",
+    "lighthouse": "echo \"lighthouse not configured in this worktree\""
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.8.0",
+    "@types/react": "^18.3.2",
+    "@types/react-dom": "^18.3.2",
+    "@vitejs/plugin-react": "^4.4.0",
+    "typescript": "^5.6.2",
+    "vite": "^5.4.7"
+  }
+}

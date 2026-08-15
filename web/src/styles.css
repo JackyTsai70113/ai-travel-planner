@@ -1,0 +1,64 @@
+:root {
+  --bg: linear-gradient(180deg, #031224 0%, #0f2c4d 45%, #08213d 100%);
+  --card: #f8fbff;
+  --text: #10233a;
+  --sub: #3b4a60;
+  --line: #d4dde7;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  font-family: "Noto Sans TC", "Inter", "PingFang TC", sans-serif;
+  color: var(--text);
+}
+
+.shell {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 24px 14px 36px;
+}
+
+.hero, .card {
+  background: var(--card);
+  border-radius: 18px;
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: 0 10px 26px rgba(0, 8, 30, 0.18);
+}
+
+.hero h1 { margin: 4px 0 4px; font-size: 1.4rem; }
+.eyebrow { margin: 0; color: #1b6a65; font-weight: 700; font-size: .85rem; }
+
+h2 {
+  margin: 0 0 10px;
+  color: #06384e;
+}
+
+.day {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+  margin-top: 10px;
+}
+
+.day h3 { margin: 0 0 6px; }
+.day p { margin: 0 0 8px; color: var(--sub); }
+
+ul { margin: 0; padding-left: 18px; }
+li { margin: 8px 0; }
+
+.budget-row {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px dashed #b7c4d5;
+  padding: 6px 0;
+}
+
+dt { font-weight: 700; }
+dd { margin: 0; }
+
+@media (min-width: 768px) {
+  .shell { padding: 28px 22px 44px; }
+  .hero, .card { padding: 20px; }
+}
