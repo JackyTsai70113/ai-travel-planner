@@ -7,6 +7,7 @@ from datetime import date, datetime, time, timedelta
 from typing import Iterable
 from zoneinfo import ZoneInfo
 
+from src.conditions import evaluate_conditions
 from src.validator import OpeningInterval, Violation
 
 from .contracts import ScheduledTrip, ScheduleState, SchedulingInput, SchedulingOutput
@@ -188,6 +189,10 @@ def _schedule_day(current: date, day_number: int, hotel_id: str, activities: Ite
         if end_at > closes or not _is_open(activity["id"], cursor, end_at, request):
             violations.append(_failure("schedule.closed_or_unverified", "activity lacks a verified open interval for its scheduled time", activity["path"]))
             continue
+        condition_errors = _condition_errors(activity["id"], cursor, end_at, request, activity["path"])
+        if condition_errors:
+            violations.extend(condition_errors)
+            continue
         items.append({"id": f"day{day_number}-{activity['id']}", "kind": activity["kind"], "place_id": activity["id"], "start_at": cursor.isoformat(), "end_at": end_at.isoformat(), "selection_status": "selected"})
         previous, cursor = activity["id"], end_at
         if activity["schedule"].get("day") is None:
@@ -206,6 +211,19 @@ def _is_open(place_id: str, start: datetime, end: datetime, request: SchedulingI
     if not intervals:
         return False
     return any(interval.weekday == start.weekday() and interval.opens_at <= start.time() and end.time() <= interval.closes_at for interval in intervals)
+
+
+def _condition_errors(place_id: str, start: datetime, end: datetime, request: SchedulingInput, path: str) -> list[Violation]:
+    context = request.validation_context
+    if context.condition_snapshot is None or context.condition_evaluated_at is None:
+        return []
+    decision = evaluate_conditions(
+        context.condition_snapshot, place_id, start, end,
+        context.condition_evaluated_at, context.condition_policy,
+    )
+    # Scheduler feasibility is binary: only evaluator errors reject a
+    # placement. Warnings and their soft penalties remain schedulable signals.
+    return [Violation(item.code, item.severity, item.message, path) for item in decision.findings if item.severity == "error"]
 
 
 def _failure(code: str, message: str, path: str) -> Violation:

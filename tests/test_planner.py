@@ -260,6 +260,45 @@ class PlannerTests(unittest.TestCase):
         self.assertIsNone(result.best_plan)
         self.assertIn("condition.closure.closed", {item.code for item in result.plans[0].violations})
 
+    def _scheduler_condition_case(self, fixture, daily_start="09:00"):
+        trip = copy.deepcopy(self.trip)
+        trip["days"] = []
+        ohori = next(place for place in trip["candidate_sets"]["places"] if place["id"] == "ohori-park")
+        ohori["schedule"] = {"duration_minutes": 60, "day": 2, "required": True}
+        context = ValidationContext(
+            travel_minutes={
+                ("hakata-hotel", "ohori-park"): 20,
+                ("ohori-park", "hakata-hotel"): 20,
+            },
+            opening_hours={"ohori-park": [OpeningInterval(weekday, time(8), time(22)) for weekday in range(7)]},
+            condition_snapshot=load_condition_snapshot(ROOT / f"fixtures/conditions/{fixture}.json"),
+            condition_evaluated_at=datetime.fromisoformat("2026-04-10T09:00:00+09:00"),
+            condition_policy=ConditionPolicy(max_age=timedelta(days=1)),
+        )
+        return schedule(SchedulingInput(trip, context, daily_start=daily_start))
+
+    def test_scheduler_rejects_tide_placement_outside_authoritative_window(self):
+        result = self._scheduler_condition_case("tide")
+        self.assertIsNone(result.best_trip)
+        self.assertIn("condition.tide.outside_window", {item.code for item in result.candidates[0].violations})
+
+    def test_scheduler_accepts_tide_placement_inside_authoritative_window(self):
+        result = self._scheduler_condition_case("tide", daily_start="09:10")
+        candidate = result.best_trip
+        self.assertIsNotNone(candidate)
+        assert candidate is not None
+        item = candidate.trip["days"][1]["items"][0]
+        self.assertEqual(item["start_at"], "2026-04-11T09:30:00+09:00")
+        self.assertEqual(candidate.state, ScheduleState.READY)
+
+    def test_scheduler_keeps_weather_soft_risk_schedulable(self):
+        result = self._scheduler_condition_case("weather")
+        candidate = result.best_trip
+        self.assertIsNotNone(candidate)
+        assert candidate is not None
+        self.assertEqual(candidate.state, ScheduleState.READY)
+        self.assertEqual(candidate.trip["days"][1]["items"][0]["start_at"], "2026-04-11T09:20:00+09:00")
+
 
 if __name__ == "__main__":
     unittest.main()
