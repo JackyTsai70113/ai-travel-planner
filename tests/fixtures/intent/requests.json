@@ -66,5 +66,25 @@
   {
     "name": "explicit_date_selector",
     "text": "2027/09/01 到 2027/09/04 去京都，2027/09/02 上午一定要去金閣寺。"
+  },
+  {
+    "name": "global_forbidden_scoped_required",
+    "text": "2027/10/01 到 2027/10/03 去大阪，不要去大阪城，第二天一定要去大阪城。"
+  },
+  {
+    "name": "global_required_scoped_forbidden",
+    "text": "2027/11/01 到 2027/11/03 去大阪，一定要去大阪城，第二天不要去大阪城。"
+  },
+  {
+    "name": "if_rain_go_aquarium",
+    "text": "2027/12/01 到 2027/12/03 去大阪，如果下雨就去海遊館。"
+  },
+  {
+    "name": "if_rain_go_museum",
+    "text": "2028/01/01 到 2028/01/03 去東京，若下雨就去江戶東京博物館。"
+  },
+  {
+    "name": "day_specific_child_nap",
+    "text": "2028/02/01 到 2028/02/04 去沖繩，第二天 13:00 到 15:00 小孩要午睡。"
   }
 ]

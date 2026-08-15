@@ -75,12 +75,26 @@ def parse_trip_request(text: str) -> TripRequest:
         budget_amount, currency = values["budget"]  # type: ignore[misc]
     transport = _choices(text, {"自駕": "drive", "開車": "drive", "大眾運輸": "transit", "搭電車": "transit", "火車": "transit", "混合": "mixed"}, provenance, "transport")
     request_constraints, constraint_issues = _request_constraints(text, start_date)
-    extension_subjects = {
-        item.subject for item in request_constraints
-        if item.subject and (item.scope or item.time_window or item.condition or item.kind != "place")
-    }
-    required = tuple(value for value in _after_markers(text, ("一定要去", "必去", "想去"), provenance, "required_places") if value not in extension_subjects)
-    forbidden = tuple(value for value in _after_markers(text, ("不要去", "不去", "避開"), provenance, "forbidden_places") if value not in extension_subjects)
+    extension_spans = tuple(
+        (source.start, source.end)
+        for item in request_constraints
+        if item.scope or item.time_window or item.condition
+        for source in item.provenance
+        if source.field == "request_constraints"
+    )
+    required = _after_markers(text, ("一定要去", "必去", "想去"), provenance, "required_places", extension_spans)
+    forbidden = _after_markers(text, ("不要去", "不去", "避開"), provenance, "forbidden_places", extension_spans)
+    constraint_issues = tuple(constraint_issues) + tuple(
+        ConstraintIssue(
+            "contradictory_strength", (item.id,), "request_constraints", item.subject or "",
+            "全旅程地點限制與特定範圍的要求互相矛盾",
+        )
+        for item in request_constraints
+        if item.kind == "place" and item.subject and (
+            (item.strength == "forbidden" and item.subject in required)
+            or (item.strength in {"required", "preferred"} and item.subject in forbidden)
+        )
+    )
     accommodation = _choices(text, {"溫泉旅館": "ryokan", "商務旅館": "business_hotel", "親子飯店": "family_hotel", "住市中心": "central"}, provenance, "accommodation_preferences")
     food = _choices(text, {"吃素": "vegetarian", "素食": "vegetarian", "海鮮": "seafood", "拉麵": "ramen", "和牛": "wagyu", "不吃牛": "no_beef"}, provenance, "food_preferences")
     pace = "relaxed" if re.search(r"不要太累|慢慢玩|輕鬆", text) else ("packed" if re.search(r"行程緊湊|排滿", text) else None)
@@ -125,8 +139,44 @@ def _request_constraints(text: str, trip_start_date: str | None):
             relation=None, object_=None, condition=None):
         identifier = f"request-{len(found) + 1}"
         source = FieldProvenance(match.group(0), match.start(), match.end(), "request_constraints")
+        sources = [source]
+
+        def trace(field, pattern):
+            located = re.search(pattern, source.text)
+            if located:
+                sources.append(FieldProvenance(
+                    located.group(0), source.start + located.start(),
+                    source.start + located.end(), field,
+                ))
+
+        if subject:
+            trace("subject", re.escape(subject))
+        if scope:
+            if scope.day_number is not None:
+                trace("scope", r"第[\d一二三四五六七八九十]+天")
+            elif scope.day_selector:
+                trace("scope", r"最後一天")
+            elif scope.date:
+                year, month, day = scope.date.split("-")
+                trace("scope", rf"{year}[/-]0?{int(month)}[/-]0?{int(day)}")
+        if window:
+            if window.start:
+                pattern = re.escape(window.start)
+                if window.end:
+                    pattern += rf"\s*(?:到|至|[-~])\s*{re.escape(window.end)}"
+                trace("time_window", pattern)
+            elif window.end:
+                trace("time_window", re.escape(window.end))
+            elif window.period:
+                trace("time_window", r"早上|上午|中午|下午|晚上|晚間")
+        if condition:
+            trace("condition", r"(?:(?:如果|若)\s*)?(?:下雨|雨天)|有時間(?:的話)?|時間允許(?:的話)?|來得及(?:的話)?")
+        if relation:
+            trace("relation", r"之前|之後|排在|先去|再去|前|後|附近|離機場近|不要跑遠")
+        if object_:
+            trace("object", r"飯店入住|旅館入住|入住飯店|入住旅館" if object_ == "hotel_check_in" else re.escape(object_))
         found.append((match.start(), RequestConstraint(identifier, kind, strength, subject, scope,
-                                                       window, relation, object_, condition, (source,))))
+                                                       window, relation, object_, condition, tuple(sources))))
 
     # An absolute-date selector deliberately requires an explicit strength
     # marker.  This keeps the end date in "YYYY/MM/DD 到 YYYY/MM/DD 去東京"
@@ -148,8 +198,8 @@ def _request_constraints(text: str, trip_start_date: str | None):
         r"(?:(第[\d一二三四五六七八九十]+天|最後一天)\s*)?"
         r"(?:(早上|上午|中午|下午|晚上|晚間)\s*)?"
         r"(?:(\d{1,2})[:：](\d{2})\s*(?:到|至|[-~])\s*(\d{1,2})[:：](\d{2})\s*)?"
-        r"(?:(下雨(?:的話)?|雨天|有時間(?:的話)?|時間允許(?:的話)?|來得及(?:的話)?)\s*)?"
-        r"(?:才|再)?\s*(一定要去|必去|不要去|不去|避開|想去|希望去|去)\s*"
+        r"(?:(?:(?:如果|若)\s*)?(下雨(?:的話)?|雨天|有時間(?:的話)?|時間允許(?:的話)?|來得及(?:的話)?)\s*)?"
+        r"(?:才|再|就)?\s*(一定要去|必去|不要去|不去|避開|想去|希望去|去)\s*"
         r"([\u4e00-\u9fffA-Za-z0-9]+)"
     )
     for match in re.finditer(place_pattern, text):
@@ -184,7 +234,7 @@ def _request_constraints(text: str, trip_start_date: str | None):
                 TimeWindow(start=time) if relation == "start" else TimeWindow(end=time), relation)
 
     # Child nap and meal windows.
-    for match in re.finditer(r"(?:小孩|兒童|孩子)?\s*(?:每天|每日)?\s*(?:(\d{1,2})[:：](\d{2})\s*(?:到|至|[-~])\s*(\d{1,2})[:：](\d{2})\s*)?(?:要|需要)?午睡", text):
+    for match in re.finditer(r"(?:第[\d一二三四五六七八九十]+天\s*)?(?:小孩|兒童|孩子)?\s*(?:每天|每日)?\s*(?:(\d{1,2})[:：](\d{2})\s*(?:到|至|[-~])\s*(\d{1,2})[:：](\d{2})\s*)?(?:小孩|兒童|孩子)?\s*(?:要|需要)?午睡", text):
         window = TimeWindow(f"{int(match.group(1)):02d}:{match.group(2)}", f"{int(match.group(3)):02d}:{match.group(4)}") if match.group(1) else TimeWindow(period="afternoon")
         add("nap", "required", match, "child", _scope(match.group(0)), window)
     for match in re.finditer(r"(?:每天|每日)?\s*(午餐|晚餐|早餐)(?:要在)?\s*(\d{1,2})[:：](\d{2})\s*(?:到|至|[-~])\s*(\d{1,2})[:：](\d{2})", text):
@@ -312,11 +362,12 @@ def _choices(text, vocabulary, provenance, field):
     return tuple(result)
 
 
-def _after_markers(text, markers, provenance, field):
+def _after_markers(text, markers, provenance, field, excluded_spans=()):
     names = []
     for marker in markers:
-        match = re.search(re.escape(marker) + r"\s*([\u4e00-\u9fffA-Za-z0-9]+)", text)
-        if match:
+        for match in re.finditer(re.escape(marker) + r"\s*([\u4e00-\u9fffA-Za-z0-9]+)", text):
+            if any(start <= match.start() and match.end() <= end for start, end in excluded_spans):
+                continue
             name = match.group(1)
             provenance[field].append(FieldProvenance(match.group(0), match.start(), match.end(), field))
             if name not in names:

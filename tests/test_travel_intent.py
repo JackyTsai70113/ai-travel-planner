@@ -128,6 +128,12 @@ class TravelIntentParserTests(unittest.TestCase):
         self.assertEqual((constraint.kind, constraint.strength, constraint.time_window),
                          ("nap", "required", TimeWindow(start="13:00", end="15:00")))
 
+    def test_day_specific_child_nap_keeps_scope_and_explicit_window(self):
+        constraint = next(item for item in self._parse("day_specific_child_nap").request_constraints
+                          if item.kind == "nap")
+        self.assertEqual(constraint.scope, ConstraintScope(day_number=2))
+        self.assertEqual(constraint.time_window, TimeWindow(start="13:00", end="15:00"))
+
     def test_meal_window_and_return_deadline_preserve_order(self):
         constraints = tuple(item for item in self._parse("meal_and_return_deadline").request_constraints
                             if item.kind in {"meal", "return_deadline"})
@@ -152,6 +158,31 @@ class TravelIntentParserTests(unittest.TestCase):
         self.assertEqual((optional.kind, optional.strength, optional.subject, optional.condition),
                          ("place", "optional", "錦市場", ConstraintCondition("time_available")))
 
+    def test_if_and_ruo_rain_patterns_are_weather_conditions(self):
+        for name, subject in (("if_rain_go_aquarium", "海遊館"),
+                              ("if_rain_go_museum", "江戶東京博物館")):
+            with self.subTest(name=name):
+                constraint = next(item for item in self._parse(name).request_constraints if item.condition)
+                self.assertEqual((constraint.subject, constraint.condition),
+                                 (subject, ConstraintCondition("weather", "rain")))
+
+    def test_constraint_components_have_field_level_exact_provenance(self):
+        for name in ("explicit_date_selector", "rainy_day_condition"):
+            intent = self._parse(name)
+            constraint = next(item for item in intent.request_constraints
+                              if item.subject in {"金閣寺", "國立科學博物館"})
+            fields = {source.field for source in constraint.provenance}
+            self.assertIn("subject", fields)
+            if constraint.scope:
+                self.assertIn("scope", fields)
+            if constraint.time_window:
+                self.assertIn("time_window", fields)
+            if constraint.condition:
+                self.assertIn("condition", fields)
+            self.assertNotEqual(fields, {"request_constraints"})
+            for source in constraint.provenance:
+                self.assertEqual(intent.raw_text[source.start:source.end], source.text)
+
     def test_contradiction_and_missing_date_are_machine_readable(self):
         contradiction = self._parse("contradictory_strength")
         missing_date = self._parse("missing_date_with_day_reference")
@@ -161,6 +192,26 @@ class TravelIntentParserTests(unittest.TestCase):
         self.assertTrue(issue.text)
         self.assertTrue(issue.reason)
         self.assertIn("missing_trip_date", {item.code for item in missing_date.constraint_issues})
+
+    def test_global_forbidden_and_scoped_required_are_both_preserved(self):
+        intent = self._parse("global_forbidden_scoped_required")
+        self.assertIn("大阪城", intent.forbidden_places)
+        self.assertIn(HardConstraint("forbidden-大阪城", "forbidden_location", "大阪城"),
+                      intent.hard_constraints)
+        scoped = next(item for item in intent.request_constraints
+                      if item.subject == "大阪城" and item.scope == ConstraintScope(day_number=2))
+        self.assertEqual((scoped.kind, scoped.strength), ("place", "required"))
+        self.assertIn("contradictory_strength", {item.code for item in intent.constraint_issues})
+
+    def test_global_required_and_scoped_forbidden_are_both_preserved(self):
+        intent = self._parse("global_required_scoped_forbidden")
+        self.assertIn("大阪城", intent.required_places)
+        self.assertIn(HardConstraint("required-大阪城", "required_location", "大阪城"),
+                      intent.hard_constraints)
+        scoped = next(item for item in intent.request_constraints
+                      if item.subject == "大阪城" and item.scope == ConstraintScope(day_number=2))
+        self.assertEqual((scoped.kind, scoped.strength), ("place", "forbidden"))
+        self.assertIn("contradictory_strength", {item.code for item in intent.constraint_issues})
 
     def test_other_constraint_validation_issues_have_stable_codes(self):
         invalid_window = parse_trip_request("2027/08/01 到 2027/08/03 去東京，第二天 16:00 到 14:00 去上野公園。")
