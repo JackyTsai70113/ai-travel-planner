@@ -56,6 +56,27 @@ class ReservationEvidenceTests(unittest.TestCase):
         self.assertIn(ResolutionIssue.TIMEZONE_MISMATCH, mismatch.resolution_issues)
         self.assertEqual(mismatch.resolution_state, ResolutionState.PENDING)
 
+    def test_dst_nonexistent_local_time_is_rejected_but_fall_back_folds_are_valid(self):
+        restaurant = self.fixtures[0]
+        for offset in ("-05:00", "-04:00"):
+            nonexistent = replace(
+                restaurant,
+                timezone="America/New_York",
+                start_at=f"2026-03-08T02:15:00{offset}",
+                end_at="2026-03-08T03:15:00-04:00",
+            )
+            self.assertIn(ResolutionIssue.TIMEZONE_MISMATCH, nonexistent.resolution_issues)
+            self.assertIsNone(nonexistent.planner_bindings())
+        for offset in ("-04:00", "-05:00"):
+            fall_fold = replace(
+                restaurant,
+                timezone="America/New_York",
+                start_at=f"2026-11-01T01:15:00{offset}",
+                end_at=f"2026-11-01T01:45:00{offset}",
+            )
+            self.assertEqual(fall_fold.resolution_state, ResolutionState.READY)
+            self.assertIsNotNone(fall_fold.planner_bindings())
+
     def test_duration_derives_end_and_cancellation_deadline_requires_timezone(self):
         restaurant = self.fixtures[0]
         duration_only = replace(restaurant, end_at=None, duration_minutes=90)
@@ -86,6 +107,23 @@ class ReservationEvidenceTests(unittest.TestCase):
         self.assertIsNone(self.fixtures[4].planner_bindings())
         flight_constraint, _ = self.fixtures[2].planner_bindings()
         self.assertEqual(flight_constraint.value["item_id"], "d1-arrival")
+
+    def test_public_binding_url_drops_query_and_fragment_and_rejects_userinfo(self):
+        restaurant = self.fixtures[0]
+        provenance = replace(restaurant.provenance, source_url="https://booking.example/path?token=secret#private")
+        _, overrides = replace(restaurant, provenance=provenance).planner_bindings()
+        self.assertEqual(overrides[0]["provenance"]["source_url"], "https://booking.example/path")
+        unsafe = replace(restaurant, provenance=replace(provenance, source_url="https://user:password@booking.example/path"))
+        with self.assertRaisesRegex(ValueError, "userinfo"):
+            unsafe.planner_bindings()
+
+    def test_reservation_id_must_be_safe_for_derived_trip_ids(self):
+        restaurant = self.fixtures[0]
+        for invalid_id in ("", "Booking", "booking code"):
+            with self.subTest(invalid_id=invalid_id), self.assertRaisesRegex(ValueError, "Trip schema pattern"):
+                replace(restaurant, id=invalid_id)
+        with self.assertRaisesRegex(ValueError, "provider"):
+            replace(restaurant, provider="   ")
 
     def test_overrides_are_trip_schema_compatible_and_repair_does_not_move_anchor(self):
         reservation = self.fixtures[0]

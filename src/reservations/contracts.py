@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
@@ -18,6 +19,9 @@ from urllib.parse import urlsplit, urlunsplit
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from src.planner import HardConstraint
+
+
+_TRIP_ID = re.compile(r"^[a-z][a-z0-9_-]*$")
 
 
 class EvidenceKind(str, Enum):
@@ -111,8 +115,10 @@ class ReservationEvidence:
     reported_times: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        if not self.id or not self.provider:
-            raise ValueError("id and provider are required")
+        if not _TRIP_ID.fullmatch(self.id):
+            raise ValueError("id must match Trip schema pattern ^[a-z][a-z0-9_-]*$")
+        if not self.provider or not self.provider.strip():
+            raise ValueError("provider is required")
         if self.party_size is not None and self.party_size < 1:
             raise ValueError("party_size must be positive")
         if self.duration_minutes is not None and self.duration_minutes <= 0:
@@ -232,13 +238,23 @@ def _public_url(value: str) -> str:
     parts = urlsplit(value)
     if parts.scheme not in {"http", "https"} or not parts.netloc:
         raise ValueError("source_url must be an absolute HTTP(S) URL")
+    if parts.username is not None or parts.password is not None:
+        raise ValueError("source_url must not contain userinfo")
     return urlunsplit((parts.scheme, parts.netloc, parts.path, "", ""))
 
 
 def _offset_matches_zone(value: datetime, zone: ZoneInfo) -> bool:
     wall_time = value.replace(tzinfo=None)
-    valid_offsets = {wall_time.replace(tzinfo=zone, fold=fold).utcoffset() for fold in (0, 1)}
-    return value.utcoffset() in valid_offsets
+    for fold in (0, 1):
+        candidate = wall_time.replace(tzinfo=zone, fold=fold)
+        round_trip = candidate.astimezone(timezone.utc).astimezone(zone)
+        if (
+            candidate.utcoffset() == value.utcoffset()
+            and round_trip.replace(tzinfo=None) == wall_time
+            and round_trip.utcoffset() == candidate.utcoffset()
+        ):
+            return True
+    return False
 
 
 def reservation_from_record(record: Mapping[str, Any]) -> ReservationEvidence:
