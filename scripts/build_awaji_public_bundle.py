@@ -76,16 +76,15 @@ def _bundle_reservations(days: list[dict], places: dict[str, dict[str, object]])
             if item.get("id", "").startswith("fixed-"):
                 place = places.get(item.get("place_id"), {})
                 place_name = place.get("name") if isinstance(place, dict) else None
-                fallback_name = "8/28 17:45 固定預約（項目名稱待補）"
+                fallback_name = "8/28 17:45 固定預約（名稱待補）"
                 resolution = place.get("resolution") if isinstance(place, dict) else {}
                 is_resolved = bool(
                     resolution
                     and isinstance(resolution, dict)
                     and resolution.get("state") == "resolved"
                 )
-                display_name = place_name
-                if not is_resolved:
-                    display_name = fallback_name
+                has_known_name = isinstance(place_name, str) and place_name.strip()
+                display_name = place_name if has_known_name else fallback_name
                 reservations.append(
                     {
                         "id": item.get("id"),

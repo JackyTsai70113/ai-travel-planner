@@ -21,18 +21,18 @@
   },
   "preferences": {
     "hard_constraints": [
-      {
-        "id": "no-hard-activity-after-17-15",
-        "kind": "timing",
-        "description": "17:15 後不得新增固定時段景點，保留鳴門漩渦固定預約可調整時間窗",
-        "value": true
-      },
-      {
-        "id": "fixed-17-45-reservation",
-        "kind": "reservation",
-        "description": "保留 17:45 的鳴門固定預約（場次與地點待確認）",
-        "value": true
-      }
+    {
+      "id": "no-hard-activity-after-17-15",
+      "kind": "timing",
+      "description": "17:15 後不得新增固定時段景點，保留 8/28 17:45 固定預約可調整時間窗",
+      "value": true
+    },
+    {
+      "id": "fixed-17-45-reservation",
+      "kind": "reservation",
+      "description": "保留 8/28 17:45 固定預約（名稱：しあわせのパンケーキ）",
+      "value": true
+    }
     ],
     "soft_preferences": [
       {
@@ -186,21 +186,471 @@
       },
       {
         "id": "naruto-ferry-fixed-activity",
-        "name": "鳴門漩渦固定行程（待確認）",
+        "name": "しあわせのパンケーキ",
         "kind": "poi",
-        "address": "鳴門海域",
+        "address": "鳴門（地點待補）",
         "resolution": {
           "state": "clarification_required",
-          "confidence": 0.3,
-          "clarification": "場次名稱、導覽時間、預約方式待補"
+          "confidence": 0.74,
+          "clarification": "地點與活動持續時間待補。名稱已確認。"
         },
         "provenance": {
           "source_type": "user_input",
-          "provider": "planner note",
-          "source_url": "https://example.invalid/naruto/fixed-plan",
+          "provider": "Issue comment",
+          "source_url": "https://github.com/JackyTsai70113/ai-travel-planner/issues/52",
           "retrieved_at": "2026-08-15T09:30:00+09:00",
           "confidence": 0.3,
-          "status": "unverified"
+          "status": "confirmed"
+        }
+      },
+      {
+        "id": "map-import-pokara-naruto-store",
+        "name": "ポカラ 鳴門店",
+        "kind": "restaurant",
+        "address": "Suberiiwahama-23-100 Muyacho Okuwajima, Naruto, Tokushima 772-0011",
+        "coordinates": {
+          "latitude": 34.183504,
+          "longitude": 134.6123529
+        },
+        "identifiers": [
+          {
+            "type": "provider_reference",
+            "value": "maps-list:entry-01",
+            "provenance": {
+              "source_type": "provider",
+              "provider": "Google Maps",
+              "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+              "retrieved_at": "2026-08-15T10:20:00+09:00",
+              "status": "estimated"
+            }
+          }
+        ],
+        "provenance": {
+          "source_type": "provider",
+          "provider": "Google Maps",
+          "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+          "retrieved_at": "2026-08-15T10:20:00+09:00",
+          "status": "estimated"
+        }
+      },
+      {
+        "id": "map-import-ocean-terrace",
+        "name": "Ocean Terrace",
+        "kind": "poi",
+        "address": "816 Nojimahikinoura, Awaji, Hyogo 656-1721",
+        "coordinates": {
+          "latitude": 34.562085,
+          "longitude": 134.94875
+        },
+        "identifiers": [
+          {
+            "type": "provider_reference",
+            "value": "maps-list:entry-02",
+            "provenance": {
+              "source_type": "provider",
+              "provider": "Google Maps",
+              "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+              "retrieved_at": "2026-08-15T10:20:00+09:00",
+              "status": "estimated"
+            }
+          }
+        ],
+        "provenance": {
+          "source_type": "provider",
+          "provider": "Google Maps",
+          "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+          "retrieved_at": "2026-08-15T10:20:00+09:00",
+          "status": "estimated"
+        }
+      },
+      {
+        "id": "map-import-sbrick-warehouse",
+        "name": "S BRICK 旧:鐘紡工場跡 赤レンガ倉庫",
+        "kind": "poi",
+        "address": "1 Chome-1-8 Shioya, Sumoto, Hyogo 656-0021",
+        "coordinates": {
+          "latitude": 34.3454531,
+          "longitude": 134.8953604
+        },
+        "identifiers": [
+          {
+            "type": "provider_reference",
+            "value": "maps-list:entry-03",
+            "provenance": {
+              "source_type": "provider",
+              "provider": "Google Maps",
+              "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+              "retrieved_at": "2026-08-15T10:20:00+09:00",
+              "status": "estimated"
+            }
+          }
+        ],
+        "provenance": {
+          "source_type": "provider",
+          "provider": "Google Maps",
+          "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+          "retrieved_at": "2026-08-15T10:20:00+09:00",
+          "status": "estimated"
+        }
+      },
+      {
+        "id": "map-import-uzuno-oka",
+        "name": "絶景レストラン うずの丘",
+        "kind": "restaurant",
+        "address": "Hei-936-3 Fukura, Minamiawaji, Hyogo 656-0503",
+        "coordinates": {
+          "latitude": 34.254789,
+          "longitude": 134.6846986
+        },
+        "identifiers": [
+          {
+            "type": "provider_reference",
+            "value": "maps-list:entry-05",
+            "provenance": {
+              "source_type": "provider",
+              "provider": "Google Maps",
+              "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+              "retrieved_at": "2026-08-15T10:20:00+09:00",
+              "status": "estimated"
+            }
+          }
+        ],
+        "provenance": {
+          "source_type": "provider",
+          "provider": "Google Maps",
+          "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+          "retrieved_at": "2026-08-15T10:20:00+09:00",
+          "status": "estimated"
+        }
+      },
+      {
+        "id": "map-import-yumebutai",
+        "name": "夢舞台",
+        "kind": "poi",
+        "address": "1035 Ura, Awaji, Hyogo 656-2305",
+        "coordinates": {
+          "latitude": 34.5440994,
+          "longitude": 134.9941742
+        },
+        "identifiers": [
+          {
+            "type": "provider_reference",
+            "value": "maps-list:entry-06",
+            "provenance": {
+              "source_type": "provider",
+              "provider": "Google Maps",
+              "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+              "retrieved_at": "2026-08-15T10:20:00+09:00",
+              "status": "estimated"
+            }
+          }
+        ],
+        "provenance": {
+          "source_type": "provider",
+          "provider": "Google Maps",
+          "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+          "retrieved_at": "2026-08-15T10:20:00+09:00",
+          "status": "estimated"
+        }
+      },
+      {
+        "id": "map-import-naruto-bridge-memorial",
+        "name": "漩渦之丘 大鳴門橋紀念館",
+        "kind": "poi",
+        "address": "Hei-936-3 Fukura, Minamiawaji, Hyogo 656-0503",
+        "coordinates": {
+          "latitude": 34.2547535,
+          "longitude": 134.6846892
+        },
+        "identifiers": [
+          {
+            "type": "provider_reference",
+            "value": "maps-list:entry-07",
+            "provenance": {
+              "source_type": "provider",
+              "provider": "Google Maps",
+              "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+              "retrieved_at": "2026-08-15T10:20:00+09:00",
+              "status": "estimated"
+            }
+          }
+        ],
+        "provenance": {
+          "source_type": "provider",
+          "provider": "Google Maps",
+          "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+          "retrieved_at": "2026-08-15T10:20:00+09:00",
+          "status": "estimated"
+        }
+      },
+      {
+        "id": "map-import-poplar-ramen",
+        "name": "淡路島ラーメン ポプラ",
+        "kind": "restaurant",
+        "address": "5 Chome-1-37 Honmachi, Sumoto, Hyogo 656-0025",
+        "coordinates": {
+          "latitude": 34.3403814,
+          "longitude": 134.8952662
+        },
+        "identifiers": [
+          {
+            "type": "provider_reference",
+            "value": "maps-list:entry-08",
+            "provenance": {
+              "source_type": "provider",
+              "provider": "Google Maps",
+              "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+              "retrieved_at": "2026-08-15T10:20:00+09:00",
+              "status": "estimated"
+            }
+          }
+        ],
+        "provenance": {
+          "source_type": "provider",
+          "provider": "Google Maps",
+          "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+          "retrieved_at": "2026-08-15T10:20:00+09:00",
+          "status": "estimated"
+        }
+      },
+      {
+        "id": "map-import-ohama-park",
+        "name": "Ohama Park",
+        "kind": "poi",
+        "address": "1 Chome-2 Kaigandori, Sumoto, Hyogo 656-0022",
+        "coordinates": {
+          "latitude": 34.3403489,
+          "longitude": 134.9041265
+        },
+        "identifiers": [
+          {
+            "type": "provider_reference",
+            "value": "maps-list:entry-09",
+            "provenance": {
+              "source_type": "provider",
+              "provider": "Google Maps",
+              "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+              "retrieved_at": "2026-08-15T10:20:00+09:00",
+              "status": "estimated"
+            }
+          }
+        ],
+        "provenance": {
+          "source_type": "provider",
+          "provider": "Google Maps",
+          "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+          "retrieved_at": "2026-08-15T10:20:00+09:00",
+          "status": "estimated"
+        }
+      },
+      {
+        "id": "map-import-garb-costa-orange",
+        "name": "Garb Costa Orange",
+        "kind": "restaurant",
+        "address": "1033-1 Gunge, Awaji, Hyogo 656-1511",
+        "coordinates": {
+          "latitude": 34.4890632,
+          "longitude": 134.8552703
+        },
+        "identifiers": [
+          {
+            "type": "provider_reference",
+            "value": "maps-list:entry-10",
+            "provenance": {
+              "source_type": "provider",
+              "provider": "Google Maps",
+              "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+              "retrieved_at": "2026-08-15T10:20:00+09:00",
+              "status": "estimated"
+            }
+          }
+        ],
+        "provenance": {
+          "source_type": "provider",
+          "provider": "Google Maps",
+          "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+          "retrieved_at": "2026-08-15T10:20:00+09:00",
+          "status": "estimated"
+        }
+      },
+      {
+        "id": "map-import-taidrobou",
+        "name": "浮世離れの鯛ドロボー",
+        "kind": "restaurant",
+        "address": "Heianura-40-6 Aigacho, Sumoto, Hyogo 656-2121",
+        "coordinates": {
+          "latitude": 34.3934886,
+          "longitude": 134.8947108
+        },
+        "identifiers": [
+          {
+            "type": "provider_reference",
+            "value": "maps-list:entry-11",
+            "provenance": {
+              "source_type": "provider",
+              "provider": "Google Maps",
+              "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+              "retrieved_at": "2026-08-15T10:20:00+09:00",
+              "status": "estimated"
+            }
+          }
+        ],
+        "provenance": {
+          "source_type": "provider",
+          "provider": "Google Maps",
+          "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+          "retrieved_at": "2026-08-15T10:20:00+09:00",
+          "status": "estimated"
+        }
+      },
+      {
+        "id": "map-import-o-awaji",
+        "name": "O AWAJI",
+        "kind": "restaurant",
+        "address": "2963-4 Nakada, Awaji, Hyogo 656-2163",
+        "coordinates": {
+          "latitude": 34.4372787,
+          "longitude": 134.8813168
+        },
+        "identifiers": [
+          {
+            "type": "provider_reference",
+            "value": "maps-list:entry-12",
+            "provenance": {
+              "source_type": "provider",
+              "provider": "Google Maps",
+              "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+              "retrieved_at": "2026-08-15T10:20:00+09:00",
+              "status": "estimated"
+            }
+          }
+        ],
+        "provenance": {
+          "source_type": "provider",
+          "provider": "Google Maps",
+          "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+          "retrieved_at": "2026-08-15T10:20:00+09:00",
+          "status": "estimated"
+        }
+      },
+      {
+        "id": "map-import-boulangerie-rural",
+        "name": "Boulangerie RURAL",
+        "kind": "restaurant",
+        "address": "1467-4 Otani, Awaji, Hyogo 656-2224",
+        "coordinates": {
+          "latitude": 34.4471588,
+          "longitude": 134.8998377
+        },
+        "identifiers": [
+          {
+            "type": "provider_reference",
+            "value": "maps-list:entry-13",
+            "provenance": {
+              "source_type": "provider",
+              "provider": "Google Maps",
+              "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+              "retrieved_at": "2026-08-15T10:20:00+09:00",
+              "status": "estimated"
+            }
+          }
+        ],
+        "provenance": {
+          "source_type": "provider",
+          "provider": "Google Maps",
+          "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+          "retrieved_at": "2026-08-15T10:20:00+09:00",
+          "status": "estimated"
+        }
+      },
+      {
+        "id": "map-import-picnic-garden",
+        "name": "Picnic Garden",
+        "kind": "restaurant",
+        "address": "1028-1 Gunge, Awaji, Hyogo 656-1511",
+        "coordinates": {
+          "latitude": 34.4881234,
+          "longitude": 134.8545567
+        },
+        "identifiers": [
+          {
+            "type": "provider_reference",
+            "value": "maps-list:entry-14",
+            "provenance": {
+              "source_type": "provider",
+              "provider": "Google Maps",
+              "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+              "retrieved_at": "2026-08-15T10:20:00+09:00",
+              "status": "estimated"
+            }
+          }
+        ],
+        "provenance": {
+          "source_type": "provider",
+          "provider": "Google Maps",
+          "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+          "retrieved_at": "2026-08-15T10:20:00+09:00",
+          "status": "estimated"
+        }
+      },
+      {
+        "id": "map-import-keino-beach",
+        "name": "慶野松原海水浴場",
+        "kind": "poi",
+        "address": "Matsuhokeino, Minamiawaji, Hyogo 656-0304",
+        "coordinates": {
+          "latitude": 34.3390892,
+          "longitude": 134.7341361
+        },
+        "identifiers": [
+          {
+            "type": "provider_reference",
+            "value": "maps-list:entry-15",
+            "provenance": {
+              "source_type": "provider",
+              "provider": "Google Maps",
+              "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+              "retrieved_at": "2026-08-15T10:20:00+09:00",
+              "status": "estimated"
+            }
+          }
+        ],
+        "provenance": {
+          "source_type": "provider",
+          "provider": "Google Maps",
+          "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+          "retrieved_at": "2026-08-15T10:20:00+09:00",
+          "status": "estimated"
+        }
+      },
+      {
+        "id": "map-import-awaji-hanasajiki",
+        "name": "Hyogo Prefecture Awaji Hanasajiki",
+        "kind": "poi",
+        "address": "2805-7 Kusumoto, Awaji, Hyogo 656-2301",
+        "coordinates": {
+          "latitude": 34.5535521,
+          "longitude": 134.9780291
+        },
+        "identifiers": [
+          {
+            "type": "provider_reference",
+            "value": "maps-list:entry-16",
+            "provenance": {
+              "source_type": "provider",
+              "provider": "Google Maps",
+              "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+              "retrieved_at": "2026-08-15T10:20:00+09:00",
+              "status": "estimated"
+            }
+          }
+        ],
+        "provenance": {
+          "source_type": "provider",
+          "provider": "Google Maps",
+          "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+          "retrieved_at": "2026-08-15T10:20:00+09:00",
+          "status": "estimated"
         }
       },
       {
@@ -587,7 +1037,7 @@
           "start_at": "2026-08-28T17:45:00+09:00",
           "end_at": "2026-08-28T17:45:00+09:00",
           "selection_status": "selected",
-          "notes": "固定預約，項目名稱/地點/結束時間仍待確認"
+          "notes": "固定預約：8/28 17:45 しあわせのパンケーキ。地點與持續時間仍待補。"
         },
         {
           "id": "day2-dinner",
@@ -742,7 +1192,7 @@
     {
       "code": "RESERVATION_UNCONFIRMED",
       "severity": "warning",
-      "message": "固定預約 17:45 的活動名稱與參與規範仍待補全",
+      "message": "固定預約 8/28 17:45 名稱已確認（しあわせのパンケーキ），但地點與 duration 待補",
       "path": "/days/2026-08-28/items/fixed-2026-08-28-17-45"
     }
   ],

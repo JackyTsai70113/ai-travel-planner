@@ -36,7 +36,8 @@ class AwajiTripFixtureTests(unittest.TestCase):
         self.assertEqual(fixed["start_at"], "2026-08-28T17:45:00+09:00")
         self.assertEqual(fixed["kind"], "visit")
         self.assertEqual(fixed["start_at"], fixed["end_at"])
-        self.assertIn("待確認", fixed["notes"])
+        self.assertIn("しあわせのパンケーキ", fixed["notes"])
+        self.assertIn("地點與持續時間仍待補", fixed["notes"])
 
     def test_day_five_no_hard_visit(self):
         day_five = next(day for day in self.trip["days"] if day["date"] == "2026-08-31")
