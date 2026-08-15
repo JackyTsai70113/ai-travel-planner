@@ -42,6 +42,11 @@ def _safe_time(value: str | None) -> str | None:
     return value[:16]
 
 
+def _write_json(path: Path, payload: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
+
+
 def _normalize_item(item: dict) -> dict:
     return {
         "id": item.get("id"),
@@ -163,12 +168,14 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Build public bundle for issue-52 awaji trip")
     parser.add_argument("--trip-path", type=Path, default=TRIP_PATH_DEFAULT)
     parser.add_argument("--output", type=Path, default=OUTPUT_DEFAULT)
+    parser.add_argument("--web-output", type=Path, default=None)
     args = parser.parse_args()
 
     trip = _read_json(args.trip_path)
     bundle = build_public_bundle(trip, args.trip_path)
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(bundle, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
+    _write_json(args.output, bundle)
+    if args.web_output is not None:
+        _write_json(args.web_output, bundle)
 
 
 if __name__ == "__main__":

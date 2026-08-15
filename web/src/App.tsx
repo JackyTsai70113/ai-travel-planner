@@ -72,15 +72,20 @@ function App() {
 
   useEffect(() => {
     const load = async () => {
+      const baseUrl = String(import.meta.env.BASE_URL || '/')
       setLoading(true)
       setError('')
+
       try {
         const urls = [
-          `${import.meta.env.BASE_URL}public-bundle.json`,
+          `${baseUrl}trips/awaji-2026/public-bundle.json`,
+          `${baseUrl}public-bundle.json`,
           '/trips/awaji-2026/public-bundle.json',
           '/public-bundle.json',
         ]
-        let response: Response | undefined
+        const attemptLogs: string[] = []
+        let response: Response | null = null
+
         for (const candidate of urls) {
           try {
             const result = await fetch(candidate)
@@ -88,13 +93,15 @@ function App() {
               response = result
               break
             }
+            attemptLogs.push(`${candidate} => HTTP ${result.status}`)
+            continue
           } catch {
-            // continue
+            attemptLogs.push(`${candidate} => network error`)
           }
         }
 
         if (!response) {
-          throw new Error('public-bundle.json 無法載入')
+          throw new Error(`public-bundle.json 無法載入（已嘗試 ${urls.join('、')}；${attemptLogs.join('；')}）`)
         }
         const data = await response.json()
         setBundle(data as Bundle)
@@ -123,7 +130,7 @@ function App() {
   return (
     <main className="shell">
       <header className="hero">
-        <p className="eyebrow">Issue 52 · Golden Trip</p>
+        <p className="eyebrow">2026 淡路島・鳴門家庭旅行</p>
         <h1>{bundle.title}</h1>
         <p>{bundle.date_range.start_date} ~ {bundle.date_range.end_date}</p>
         <p>時區：{bundle.local_timezone}</p>
