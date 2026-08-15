@@ -1,0 +1,27 @@
+{
+  "profile": "tourism-site-v1",
+  "site": "Fukuoka City Museum official website (recorded fixture)",
+  "retrieved_at": "2026-08-01T03:00:00+00:00",
+  "records": [
+    {
+      "subject_id": "fukuoka-city-museum",
+      "source_url": "https://museum.city.fukuoka.jp/",
+      "valid_from": "2026-07-01",
+      "valid_until": "2026-12-31",
+      "excerpt": "Recorded operational fields for offline contract testing; not a live-page quote.",
+      "facts": {
+        "regular_opening_hours": {"opens_at": "09:30", "closes_at": "17:30"},
+        "last_admission": "17:00",
+        "reservation_requirement": false,
+        "accessibility": "wheelchair_accessible"
+      }
+    },
+    {
+      "subject_id": "fukuoka-city-museum",
+      "source_url": "https://museum.city.fukuoka.jp/",
+      "valid_from": "2026-09-07",
+      "valid_until": "2026-09-09",
+      "facts": {"temporary_closure": true}
+    }
+  ]
+}
