@@ -18,6 +18,12 @@
       "status": "unresolved",
       "provider": "naruto-tourism",
       "note": "鳴門固定預約活動名稱、是否需現場報到待補"
+    },
+    {
+      "kind": "vehicle",
+      "status": "confirmed",
+      "provider": "user_input",
+      "note": "租車確認：Toyota Alphard"
     }
   ],
   "notes": "issue-52 canonicalization 對應資料基準，非即時最終行程資料"

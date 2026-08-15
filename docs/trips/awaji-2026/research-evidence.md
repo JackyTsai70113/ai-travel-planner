@@ -9,6 +9,7 @@
   - 徳島別荘ホテル2 ×1 夜
   - The Royal Park Canvas Kobe Sannomiya ×1 夜
 - 8/28 17:45 固定預約：名稱已確認為 `しあわせのパンケーキ`，地點與 duration 待補
+- 已確認租車：`Toyota Alphard`
 
 ## 需要補齊的官方/研究證據
 
