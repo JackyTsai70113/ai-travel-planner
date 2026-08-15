@@ -63,7 +63,7 @@ class DashboardTests(unittest.TestCase):
         self.assertEqual(1, len(self.service.calls))
         status, body = self.request("GET", "/api/trips/" + job["trip_id"]); view = json.loads(body)
         self.assertEqual(200, status)
-        for field in ("overview", "days", "routes", "restaurants", "flights", "hotels", "budget", "sources", "validation", "website_url", "trip_json_url"):
+        for field in ("overview", "days", "routes", "restaurants", "flights", "hotels", "budget", "sources", "validation", "contingencies", "website_url", "trip_json_url"):
             self.assertIn(field, view)
         self.assertTrue((self.app.trips_directory / job["trip_id"] / "trip.json").exists())
         self.assertTrue((self.app.site_directory / job["trip_id"] / "index.html").exists())
@@ -83,6 +83,7 @@ class DashboardTests(unittest.TestCase):
         os.environ["DASHBOARD_TEST_SECRET"] = "web-secret-777"
         status, page = self.request("GET", "/")
         self.assertEqual(200, status); self.assertIn("AI Travel Planner", page)
+        self.assertIn("Contingencies", page)
         self.assertNotIn("web-secret-777", page)
         status, body = self.request("GET", "/trips/../../etc/passwd")
         self.assertEqual(404, status)
