@@ -167,21 +167,36 @@ class TravelIntentParserTests(unittest.TestCase):
                                  (subject, ConstraintCondition("weather", "rain")))
 
     def test_constraint_components_have_field_level_exact_provenance(self):
-        for name in ("explicit_date_selector", "rainy_day_condition"):
+        fixture_names = (
+            "fullwidth_colon_place_window",
+            "day_specific_child_nap",
+            "meal_and_return_deadline",
+            "daily_boundaries",
+            "ordering_after_checkin",
+            "rainy_day_condition",
+        )
+        component_names = (
+            "kind", "strength", "subject", "scope", "time_window",
+            "relation", "object", "condition",
+        )
+        for name in fixture_names:
             intent = self._parse(name)
-            constraint = next(item for item in intent.request_constraints
-                              if item.subject in {"金閣寺", "國立科學博物館"})
-            fields = {source.field for source in constraint.provenance}
-            self.assertIn("subject", fields)
-            if constraint.scope:
-                self.assertIn("scope", fields)
-            if constraint.time_window:
-                self.assertIn("time_window", fields)
-            if constraint.condition:
-                self.assertIn("condition", fields)
-            self.assertNotEqual(fields, {"request_constraints"})
-            for source in constraint.provenance:
-                self.assertEqual(intent.raw_text[source.start:source.end], source.text)
+            self.assertTrue(intent.request_constraints)
+            for constraint in intent.request_constraints:
+                with self.subTest(name=name, constraint=constraint.id):
+                    fields = {source.field for source in constraint.provenance}
+                    for component in component_names:
+                        if getattr(constraint, component) is not None:
+                            self.assertIn(component, fields)
+                    for source in constraint.provenance:
+                        self.assertEqual(intent.raw_text[source.start:source.end], source.text)
+
+    def test_fullwidth_colon_place_window_is_normalized_without_losing_scope(self):
+        constraint = next(item for item in self._parse("fullwidth_colon_place_window").request_constraints
+                          if item.subject == "銀閣寺")
+        self.assertEqual(constraint.scope, ConstraintScope(day_number=2))
+        self.assertEqual(constraint.time_window, TimeWindow(start="13:30", end="15:00"))
+        self.assertEqual((constraint.kind, constraint.strength), ("place", "required"))
 
     def test_contradiction_and_missing_date_are_machine_readable(self):
         contradiction = self._parse("contradictory_strength")

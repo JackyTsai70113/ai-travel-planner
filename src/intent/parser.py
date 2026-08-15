@@ -142,6 +142,8 @@ def _request_constraints(text: str, trip_start_date: str | None):
         sources = [source]
 
         def trace(field, pattern):
+            if any(item.field == field for item in sources):
+                return
             located = re.search(pattern, source.text)
             if located:
                 sources.append(FieldProvenance(
@@ -149,8 +151,35 @@ def _request_constraints(text: str, trip_start_date: str | None):
                     source.start + located.end(), field,
                 ))
 
+        kind_patterns = {
+            "place": r"去|避開",
+            "order": r"先去[^，。；;!?！？]*再去|排在",
+            "daily_boundary": r"開始|出門|結束|回飯店|回旅館|返回飯店|返回旅館",
+            "nap": r"午睡",
+            "meal": r"早餐|午餐|晚餐",
+            "return_deadline": r"回飯店|回旅館|返回飯店|返回旅館",
+            "proximity": r"機場附近|離機場近|不要跑遠",
+        }
+        strength_patterns = {
+            "required": r"一定要|必去|需要|要|每天|每日|只排|先去|排在|開始|出門|結束|午睡|前|後",
+            "preferred": r"想去|希望去|下雨|雨天",
+            "optional": r"有時間(?:的話)?|時間允許(?:的話)?|來得及(?:的話)?",
+            "forbidden": r"不要去|不去|避開",
+        }
+        trace("kind", kind_patterns[kind])
+        trace("strength", strength_patterns[strength])
         if subject:
-            trace("subject", re.escape(subject))
+            subject_patterns = {
+                "child": r"小孩|兒童|孩子",
+                "day": r"每天|每日|開始|出門|結束",
+                "hotel": r"飯店|旅館",
+                "airport": r"機場",
+                "breakfast": r"早餐",
+                "lunch": r"午餐",
+                "dinner": r"晚餐",
+                "meal": r"吃飯|用餐|餐",
+            }
+            trace("subject", subject_patterns.get(subject, re.escape(subject)))
         if scope:
             if scope.day_number is not None:
                 trace("scope", r"第[\d一二三四五六七八九十]+天")
@@ -161,18 +190,29 @@ def _request_constraints(text: str, trip_start_date: str | None):
                 trace("scope", rf"{year}[/-]0?{int(month)}[/-]0?{int(day)}")
         if window:
             if window.start:
-                pattern = re.escape(window.start)
+                hour, minute = window.start.split(":")
+                pattern = rf"0?{int(hour)}[:：]{minute}"
                 if window.end:
-                    pattern += rf"\s*(?:到|至|[-~])\s*{re.escape(window.end)}"
+                    end_hour, end_minute = window.end.split(":")
+                    pattern += rf"\s*(?:到|至|[-~])\s*0?{int(end_hour)}[:：]{end_minute}"
                 trace("time_window", pattern)
             elif window.end:
-                trace("time_window", re.escape(window.end))
+                hour, minute = window.end.split(":")
+                trace("time_window", rf"0?{int(hour)}[:：]{minute}")
             elif window.period:
                 trace("time_window", r"早上|上午|中午|下午|晚上|晚間")
         if condition:
             trace("condition", r"(?:(?:如果|若)\s*)?(?:下雨|雨天)|有時間(?:的話)?|時間允許(?:的話)?|來得及(?:的話)?")
         if relation:
-            trace("relation", r"之前|之後|排在|先去|再去|前|後|附近|離機場近|不要跑遠")
+            relation_patterns = {
+                "before": r"先去|之前|排在[^，。；;!?！？]*前|前",
+                "after": r"之後|排在[^，。；;!?！？]*後|後",
+                "start": r"開始|出門",
+                "end": r"結束|回飯店|回旅館|返回飯店|返回旅館",
+                "by": r"前",
+                "near": r"機場附近|離機場近|不要跑遠|附近",
+            }
+            trace("relation", relation_patterns[relation])
         if object_:
             trace("object", r"飯店入住|旅館入住|入住飯店|入住旅館" if object_ == "hotel_check_in" else re.escape(object_))
         found.append((match.start(), RequestConstraint(identifier, kind, strength, subject, scope,
