@@ -49,7 +49,7 @@ def evaluate_conditions(snapshot: ConditionSnapshot, place_id: str, starts_at: d
             if kind in policy.hard_exclusion_kinds
             and r.evidence_class is EvidenceClass.AUTHORITATIVE
             and r.status is ConditionStatus.UNAVAILABLE
-            and (r.forecast_until is None or starts_at < r.forecast_until)
+            and _hard_interval_overlaps(r, starts_at, ends_at)
         ]
         if hard_records:
             findings.append(ConditionFinding(f"condition.{kind.value}.closed", "error", f"authoritative {kind.value} makes the place unavailable"))
@@ -106,3 +106,11 @@ def _fresh(record, evaluated_at: datetime, policy: ConditionPolicy) -> bool:
 
 def _contained(record, starts_at: datetime, ends_at: datetime) -> bool:
     return any(window.starts_at <= starts_at and ends_at <= window.ends_at for window in record.eligibility_windows)
+
+
+def _hard_interval_overlaps(record, starts_at: datetime, ends_at: datetime) -> bool:
+    intersection_start = max(starts_at, record.valid_from)
+    intersection_end = min(ends_at, record.valid_until)
+    if record.forecast_until is not None:
+        intersection_end = min(intersection_end, record.forecast_until)
+    return intersection_start < intersection_end

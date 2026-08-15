@@ -113,6 +113,17 @@ class DynamicConditionTests(unittest.TestCase):
         result = evaluate_conditions(ConditionSnapshot((partial_horizon,)), "ohori-park", DT("2026-04-11T10:00:00+09:00"), DT("2026-04-11T12:00:00+09:00"), DT("2026-04-10T09:00:00+09:00"), ConditionPolicy(max_age=timedelta(days=1)))
         self.assertIn("condition.closure.closed", {finding.code for finding in result.findings})
 
+    def test_closure_validity_starting_after_forecast_horizon_does_not_hard_block(self):
+        closure = load_condition_snapshot(FIXTURES / "closure.json").records[0]
+        disjoint = replace(
+            closure, valid_from=DT("2026-04-11T11:30:00+09:00"),
+            valid_until=DT("2026-04-11T13:00:00+09:00"),
+            forecast_until=DT("2026-04-11T11:00:00+09:00"),
+        )
+        result = evaluate_conditions(ConditionSnapshot((disjoint,)), "ohori-park", DT("2026-04-11T10:00:00+09:00"), DT("2026-04-11T12:00:00+09:00"), DT("2026-04-10T09:00:00+09:00"), ConditionPolicy(max_age=timedelta(days=1)))
+        self.assertNotIn("condition.closure.closed", {finding.code for finding in result.findings})
+        self.assertIn("condition.unverified", {finding.code for finding in result.findings})
+
     def test_experience_tide_window_is_advisory_not_hard(self):
         tide = load_condition_snapshot(FIXTURES / "tide.json").records[0]
         provenance = replace(tide.provenance, evidence_class=EvidenceClass.EXPERIENCE, source_type="community-report")
