@@ -12,6 +12,10 @@ from datetime import datetime, time
 from enum import Enum
 from typing import Callable, Mapping, Sequence
 
+from src.opening_hours import Eligibility, evaluate_opening_hours
+
+from src.conditions import ConditionPolicy, ConditionSnapshot, evaluate_conditions
+
 
 class Outcome(str, Enum):
     VALID = "valid"
@@ -98,10 +102,10 @@ class ValidationContext:
     """
 
     travel_minutes: Mapping[tuple[str, str], int] = field(default_factory=dict)
+    opening_hours: Mapping[str, Sequence[OpeningInterval] | Mapping[str, object]] = field(default_factory=dict)
+    budget_limit: BudgetLimit | None = None
     route_facts: Mapping[tuple[str, str], RouteConstraint] = field(default_factory=dict)
     place_constraints: Mapping[str, PlaceConstraint] = field(default_factory=dict)
-    opening_hours: Mapping[str, Sequence[OpeningInterval]] = field(default_factory=dict)
-    budget_limit: BudgetLimit | None = None
     fixed_anchors: Mapping[str, tuple[str, str]] = field(default_factory=dict)
     required_transport_pairs: Sequence[tuple[str, str]] = field(default_factory=tuple)
     required_locations: Sequence[str] = field(default_factory=tuple)
@@ -110,6 +114,9 @@ class ValidationContext:
     forbidden_locations_by_day: Mapping[int, Sequence[str]] = field(default_factory=dict)
     daily_hotel_constraints: Mapping[int, tuple[str | None, str | None]] = field(default_factory=dict)
     require_fresh_critical_facts: bool = True
+    condition_snapshot: ConditionSnapshot | None = None
+    condition_evaluated_at: datetime | None = None
+    condition_policy: ConditionPolicy = field(default_factory=ConditionPolicy)
 
 
 Rule = Callable[[dict, ValidationContext], Sequence[Violation]]
@@ -451,6 +458,34 @@ def place_condition_rule(trip: dict, context: ValidationContext) -> Sequence[Vio
     return violations
 
 
+def condition_rule(trip: dict, context: ValidationContext) -> Sequence[Violation]:
+    violations: list[Violation] = []
+    if context.condition_snapshot is None:
+        return violations
+
+    for day_index, day in enumerate(trip.get("days", [])):
+        for item_index, item in enumerate(day.get("items", [])):
+            place_id = item.get("place_id")
+            if not isinstance(place_id, str) or item.get("start_at") is None or item.get("end_at") is None:
+                continue
+            if context.condition_evaluated_at is None:
+                violations.append(
+                    _warning("condition.unverified", "condition evaluated_at is required", _item_path(day_index, item_index))
+                )
+                continue
+            try:
+                start, end = _timestamps(item)
+            except (TypeError, ValueError):
+                continue
+            decision = evaluate_conditions(
+                context.condition_snapshot, place_id, start, end, context.condition_evaluated_at, context.condition_policy
+            )
+            violations.extend(
+                Violation(item.code, item.severity, item.message, _item_path(day_index, item_index)) for item in decision.findings
+            )
+    return violations
+
+
 def hotel_consistency_rule(trip: dict, context: ValidationContext) -> Sequence[Violation]:
     violations: list[Violation] = []
     for day_index, day in enumerate(trip.get("days", [])):
@@ -488,13 +523,21 @@ def hotel_consistency_rule(trip: dict, context: ValidationContext) -> Sequence[V
 
 def opening_hours_rule(trip: dict, context: ValidationContext) -> Sequence[Violation]:
     violations: list[Violation] = []
+    restaurant_hours = {
+        candidate.get("place", {}).get("id"): candidate.get("opening_hours")
+        for candidate in trip.get("candidate_sets", {}).get("restaurants", [])
+        if isinstance(candidate, Mapping) and isinstance(candidate.get("place"), Mapping)
+    }
+    trip_timezone = str(trip.get("local_timezone", "UTC"))
     for day_index, day in enumerate(trip.get("days", [])):
         for item_index, item in enumerate(day.get("items", [])):
             if item.get("kind") not in {"visit", "meal"}:
                 continue
             path = _item_path(day_index, item_index)
             intervals = context.opening_hours.get(item["place_id"])
-            if not intervals:
+            if not intervals and item.get("kind") == "meal":
+                intervals = restaurant_hours.get(item["place_id"])
+            if intervals is None:
                 violations.append(
                     _warning(
                         "opening_hours.unverified",
@@ -506,7 +549,20 @@ def opening_hours_rule(trip: dict, context: ValidationContext) -> Sequence[Viola
                 continue
 
             start, end = _timestamps(item)
-            if start.date() != end.date() or not any(
+            try:
+                result = (
+                    evaluate_opening_hours(intervals, start, end, default_timezone=trip_timezone)
+                    if not isinstance(intervals, Sequence) or isinstance(intervals, (str, bytes, Mapping))
+                    else Eligibility.ELIGIBLE
+                )
+            except (KeyError, TypeError, ValueError):
+                violations.append(_error("opening_hours.closed", "opening hours schedule is invalid", path))
+                continue
+            if not isinstance(intervals, Sequence) or isinstance(intervals, (str, bytes, Mapping)):
+                if result.status is not Eligibility.ELIGIBLE:
+                    code = "opening_hours.closed" if result.status is Eligibility.CLOSED else "opening_hours.unverified"
+                    violations.append(Violation(code, "error" if code == "opening_hours.closed" else "warning", result.reason, path))
+            elif start.date() != end.date() or not any(
                 interval.weekday == start.weekday()
                 and interval.opens_at <= start.timetz().replace(tzinfo=None)
                 and end.timetz().replace(tzinfo=None) <= interval.closes_at
@@ -628,6 +684,7 @@ DEFAULT_RULES = RuleRegistry(
         travel_time_rule,
         route_condition_rule,
         place_condition_rule,
+        condition_rule,
         hotel_consistency_rule,
         opening_hours_rule,
         budget_rule,
