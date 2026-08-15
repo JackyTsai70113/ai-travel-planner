@@ -41,13 +41,24 @@ production environment. The adapter maps documented genre, dinner budget,
 open/close note, child, non-smoking, parking, and canonical URL fields. Its
 free-text hours never become structured/fresh. Applications displaying its data
 must show `Powered by ホットペッパーグルメ Webサービス`.
+The text label links to `http://webservice.recruit.co.jp/` as required by the
+provider's published credit HTML.
 
 `OfficialRestaurantFeedAdapter` is the normalized seam for restaurant-operated
 feeds or CMS exports. Every record must declare an existing canonical lowercase
 place ID; the system never merges by a weak name match. Fresh official
 operational facts take priority over provider facts. Lower-authority facts and
-all source provenance remain auditable. Contradictory facts at the same winning
+all source provenance remain auditable. The location-rich place record remains
+source-coherent with its own provenance rather than relabeling copied provider
+coordinates as official. Official priority does not extend to rating, cuisine,
+or other quality/discovery scalars; provider/community evidence wins those
+fields and conflicting values remain alternatives. Contradictory facts at the same winning
 authority become `conflicting`, which blocks meal selection.
+
+Legacy aggregate `rating`, `rating_source`, and `review_count` are selected as
+one source bundle so a count can never be attached to another provider's
+rating. Reconciliation is audit-idempotent: existing source provenance is
+expanded and fact alternatives are stable-key deduplicated on repeated runs.
 
 Aggregate restaurant ratings are separate from dish evidence. Every rating
 retains its original minimum/maximum scale; review count is retained when the

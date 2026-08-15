@@ -106,20 +106,23 @@ def reconcile_restaurant_candidates(candidates: Iterable[Mapping[str, object]]) 
 
 def _reconcile_group(group: Sequence[Mapping[str, object]]) -> dict[str, object]:
     ranked = sorted(group, key=lambda item: (_authority(item), _freshness(item)))
-    result = _deep_copy_candidate(ranked[0])
-    result_place = result.get("place")
-    if isinstance(result_place, dict):
-        for candidate in ranked[1:]:
-            source_place = candidate.get("place")
-            if not isinstance(source_place, Mapping):
-                continue
-            for field in ("address", "coordinates", "opening_hours_note", "accessibility_notes"):
-                if field not in result_place and field in source_place:
-                    result_place[field] = _copy_value(source_place[field])
+    result: dict[str, object] = {"provenance": _copy_value(_provenance(ranked[0]))}
+    place_sources = [candidate for candidate in ranked if isinstance(candidate.get("place"), Mapping)]
+    if place_sources:
+        place_source = min(place_sources, key=_place_rank)
+        result["place"] = _copy_value(place_source["place"])
     source_provenance = _unique_provenance(ranked)
     if source_provenance:
         result["source_provenance"] = source_provenance
     alternatives: list[dict[str, object]] = []
+    for candidate in ranked:
+        candidate_alternatives = candidate.get("alternatives")
+        if isinstance(candidate_alternatives, Sequence) and not isinstance(candidate_alternatives, (str, bytes)):
+            alternatives.extend(
+                dict(_copy_value(alternative))
+                for alternative in candidate_alternatives
+                if isinstance(alternative, Mapping)
+            )
     operational = (
         "opening_hours", "reservation_required", "reservation_url", "child_friendly",
         "smoking_policy", "parking_available", "business_status",
@@ -150,7 +153,7 @@ def _reconcile_group(group: Sequence[Mapping[str, object]]) -> dict[str, object]
         for source in sources[1:]:
             if _fact_value(source[field]) != _fact_value(result[field]):
                 alternatives.append({"field": field, "value": _copy_value(source[field]), "provenance": dict(_provenance(source))})
-    for candidate in ranked[1:]:
+    for candidate in ranked:
         for field in ("ratings", "meal_price_signals", "recommended_dishes"):
             if isinstance(candidate.get(field), list):
                 existing = result.setdefault(field, [])
@@ -158,9 +161,45 @@ def _reconcile_group(group: Sequence[Mapping[str, object]]) -> dict[str, object]
                     for value in candidate[field]:
                         if _stable_value(value) not in {_stable_value(item) for item in existing}:
                             existing.append(_copy_value(value))
-        for field in ("rating", "rating_source", "review_count", "cuisine", "price_range", "wait_risk"):
-            if field not in result and field in candidate:
-                result[field] = _copy_value(candidate[field])
+    rating_bundle = ("rating", "rating_source", "review_count")
+    rating_sources = sorted((candidate for candidate in ranked if "rating" in candidate), key=lambda item: _quality_rank(item, "rating"))
+    if rating_sources:
+        selected_rating = rating_sources[0]
+        for field in rating_bundle:
+            if field in selected_rating:
+                result[field] = _copy_value(selected_rating[field])
+        for source in rating_sources[1:]:
+            for field in rating_bundle:
+                if field in source and (field not in result or _fact_value(source[field]) != _fact_value(result[field])):
+                    alternatives.append({
+                        "field": field,
+                        "value": _copy_value(source[field]),
+                        "provenance": dict(_provenance(source)),
+                    })
+    else:
+        count_sources = sorted((candidate for candidate in ranked if "review_count" in candidate), key=lambda item: _quality_rank(item, "review_count"))
+        if count_sources:
+            result["review_count"] = _copy_value(count_sources[0]["review_count"])
+            for source in count_sources[1:]:
+                if _fact_value(source["review_count"]) != _fact_value(result["review_count"]):
+                    alternatives.append({
+                        "field": "review_count",
+                        "value": _copy_value(source["review_count"]),
+                        "provenance": dict(_provenance(source)),
+                    })
+    quality = ("cuisine", "price_range", "wait_risk")
+    for field in quality:
+        sources = sorted((candidate for candidate in ranked if field in candidate), key=lambda item: _quality_rank(item, field))
+        if not sources:
+            continue
+        result[field] = _copy_value(sources[0][field])
+        for source in sources[1:]:
+            if _fact_value(source[field]) != _fact_value(result[field]):
+                alternatives.append({
+                    "field": field,
+                    "value": _copy_value(source[field]),
+                    "provenance": dict(_provenance(source)),
+                })
     attributions: list[str] = []
     for candidate in ranked:
         values = candidate.get("attributions")
@@ -169,7 +208,7 @@ def _reconcile_group(group: Sequence[Mapping[str, object]]) -> dict[str, object]
     if attributions:
         result["attributions"] = list(dict.fromkeys(attributions))
     if alternatives:
-        result["alternatives"] = alternatives
+        result["alternatives"] = _unique_alternatives(alternatives)
     return result
 
 
@@ -177,6 +216,33 @@ def _authority(candidate: Mapping[str, object]) -> int:
     return {"official": 0, "provider": 1, "community": 2, "derived": 3, "user_input": 4}.get(
         str(_provenance(candidate).get("source_type")), 99
     )
+
+
+def _place_rank(candidate: Mapping[str, object]) -> tuple[int, int, int]:
+    """Keep one source-coherent place record, preferring routing coordinates."""
+
+    place = candidate.get("place")
+    if not isinstance(place, Mapping):
+        return 1, 1, _authority(candidate)
+    coordinates = place.get("coordinates")
+    has_coordinates = (
+        isinstance(coordinates, Mapping)
+        and isinstance(coordinates.get("latitude"), (int, float))
+        and not isinstance(coordinates.get("latitude"), bool)
+        and isinstance(coordinates.get("longitude"), (int, float))
+        and not isinstance(coordinates.get("longitude"), bool)
+    )
+    has_address = isinstance(place.get("address"), str) and bool(place["address"])
+    return int(not has_coordinates), int(not has_address), _authority(candidate)
+
+
+def _quality_rank(candidate: Mapping[str, object], field: str) -> tuple[int, int]:
+    """Prefer discovery evidence for quality fields; official priority is operational."""
+
+    source_type = str(_provenance(candidate).get("source_type"))
+    authority = {"provider": 0, "community": 1, "official": 2, "derived": 3, "user_input": 4}.get(source_type, 99)
+    unknown = field == "wait_risk" and candidate.get(field) == "unknown"
+    return int(unknown), authority
 
 
 def _freshness(candidate: Mapping[str, object]) -> int:
@@ -217,11 +283,36 @@ def _unique_provenance(candidates: Sequence[Mapping[str, object]]) -> list[dict[
     values: list[dict[str, object]] = []
     seen: set[str] = set()
     for candidate in candidates:
-        provenance = _provenance(candidate)
-        key = _stable_value(provenance)
-        if provenance and key not in seen:
+        provenance_values: list[Mapping[str, object]] = []
+        direct = _provenance(candidate)
+        if direct:
+            provenance_values.append(direct)
+        place = candidate.get("place")
+        if isinstance(place, Mapping) and isinstance(place.get("provenance"), Mapping):
+            provenance_values.append(place["provenance"])
+        nested = candidate.get("source_provenance")
+        if isinstance(nested, Sequence) and not isinstance(nested, (str, bytes)):
+            provenance_values.extend(value for value in nested if isinstance(value, Mapping))
+        for provenance in provenance_values:
+            key = _stable_value(provenance)
+            if key not in seen:
+                seen.add(key)
+                values.append(dict(provenance))
+    return values
+
+
+def _unique_alternatives(alternatives: Sequence[Mapping[str, object]]) -> list[dict[str, object]]:
+    values: list[dict[str, object]] = []
+    seen: set[str] = set()
+    for alternative in alternatives:
+        key = _stable_value({
+            "field": alternative.get("field"),
+            "value": alternative.get("value"),
+            "provenance": alternative.get("provenance"),
+        })
+        if key not in seen:
             seen.add(key)
-            values.append(dict(provenance))
+            values.append(dict(alternative))
     return values
 
 

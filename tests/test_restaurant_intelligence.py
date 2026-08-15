@@ -146,15 +146,23 @@ def test_official_override_and_same_authority_conflict_are_auditable():
     provider["place"]["address"] = "福岡市中央区"
     provider["place"]["coordinates"] = {"latitude": 33.59, "longitude": 130.40}
     provider["attributions"] = ["Provider credit"]
+    provider.update({"rating": 4.7, "rating_source": "Google Places", "review_count": 120, "cuisine": "ramen"})
     official_source = {**PROVENANCE, "source_type": "official", "provider": "Restaurant official site"}
     official = candidate(provenance=official_source, intervals=[{"weekday": 2, "opens_at": "17:00", "closes_at": "20:00"}])
+    official.update({"rating": 1.0, "rating_source": "self_claimed", "review_count": 1, "cuisine": "official category"})
     reconciled = reconcile_restaurant_candidates([provider, official])[0]
     assert reconciled["opening_hours"]["intervals"][0]["opens_at"] == "17:00"
     assert len(reconciled["source_provenance"]) == 2
     assert reconciled["alternatives"][0]["field"] == "opening_hours"
     assert reconciled["place"]["address"] == "福岡市中央区"
     assert reconciled["place"]["coordinates"] == {"latitude": 33.59, "longitude": 130.40}
+    assert reconciled["place"]["provenance"]["provider"] == "recorded"
     assert reconciled["attributions"] == ["Provider credit"]
+    assert (reconciled["rating"], reconciled["rating_source"], reconciled["review_count"], reconciled["cuisine"]) == (
+        4.7, "Google Places", 120, "ramen",
+    )
+    alternative_fields = {alternative["field"] for alternative in reconciled["alternatives"]}
+    assert {"rating", "rating_source", "review_count", "cuisine"} <= alternative_fields
 
     other_official = candidate(provenance={**official_source, "provider": "Official notice"})
     conflict = reconcile_restaurant_candidates([official, other_official])[0]
@@ -162,6 +170,35 @@ def test_official_override_and_same_authority_conflict_are_auditable():
     assert meal_eligibility(conflict, datetime.fromisoformat("2026-08-26T12:00:00+09:00"), datetime.fromisoformat("2026-08-26T13:00:00+09:00")) is Eligibility.UNVERIFIED
     # Equal names never merge unrelated canonical IDs.
     assert len(reconcile_restaurant_candidates([candidate("one"), candidate("two")])) == 2
+
+
+def test_rating_bundle_and_reconciliation_audit_are_source_coherent_and_idempotent():
+    provider_a = candidate()
+    provider_a.update({"rating": 4.7, "rating_source": "Provider A"})
+    provider_b = candidate(provenance={**PROVENANCE, "provider": "Provider B"})
+    provider_b.update({"rating": 3.1, "rating_source": "Provider B", "review_count": 900})
+
+    bundled = reconcile_restaurant_candidates([provider_a, provider_b])[0]
+    assert (bundled["rating"], bundled["rating_source"]) == (4.7, "Provider A")
+    assert "review_count" not in bundled
+    provider_b_alternatives = {
+        item["field"]: item
+        for item in bundled["alternatives"]
+        if item["provenance"]["provider"] == "Provider B"
+    }
+    assert provider_b_alternatives["review_count"]["value"] == 900
+
+    official_source = {**PROVENANCE, "source_type": "official", "provider": "Restaurant official site"}
+    official = candidate(provenance=official_source, intervals=[{"weekday": 2, "opens_at": "17:00", "closes_at": "20:00"}])
+    official.update({"rating": 1.0, "rating_source": "self_claimed", "review_count": 1, "cuisine": "official category"})
+    provider_a.update({"review_count": 120, "cuisine": "ramen"})
+    first = reconcile_restaurant_candidates([provider_a, official])[0]
+    second = reconcile_restaurant_candidates([first, official])[0]
+    third = reconcile_restaurant_candidates([first])[0]
+    assert second["alternatives"] == first["alternatives"]
+    assert second["source_provenance"] == first["source_provenance"]
+    assert third["alternatives"] == first["alternatives"]
+    assert third["source_provenance"] == first["source_provenance"]
 
 
 def test_validator_uses_candidate_snapshot_as_direct_closed_fallback():

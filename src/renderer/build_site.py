@@ -28,7 +28,7 @@ def build_site(trip: dict[str, Any], derived: dict[str, Any] | None = None) -> s
     budget = "".join(f"<tr><th>{escape(str(k))}</th><td>{escape(_money(v))}</td></tr>" for k, v in trip.get("budget", {}).get("categories", {}).items())
     total = derived.get("budget", {}).get("total_label") or _money(trip.get("budget", {}).get("total", {}))
     sources = "".join(_render_source(x) for x in _sources(trip)) or '<p class="quiet">沒有未確認來源資料。</p>'
-    attributions = "".join(f'<p class="attribution">{escape(value)}</p>' for value in _attributions(trip))
+    attributions = "".join(_render_attribution(value) for value in _attributions(trip))
     return f'''<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{title}</title><style>{_CSS}</style></head><body><main>
 <header><p class="eyebrow">TRIP · {escape(trip.get("local_timezone", ""))}</p><h1>{title}</h1><div class="stats">{stats}</div></header>
 <nav aria-label="行程區段"><a href="#overview">總覽</a><a href="#itinerary">行程</a><a href="#budget">預算</a></nav>
@@ -56,6 +56,16 @@ def _attributions(trip: dict[str, Any]) -> list[str]:
         if isinstance(candidate_values, list):
             values.extend(value for value in candidate_values if isinstance(value, str) and value)
     return list(dict.fromkeys(values))
+
+
+def _render_attribution(value: str) -> str:
+    if value == _HOTPEPPER_ATTRIBUTION:
+        return (
+            '<p class="attribution">Powered by '
+            '<a href="http://webservice.recruit.co.jp/">'
+            'ホットペッパーグルメ Webサービス</a></p>'
+        )
+    return f'<p class="attribution">{escape(value)}</p>'
 
 
 def _render_source(item: dict[str, Any]) -> str:
@@ -91,6 +101,8 @@ def main() -> None:
 _CSS = '''
 :root{--ink:#172033;--muted:#5d6779;--line:#dce1e9;--accent:#0b6e69}*{box-sizing:border-box}body{margin:0;background:#f3f6f8;color:var(--ink);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Noto Sans TC",sans-serif}main{max-width:680px;margin:auto;padding:20px 16px 48px}header,section,article{background:#fff;border:1px solid var(--line);border-radius:16px}header,section{padding:20px;margin-bottom:14px}h1{font-size:28px;line-height:1.2;margin:4px 0 18px}h2{font-size:21px;margin:0 0 16px}h3{font-size:17px;margin:12px 0 8px}.eyebrow{color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.06em;margin:0}.stats{display:grid;gap:8px}.stat{background:#eaf5f3;border-radius:10px;padding:10px 12px}.stat span,.stat strong{display:block}.stat span,.hint,.quiet,.source p,.attribution{color:var(--muted);font-size:14px}nav{display:flex;gap:8px;overflow:auto;position:sticky;top:0;padding:8px 0;background:#f3f6f8;z-index:1}nav a{background:#fff;border:1px solid var(--line);border-radius:999px;color:var(--ink);padding:7px 13px;text-decoration:none;white-space:nowrap}ul,ol{padding-left:20px}.warnings li{color:#9a5200;margin:6px 0}.warnings .quiet{color:var(--muted)}article{padding:14px;margin:10px 0}article h3{margin-top:3px}ol{list-style:none;padding:0;margin:10px 0 0}ol li{display:grid;grid-template-columns:56px 1fr;gap:3px 10px;border-top:1px solid var(--line);padding:10px 0}ol li:first-child{border-top:0}time,ol span{color:var(--muted);font-size:14px}ol span{grid-column:2}.source{display:grid;grid-template-columns:1fr auto;gap:2px 8px}.source p{grid-column:1/-1;margin:2px 0 0}.attribution{margin:12px 0 0}.badge{color:#704400;background:#fff1d6;border-radius:999px;font-size:12px;font-weight:700;padding:2px 8px}table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid var(--line);padding:10px 0;text-align:left}td{text-align:right}tfoot{font-weight:800}@media(max-width:390px){main{padding:12px 10px 32px}header,section{padding:16px}h1{font-size:25px}}
 '''
+
+_HOTPEPPER_ATTRIBUTION = "Powered by ホットペッパーグルメ Webサービス"
 
 
 if __name__ == "__main__": main()
