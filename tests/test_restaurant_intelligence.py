@@ -172,6 +172,35 @@ def test_official_override_and_same_authority_conflict_are_auditable():
     assert len(reconcile_restaurant_candidates([candidate("one"), candidate("two")])) == 2
 
 
+def test_rating_bundle_and_reconciliation_audit_are_source_coherent_and_idempotent():
+    provider_a = candidate()
+    provider_a.update({"rating": 4.7, "rating_source": "Provider A"})
+    provider_b = candidate(provenance={**PROVENANCE, "provider": "Provider B"})
+    provider_b.update({"rating": 3.1, "rating_source": "Provider B", "review_count": 900})
+
+    bundled = reconcile_restaurant_candidates([provider_a, provider_b])[0]
+    assert (bundled["rating"], bundled["rating_source"]) == (4.7, "Provider A")
+    assert "review_count" not in bundled
+    provider_b_alternatives = {
+        item["field"]: item
+        for item in bundled["alternatives"]
+        if item["provenance"]["provider"] == "Provider B"
+    }
+    assert provider_b_alternatives["review_count"]["value"] == 900
+
+    official_source = {**PROVENANCE, "source_type": "official", "provider": "Restaurant official site"}
+    official = candidate(provenance=official_source, intervals=[{"weekday": 2, "opens_at": "17:00", "closes_at": "20:00"}])
+    official.update({"rating": 1.0, "rating_source": "self_claimed", "review_count": 1, "cuisine": "official category"})
+    provider_a.update({"review_count": 120, "cuisine": "ramen"})
+    first = reconcile_restaurant_candidates([provider_a, official])[0]
+    second = reconcile_restaurant_candidates([first, official])[0]
+    third = reconcile_restaurant_candidates([first])[0]
+    assert second["alternatives"] == first["alternatives"]
+    assert second["source_provenance"] == first["source_provenance"]
+    assert third["alternatives"] == first["alternatives"]
+    assert third["source_provenance"] == first["source_provenance"]
+
+
 def test_validator_uses_candidate_snapshot_as_direct_closed_fallback():
     trip = json.loads(FIXTURE.read_text(encoding="utf-8"))
     restaurant = candidate("ramen-shop", intervals=[])

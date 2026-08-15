@@ -161,7 +161,33 @@ def _reconcile_group(group: Sequence[Mapping[str, object]]) -> dict[str, object]
                     for value in candidate[field]:
                         if _stable_value(value) not in {_stable_value(item) for item in existing}:
                             existing.append(_copy_value(value))
-    quality = ("rating", "rating_source", "review_count", "cuisine", "price_range", "wait_risk")
+    rating_bundle = ("rating", "rating_source", "review_count")
+    rating_sources = sorted((candidate for candidate in ranked if "rating" in candidate), key=lambda item: _quality_rank(item, "rating"))
+    if rating_sources:
+        selected_rating = rating_sources[0]
+        for field in rating_bundle:
+            if field in selected_rating:
+                result[field] = _copy_value(selected_rating[field])
+        for source in rating_sources[1:]:
+            for field in rating_bundle:
+                if field in source and (field not in result or _fact_value(source[field]) != _fact_value(result[field])):
+                    alternatives.append({
+                        "field": field,
+                        "value": _copy_value(source[field]),
+                        "provenance": dict(_provenance(source)),
+                    })
+    else:
+        count_sources = sorted((candidate for candidate in ranked if "review_count" in candidate), key=lambda item: _quality_rank(item, "review_count"))
+        if count_sources:
+            result["review_count"] = _copy_value(count_sources[0]["review_count"])
+            for source in count_sources[1:]:
+                if _fact_value(source["review_count"]) != _fact_value(result["review_count"]):
+                    alternatives.append({
+                        "field": "review_count",
+                        "value": _copy_value(source["review_count"]),
+                        "provenance": dict(_provenance(source)),
+                    })
+    quality = ("cuisine", "price_range", "wait_risk")
     for field in quality:
         sources = sorted((candidate for candidate in ranked if field in candidate), key=lambda item: _quality_rank(item, field))
         if not sources:
@@ -182,7 +208,7 @@ def _reconcile_group(group: Sequence[Mapping[str, object]]) -> dict[str, object]
     if attributions:
         result["attributions"] = list(dict.fromkeys(attributions))
     if alternatives:
-        result["alternatives"] = alternatives
+        result["alternatives"] = _unique_alternatives(alternatives)
     return result
 
 
@@ -257,11 +283,36 @@ def _unique_provenance(candidates: Sequence[Mapping[str, object]]) -> list[dict[
     values: list[dict[str, object]] = []
     seen: set[str] = set()
     for candidate in candidates:
-        provenance = _provenance(candidate)
-        key = _stable_value(provenance)
-        if provenance and key not in seen:
+        provenance_values: list[Mapping[str, object]] = []
+        direct = _provenance(candidate)
+        if direct:
+            provenance_values.append(direct)
+        place = candidate.get("place")
+        if isinstance(place, Mapping) and isinstance(place.get("provenance"), Mapping):
+            provenance_values.append(place["provenance"])
+        nested = candidate.get("source_provenance")
+        if isinstance(nested, Sequence) and not isinstance(nested, (str, bytes)):
+            provenance_values.extend(value for value in nested if isinstance(value, Mapping))
+        for provenance in provenance_values:
+            key = _stable_value(provenance)
+            if key not in seen:
+                seen.add(key)
+                values.append(dict(provenance))
+    return values
+
+
+def _unique_alternatives(alternatives: Sequence[Mapping[str, object]]) -> list[dict[str, object]]:
+    values: list[dict[str, object]] = []
+    seen: set[str] = set()
+    for alternative in alternatives:
+        key = _stable_value({
+            "field": alternative.get("field"),
+            "value": alternative.get("value"),
+            "provenance": alternative.get("provenance"),
+        })
+        if key not in seen:
             seen.add(key)
-            values.append(dict(provenance))
+            values.append(dict(alternative))
     return values
 
 
