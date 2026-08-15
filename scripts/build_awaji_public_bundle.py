@@ -39,18 +39,7 @@ def _build_profile(trip: dict) -> dict:
 def _safe_time(value: str | None) -> str | None:
     if not value:
         return None
-    try:
-        parsed = datetime.fromisoformat(value)
-    except ValueError:
-        return value[:16]
-    if parsed.tzinfo is None:
-        return parsed.replace(microsecond=0, second=0).isoformat()
-    return parsed.replace(microsecond=0, second=0).isoformat()
-
-
-def _write_json(path: Path, payload: dict) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
+    return value[:16]
 
 
 def _normalize_item(item: dict) -> dict:
@@ -80,23 +69,6 @@ def _bundle_days(trip: dict) -> list[dict]:
     return days
 
 
-def _bundle_places(places: dict[str, dict[str, object]]) -> list[dict]:
-    return sorted(
-        [
-            {
-                "id": place_id,
-                "name": place.get("name"),
-                "address": place.get("address"),
-                "kind": place.get("kind"),
-                "maps_query": place.get("name"),
-            }
-            for place_id, place in places.items()
-            if isinstance(place, dict)
-        ],
-        key=lambda item: item["id"],
-    )
-
-
 def _bundle_reservations(days: list[dict], places: dict[str, dict[str, object]]) -> list[dict]:
     reservations: list[dict] = []
     for day in days:
@@ -104,15 +76,16 @@ def _bundle_reservations(days: list[dict], places: dict[str, dict[str, object]])
             if item.get("id", "").startswith("fixed-"):
                 place = places.get(item.get("place_id"), {})
                 place_name = place.get("name") if isinstance(place, dict) else None
-                fallback_name = "8/28 17:45 固定預約（名稱待補）"
+                fallback_name = "8/28 17:45 固定預約（項目名稱待補）"
                 resolution = place.get("resolution") if isinstance(place, dict) else {}
                 is_resolved = bool(
                     resolution
                     and isinstance(resolution, dict)
                     and resolution.get("state") == "resolved"
                 )
-                has_known_name = isinstance(place_name, str) and place_name.strip()
-                display_name = place_name if has_known_name else fallback_name
+                display_name = place_name
+                if not is_resolved:
+                    display_name = fallback_name
                 reservations.append(
                     {
                         "id": item.get("id"),
@@ -155,19 +128,11 @@ def build_public_bundle(trip: dict, trip_path: Path) -> dict:
     validation = trip.get("validation", [])
     budget = trip.get("budget", {})
 
-    severities = {item.get("severity") for item in validation if isinstance(item, dict)}
-    trip_status = "ok"
-    if "error" in severities:
-        trip_status = "error"
-    elif "warning" in severities:
-        trip_status = "warning"
-
     return {
         "trip_id": trip.get("id"),
         "title": trip.get("title"),
         "local_timezone": trip.get("local_timezone"),
-        "places": _bundle_places(places),
-        "status": trip_status,
+        "status": "warning" if any(item.get("severity") == "warning" for item in validation if isinstance(item, dict)) else "ok",
         "date_range": trip.get("date_range", {}),
         "traveler_profile": _build_profile(trip),
         "selected": {
@@ -199,14 +164,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Build public bundle for issue-52 awaji trip")
     parser.add_argument("--trip-path", type=Path, default=TRIP_PATH_DEFAULT)
     parser.add_argument("--output", type=Path, default=OUTPUT_DEFAULT)
-    parser.add_argument("--web-output", type=Path, default=None)
     args = parser.parse_args()
 
     trip = _read_json(args.trip_path)
     bundle = build_public_bundle(trip, args.trip_path)
-    _write_json(args.output, bundle)
-    if args.web_output is not None:
-        _write_json(args.web_output, bundle)
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(bundle, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
 
 
 if __name__ == "__main__":

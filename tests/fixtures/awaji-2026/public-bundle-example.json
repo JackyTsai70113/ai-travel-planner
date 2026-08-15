@@ -94,7 +94,7 @@
           "end_at": "2026-08-28T17:45",
           "id": "fixed-2026-08-28-17-45",
           "kind": "visit",
-          "notes": "固定預約：8/28 17:45 しあわせのパンケーキ。地點與持續時間仍待補。",
+          "notes": "固定預約，項目名稱/地點/結束時間仍待確認",
           "place_id": "naruto-ferry-fixed-activity",
           "start_at": "2026-08-28T17:45"
         },
@@ -218,18 +218,18 @@
   ],
   "local_timezone": "Asia/Tokyo",
   "meta": {
-    "generated_at": "2026-08-15T12:56:30+00:00",
+    "generated_at": "2026-08-15T09:52:17+00:00",
     "source_path": "trips/awaji-naruto-tokushima-kobe-2026/trip.json",
-    "source_sha256": "c646e71521dfd44db246d199138e30fd0759a783806552dc19e4d524b1447ddb"
+    "source_sha256": "e256dd64e8c19dd17935503faca643e2c97c9e1117b34f092e787c0a40675d0f"
   },
   "preferences": {
     "hard_constraints": [
       {
-        "description": "17:15 後不得新增固定時段景點，保留 8/28 17:45 固定預約可調整時間窗",
+        "description": "17:15 後不得新增固定時段景點，保留鳴門漩渦固定預約可調整時間窗",
         "id": "no-hard-activity-after-17-15"
       },
       {
-        "description": "保留 8/28 17:45 固定預約（名稱：しあわせのパンケーキ）",
+        "description": "保留 17:45 的鳴門固定預約（場次與地點待確認）",
         "id": "fixed-17-45-reservation"
       }
     ],
@@ -249,7 +249,7 @@
       "day": "2026-08-28",
       "id": "fixed-2026-08-28-17-45",
       "kind": "placeholder-anchored-reservation",
-      "name": "しあわせのパンケーキ",
+      "name": "8/28 17:45 固定預約（項目名稱待補）",
       "place_id": "naruto-ferry-fixed-activity",
       "time": "2026-08-28T17:45",
       "unresolved": true
@@ -279,7 +279,7 @@
   "validation": [
     {
       "code": "RESERVATION_UNCONFIRMED",
-      "message": "固定預約 8/28 17:45 名稱已確認（しあわせのパンケーキ），但地點與 duration 待補",
+      "message": "固定預約 17:45 的活動名稱與參與規範仍待補全",
       "path": "/days/2026-08-28/items/fixed-2026-08-28-17-45",
       "severity": "warning"
     }
