@@ -25,8 +25,8 @@ jobs:
       - uses: actions/configure-pages@v5
         with:
           enablement: true
-      - name: Build static site from canonical fixture
-        run: python3 -m src.renderer.build_site fixtures/trips/japan-5-day-trip-v1.json --output site
+      - name: Build Golden Trip Website from canonical fixture
+        run: python3 -m src.golden_trip_renderer.build_site fixtures/trips/japan-5-day-trip-v1.json --output site
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
