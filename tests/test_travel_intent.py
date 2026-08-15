@@ -86,6 +86,37 @@ class TravelIntentParserTests(unittest.TestCase):
         self.assertNotIn("上野公園", intent.required_places)
         self.assertFalse(any(item.kind == "required_location" and item.value == "淺草寺" for item in intent.hard_constraints))
 
+    def test_bare_go_day_specific_places_are_required_and_never_global(self):
+        intent = self._parse("bare_day_specific_places")
+        constraints = intent.request_constraints
+        self.assertEqual([(item.kind, item.strength, item.subject, item.scope, item.time_window)
+                          for item in constraints], [
+            ("place", "required", "淺草寺", ConstraintScope(day_number=1), None),
+            ("place", "required", "上野公園", ConstraintScope(day_number=2), TimeWindow(period="afternoon")),
+        ])
+        self.assertNotIn("淺草寺", intent.required_places)
+        self.assertNotIn("上野公園", intent.required_places)
+        self.assertFalse(any(item.kind == "required_location" and item.value in {"淺草寺", "上野公園"}
+                             for item in intent.hard_constraints))
+        for constraint in constraints:
+            self._assert_component_provenance(intent, constraint)
+            strength_sources = tuple(source.text for source in constraint.provenance
+                                     if source.field == "strength")
+            self.assertEqual(strength_sources, ("去",))
+
+    def test_bare_go_explicit_window_is_required_scoped_and_traced(self):
+        intent = self._parse("bare_explicit_place_window")
+        constraint = next(item for item in intent.request_constraints if item.subject == "清水寺")
+        self.assertEqual((constraint.kind, constraint.strength, constraint.scope, constraint.time_window),
+                         ("place", "required", ConstraintScope(day_number=2),
+                          TimeWindow(start="14:00", end="16:00")))
+        self.assertNotIn("清水寺", intent.required_places)
+        self.assertFalse(any(item.kind == "required_location" and item.value == "清水寺"
+                             for item in intent.hard_constraints))
+        self._assert_component_provenance(intent, constraint)
+        self.assertEqual(tuple(source.text for source in constraint.provenance
+                               if source.field == "strength"), ("去",))
+
     def test_ordering_and_after_checkin_are_normalized_in_source_order(self):
         constraints = self._parse("ordering_after_checkin").request_constraints
         self.assertEqual([(item.kind, item.subject, item.relation, item.object) for item in constraints], [
@@ -247,6 +278,15 @@ class TravelIntentParserTests(unittest.TestCase):
 
     def _parse(self, name):
         return parse_trip_request(FIXTURE_BY_NAME[name]["text"])
+
+    def _assert_component_provenance(self, intent, constraint):
+        fields = {source.field for source in constraint.provenance}
+        for component in ("kind", "strength", "subject", "scope", "time_window",
+                          "relation", "object", "condition"):
+            if getattr(constraint, component) is not None:
+                self.assertIn(component, fields)
+        for source in constraint.provenance:
+            self.assertEqual(intent.raw_text[source.start:source.end], source.text)
 
 
 if __name__ == "__main__":

@@ -90,5 +90,13 @@
   {
     "name": "fullwidth_colon_place_window",
     "text": "2028/03/01 到 2028/03/03 去京都，第二天 13：30 到 15：00 一定要去銀閣寺。"
+  },
+  {
+    "name": "bare_day_specific_places",
+    "text": "2028/04/01 到 2028/04/03 去東京，第一天去淺草寺，第二天下午去上野公園。"
+  },
+  {
+    "name": "bare_explicit_place_window",
+    "text": "2028/05/01 到 2028/05/03 去京都，第二天 14:00 到 16:00 去清水寺。"
   }
 ]

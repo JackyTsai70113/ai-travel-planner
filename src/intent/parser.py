@@ -161,7 +161,10 @@ def _request_constraints(text: str, trip_start_date: str | None):
             "proximity": r"機場附近|離機場近|不要跑遠",
         }
         strength_patterns = {
-            "required": r"一定要|必去|需要|要|每天|每日|只排|先去|排在|開始|出門|結束|午睡|前|後",
+            # In a scoped assignment ("第一天去 X"), 去 is itself the
+            # requester's explicit required action rather than an inferred
+            # default.  It can support both kind and strength provenance.
+            "required": r"一定要|必去|需要|要|每天|每日|只排|先去|排在|開始|出門|結束|午睡|前|後|去",
             "preferred": r"想去|希望去|下雨|雨天",
             "optional": r"有時間(?:的話)?|時間允許(?:的話)?|來得及(?:的話)?",
             "forbidden": r"不要去|不去|避開",
