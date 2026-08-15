@@ -12,6 +12,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Callable, Mapping, Sequence
 
+from src.conditions import ConditionPolicy, ConditionSnapshot, evaluate_conditions
 from src.opening_hours import (
     Eligibility,
     OpeningHoursSnapshot,
@@ -65,6 +66,9 @@ class ValidationContext:
     travel_minutes: Mapping[tuple[str, str], int] = field(default_factory=dict)
     opening_hours: Mapping[str, Sequence[OpeningInterval] | OpeningHoursSnapshot | Mapping[str, object]] = field(default_factory=dict)
     budget_limit: BudgetLimit | None = None
+    condition_snapshot: ConditionSnapshot | None = None
+    condition_evaluated_at: datetime | None = None
+    condition_policy: ConditionPolicy = field(default_factory=ConditionPolicy)
 
 
 Rule = Callable[[dict, ValidationContext], Sequence[Violation]]
@@ -211,7 +215,26 @@ def budget_rule(trip: dict, context: ValidationContext) -> Sequence[Violation]:
     return []
 
 
-DEFAULT_RULES = RuleRegistry((time_overlap_rule, travel_time_rule, opening_hours_rule, budget_rule))
+def dynamic_condition_rule(trip: dict, context: ValidationContext) -> Sequence[Violation]:
+    """Evaluate only supplied condition inputs; never fetch or read wall-clock time."""
+
+    if context.condition_snapshot is None:
+        return []
+    if context.condition_evaluated_at is None:
+        return [_warning("condition.unverified", "condition evaluated_at is required", "/days")]
+    violations: list[Violation] = []
+    for day_index, day in enumerate(trip.get("days", [])):
+        for item_index, item in enumerate(day.get("items", [])):
+            decision = evaluate_conditions(
+                context.condition_snapshot, item["place_id"], *_timestamps(item),
+                context.condition_evaluated_at, context.condition_policy,
+            )
+            path = _item_path(day_index, item_index)
+            violations.extend(Violation(finding.code, finding.severity, finding.message, path) for finding in decision.findings)
+    return violations
+
+
+DEFAULT_RULES = RuleRegistry((time_overlap_rule, travel_time_rule, opening_hours_rule, budget_rule, dynamic_condition_rule))
 
 
 def _timestamps(item: dict) -> tuple[datetime, datetime]:

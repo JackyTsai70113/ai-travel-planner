@@ -1,10 +1,11 @@
 import copy
 import json
-from datetime import time
+from datetime import datetime, time, timedelta
 from pathlib import Path
 import unittest
 
 from src.validator import BudgetLimit, OpeningInterval, Outcome, RuleRegistry, ValidationContext, validate_itinerary
+from src.conditions import ConditionPolicy, load_condition_snapshot
 
 
 FIXTURE = Path(__file__).parents[1] / "fixtures/trips/japan-5-day-trip-v1.json"
@@ -62,6 +63,32 @@ class ItineraryValidatorTests(unittest.TestCase):
         registry = RuleRegistry()
         registry.register(lambda trip, context: [])
         self.assertEqual(validate_itinerary(self.trip, registry=registry).outcome, Outcome.VALID)
+
+    def test_tide_window_violation_prevents_finalization(self):
+        context = verified_context()
+        snapshot = load_condition_snapshot(Path(__file__).parents[1] / "fixtures/conditions/tide.json")
+        trip = copy.deepcopy(self.trip)
+        trip["days"][1]["items"][0]["end_at"] = "2026-04-11T13:00:00+09:00"
+        context = ValidationContext(
+            travel_minutes=context.travel_minutes, opening_hours=context.opening_hours,
+            budget_limit=context.budget_limit, condition_snapshot=snapshot,
+            condition_evaluated_at=datetime.fromisoformat("2026-04-10T09:00:00+09:00"),
+            condition_policy=ConditionPolicy(max_age=timedelta(days=1)),
+        )
+        result = validate_itinerary(trip, context)
+        self.assertEqual(result.outcome, Outcome.INVALID)
+        self.assertIn("condition.tide.outside_window", {item.code for item in result.violations})
+
+    def test_condition_snapshot_without_evaluated_at_is_unverified(self):
+        context = verified_context()
+        context = ValidationContext(
+            travel_minutes=context.travel_minutes, opening_hours=context.opening_hours,
+            budget_limit=context.budget_limit,
+            condition_snapshot=load_condition_snapshot(Path(__file__).parents[1] / "fixtures/conditions/weather.json"),
+        )
+        result = validate_itinerary(self.trip, context)
+        self.assertEqual(result.outcome, Outcome.INCOMPLETE)
+        self.assertIn("condition.unverified", {item.code for item in result.violations})
 
 
 if __name__ == "__main__":

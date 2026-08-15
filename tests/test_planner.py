@@ -1,6 +1,6 @@
 import copy
 import json
-from datetime import time
+from datetime import datetime, time, timedelta
 from pathlib import Path
 import unittest
 
@@ -16,6 +16,7 @@ from src.planner import (
     schedule,
 )
 from src.validator import BudgetLimit, OpeningInterval, ValidationContext
+from src.conditions import ConditionPolicy, load_condition_snapshot
 
 
 ROOT = Path(__file__).parents[1]
@@ -231,6 +232,33 @@ class PlannerTests(unittest.TestCase):
         day_one = candidate.trip["days"][0]["items"]
         self.assertEqual([item["id"] for item in day_one[:2]], ["d1-arrival", "d1-checkin"])
         self.assertGreaterEqual(day_one[2]["start_at"], "2026-04-10T15:50:00+09:00")
+
+    def test_weather_soft_penalty_ranks_candidate_without_hard_failure(self):
+        context = verified_context()
+        context = ValidationContext(
+            travel_minutes=context.travel_minutes, opening_hours=context.opening_hours,
+            budget_limit=context.budget_limit,
+            condition_snapshot=load_condition_snapshot(ROOT / "fixtures/conditions/weather.json"),
+            condition_evaluated_at=datetime.fromisoformat("2026-04-10T09:00:00+09:00"),
+            condition_policy=ConditionPolicy(max_age=timedelta(days=1)),
+        )
+        candidate = plan(PlannerInput([self.trip], context)).best_plan
+        self.assertIsNotNone(candidate)
+        self.assertEqual(candidate.score, -3.5)
+        self.assertIn("condition.weather.risk", {item.code for item in candidate.violations})
+
+    def test_authoritative_closure_eliminates_candidate(self):
+        context = verified_context()
+        context = ValidationContext(
+            travel_minutes=context.travel_minutes, opening_hours=context.opening_hours,
+            budget_limit=context.budget_limit,
+            condition_snapshot=load_condition_snapshot(ROOT / "fixtures/conditions/closure.json"),
+            condition_evaluated_at=datetime.fromisoformat("2026-04-10T09:00:00+09:00"),
+            condition_policy=ConditionPolicy(max_age=timedelta(days=1)),
+        )
+        result = plan(PlannerInput([self.trip], context))
+        self.assertIsNone(result.best_plan)
+        self.assertIn("condition.closure.closed", {item.code for item in result.plans[0].violations})
 
 
 if __name__ == "__main__":
