@@ -39,7 +39,13 @@ def _build_profile(trip: dict) -> dict:
 def _safe_time(value: str | None) -> str | None:
     if not value:
         return None
-    return value[:16]
+    try:
+        parsed = datetime.fromisoformat(value)
+    except ValueError:
+        return value[:16]
+    if parsed.tzinfo is None:
+        return parsed.replace(microsecond=0, second=0).isoformat()
+    return parsed.replace(microsecond=0, second=0).isoformat()
 
 
 def _write_json(path: Path, payload: dict) -> None:
@@ -132,11 +138,18 @@ def build_public_bundle(trip: dict, trip_path: Path) -> dict:
     validation = trip.get("validation", [])
     budget = trip.get("budget", {})
 
+    severities = {item.get("severity") for item in validation if isinstance(item, dict)}
+    trip_status = "ok"
+    if "error" in severities:
+        trip_status = "error"
+    elif "warning" in severities:
+        trip_status = "warning"
+
     return {
         "trip_id": trip.get("id"),
         "title": trip.get("title"),
         "local_timezone": trip.get("local_timezone"),
-        "status": "warning" if any(item.get("severity") == "warning" for item in validation if isinstance(item, dict)) else "ok",
+        "status": trip_status,
         "date_range": trip.get("date_range", {}),
         "traveler_profile": _build_profile(trip),
         "selected": {
