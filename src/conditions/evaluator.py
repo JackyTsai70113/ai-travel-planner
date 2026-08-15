@@ -49,6 +49,7 @@ def evaluate_conditions(snapshot: ConditionSnapshot, place_id: str, starts_at: d
             if kind in policy.hard_exclusion_kinds
             and r.evidence_class is EvidenceClass.AUTHORITATIVE
             and r.status is ConditionStatus.UNAVAILABLE
+            and (r.forecast_until is None or starts_at < r.forecast_until)
         ]
         if hard_records:
             findings.append(ConditionFinding(f"condition.{kind.value}.closed", "error", f"authoritative {kind.value} makes the place unavailable"))
