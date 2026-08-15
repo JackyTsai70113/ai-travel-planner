@@ -53,6 +53,8 @@ class DynamicConditionTests(unittest.TestCase):
         self.assertEqual(missing.findings[0].code, "condition.unverified")
         self.assertEqual(stale.findings[0].code, "condition.stale")
         self.assertEqual(horizon.findings[0].code, "condition.unverified")
+        self.assertEqual(horizon.soft_penalty, 0)
+        self.assertNotIn("condition.weather.risk", {finding.code for finding in horizon.findings})
 
     def test_weather_is_soft_but_authoritative_closure_is_hard(self):
         policy = ConditionPolicy(max_age=timedelta(days=1))
@@ -68,6 +70,14 @@ class DynamicConditionTests(unittest.TestCase):
         result = evaluate_conditions(ConditionSnapshot((unknown,)), "ohori-park", DT("2026-04-11T10:00:00+09:00"), DT("2026-04-11T12:00:00+09:00"), DT("2026-04-10T09:00:00+09:00"), ConditionPolicy(max_age=timedelta(days=1)))
         self.assertEqual(result.findings[0].code, "condition.unverified")
         self.assertEqual(result.soft_penalty, 0)
+
+    def test_unknown_tide_is_unverified_not_an_outside_window_error(self):
+        tide = load_condition_snapshot(FIXTURES / "tide.json").records[0]
+        unknown = replace(tide, status=ConditionStatus.UNKNOWN)
+        result = evaluate_conditions(ConditionSnapshot((unknown,)), "ohori-park", DT("2026-04-11T12:00:00+09:00"), DT("2026-04-11T13:00:00+09:00"), DT("2026-04-10T09:00:00+09:00"), ConditionPolicy(max_age=timedelta(days=1)))
+        self.assertIn("condition.unverified", {finding.code for finding in result.findings})
+        self.assertFalse(any(finding.severity == "error" for finding in result.findings))
+        self.assertNotIn("condition.tide.outside_window", {finding.code for finding in result.findings})
 
     def test_experience_closure_can_only_be_a_soft_signal(self):
         closure = load_condition_snapshot(FIXTURES / "closure.json").records[0]

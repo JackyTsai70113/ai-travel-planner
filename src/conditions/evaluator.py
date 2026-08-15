@@ -67,8 +67,12 @@ def evaluate_conditions(snapshot: ConditionSnapshot, place_id: str, starts_at: d
 
         kind_penalties: list[float] = []
         if kind in policy.containment_kinds:
-            authoritative = [r for r in full_coverage if r.evidence_class is EvidenceClass.AUTHORITATIVE]
-            advisory = [r for r in full_coverage if r.evidence_class is not EvidenceClass.AUTHORITATIVE]
+            # Eligibility containment can only be proven by an explicitly
+            # available record. Unknown, risky, and unavailable statuses do
+            # not establish a usable window.
+            available_coverage = [r for r in full_coverage if r.status is ConditionStatus.AVAILABLE]
+            authoritative = [r for r in available_coverage if r.evidence_class is EvidenceClass.AUTHORITATIVE]
+            advisory = [r for r in available_coverage if r.evidence_class is not EvidenceClass.AUTHORITATIVE]
             if authoritative and not any(_contained(r, starts_at, ends_at) for r in authoritative):
                 findings.append(ConditionFinding(f"condition.{kind.value}.outside_window", "error", f"scheduled interval is outside the authoritative {kind.value} eligibility window"))
             if advisory and not any(_contained(r, starts_at, ends_at) for r in advisory):
@@ -76,7 +80,7 @@ def evaluate_conditions(snapshot: ConditionSnapshot, place_id: str, starts_at: d
                 findings.append(ConditionFinding(f"condition.{kind.value}.risk", "warning", f"non-authoritative {kind.value} window is a soft risk signal"))
 
         soft_records = [
-            r for r in fresh
+            r for r in full_coverage
             if r.status in {ConditionStatus.RISKY, ConditionStatus.UNAVAILABLE}
             and not (kind in policy.hard_exclusion_kinds and r.evidence_class is EvidenceClass.AUTHORITATIVE)
         ]
