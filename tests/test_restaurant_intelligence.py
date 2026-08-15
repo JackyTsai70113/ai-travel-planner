@@ -173,7 +173,7 @@ def test_official_override_and_same_authority_conflict_are_auditable():
 
 
 def test_rating_bundle_and_reconciliation_audit_are_source_coherent_and_idempotent():
-    provider_a = candidate()
+    provider_a = candidate(provenance={**PROVENANCE, "provider": "Provider A"})
     provider_a.update({"rating": 4.7, "rating_source": "Provider A"})
     provider_b = candidate(provenance={**PROVENANCE, "provider": "Provider B"})
     provider_b.update({"rating": 3.1, "rating_source": "Provider B", "review_count": 900})
@@ -187,6 +187,26 @@ def test_rating_bundle_and_reconciliation_audit_are_source_coherent_and_idempote
         if item["provenance"]["provider"] == "Provider B"
     }
     assert provider_b_alternatives["review_count"]["value"] == 900
+
+    count_only = candidate(provenance={**PROVENANCE, "provider": "Count Only"})
+    count_only["review_count"] = 700
+    partial = reconcile_restaurant_candidates([provider_a, count_only])[0]
+    assert "review_count" not in partial
+    assert any(
+        item["field"] == "review_count"
+        and item["value"] == 700
+        and item["provenance"]["provider"] == "Count Only"
+        for item in partial["alternatives"]
+    )
+
+    ordered_a = candidate(provenance={**PROVENANCE, "provider": "Provider A"})
+    ordered_a.update({"rating": 4.7, "rating_source": "Provider A"})
+    ordered_b = candidate(provenance={**PROVENANCE, "provider": "Provider B"})
+    ordered_b.update({"rating": 3.1, "rating_source": "Provider B"})
+    assert reconcile_restaurant_candidates([ordered_a, ordered_b])[0]["rating"] == 4.7
+    assert reconcile_restaurant_candidates([ordered_b, ordered_a])[0]["rating"] == 4.7
+    ordered_a["opening_hours"]["status"] = "stale"
+    assert reconcile_restaurant_candidates([ordered_a, ordered_b])[0]["rating"] == 4.7
 
     official_source = {**PROVENANCE, "source_type": "official", "provider": "Restaurant official site"}
     official = candidate(provenance=official_source, intervals=[{"weekday": 2, "opens_at": "17:00", "closes_at": "20:00"}])

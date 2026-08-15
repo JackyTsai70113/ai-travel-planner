@@ -168,7 +168,9 @@ def _reconcile_group(group: Sequence[Mapping[str, object]]) -> dict[str, object]
         for field in rating_bundle:
             if field in selected_rating:
                 result[field] = _copy_value(selected_rating[field])
-        for source in rating_sources[1:]:
+        for source in ranked:
+            if source is selected_rating:
+                continue
             for field in rating_bundle:
                 if field in source and (field not in result or _fact_value(source[field]) != _fact_value(result[field])):
                     alternatives.append({
@@ -236,13 +238,36 @@ def _place_rank(candidate: Mapping[str, object]) -> tuple[int, int, int]:
     return int(not has_coordinates), int(not has_address), _authority(candidate)
 
 
-def _quality_rank(candidate: Mapping[str, object], field: str) -> tuple[int, int]:
+def _quality_rank(candidate: Mapping[str, object], field: str) -> tuple[int, int, float, str]:
     """Prefer discovery evidence for quality fields; official priority is operational."""
 
-    source_type = str(_provenance(candidate).get("source_type"))
+    provenance = _provenance(candidate)
+    source_type = str(provenance.get("source_type"))
     authority = {"provider": 0, "community": 1, "official": 2, "derived": 3, "user_input": 4}.get(source_type, 99)
+    existing_sources = candidate.get("source_provenance")
+    if isinstance(existing_sources, Sequence) and not isinstance(existing_sources, (str, bytes)) and existing_sources:
+        # A prior aggregate has already made an auditable field choice. Keep it
+        # stable when the same raw records are reconciled again; production
+        # updates should reconcile the complete current raw source set.
+        authority = -1
     unknown = field == "wait_risk" and candidate.get(field) == "unknown"
-    return int(unknown), authority
+    retrieved_at = provenance.get("retrieved_at")
+    try:
+        retrieved = datetime.fromisoformat(str(retrieved_at).replace("Z", "+00:00"))
+        retrieval_rank = -retrieved.timestamp() if retrieved.tzinfo is not None else float("inf")
+    except (OSError, OverflowError, ValueError):
+        retrieval_rank = float("inf")
+    quality_value = (
+        {key: candidate[key] for key in ("rating", "rating_source", "review_count") if key in candidate}
+        if field in {"rating", "rating_source", "review_count"}
+        else candidate.get(field)
+    )
+    stable_source = _stable_value({
+        "provider": provenance.get("provider"),
+        "source_url": provenance.get("source_url"),
+        "quality_value": quality_value,
+    })
+    return int(unknown), authority, retrieval_rank, stable_source
 
 
 def _freshness(candidate: Mapping[str, object]) -> int:

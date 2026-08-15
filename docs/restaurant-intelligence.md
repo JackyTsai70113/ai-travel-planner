@@ -57,8 +57,11 @@ authority become `conflicting`, which blocks meal selection.
 
 Legacy aggregate `rating`, `rating_source`, and `review_count` are selected as
 one source bundle so a count can never be attached to another provider's
-rating. Reconciliation is audit-idempotent: existing source provenance is
-expanded and fact alternatives are stable-key deduplicated on repeated runs.
+rating. Count-only or source-only evidence from another record remains an
+alternative. Equal-authority quality sources use retrieved-at freshness and a
+stable source/value key, never opening-hours freshness or input order.
+Reconciliation is audit-idempotent: existing source provenance is expanded and
+fact alternatives are stable-key deduplicated on repeated runs.
 
 Aggregate restaurant ratings are separate from dish evidence. Every rating
 retains its original minimum/maximum scale; review count is retained when the
