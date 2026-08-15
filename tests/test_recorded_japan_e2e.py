@@ -32,6 +32,7 @@ class RecordedGoogleClient:
                 "id": "tokushima-family-dining", "displayName": {"text": "親子食堂"},
                 "rating": 4.4, "userRatingCount": 218, "primaryType": "japanese_restaurant",
                 "googleMapsUri": "https://maps.example.test/tokushima-family-dining",
+                "timeZone": {"id": "Asia/Tokyo"},
                 "regularOpeningHours": {"periods": [
                     # Monday lunch/dinner split; no Wednesday interval.
                     {"open": {"day": 1, "hour": 11}, "close": {"day": 1, "hour": 14}},

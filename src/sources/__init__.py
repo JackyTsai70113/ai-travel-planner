@@ -34,7 +34,9 @@ from .official import (
 )
 from .providers import (
     GooglePlacesAdapter,
+    HotPepperGourmetAdapter,
     JsonHttpClient,
+    OfficialRestaurantFeedAdapter,
     ProviderConfigurationError,
     ProviderRequestError,
     ResearchEvidence,
@@ -70,10 +72,12 @@ __all__ = [
     "FixtureOfficialPoiAdapter",
     "FlightSearchQuery",
     "GooglePlacesAdapter",
+    "HotPepperGourmetAdapter",
     "HotelSearchQuery",
     "JsonHttpClient",
     "Occupancy",
     "OfficialFixtureParser",
+    "OfficialRestaurantFeedAdapter",
     "OperationalFact",
     "OperatorAdvisoryParser",
     "ParseResult",
