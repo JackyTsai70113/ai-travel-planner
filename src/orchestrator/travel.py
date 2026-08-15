@@ -67,6 +67,7 @@ class OrchestrationResult:
     warnings: tuple[WarningRecord, ...]
     trip: dict | None
     render_path: Path | None
+    trip_path: Path | None = None
 
     @property
     def succeeded(self) -> bool:
@@ -96,6 +97,7 @@ class TravelOrchestratorConfig:
     adapters: Sequence[SourceAdapter]
     candidate_trip_factory: CandidateTripFactory
     output_directory: Path
+    trip_output_directory: Path | None = None
     research_categories: tuple[str, ...] = ("pois", "restaurants", "hotels", "flights", "transport")
     routing_context_factory: RoutingContextFactory | None = None
     optimizer: Optimizer | None = None
@@ -183,12 +185,16 @@ class TravelOrchestrator:
         if canonical_report.status is StageStatus.FAILED:
             return self._result(intent, reports, aggregate_warnings)
 
+        trip_path, persistence_report = self._persist_trip(canonical_trip)
+        if persistence_report.status is StageStatus.FAILED:
+            reports[StageName.CANONICAL_TRIP] = persistence_report
+            return self._result(intent, reports, [*aggregate_warnings, *persistence_report.errors])
         render_path, renderer_report = self._run_renderer(canonical_trip)
         reports[StageName.RENDERER] = renderer_report
         aggregate_warnings.extend(renderer_report.warnings)
         if renderer_report.status is StageStatus.FAILED:
             return self._result(intent, reports, aggregate_warnings)
-        return self._result(intent, reports, aggregate_warnings, canonical_trip, render_path)
+        return self._result(intent, reports, aggregate_warnings, canonical_trip, render_path, trip_path)
 
     def _run_routing(self, intent: TravelIntent, store: CandidateStore) -> tuple[ValidationContext, StageReport]:
         if self.config.routing_context_factory is None:
@@ -257,6 +263,20 @@ class TravelOrchestrator:
             error = WarningRecord("renderer.failed", str(exc), StageName.RENDERER)
             return None, StageReport(StageName.RENDERER, StageStatus.FAILED, 1, (), (error,))
 
+    def _persist_trip(self, trip: dict) -> tuple[Path | None, StageReport]:
+        """Persist only the validated canonical document, never provider raw payloads."""
+        if self.config.trip_output_directory is None:
+            return None, StageReport(StageName.CANONICAL_TRIP, StageStatus.SUCCEEDED, 0)
+        try:
+            import json
+            target = self.config.trip_output_directory / str(trip.get("id", "trip")) / "trip.json"
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(json.dumps(trip, ensure_ascii=False, indent=2), encoding="utf-8")
+            return target, StageReport(StageName.CANONICAL_TRIP, StageStatus.SUCCEEDED, 1)
+        except Exception as exc:
+            error = WarningRecord("canonical.persist_failed", str(exc), StageName.CANONICAL_TRIP)
+            return None, StageReport(StageName.CANONICAL_TRIP, StageStatus.FAILED, 1, (), (error,))
+
     def _retry(self, name: StageName, operation: Callable[[], object]) -> tuple[object | None, StageReport]:
         errors: list[WarningRecord] = []
         for attempt in range(1, self.config.max_stage_attempts + 1):
@@ -267,8 +287,8 @@ class TravelOrchestrator:
         return None, StageReport(name, StageStatus.FAILED, self.config.max_stage_attempts, (), tuple(errors))
 
     @staticmethod
-    def _result(intent, reports, warnings, trip=None, render_path=None) -> OrchestrationResult:
-        return OrchestrationResult(intent, tuple(reports[name] for name in TravelOrchestrator.ORDER), tuple(warnings), trip, render_path)
+    def _result(intent, reports, warnings, trip=None, render_path=None, trip_path=None) -> OrchestrationResult:
+        return OrchestrationResult(intent, tuple(reports[name] for name in TravelOrchestrator.ORDER), tuple(warnings), trip, render_path, trip_path)
 
 
 def _destination(intent: TravelIntent) -> str:

@@ -46,7 +46,7 @@ def parse_trip_request(text: str) -> TripRequest:
         provenance["regions"].append(FieldProvenance(region, match.start(), match.end(), "regions"))
     values["destinations"], values["regions"] = places, regions
 
-    capture("origin", r"(?:從|由|出發地[：:]?)(台北|高雄|桃園|香港|東京|大阪)(?:出發|飛|去)?", lambda m: m.group(1))
+    capture("origin", r"(?:(?:從|由|出發地[：:]?)(台北|高雄|桃園|香港|東京|大阪)(?:出發|飛|去)?|(台北|高雄|桃園|香港|東京|大阪)出發)", lambda m: m.group(1) or m.group(2))
     capture("duration", r"([\d一二三四五六七八九十]+)天([\d一二三四五六七八九十]+)夜", lambda m: (_number(m.group(1)), _number(m.group(2))))
     if "duration" not in values:
         capture("duration", r"([\d一二三四五六七八九十]+)天", lambda m: (_number(m.group(1)), None))
