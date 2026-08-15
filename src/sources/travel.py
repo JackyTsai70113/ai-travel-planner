@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from typing import Any, Callable, Iterable
@@ -184,7 +185,8 @@ def _normalise_hotel(hotel: dict[str, Any], offer: dict[str, Any], retrieved_at:
     taxes = sum(float(item.get("amount", 0)) for item in price.get("taxes", []))
     policy = offer.get("policies", {})
     hid = str(hotel.get("hotelId", offer.get("id")))
-    place: dict[str, Any] = {"id": f"amadeus-hotel-{hid}", "name": hotel.get("name", hid), "kind": "hotel"}
+    canonical_hid = re.sub(r"[^a-z0-9_-]+", "-", hid.lower()).strip("-_")
+    place: dict[str, Any] = {"id": f"amadeus-hotel-{canonical_hid}", "name": hotel.get("name", hid), "kind": "hotel"}
     if hotel.get("latitude") is not None and hotel.get("longitude") is not None:
         place["coordinates"] = {"latitude": float(hotel["latitude"]), "longitude": float(hotel["longitude"])}
     candidate = {"place": place, "nightly_cost": _money(float(total["amount"]) / (query.check_out_date - query.check_in_date).days, total["currency"]),

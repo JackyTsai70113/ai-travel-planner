@@ -7,7 +7,8 @@ from datetime import datetime, timedelta
 from typing import Iterable
 
 from src.validator import Outcome, Violation, validate_itinerary
-from src.restaurant_intelligence import meal_eligible
+from src.opening_hours import Eligibility
+from src.restaurant_intelligence import meal_eligibility
 
 from .contracts import CandidatePlan, HardConstraint, PlanState, PlannerInput, PlannerOutput, SoftPreference
 
@@ -46,7 +47,15 @@ def _evaluate(trip: dict, request: PlannerInput) -> CandidatePlan:
 
 def _validate(trip: dict, request: PlannerInput) -> list[Violation]:
     result = validate_itinerary(trip, request.validation_context)
-    return [*result.violations, *_restaurant_eligibility_violations(trip), *_hard_constraint_violations(trip, request.hard_constraints)]
+    combined = [*result.violations, *_restaurant_eligibility_violations(trip), *_hard_constraint_violations(trip, request.hard_constraints)]
+    unique: list[Violation] = []
+    seen: set[tuple[str, str]] = set()
+    for violation in combined:
+        identity = (violation.code, violation.path)
+        if identity not in seen:
+            seen.add(identity)
+            unique.append(violation)
+    return unique
 
 
 def _restaurant_eligibility_violations(trip: dict) -> list[Violation]:
@@ -57,12 +66,15 @@ def _restaurant_eligibility_violations(trip: dict) -> list[Violation]:
             if item.get("kind") != "meal" or item.get("place_id") not in restaurants:
                 continue
             candidate = restaurants[item["place_id"]]
-            hours = candidate.get("opening_hours")
             path = f"/days/{day_index}/items/{item_index}"
-            if not isinstance(hours, dict) or hours.get("status") != "fresh":
-                violations.append(Violation("opening_hours.unverified", "warning", "restaurant opening hours are not fresh", path))
+            eligibility = meal_eligibility(candidate, _timestamp(item["start_at"]), _timestamp(item["end_at"]))
+            hours = candidate.get("opening_hours")
+            if eligibility is Eligibility.UNVERIFIED:
+                code = "opening_hours.conflicting" if isinstance(hours, dict) and hours.get("status") == "conflicting" else "opening_hours.unverified"
+                severity = "error" if code == "opening_hours.conflicting" else "warning"
+                violations.append(Violation(code, severity, "restaurant opening hours are not confirmed", path))
                 continue
-            if not meal_eligible(candidate, _timestamp(item["start_at"]), _timestamp(item["end_at"])):
+            if eligibility is Eligibility.CLOSED:
                 violations.append(Violation("opening_hours.closed", "error", "restaurant is not eligible for this meal interval", path))
     return violations
 

@@ -13,6 +13,8 @@ from src.sources import (
 )
 from src.sources.providers import (
     GooglePlacesAdapter,
+    HotPepperGourmetAdapter,
+    OfficialRestaurantFeedAdapter,
     ProviderConfigurationError,
     ProviderRequestError,
     YouTubeEvidenceAdapter,
@@ -98,6 +100,7 @@ class ProductionProviderAdapterTests(unittest.TestCase):
             "places": [{
                 "id": "ChIJ-restaurant", "displayName": {"text": "水曜日定休食堂"},
                 "rating": 4.6, "userRatingCount": 321, "primaryType": "japanese_restaurant",
+                "timeZone": {"id": "Asia/Tokyo"},
                 "regularOpeningHours": {"periods": [
                     {"open": {"day": 1, "hour": 11, "minute": 30}, "close": {"day": 1, "hour": 14, "minute": 0}},
                     {"open": {"day": 1, "hour": 17, "minute": 30}, "close": {"day": 1, "hour": 21, "minute": 0}},
@@ -110,11 +113,80 @@ class ProductionProviderAdapterTests(unittest.TestCase):
         self.assertEqual("Google Places", restaurant["rating_source"])
         self.assertEqual(321, restaurant["review_count"])
         self.assertEqual("japanese_restaurant", restaurant["cuisine"])
-        self.assertEqual({"status": "fresh", "intervals": [
+        self.assertEqual("fresh", restaurant["opening_hours"]["status"])
+        self.assertEqual("Asia/Tokyo", restaurant["opening_hours"]["timezone"])
+        self.assertEqual([
             {"weekday": 0, "opens_at": "11:30", "closes_at": "14:00"},
             {"weekday": 0, "opens_at": "17:30", "closes_at": "21:00"},
-        ]}, restaurant["opening_hours"])
+        ], restaurant["opening_hours"]["intervals"])
         self.assertNotIn("regularOpeningHours", str(restaurant))
+
+    def test_google_special_hours_timezone_cross_midnight_and_canonical_id(self):
+        recording = {"places": [{
+            "id": "ChIJ_Mixed-Case", "displayName": {"text": "深夜食堂"}, "rating": 4.1,
+            "userRatingCount": 22, "priceLevel": "PRICE_LEVEL_MODERATE", "businessStatus": "OPERATIONAL",
+            "timeZone": {"id": "Asia/Tokyo"},
+            "regularOpeningHours": {"periods": [
+                {"open": {"day": 3, "hour": 22}, "close": {"day": 4, "hour": 2}},
+            ]},
+            "currentOpeningHours": {
+                "periods": [{"open": {"day": 3, "hour": 12, "date": {"year": 2026, "month": 8, "day": 26}}, "close": {"day": 3, "hour": 13, "date": {"year": 2026, "month": 8, "day": 26}}}],
+                "specialDays": [
+                    {"date": {"year": 2026, "month": 8, "day": 26}},
+                    {"date": {"year": 2026, "month": 8, "day": 27}},
+                ],
+            },
+        }]}
+        restaurant = list(GooglePlacesAdapter("key", http_client=RecordedHttpClient([self.google_recording, recording]), now=NOW).fetch(QUERY))[1][1]
+        self.assertEqual("google-chij_mixed-case", restaurant["place"]["id"])
+        self.assertEqual(5.0, restaurant["ratings"][0]["scale_max"])
+        self.assertEqual("PRICE_LEVEL_MODERATE", restaurant["meal_price_signals"][0]["label"])
+        self.assertEqual(1, restaurant["opening_hours"]["intervals"][0]["closes_day_offset"])
+        self.assertNotIn(3, restaurant["opening_hours"]["closed_weekdays"])
+        self.assertEqual(["open", "closed"], [item["status"] for item in restaurant["opening_hours"]["special_hours"]])
+        self.assertNotIn("currentOpeningHours", str(restaurant))
+
+    def test_google_always_open_period_without_close_is_safe(self):
+        recording = {"places": [{
+            "id": "AlwaysOpen", "displayName": {"text": "24h"}, "timeZone": {"id": "Asia/Tokyo"},
+            "regularOpeningHours": {"periods": [{"open": {"day": 0, "hour": 0, "minute": 0}}]},
+        }]}
+        restaurant = list(GooglePlacesAdapter("key", http_client=RecordedHttpClient([self.google_recording, recording]), now=NOW).fetch(QUERY))[1][1]
+        self.assertEqual(7, len(restaurant["opening_hours"]["intervals"]))
+        self.assertTrue(all(item["closes_day_offset"] == 1 for item in restaurant["opening_hours"]["intervals"]))
+
+    def test_hotpepper_recording_normalizes_quality_signals_but_not_free_text_hours(self):
+        payload = {"results": {"shop": [{
+            "id": "J001234", "name": "博多食堂", "address": "福岡市", "lat": 33.59, "lng": 130.40,
+            "genre": {"name": "居酒屋"}, "budget": {"average": "3001～4000円", "name": "3001～4000円"},
+            "open": "月～火 17:00～翌1:00", "close": "水曜日", "child": "お子様連れ歓迎",
+            "non_smoking": "全面禁煙", "parking": "駐車場なし", "urls": {"pc": "https://hotpepper.example/shop"},
+        }]}}
+        client = RecordedHttpClient([payload])
+        result = list(HotPepperGourmetAdapter("hotpepper-key", http_client=client, now=NOW).fetch(QUERY))[0][1]
+        self.assertEqual("hotpepper-j001234", result["place"]["id"])
+        self.assertEqual("居酒屋", result["cuisine"])
+        self.assertEqual("dinner", result["meal_price_signals"][0]["meal"])
+        self.assertTrue(result["child_friendly"])
+        self.assertFalse(result["parking_available"])
+        self.assertEqual("non_smoking", result["smoking_policy"])
+        self.assertEqual("unverified", result["opening_hours"]["status"])
+        self.assertEqual([], result["opening_hours"]["intervals"])
+        self.assertEqual(["水曜日"], result["opening_hours"]["regular_holidays"])
+        self.assertIn("水曜日", result["opening_hours"]["note"])
+        self.assertNotIn("rating", result)
+        self.assertNotIn("recommended_dishes", result)
+        self.assertIn("Powered by ホットペッパーグルメ Webサービス", result["attributions"])
+        self.assertIn("key=hotpepper-key", client.calls[0][1])
+
+    def test_official_feed_requires_exact_canonical_place_id(self):
+        records = [
+            {"place_id": "google-exact", "name": "公式店", "source_url": "https://restaurant.example/", "opening_hours": {"status": "fresh", "timezone": "Asia/Tokyo", "intervals": []}},
+            {"place_id": "Google-Bad", "name": "別店", "source_url": "https://restaurant.example/bad"},
+        ]
+        results = list(OfficialRestaurantFeedAdapter(records, now=NOW).fetch(QUERY))
+        self.assertEqual(1, len(results))
+        self.assertEqual("official", results[0][1]["provenance"]["source_type"])
 
     def test_recommended_dishes_require_explicit_source_provenance(self):
         candidate = {"place": {"id": "restaurant", "name": "Restaurant", "kind": "restaurant"}}

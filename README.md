@@ -23,6 +23,8 @@ export YOUTUBE_API_KEY='...'
 export AMADEUS_CLIENT_ID='...'
 export AMADEUS_CLIENT_SECRET='...'
 export OPENROUTESERVICE_API_KEY='...'
+# Optional Japan restaurant discovery source:
+export HOTPEPPER_API_KEY='...'
 ```
 
 Run the end-user entrypoint with a natural-language request:
@@ -42,9 +44,19 @@ open site/tokushima-kobe/index.html
 ```
 
 The current provider adapters are Google Places, YouTube Data API, Amadeus
-Self-Service, and OpenRouteService.  Provider responses remain unverified
+Self-Service, OpenRouteService, and the optional official Hot Pepper Gourmet
+Web Service. Hot Pepper output must be displayed with
+`Powered by ホットペッパーグルメ Webサービス`;
+its free-text hours remain unverified until a structured source confirms them.
+Provider responses remain unverified
 until retrieved; no automatic booking or payment is performed.  CI uses
 recorded/mock data and never calls these APIs.
+
+Restaurant quality, price, dishes, and operational facts remain separate and
+retain their original provenance. Planner and validator use the same
+timezone-aware opening-hours snapshot, including split/overnight intervals,
+regular closures, last order, and date-specific exceptions. See
+[`Restaurant intelligence`](docs/restaurant-intelligence.md).
 
 ## Deployment
 

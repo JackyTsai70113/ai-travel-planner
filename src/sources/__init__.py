@@ -3,7 +3,8 @@
 from .adapters import AdapterFailure, FixtureCommunityRestaurantAdapter, FixtureOfficialPoiAdapter, SourceAdapter, SourceQuery, collect_from_adapters
 from .candidate_store import CandidateRecord, CandidateState, CandidateStore, StaleCandidateError
 from .providers import (
-    GooglePlacesAdapter, JsonHttpClient, ProviderConfigurationError,
+    GooglePlacesAdapter, HotPepperGourmetAdapter, OfficialRestaurantFeedAdapter,
+    JsonHttpClient, ProviderConfigurationError,
     ProviderRequestError, ResearchEvidence, UrllibJsonHttpClient,
     YouTubeEvidenceAdapter, authority_rank, prioritize_by_authority,
 )
@@ -27,6 +28,8 @@ __all__ = [
     "FixtureCommunityRestaurantAdapter",
     "FixtureOfficialPoiAdapter",
     "GooglePlacesAdapter",
+    "HotPepperGourmetAdapter",
+    "OfficialRestaurantFeedAdapter",
     "JsonHttpClient",
     "ProviderConfigurationError",
     "ProviderRequestError",

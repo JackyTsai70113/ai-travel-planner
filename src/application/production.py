@@ -16,11 +16,11 @@ from zoneinfo import ZoneInfo
 
 from src.intent import TravelIntent
 from src.orchestrator import OrchestrationResult, TravelOrchestrator, TravelOrchestratorConfig
-from src.restaurant_intelligence import eligible_restaurants, validation_opening_hours
+from src.restaurant_intelligence import eligible_restaurants, reconcile_restaurant_candidates, validation_opening_hours
 from src.sources import (
     AmadeusClient, AmadeusFlightAdapter, AmadeusHotelAdapter, FlightSearchQuery,
-    GooglePlacesAdapter, HotelSearchQuery, Occupancy, SourceAdapter, SourceQuery,
-    YouTubeEvidenceAdapter,
+    GooglePlacesAdapter, HotPepperGourmetAdapter, HotelSearchQuery, Occupancy, SourceAdapter, SourceQuery,
+    YouTubeEvidenceAdapter, collect_from_adapters,
 )
 from src.sources.routing import OpenRouteServiceProvider, PlaceRef, RouteMatrix, RouteMode, RouteStatus
 from src.validator import ValidationContext
@@ -56,6 +56,8 @@ class ProductionDependencies:
     youtube: YouTubeEvidenceAdapter | None = None
     amadeus_client: AmadeusClient | None = None
     routing_provider: object | None = None
+    hotpepper: SourceAdapter | None = None
+    official_restaurants: SourceAdapter | None = None
 
 
 class _ProductionResearchAdapter(SourceAdapter):
@@ -64,27 +66,43 @@ class _ProductionResearchAdapter(SourceAdapter):
     name = "production-research"
 
     def __init__(self, intent: TravelIntent, google: SourceAdapter, youtube: YouTubeEvidenceAdapter,
-                 amadeus_client: AmadeusClient) -> None:
+                 amadeus_client: AmadeusClient, optional_restaurants: Sequence[SourceAdapter] = ()) -> None:
         self.intent, self.google, self.youtube = intent, google, youtube
+        self.optional_restaurants = tuple(optional_restaurants)
         self.flight_search = AmadeusFlightAdapter(amadeus_client)
         self.hotel_search = AmadeusHotelAdapter(amadeus_client)
         self.evidence: list[object] = []
+        self.failures: list[object] = []
 
     def fetch(self, query: SourceQuery):
         # Evidence is deliberately not converted into an operational candidate.
-        self.evidence = list(self.youtube.fetch_evidence(query))
-        candidates = list(self.google.fetch(query))
+        try:
+            self.evidence = list(self.youtube.fetch_evidence(query))
+        except Exception as exc:
+            self.failures.append(exc)
+            self.evidence = []
+        candidates, failures = collect_from_adapters((self.google, *self.optional_restaurants), query)
+        self.failures.extend(failures)
         origin, destination = _airport_codes(self.intent)
         start, end = _travel_dates(self.intent)
         occupancy = Occupancy(_adults(self.intent), self.intent.travelers.child_ages)
         currency = self.intent.currency or "JPY"
-        candidates.extend(self.flight_search.search(FlightSearchQuery(
-            origin, destination, start, occupancy, return_date=end, currency=currency,
-            airport_timezones={origin: "Asia/Taipei", destination: "Asia/Tokyo"},
-        )).candidates)
-        candidates.extend(self.hotel_search.search(HotelSearchQuery(
-            destination, start, end + timedelta(days=1), occupancy, currency=currency,
-        )).candidates)
+        try:
+            candidates.extend(self.flight_search.search(FlightSearchQuery(
+                origin, destination, start, occupancy, return_date=end, currency=currency,
+                airport_timezones={origin: "Asia/Taipei", destination: "Asia/Tokyo"},
+            )).candidates)
+        except Exception as exc:
+            self.failures.append(exc)
+        try:
+            candidates.extend(self.hotel_search.search(HotelSearchQuery(
+                destination, start, end + timedelta(days=1), occupancy, currency=currency,
+            )).candidates)
+        except Exception as exc:
+            self.failures.append(exc)
+        restaurants = reconcile_restaurant_candidates(candidate for collection, candidate in candidates if collection == "restaurants")
+        candidates = [(collection, candidate) for collection, candidate in candidates if collection != "restaurants"]
+        candidates.extend(("restaurants", candidate) for candidate in restaurants)
         return candidates
 
 
@@ -124,12 +142,20 @@ def create_production_orchestrator(*, trip_id: str, trips_directory: Path = Path
     youtube = dependencies.youtube or YouTubeEvidenceAdapter(api_key=environment["YOUTUBE_API_KEY"])
     amadeus = dependencies.amadeus_client or AmadeusClient(environment=dict(environment))
     routing_provider = dependencies.routing_provider or OpenRouteServiceProvider(api_key=environment["OPENROUTESERVICE_API_KEY"])
+    optional_restaurants: list[SourceAdapter] = []
+    if dependencies.hotpepper is not None:
+        optional_restaurants.append(dependencies.hotpepper)
+    elif environment.get("HOTPEPPER_API_KEY"):
+        optional_restaurants.append(HotPepperGourmetAdapter(api_key=environment["HOTPEPPER_API_KEY"]))
+    if dependencies.official_restaurants is not None:
+        optional_restaurants.append(dependencies.official_restaurants)
 
     # Intent is supplied at run time, so this adapter factory is installed by
     # the facade just before invoking the existing orchestrator.
     runner = _IntentBoundRunner(
         trip_id=trip_id, trips_directory=trips_directory, site_directory=site_directory,
         google=google, youtube=youtube, amadeus=amadeus, routing_provider=routing_provider,
+        optional_restaurants=tuple(optional_restaurants),
         progress_callback=progress_callback,
     )
     return runner
@@ -138,14 +164,16 @@ def create_production_orchestrator(*, trip_id: str, trips_directory: Path = Path
 class _IntentBoundRunner(ProductionPlanningRunner):
     def __init__(self, *, trip_id: str, trips_directory: Path, site_directory: Path,
                  google: SourceAdapter, youtube: YouTubeEvidenceAdapter, amadeus: AmadeusClient,
-                 routing_provider: object, progress_callback: Callable[[str], None] | None) -> None:
+                 routing_provider: object, progress_callback: Callable[[str], None] | None,
+                 optional_restaurants: Sequence[SourceAdapter] = ()) -> None:
         self.trip_id, self.trips_directory, self.site_directory = _safe_trip_id(trip_id), trips_directory, site_directory
         self.google, self.youtube, self.amadeus = google, youtube, amadeus
+        self.optional_restaurants = tuple(optional_restaurants)
         self.routing_provider, self.progress_callback = routing_provider, progress_callback
 
     def run(self, intent: TravelIntent) -> OrchestrationResult:
         _require_plannable_intent(intent)
-        research = _ProductionResearchAdapter(intent, self.google, self.youtube, self.amadeus)
+        research = _ProductionResearchAdapter(intent, self.google, self.youtube, self.amadeus, self.optional_restaurants)
         config = TravelOrchestratorConfig(
             adapters=(research,),
             candidate_trip_factory=lambda current, store: _candidate_trips(self.trip_id, current, store.records()),
