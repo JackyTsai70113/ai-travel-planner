@@ -68,3 +68,13 @@ record the responsible operator or tourism authority URL as an `official` source
 `prioritize_by_authority` returns independent records in official → provider →
 community order without overwriting lower-priority evidence; consumers must keep
 the provenance record and use official facts for hard constraints.
+
+## Operational-fact reconciliation (Issue #30)
+
+Recorded official-site text is normalized by `src.sources.official`; acquisition
+and raw page content remain outside planner and validator boundaries. The
+reconciler applies official → provider → community authority deterministically
+and retains all records. A selected value is not confirmation when its validity
+has expired, its retrieval age exceeds policy, or applicable evidence conflicts.
+See `official-site-facts.md` for fixture profiles, compliance, freshness, and the
+manual-entry fallback.
