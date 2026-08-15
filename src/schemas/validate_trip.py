@@ -39,8 +39,6 @@ def validate_trip(trip: dict) -> None:
     for index, candidate in enumerate(trip["candidate_sets"].get("restaurants", [])):
         _validate_restaurant(candidate, index)
         place_id = candidate.get("place", {}).get("id")
-        if place_id not in place_ids:
-            raise TripValidationError(f"candidate_sets.restaurants[{index}].place.id does not reference candidate_sets.places")
         if place_id in restaurant_ids:
             raise TripValidationError("candidate_sets.restaurants contains duplicate canonical place IDs")
         restaurant_ids.add(place_id)

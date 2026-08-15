@@ -4,7 +4,14 @@ from datetime import time
 from pathlib import Path
 import unittest
 
-from src.planner import HardConstraint, PlanState, PlannerInput, SoftPreference, plan
+from src.planner import (
+    HardConstraint,
+    PlanState,
+    PlannerInput,
+    SoftPreference,
+    UnverifiedRestaurantHoursPolicy,
+    plan,
+)
 from src.validator import BudgetLimit, OpeningInterval, ValidationContext
 
 
@@ -91,6 +98,7 @@ class PlannerTests(unittest.TestCase):
         restaurant = trip["candidate_sets"]["restaurants"][0]
         restaurant["opening_hours"] = {
             "status": "fresh",
+            "timezone": "Asia/Tokyo",
             # Monday only.  Wednesday (Python weekday 2) must not be accepted.
             "intervals": [{"weekday": 0, "opens_at": "11:30", "closes_at": "21:00"}],
         }
@@ -109,6 +117,7 @@ class PlannerTests(unittest.TestCase):
         restaurant = trip["candidate_sets"]["restaurants"][0]
         restaurant["opening_hours"] = {
             "status": "fresh",
+            "timezone": "Asia/Tokyo",
             "intervals": [
                 {"weekday": 0, "opens_at": "11:30", "closes_at": "14:00"},
                 {"weekday": 0, "opens_at": "17:30", "closes_at": "21:00"},
@@ -126,15 +135,36 @@ class PlannerTests(unittest.TestCase):
     def test_stale_restaurant_hours_are_unverified_not_assumed_open(self):
         trip = copy.deepcopy(self.trip)
         restaurant = trip["candidate_sets"]["restaurants"][0]
-        restaurant["opening_hours"] = {"status": "stale", "intervals": [{"weekday": 0, "opens_at": "00:00", "closes_at": "23:59"}]}
+        restaurant["opening_hours"] = {"status": "stale", "timezone": "Asia/Tokyo", "intervals": [{"weekday": 0, "opens_at": "00:00", "closes_at": "23:59"}]}
         trip["days"][3]["items"].append({
             "id": "stale-hours-meal", "kind": "meal", "place_id": "ramen-shop",
             "start_at": "2026-04-13T18:00:00+09:00", "end_at": "2026-04-13T19:00:00+09:00",
             "selection_status": "selected",
         })
-        result = plan(PlannerInput([trip], verified_context()))
-        self.assertIsNotNone(result.best_plan)
-        self.assertIn("opening_hours.unverified", {item.code for item in result.best_plan.violations})
+        fresh_trip = copy.deepcopy(trip)
+        fresh_trip["candidate_sets"]["restaurants"][0]["opening_hours"]["status"] = "fresh"
+        result = plan(PlannerInput([trip, fresh_trip], verified_context()))
+        self.assertEqual(result.best_plan.trip["candidate_sets"]["restaurants"][0]["opening_hours"]["status"], "fresh")
+        stale_plan = next(item for item in result.plans if item.trip["candidate_sets"]["restaurants"][0]["opening_hours"]["status"] == "stale")
+        self.assertLess(stale_plan.score, result.best_plan.score)
+        self.assertIn("opening_hours.unverified", {item.code for item in stale_plan.violations})
+
+    def test_unverified_restaurant_hours_can_be_configured_as_blocking(self):
+        trip = copy.deepcopy(self.trip)
+        restaurant = trip["candidate_sets"]["restaurants"][0]
+        restaurant["opening_hours"] = {"status": "unverified", "timezone": "Asia/Tokyo", "intervals": []}
+        trip["days"][3]["items"].append({
+            "id": "unknown-hours-meal", "kind": "meal", "place_id": "ramen-shop",
+            "start_at": "2026-04-13T18:00:00+09:00", "end_at": "2026-04-13T19:00:00+09:00",
+            "selection_status": "selected",
+        })
+        result = plan(PlannerInput(
+            [trip], verified_context(), max_repair_iterations=0,
+            unverified_restaurant_hours_policy=UnverifiedRestaurantHoursPolicy.BLOCK,
+        ))
+        self.assertIsNone(result.best_plan)
+        violation = next(item for item in result.plans[0].violations if item.code == "opening_hours.unverified")
+        self.assertEqual(violation.severity, "error")
 
 
 if __name__ == "__main__":

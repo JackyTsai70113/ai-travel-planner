@@ -21,6 +21,11 @@ one confirmed interval. Split-hour gaps, closed weekdays, special closures, and
 meals starting after last order are rejected. Stale, unknown, and conflicting
 snapshots are not selectable by the production composer. The validator reads
 the same snapshot and retains `opening_hours.closed` as the final safety gate.
+A fresh mapping without its own restaurant timezone is treated as unverified;
+the timestamp offset or Trip timezone is never silently substituted. The
+planner penalizes unverified restaurant hours by default and can use
+`UnverifiedRestaurantHoursPolicy.BLOCK` when every scheduled meal must have
+confirmed hours.
 
 ## Sources and reconciliation
 

@@ -10,7 +10,15 @@ from src.validator import Outcome, Violation, validate_itinerary
 from src.opening_hours import Eligibility
 from src.restaurant_intelligence import meal_eligibility
 
-from .contracts import CandidatePlan, HardConstraint, PlanState, PlannerInput, PlannerOutput, SoftPreference
+from .contracts import (
+    CandidatePlan,
+    HardConstraint,
+    PlanState,
+    PlannerInput,
+    PlannerOutput,
+    SoftPreference,
+    UnverifiedRestaurantHoursPolicy,
+)
 
 
 def plan(request: PlannerInput) -> PlannerOutput:
@@ -24,6 +32,8 @@ def plan(request: PlannerInput) -> PlannerOutput:
 
     if request.max_repair_iterations < 0:
         raise ValueError("max_repair_iterations must be non-negative")
+    if not isinstance(request.unverified_restaurant_hours_policy, UnverifiedRestaurantHoursPolicy):
+        raise ValueError("unverified_restaurant_hours_policy must be penalize or block")
     plans = [_evaluate(copy.deepcopy(trip), request) for trip in request.candidate_trips]
     return PlannerOutput(tuple(sorted(plans, key=lambda item: (item.state is PlanState.FAILED, -item.score))))
 
@@ -42,23 +52,31 @@ def _evaluate(trip: dict, request: PlannerInput) -> CandidatePlan:
     if _has_errors(violations):
         return CandidatePlan(trip, float("-inf"), PlanState.FAILED, tuple(violations), iterations)
     state = PlanState.REPAIRED if iterations else PlanState.READY
-    return CandidatePlan(trip, _score(trip, request.soft_preferences), state, tuple(violations), iterations)
+    return CandidatePlan(trip, _score(trip, request.soft_preferences, violations), state, tuple(violations), iterations)
 
 
 def _validate(trip: dict, request: PlannerInput) -> list[Violation]:
     result = validate_itinerary(trip, request.validation_context)
-    combined = [*result.violations, *_restaurant_eligibility_violations(trip), *_hard_constraint_violations(trip, request.hard_constraints)]
+    combined = [
+        *result.violations,
+        *_restaurant_eligibility_violations(trip, request.unverified_restaurant_hours_policy),
+        *_hard_constraint_violations(trip, request.hard_constraints),
+    ]
     unique: list[Violation] = []
-    seen: set[tuple[str, str]] = set()
+    indexes: dict[tuple[str, str], int] = {}
     for violation in combined:
         identity = (violation.code, violation.path)
-        if identity not in seen:
-            seen.add(identity)
+        if identity not in indexes:
+            indexes[identity] = len(unique)
             unique.append(violation)
+        elif violation.severity == "error" and unique[indexes[identity]].severity != "error":
+            unique[indexes[identity]] = violation
     return unique
 
 
-def _restaurant_eligibility_violations(trip: dict) -> list[Violation]:
+def _restaurant_eligibility_violations(
+    trip: dict, policy: UnverifiedRestaurantHoursPolicy
+) -> list[Violation]:
     restaurants = {candidate.get("place", {}).get("id"): candidate for candidate in trip.get("candidate_sets", {}).get("restaurants", [])}
     violations = []
     for day_index, day in enumerate(trip.get("days", [])):
@@ -71,7 +89,7 @@ def _restaurant_eligibility_violations(trip: dict) -> list[Violation]:
             hours = candidate.get("opening_hours")
             if eligibility is Eligibility.UNVERIFIED:
                 code = "opening_hours.conflicting" if isinstance(hours, dict) and hours.get("status") == "conflicting" else "opening_hours.unverified"
-                severity = "error" if code == "opening_hours.conflicting" else "warning"
+                severity = "error" if code == "opening_hours.conflicting" or policy is UnverifiedRestaurantHoursPolicy.BLOCK else "warning"
                 violations.append(Violation(code, severity, "restaurant opening hours are not confirmed", path))
                 continue
             if eligibility is Eligibility.CLOSED:
@@ -158,7 +176,7 @@ def _set_json_pointer(document: dict, pointer: str, value: object) -> None:
     current[parts[-1]] = value
 
 
-def _score(trip: dict, preferences: Iterable[SoftPreference]) -> float:
+def _score(trip: dict, preferences: Iterable[SoftPreference], violations: Iterable[Violation]) -> float:
     score = 0.0
     item_count = sum(len(day.get("items", [])) for day in trip.get("days", []))
     for preference in preferences:
@@ -168,6 +186,21 @@ def _score(trip: dict, preferences: Iterable[SoftPreference]) -> float:
             score -= max(0, len(trip.get("selected", {}).get("hotel_place_ids", [])) - 1) * preference.weight
         # Other preference kinds remain neutral when the candidate data has no
         # explicit matching fact; a planner must not infer it.
+    restaurant_ids = {
+        candidate.get("place", {}).get("id")
+        for candidate in trip.get("candidate_sets", {}).get("restaurants", [])
+    }
+    meal_paths = {
+        f"/days/{day_index}/items/{item_index}"
+        for day_index, day in enumerate(trip.get("days", []))
+        for item_index, item in enumerate(day.get("items", []))
+        if item.get("kind") == "meal" and item.get("place_id") in restaurant_ids
+    }
+    score -= sum(
+        1.0
+        for violation in violations
+        if violation.code == "opening_hours.unverified" and violation.path in meal_paths
+    )
     return score
 
 

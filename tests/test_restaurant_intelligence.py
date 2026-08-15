@@ -60,6 +60,25 @@ def test_timezone_conversion_and_full_split_interval_gate():
     ) is Eligibility.CLOSED  # lunch/dinner split gap
 
 
+def test_fresh_hours_without_restaurant_timezone_are_unverified():
+    restaurant = candidate()
+    del restaurant["opening_hours"]["timezone"]
+    start = datetime.fromisoformat("2026-08-26T12:00:00+08:00")
+    end = datetime.fromisoformat("2026-08-26T13:00:00+08:00")
+    assert meal_eligibility(restaurant, start, end) is Eligibility.UNVERIFIED
+
+    trip = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    restaurant["place"]["id"] = "ramen-shop"
+    trip["candidate_sets"]["restaurants"] = [restaurant]
+    trip["days"][3]["items"].append({
+        "id": "missing-timezone-meal", "kind": "meal", "place_id": "ramen-shop",
+        "start_at": "2026-04-13T12:00:00+09:00", "end_at": "2026-04-13T13:00:00+09:00",
+        "selection_status": "selected",
+    })
+    result = validate_itinerary(trip)
+    assert "opening_hours.unverified" in {violation.code for violation in result.violations}
+
+
 def test_closed_weekday_and_special_date_states_override_weekly_hours():
     wednesday = (datetime.fromisoformat("2026-08-26T12:00:00+09:00"), datetime.fromisoformat("2026-08-26T13:00:00+09:00"))
     closed = candidate(intervals=[{"weekday": 2, "opens_at": "00:00", "closes_at": "00:00", "closes_day_offset": 1}])

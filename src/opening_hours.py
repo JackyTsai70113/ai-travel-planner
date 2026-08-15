@@ -103,7 +103,10 @@ def snapshot_from_mapping(value: object, *, default_timezone: str | None = None)
         status = HoursStatus(str(value.get("status", "unverified")))
     except ValueError:
         status = HoursStatus.UNVERIFIED
-    timezone_name = value.get("timezone") or default_timezone or "UTC"
+    explicit_timezone = value.get("timezone")
+    timezone_name = explicit_timezone or default_timezone or "UTC"
+    if not explicit_timezone and default_timezone is None and status is HoursStatus.FRESH:
+        status = HoursStatus.UNVERIFIED
     try:
         ZoneInfo(str(timezone_name))
     except (ZoneInfoNotFoundError, ValueError):
@@ -129,6 +132,8 @@ def snapshot_from_mapping(value: object, *, default_timezone: str | None = None)
     provenance = value.get("provenance") if isinstance(value.get("provenance"), Mapping) else None
     alternatives = tuple(_mappings(value.get("alternatives")))
     note = value.get("note") if isinstance(value.get("note"), str) else None
+    if not explicit_timezone and default_timezone is None and note is None:
+        note = "restaurant timezone is missing"
     return OpeningHoursSnapshot(status, str(timezone_name), intervals, closed, holidays, tuple(special), provenance, alternatives, note)
 
 

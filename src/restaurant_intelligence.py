@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, Iterable, Mapping, Sequence
 
 from src.opening_hours import (
@@ -56,13 +56,6 @@ def meal_eligibility(candidate: Mapping[str, object], start: datetime, end: date
     try:
         if candidate.get("business_status") in {"closed_temporarily", "closed_permanently"}:
             return Eligibility.CLOSED
-        hours = candidate.get("opening_hours")
-        if isinstance(hours, Mapping) and not hours.get("timezone"):
-            # Legacy fixtures were explicitly local-wall-time schedules.  Keep
-            # that behavior without treating their fixed UTC offset as an IANA
-            # restaurant timezone.
-            start = start.replace(tzinfo=None).replace(tzinfo=timezone.utc)
-            end = end.replace(tzinfo=None).replace(tzinfo=timezone.utc)
         return evaluate_opening_hours(opening_hours_snapshot(candidate), start, end).status
     except (KeyError, TypeError, ValueError):
         return Eligibility.UNVERIFIED

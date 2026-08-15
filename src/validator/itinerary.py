@@ -166,8 +166,10 @@ def opening_hours_rule(trip: dict, context: ValidationContext) -> Sequence[Viola
                 continue
             path = _item_path(day_index, item_index)
             value = context.opening_hours.get(item["place_id"])
+            from_candidate = False
             if value is None and item.get("kind") == "meal":
                 value = restaurant_hours.get(item["place_id"])
+                from_candidate = value is not None
             if value is None:
                 violations.append(_warning("opening_hours.unverified", "opening hours are unknown", path))
                 continue
@@ -176,7 +178,7 @@ def opening_hours_rule(trip: dict, context: ValidationContext) -> Sequence[Viola
                 if isinstance(value, Sequence) and not isinstance(value, (str, bytes, Mapping)):
                     snapshot = legacy_snapshot(value, trip_timezone)
                 else:
-                    snapshot = snapshot_from_mapping(value, default_timezone=trip_timezone)
+                    snapshot = snapshot_from_mapping(value, default_timezone=None if from_candidate else trip_timezone)
                 result = evaluate_opening_hours(snapshot, start, end)
             except (KeyError, TypeError, ValueError):
                 result = None
