@@ -1,5 +1,6 @@
 import copy
 import json
+from dataclasses import replace
 from datetime import datetime, time, timedelta
 from pathlib import Path
 import unittest
@@ -16,7 +17,7 @@ from src.planner import (
     schedule,
 )
 from src.validator import BudgetLimit, OpeningInterval, ValidationContext
-from src.conditions import ConditionPolicy, load_condition_snapshot
+from src.conditions import ConditionPolicy, ConditionSnapshot, ConditionStatus, load_condition_snapshot
 
 
 ROOT = Path(__file__).parents[1]
@@ -260,7 +261,7 @@ class PlannerTests(unittest.TestCase):
         self.assertIsNone(result.best_plan)
         self.assertIn("condition.closure.closed", {item.code for item in result.plans[0].violations})
 
-    def _scheduler_condition_case(self, fixture, daily_start="09:00"):
+    def _scheduler_condition_case(self, fixture_or_snapshot, daily_start="09:00", evaluated_at="2026-04-10T09:00:00+09:00"):
         trip = copy.deepcopy(self.trip)
         trip["days"] = []
         ohori = next(place for place in trip["candidate_sets"]["places"] if place["id"] == "ohori-park")
@@ -271,8 +272,11 @@ class PlannerTests(unittest.TestCase):
                 ("ohori-park", "hakata-hotel"): 20,
             },
             opening_hours={"ohori-park": [OpeningInterval(weekday, time(8), time(22)) for weekday in range(7)]},
-            condition_snapshot=load_condition_snapshot(ROOT / f"fixtures/conditions/{fixture}.json"),
-            condition_evaluated_at=datetime.fromisoformat("2026-04-10T09:00:00+09:00"),
+            condition_snapshot=(
+                load_condition_snapshot(ROOT / f"fixtures/conditions/{fixture_or_snapshot}.json")
+                if isinstance(fixture_or_snapshot, str) else fixture_or_snapshot
+            ),
+            condition_evaluated_at=datetime.fromisoformat(evaluated_at) if evaluated_at else None,
             condition_policy=ConditionPolicy(max_age=timedelta(days=1)),
         )
         return schedule(SchedulingInput(trip, context, daily_start=daily_start))
@@ -281,6 +285,7 @@ class PlannerTests(unittest.TestCase):
         result = self._scheduler_condition_case("tide")
         self.assertIsNone(result.best_trip)
         self.assertIn("condition.tide.outside_window", {item.code for item in result.candidates[0].violations})
+        self.assertNotIn("schedule.route_unknown", {item.code for item in result.candidates[0].violations})
 
     def test_scheduler_accepts_tide_placement_inside_authoritative_window(self):
         result = self._scheduler_condition_case("tide", daily_start="09:10")
@@ -298,6 +303,26 @@ class PlannerTests(unittest.TestCase):
         assert candidate is not None
         self.assertEqual(candidate.state, ScheduleState.READY)
         self.assertEqual(candidate.trip["days"][1]["items"][0]["start_at"], "2026-04-11T09:20:00+09:00")
+        self.assertIn("condition.weather.risk", {item.code for item in candidate.violations})
+
+    def test_scheduler_keeps_stale_and_unknown_condition_warnings_visible(self):
+        stale = self._scheduler_condition_case("weather", evaluated_at="2026-04-11T09:00:01+09:00").best_trip
+        self.assertIsNotNone(stale)
+        assert stale is not None
+        self.assertIn("condition.stale", {item.code for item in stale.violations})
+
+        weather = load_condition_snapshot(ROOT / "fixtures/conditions/weather.json")
+        unknown = replace(weather.records[0], status=ConditionStatus.UNKNOWN)
+        unknown_candidate = self._scheduler_condition_case(ConditionSnapshot((unknown,))).best_trip
+        self.assertIsNotNone(unknown_candidate)
+        assert unknown_candidate is not None
+        self.assertIn("condition.unverified", {item.code for item in unknown_candidate.violations})
+
+    def test_scheduler_snapshot_without_evaluated_at_is_ready_but_unverified(self):
+        candidate = self._scheduler_condition_case("weather", evaluated_at=None).best_trip
+        self.assertIsNotNone(candidate)
+        assert candidate is not None
+        self.assertIn("condition.unverified", {item.code for item in candidate.violations})
 
 
 if __name__ == "__main__":

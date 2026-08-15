@@ -42,10 +42,10 @@ def schedule(request: SchedulingInput) -> SchedulingOutput:
         days.append({"date": current.isoformat(), "summary": "", "items": planned})
     for activity_id in unscheduled:
         violations.append(_failure("schedule.no_feasible_day", f"required activity {activity_id} has no feasible day", "/candidate_sets"))
-    if violations:
+    if _has_errors(violations):
         return SchedulingOutput((ScheduledTrip(trip, ScheduleState.FAILED, tuple(violations)),))
     trip["days"] = days
-    return SchedulingOutput((ScheduledTrip(trip, ScheduleState.READY, (),),))
+    return SchedulingOutput((ScheduledTrip(trip, ScheduleState.READY, tuple(violations)),))
 
 
 def _date_range(trip: dict, violations: list[Violation]) -> tuple[date | None, date | None]:
@@ -144,6 +144,7 @@ def _schedule_day(current: date, day_number: int, hotel_id: str, activities: Ite
         previous = anchor_items[-1]["place_id"]
         cursor = datetime.fromisoformat(anchor_items[-1]["end_at"])
     placed: set[str] = set()
+    placed_activity = False
     low_fatigue = any(preference.get("kind") in {"low_fatigue", "pace"} and preference.get("value") in {True, "low"}
                       for preference in request.trip.get("preferences", {}).get("soft_preferences", []))
     for activity in sorted(selected, key=lambda value: (
@@ -189,15 +190,16 @@ def _schedule_day(current: date, day_number: int, hotel_id: str, activities: Ite
         if end_at > closes or not _is_open(activity["id"], cursor, end_at, request):
             violations.append(_failure("schedule.closed_or_unverified", "activity lacks a verified open interval for its scheduled time", activity["path"]))
             continue
-        condition_errors = _condition_errors(activity["id"], cursor, end_at, request, activity["path"])
-        if condition_errors:
-            violations.extend(condition_errors)
+        condition_findings = _condition_findings(activity["id"], cursor, end_at, request, activity["path"])
+        violations.extend(condition_findings)
+        if _has_errors(condition_findings):
             continue
         items.append({"id": f"day{day_number}-{activity['id']}", "kind": activity["kind"], "place_id": activity["id"], "start_at": cursor.isoformat(), "end_at": end_at.isoformat(), "selection_status": "selected"})
+        placed_activity = True
         previous, cursor = activity["id"], end_at
         if activity["schedule"].get("day") is None:
             placed.add(activity["id"])
-    if placed or any(activity["schedule"].get("day") == day_number for activity in selected):
+    if placed_activity:
         back = request.validation_context.travel_minutes.get((previous, hotel_id))
         if back is None:
             violations.append(_failure("schedule.route_unknown", f"route from {previous} to {hotel_id} is required for daily hotel consistency", "/days"))
@@ -213,17 +215,21 @@ def _is_open(place_id: str, start: datetime, end: datetime, request: SchedulingI
     return any(interval.weekday == start.weekday() and interval.opens_at <= start.time() and end.time() <= interval.closes_at for interval in intervals)
 
 
-def _condition_errors(place_id: str, start: datetime, end: datetime, request: SchedulingInput, path: str) -> list[Violation]:
+def _condition_findings(place_id: str, start: datetime, end: datetime, request: SchedulingInput, path: str) -> list[Violation]:
     context = request.validation_context
-    if context.condition_snapshot is None or context.condition_evaluated_at is None:
+    if context.condition_snapshot is None:
         return []
+    if context.condition_evaluated_at is None:
+        return [Violation("condition.unverified", "warning", "condition evaluated_at is required", path)]
     decision = evaluate_conditions(
         context.condition_snapshot, place_id, start, end,
         context.condition_evaluated_at, context.condition_policy,
     )
-    # Scheduler feasibility is binary: only evaluator errors reject a
-    # placement. Warnings and their soft penalties remain schedulable signals.
-    return [Violation(item.code, item.severity, item.message, path) for item in decision.findings if item.severity == "error"]
+    return [Violation(item.code, item.severity, item.message, path) for item in decision.findings]
+
+
+def _has_errors(violations: Iterable[Violation]) -> bool:
+    return any(item.severity == "error" for item in violations)
 
 
 def _failure(code: str, message: str, path: str) -> Violation:
