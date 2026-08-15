@@ -27,13 +27,20 @@ def schedule(request: SchedulingInput) -> SchedulingOutput:
     if violations or start is None or end is None or hotel_id is None:
         return SchedulingOutput((ScheduledTrip(trip, ScheduleState.FAILED, tuple(violations)),))
 
+    anchors_by_date = _anchors(trip, violations)
     days: list[dict] = []
+    unscheduled = {activity["id"] for activity in activities if activity["schedule"].get("day") is None}
     total_days = (end - start).days + 1
     for offset in range(total_days):
         current = start + timedelta(days=offset)
-        planned, day_violations = _schedule_day(current, offset + 1, hotel_id, activities, request)
+        planned, day_violations, placed = _schedule_day(
+            current, offset + 1, hotel_id, activities, anchors_by_date.get(current.isoformat(), ()), unscheduled, request,
+        )
         violations.extend(day_violations)
+        unscheduled.difference_update(placed)
         days.append({"date": current.isoformat(), "summary": "", "items": planned})
+    for activity_id in unscheduled:
+        violations.append(_failure("schedule.no_feasible_day", f"required activity {activity_id} has no feasible day", "/candidate_sets"))
     if violations:
         return SchedulingOutput((ScheduledTrip(trip, ScheduleState.FAILED, tuple(violations)),))
     trip["days"] = days
@@ -88,21 +95,54 @@ def _activities(trip: dict, violations: list[Violation]) -> list[dict]:
     return records
 
 
-def _schedule_day(current: date, day_number: int, hotel_id: str, activities: Iterable[dict], request: SchedulingInput) -> tuple[list[dict], list[Violation]]:
+def _anchors(trip: dict, violations: list[Violation]) -> dict[str, tuple[dict, ...]]:
+    """Retain confirmed operational items already present in the Canonical Trip."""
+    anchors: dict[str, tuple[dict, ...]] = {}
+    for day_index, day in enumerate(trip.get("days", [])):
+        current_date = day.get("date")
+        if not isinstance(current_date, str):
+            violations.append(_failure("schedule.anchor_date_missing", "existing DayPlan anchor lacks a date", f"/days/{day_index}/date"))
+            continue
+        items = []
+        for item_index, item in enumerate(day.get("items", [])):
+            if item.get("kind") in {"visit", "meal"}:
+                continue
+            try:
+                datetime.fromisoformat(item["start_at"])
+                datetime.fromisoformat(item["end_at"])
+                if not item.get("place_id"):
+                    raise ValueError
+            except (KeyError, TypeError, ValueError):
+                violations.append(_failure("schedule.anchor_invalid", "confirmed anchor requires place and timestamps", f"/days/{day_index}/items/{item_index}"))
+                continue
+            items.append(copy.deepcopy(item))
+        anchors[current_date] = tuple(sorted(items, key=lambda item: item["start_at"]))
+    return anchors
+
+
+def _schedule_day(current: date, day_number: int, hotel_id: str, activities: Iterable[dict], anchors: Iterable[dict], unscheduled: set[str], request: SchedulingInput) -> tuple[list[dict], list[Violation], set[str]]:
     violations: list[Violation] = []
-    selected = [activity for activity in activities if activity["schedule"].get("day") in (None, day_number)]
-    # Day-specific required activities must never be moved to a different date.
-    selected = [activity for activity in selected if activity["schedule"].get("day") == day_number or activity["schedule"].get("required", False)]
-    if not selected:
-        return [], violations
+    selected = [activity for activity in activities if activity["schedule"].get("day") == day_number]
+    # An unassigned required activity is tried once, then removed only after it
+    # was actually placed.  It is never duplicated across five daily plans.
+    selected.extend(activity for activity in activities if activity["id"] in unscheduled and activity["schedule"].get("required", False))
+    if not selected and not tuple(anchors):
+        return [], violations, set()
     try:
         zone = ZoneInfo(request.trip["local_timezone"])
         cursor = datetime.combine(current, time.fromisoformat(request.daily_start), zone)
         closes = datetime.combine(current, time.fromisoformat(request.daily_end), zone)
     except (KeyError, ValueError):
-        return [], [_failure("schedule.daily_window_invalid", "daily start/end must be HH:MM", "/")]
-    previous = hotel_id
-    items: list[dict] = []
+        return [], [_failure("schedule.daily_window_invalid", "daily start/end must be HH:MM", "/")], set()
+    anchor_items = list(anchors)
+    previous, items = hotel_id, []
+    if anchor_items:
+        # Anchors are immutable.  Activities are placed only after the last
+        # confirmed arrival/check-in/reservation boundary for that day.
+        items.extend(anchor_items)
+        previous = anchor_items[-1]["place_id"]
+        cursor = datetime.fromisoformat(anchor_items[-1]["end_at"])
+    placed: set[str] = set()
     low_fatigue = any(preference.get("kind") in {"low_fatigue", "pace"} and preference.get("value") in {True, "low"}
                       for preference in request.trip.get("preferences", {}).get("soft_preferences", []))
     for activity in sorted(selected, key=lambda value: (
@@ -150,13 +190,15 @@ def _schedule_day(current: date, day_number: int, hotel_id: str, activities: Ite
             continue
         items.append({"id": f"day{day_number}-{activity['id']}", "kind": activity["kind"], "place_id": activity["id"], "start_at": cursor.isoformat(), "end_at": end_at.isoformat(), "selection_status": "selected"})
         previous, cursor = activity["id"], end_at
-    if items:
+        if activity["schedule"].get("day") is None:
+            placed.add(activity["id"])
+    if placed or any(activity["schedule"].get("day") == day_number for activity in selected):
         back = request.validation_context.travel_minutes.get((previous, hotel_id))
         if back is None:
             violations.append(_failure("schedule.route_unknown", f"route from {previous} to {hotel_id} is required for daily hotel consistency", "/days"))
         elif cursor + timedelta(minutes=back) > closes:
             violations.append(_failure("schedule.hotel_return_infeasible", "cannot return to selected hotel within daily end", "/days"))
-    return items, violations
+    return items, violations, placed
 
 
 def _is_open(place_id: str, start: datetime, end: datetime, request: SchedulingInput) -> bool:

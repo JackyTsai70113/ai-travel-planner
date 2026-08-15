@@ -220,6 +220,18 @@ class PlannerTests(unittest.TestCase):
         self.assertEqual(item["start_at"], "2026-04-10T12:00:00+09:00")
         self.assertEqual(item["end_at"], "2026-04-10T13:00:00+09:00")
 
+    def test_scheduler_preserves_existing_arrival_and_checkin_anchors(self):
+        trip = copy.deepcopy(self.trip)
+        trip["candidate_sets"]["places"][3]["schedule"] = {"duration_minutes": 60, "day": 1, "required": True}
+        context = verified_context()
+        routes = {**context.travel_minutes, ("hakata-hotel", "ohori-park"): 20, ("ohori-park", "hakata-hotel"): 20}
+        candidate = schedule(SchedulingInput(trip, ValidationContext(routes, context.opening_hours))).best_trip
+        self.assertIsNotNone(candidate)
+        assert candidate is not None
+        day_one = candidate.trip["days"][0]["items"]
+        self.assertEqual([item["id"] for item in day_one[:2]], ["d1-arrival", "d1-checkin"])
+        self.assertGreaterEqual(day_one[2]["start_at"], "2026-04-10T15:50:00+09:00")
+
 
 if __name__ == "__main__":
     unittest.main()
