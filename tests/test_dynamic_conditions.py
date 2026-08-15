@@ -82,6 +82,38 @@ class DynamicConditionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "end must be after start"):
             evaluate_conditions(snapshot, "ohori-park", DT("2026-04-11T12:00:00+09:00"), DT("2026-04-11T12:00:00+09:00"), DT("2026-04-10T09:00:00+09:00"), ConditionPolicy())
 
+    def test_partial_overlap_with_fresh_authoritative_closure_is_hard(self):
+        closure = load_condition_snapshot(FIXTURES / "closure.json").records[0]
+        partial = replace(closure, valid_from=DT("2026-04-11T11:30:00+09:00"), valid_until=DT("2026-04-11T13:00:00+09:00"))
+        result = evaluate_conditions(ConditionSnapshot((partial,)), "ohori-park", DT("2026-04-11T10:00:00+09:00"), DT("2026-04-11T12:00:00+09:00"), DT("2026-04-10T09:00:00+09:00"), ConditionPolicy(max_age=timedelta(days=1)))
+        self.assertIn("condition.closure.closed", {finding.code for finding in result.findings})
+        self.assertIn("condition.unverified", {finding.code for finding in result.findings})
+
+    def test_experience_tide_window_is_advisory_not_hard(self):
+        tide = load_condition_snapshot(FIXTURES / "tide.json").records[0]
+        provenance = replace(tide.provenance, evidence_class=EvidenceClass.EXPERIENCE, source_type="community-report")
+        advisory = replace(tide, provenance=provenance, soft_penalty=2)
+        result = evaluate_conditions(ConditionSnapshot((advisory,)), "ohori-park", DT("2026-04-11T12:00:00+09:00"), DT("2026-04-11T13:00:00+09:00"), DT("2026-04-10T09:00:00+09:00"), ConditionPolicy(max_age=timedelta(days=1)))
+        self.assertFalse(any(finding.severity == "error" for finding in result.findings))
+        self.assertEqual(result.soft_penalty, 2)
+
+    def test_newer_community_available_does_not_mask_authoritative_closure(self):
+        closure = load_condition_snapshot(FIXTURES / "closure.json").records[0]
+        community_provenance = replace(
+            closure.provenance, evidence_class=EvidenceClass.EXPERIENCE,
+            source_type="community-report", retrieved_at=DT("2026-04-10T08:30:00+09:00"),
+        )
+        community_available = replace(closure, id="community-open", provenance=community_provenance, status=ConditionStatus.AVAILABLE)
+        result = evaluate_conditions(ConditionSnapshot((closure, community_available)), "ohori-park", DT("2026-04-11T10:00:00+09:00"), DT("2026-04-11T12:00:00+09:00"), DT("2026-04-10T09:00:00+09:00"), ConditionPolicy(max_age=timedelta(days=1)))
+        self.assertIn("condition.closure.closed", {finding.code for finding in result.findings})
+
+    def test_duplicate_soft_sources_use_strongest_penalty_once(self):
+        weather = load_condition_snapshot(FIXTURES / "weather.json").records[0]
+        other = replace(weather, id="weather-second-source", soft_penalty=2)
+        result = evaluate_conditions(ConditionSnapshot((weather, other)), "ohori-park", DT("2026-04-11T10:00:00+09:00"), DT("2026-04-11T12:00:00+09:00"), DT("2026-04-10T09:00:00+09:00"), ConditionPolicy(max_age=timedelta(days=1)))
+        self.assertEqual(result.soft_penalty, 3.5)
+        self.assertEqual(sum(finding.code == "condition.weather.risk" for finding in result.findings), 1)
+
 
 if __name__ == "__main__":
     unittest.main()
