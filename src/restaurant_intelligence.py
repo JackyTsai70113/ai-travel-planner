@@ -107,6 +107,15 @@ def reconcile_restaurant_candidates(candidates: Iterable[Mapping[str, object]]) 
 def _reconcile_group(group: Sequence[Mapping[str, object]]) -> dict[str, object]:
     ranked = sorted(group, key=lambda item: (_authority(item), _freshness(item)))
     result = _deep_copy_candidate(ranked[0])
+    result_place = result.get("place")
+    if isinstance(result_place, dict):
+        for candidate in ranked[1:]:
+            source_place = candidate.get("place")
+            if not isinstance(source_place, Mapping):
+                continue
+            for field in ("address", "coordinates", "opening_hours_note", "accessibility_notes"):
+                if field not in result_place and field in source_place:
+                    result_place[field] = _copy_value(source_place[field])
     source_provenance = _unique_provenance(ranked)
     if source_provenance:
         result["source_provenance"] = source_provenance
@@ -149,9 +158,16 @@ def _reconcile_group(group: Sequence[Mapping[str, object]]) -> dict[str, object]
                     for value in candidate[field]:
                         if _stable_value(value) not in {_stable_value(item) for item in existing}:
                             existing.append(_copy_value(value))
-        for field in ("cuisine", "price_range", "wait_risk"):
+        for field in ("rating", "rating_source", "review_count", "cuisine", "price_range", "wait_risk"):
             if field not in result and field in candidate:
                 result[field] = _copy_value(candidate[field])
+    attributions: list[str] = []
+    for candidate in ranked:
+        values = candidate.get("attributions")
+        if isinstance(values, Sequence) and not isinstance(values, (str, bytes)):
+            attributions.extend(value for value in values if isinstance(value, str) and value)
+    if attributions:
+        result["attributions"] = list(dict.fromkeys(attributions))
     if alternatives:
         result["alternatives"] = alternatives
     return result

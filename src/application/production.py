@@ -18,7 +18,7 @@ from src.intent import TravelIntent
 from src.orchestrator import OrchestrationResult, TravelOrchestrator, TravelOrchestratorConfig
 from src.restaurant_intelligence import eligible_restaurants, reconcile_restaurant_candidates, validation_opening_hours
 from src.sources import (
-    AmadeusClient, AmadeusFlightAdapter, AmadeusHotelAdapter, FlightSearchQuery,
+    AdapterFailure, AmadeusClient, AmadeusFlightAdapter, AmadeusHotelAdapter, FlightSearchQuery,
     GooglePlacesAdapter, HotPepperGourmetAdapter, HotelSearchQuery, Occupancy, SourceAdapter, SourceQuery,
     YouTubeEvidenceAdapter, collect_from_adapters,
 )
@@ -72,14 +72,18 @@ class _ProductionResearchAdapter(SourceAdapter):
         self.flight_search = AmadeusFlightAdapter(amadeus_client)
         self.hotel_search = AmadeusHotelAdapter(amadeus_client)
         self.evidence: list[object] = []
-        self.failures: list[object] = []
+        self.failures: list[AdapterFailure] = []
 
     def fetch(self, query: SourceQuery):
+        self.failures = []
         # Evidence is deliberately not converted into an operational candidate.
         try:
             self.evidence = list(self.youtube.fetch_evidence(query))
         except Exception as exc:
-            self.failures.append(exc)
+            self.failures.append(AdapterFailure(
+                adapter=str(getattr(self.youtube, "name", type(self.youtube).__name__)),
+                message=str(exc),
+            ))
             self.evidence = []
         candidates, failures = collect_from_adapters((self.google, *self.optional_restaurants), query)
         self.failures.extend(failures)
@@ -88,22 +92,31 @@ class _ProductionResearchAdapter(SourceAdapter):
         occupancy = Occupancy(_adults(self.intent), self.intent.travelers.child_ages)
         currency = self.intent.currency or "JPY"
         try:
-            candidates.extend(self.flight_search.search(FlightSearchQuery(
+            result = self.flight_search.search(FlightSearchQuery(
                 origin, destination, start, occupancy, return_date=end, currency=currency,
                 airport_timezones={origin: "Asia/Taipei", destination: "Asia/Tokyo"},
-            )).candidates)
+            ))
+            candidates.extend(result.candidates)
+            self.failures.extend(result.failures)
         except Exception as exc:
-            self.failures.append(exc)
+            self.failures.append(AdapterFailure(self.flight_search.name, str(exc)))
         try:
-            candidates.extend(self.hotel_search.search(HotelSearchQuery(
+            result = self.hotel_search.search(HotelSearchQuery(
                 destination, start, end + timedelta(days=1), occupancy, currency=currency,
-            )).candidates)
+            ))
+            candidates.extend(result.candidates)
+            self.failures.extend(result.failures)
         except Exception as exc:
-            self.failures.append(exc)
+            self.failures.append(AdapterFailure(self.hotel_search.name, str(exc)))
         restaurants = reconcile_restaurant_candidates(candidate for collection, candidate in candidates if collection == "restaurants")
         candidates = [(collection, candidate) for collection, candidate in candidates if collection != "restaurants"]
         candidates.extend(("restaurants", candidate) for candidate in restaurants)
         return candidates
+
+    def drain_failures(self) -> tuple[AdapterFailure, ...]:
+        failures = tuple(self.failures)
+        self.failures.clear()
+        return failures
 
 
 class ProductionPlanningRunner:

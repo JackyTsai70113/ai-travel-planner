@@ -10,6 +10,7 @@ from unittest.mock import patch
 from src.application.production import ProductionDependencies, create_production_orchestrator
 from src.cli import plan_command
 from src.intent import parse_trip_request
+from src.orchestrator import StageName, StageStatus
 from src.sources import AmadeusClient, SourceAdapter
 from src.sources.routing import FixtureRoutingProvider
 
@@ -35,8 +36,15 @@ class RecordedGoogle(SourceAdapter):
 
 
 class RecordedYouTube:
+    name = "recorded-youtube"
+
     def fetch_evidence(self, query):
         return []
+
+
+class BrokenYouTube(RecordedYouTube):
+    def fetch_evidence(self, query):
+        raise RuntimeError("recorded YouTube timeout")
 
 
 def _transport(method, url, headers, body):
@@ -51,9 +59,9 @@ def _transport(method, url, headers, body):
     raise AssertionError(url)
 
 
-def _runner(tmp_path):
+def _runner(tmp_path, *, youtube=None):
     dependencies = ProductionDependencies(
-        google=RecordedGoogle(), youtube=RecordedYouTube(),
+        google=RecordedGoogle(), youtube=youtube or RecordedYouTube(),
         amadeus_client=AmadeusClient(_transport, ENVIRONMENT), routing_provider=FixtureRoutingProvider(()),
     )
     return create_production_orchestrator(
@@ -73,6 +81,21 @@ def test_recorded_production_composition_runs_pipeline_and_persists_canonical_ou
     assert "google-secret" not in persisted
     assert "amadeus-secret" not in persisted
     assert result.render_path.exists()
+
+
+def test_nested_provider_failure_is_visible_to_orchestrator_without_losing_trip(tmp_path):
+    intent = parse_trip_request("2026/4/10到2026/4/14 台北出發德島五天四夜，2大，預算8萬日圓，自駕")
+    result = _runner(tmp_path, youtube=BrokenYouTube()).run(intent)
+
+    assert result.succeeded
+    research = result.stage(StageName.RESEARCH)
+    assert research.status is StageStatus.INCOMPLETE
+    assert any(
+        warning.code == "research.provider_failed"
+        and "recorded-youtube" in warning.message
+        and "recorded YouTube timeout" in warning.message
+        for warning in research.warnings
+    )
 
 
 def test_cli_non_demo_invokes_shared_production_composition_not_configuration_ready(monkeypatch, capsys, tmp_path):

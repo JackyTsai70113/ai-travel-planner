@@ -50,8 +50,10 @@ all source provenance remain auditable. Contradictory facts at the same winning
 authority become `conflicting`, which blocks meal selection.
 
 Aggregate restaurant ratings are separate from dish evidence. Every rating
-retains its original minimum/maximum scale and review count. Every recommended
-dish requires complete provenance. Adapters do not invent ratings or dishes.
+retains its original minimum/maximum scale; review count is retained when the
+provider supplies it and otherwise remains absent rather than becoming zero.
+Every recommended dish requires complete provenance. Adapters do not invent
+ratings or dishes.
 
 ## Offline verification
 

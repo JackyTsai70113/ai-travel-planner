@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 import unittest
 
 from src.sources import (
+    AdapterFailure,
     CandidateState,
     CandidateStore,
     FixtureCommunityRestaurantAdapter,
@@ -34,6 +35,16 @@ class BrokenAdapter(SourceAdapter):
         raise RuntimeError("provider timeout")
 
 
+class NestedFailureAdapter(SourceAdapter):
+    name = "nested-fixture"
+
+    def fetch(self, query):
+        return list(FixtureOfficialPoiAdapter(NOW).fetch(query))
+
+    def drain_failures(self):
+        return (AdapterFailure("nested-provider", "partial provider timeout"),)
+
+
 class SourceAdapterTests(unittest.TestCase):
     def test_fixture_adapters_emit_canonical_provenance(self):
         candidates, failures = collect_from_adapters(
@@ -53,6 +64,11 @@ class SourceAdapterTests(unittest.TestCase):
         self.assertEqual(1, len(candidates))
         self.assertEqual("places", candidates[0][0])
         self.assertEqual(["broken-fixture"], [failure.adapter for failure in failures])
+
+    def test_nested_adapter_failure_is_reported_without_discarding_candidates(self):
+        candidates, failures = collect_from_adapters([NestedFailureAdapter()], QUERY)
+        self.assertEqual(1, len(candidates))
+        self.assertEqual(["nested-provider"], [failure.adapter for failure in failures])
 
 
 class RecordedHttpClient:
@@ -120,6 +136,18 @@ class ProductionProviderAdapterTests(unittest.TestCase):
             {"weekday": 0, "opens_at": "17:30", "closes_at": "21:00"},
         ], restaurant["opening_hours"]["intervals"])
         self.assertNotIn("regularOpeningHours", str(restaurant))
+
+    def test_google_rating_does_not_invent_zero_reviews_when_count_is_absent(self):
+        recording = {"places": [{
+            "id": "RatingOnly", "displayName": {"text": "評価のみ"}, "rating": 4.2,
+            "timeZone": {"id": "Asia/Tokyo"}, "regularOpeningHours": {"periods": []},
+        }]}
+        restaurant = list(GooglePlacesAdapter(
+            "key", http_client=RecordedHttpClient([self.google_recording, recording]), now=NOW,
+        ).fetch(QUERY))[1][1]
+        self.assertEqual(4.2, restaurant["ratings"][0]["value"])
+        self.assertNotIn("review_count", restaurant["ratings"][0])
+        self.assertNotIn("review_count", restaurant)
 
     def test_google_special_hours_timezone_cross_midnight_and_canonical_id(self):
         recording = {"places": [{

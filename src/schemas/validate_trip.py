@@ -88,7 +88,11 @@ def _validate_restaurant(candidate: object, index: int) -> None:
         value, scale_min, scale_max = values
         if scale_min >= scale_max or not scale_min <= value <= scale_max:
             raise TripValidationError(f"{rating_path}.value must fall within its original scale")
-        if not isinstance(rating.get("review_count"), int) or rating["review_count"] < 0:
+        if "review_count" in rating and (
+            not isinstance(rating["review_count"], int)
+            or isinstance(rating["review_count"], bool)
+            or rating["review_count"] < 0
+        ):
             raise TripValidationError(f"{rating_path}.review_count must be a non-negative integer")
         _require_provenance(rating.get("provenance"), f"{rating_path}.provenance")
     for dish_index, dish in enumerate(candidate.get("recommended_dishes", [])):

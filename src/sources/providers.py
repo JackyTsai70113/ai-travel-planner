@@ -142,11 +142,13 @@ class GooglePlacesAdapter(SourceAdapter):
         if isinstance(raw.get("rating"), (int, float)):
             restaurant_candidate["rating"] = float(raw["rating"])
             restaurant_candidate["rating_source"] = "Google Places"
-            restaurant_candidate["ratings"] = [{
+            rating = {
                 "value": float(raw["rating"]), "scale_min": 1.0, "scale_max": 5.0,
-                "review_count": raw.get("userRatingCount", 0) if isinstance(raw.get("userRatingCount"), int) else 0,
                 "provenance": provenance,
-            }]
+            }
+            if isinstance(raw.get("userRatingCount"), int):
+                rating["review_count"] = raw["userRatingCount"]
+            restaurant_candidate["ratings"] = [rating]
         if isinstance(raw.get("userRatingCount"), int):
             restaurant_candidate["review_count"] = raw["userRatingCount"]
         cuisine = raw.get("primaryType")
