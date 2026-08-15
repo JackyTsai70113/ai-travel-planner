@@ -9,6 +9,14 @@ interface BundleDayItem {
   notes?: string
 }
 
+interface BundlePlace {
+  id: string
+  name?: string | null
+  address?: string | null
+  kind?: string | null
+  maps_query?: string | null
+}
+
 interface BundleDay {
   date: string
   summary: string
@@ -25,6 +33,7 @@ interface Bundle {
   title: string
   status: 'ok' | 'warning' | 'error'
   local_timezone: string
+  places?: BundlePlace[]
   date_range: { start_date: string; end_date: string }
   traveler_profile: {
     adults: number
@@ -102,6 +111,17 @@ function formatMoney(value: { amount: number; currency: string } | null): string
 function buildMapsLink(placeLabel: string): string {
   const query = encodeURIComponent(placeLabel.trim())
   return `https://www.google.com/maps/search/?api=1&query=${query}`
+}
+
+function findPlaceLabel(places: BundlePlace[] = [], placeId: string): string {
+  const found = places.find((place) => place.id === placeId)
+  if (!found) return placeId
+  return found.name || found.maps_query || placeId
+}
+
+function findPlaceAddress(places: BundlePlace[] = [], placeId: string): string {
+  const found = places.find((place) => place.id === placeId)
+  return found?.address || ''
 }
 
 function toFriendlyStatus(status: Bundle['status']): string {
@@ -203,6 +223,7 @@ function App() {
   }, [])
 
   const totalDays = useMemo(() => bundle?.days.length ?? 0, [bundle])
+  const placeList = useMemo(() => bundle?.places ?? [], [bundle])
   const warningCount = useMemo(
     () => bundle?.validation.filter((item) => item.severity === 'warning' || item.severity === 'error').length ?? 0,
     [bundle],
@@ -304,14 +325,21 @@ function App() {
                     </span>
                   </div>
                   <div className="journey-meta">
-                    <span>地點: {item.place_id}</span>
+                    <span>地點: {findPlaceLabel(placeList, item.place_id)}</span>
+                    {findPlaceAddress(placeList, item.place_id) ? (
+                      <span>地址: {findPlaceAddress(placeList, item.place_id)}</span>
+                    ) : null}
                     {item.notes ? <span>備註: {item.notes}</span> : null}
-                    <a href={buildMapsLink(item.place_id)} target="_blank" rel="noreferrer">
+                    <a
+                      href={buildMapsLink(findPlaceLabel(placeList, item.place_id))}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
                       開啟 Google Maps
                     </a>
                     <button
                       type="button"
-                      onClick={() => copyText(`${currentDay.date}-${item.id}`, item.place_id)}
+                      onClick={() => copyText(`${currentDay.date}-${item.id}`, findPlaceLabel(placeList, item.place_id))}
                     >
                       {copiedId === `${currentDay.date}-${item.id}` ? '已複製' : '複製地點'}
                     </button>

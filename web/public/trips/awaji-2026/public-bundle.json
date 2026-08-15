@@ -218,10 +218,187 @@
   ],
   "local_timezone": "Asia/Tokyo",
   "meta": {
-    "generated_at": "2026-08-15T18:31:58+00:00",
+    "generated_at": "2026-08-15T18:39:02+00:00",
     "source_path": "trips/awaji-naruto-tokushima-kobe-2026/trip.json",
     "source_sha256": "c646e71521dfd44db246d199138e30fd0759a783806552dc19e4d524b1447ddb"
   },
+  "places": [
+    {
+      "address": "淡路市洲本",
+      "id": "awaji-beach",
+      "kind": "poi",
+      "maps_query": "淡路島南岸景觀公園",
+      "name": "淡路島南岸景觀公園"
+    },
+    {
+      "address": "淡路市",
+      "id": "awaji-harbor-diner",
+      "kind": "restaurant",
+      "maps_query": "淡路海岸茶咖（待確認）",
+      "name": "淡路海岸茶咖（待確認）"
+    },
+    {
+      "address": "淡路市",
+      "id": "awaji-nakajima-park",
+      "kind": "poi",
+      "maps_query": "淡路島北部公園步道",
+      "name": "淡路島北部公園步道"
+    },
+    {
+      "address": "淡路市清水町",
+      "id": "awaji-riverside-hotel",
+      "kind": "hotel",
+      "maps_query": "Awaji Riverside Terrace",
+      "name": "Awaji Riverside Terrace"
+    },
+    {
+      "address": "兵庫縣神戶市",
+      "id": "kobe-airport",
+      "kind": "airport",
+      "maps_query": "神戶(神戶機場)",
+      "name": "神戶(神戶機場)"
+    },
+    {
+      "address": "2805-7 Kusumoto, Awaji, Hyogo 656-2301",
+      "id": "map-import-awaji-hanasajiki",
+      "kind": "poi",
+      "maps_query": "Hyogo Prefecture Awaji Hanasajiki",
+      "name": "Hyogo Prefecture Awaji Hanasajiki"
+    },
+    {
+      "address": "1467-4 Otani, Awaji, Hyogo 656-2224",
+      "id": "map-import-boulangerie-rural",
+      "kind": "restaurant",
+      "maps_query": "Boulangerie RURAL",
+      "name": "Boulangerie RURAL"
+    },
+    {
+      "address": "1033-1 Gunge, Awaji, Hyogo 656-1511",
+      "id": "map-import-garb-costa-orange",
+      "kind": "restaurant",
+      "maps_query": "Garb Costa Orange",
+      "name": "Garb Costa Orange"
+    },
+    {
+      "address": "Matsuhokeino, Minamiawaji, Hyogo 656-0304",
+      "id": "map-import-keino-beach",
+      "kind": "poi",
+      "maps_query": "慶野松原海水浴場",
+      "name": "慶野松原海水浴場"
+    },
+    {
+      "address": "Hei-936-3 Fukura, Minamiawaji, Hyogo 656-0503",
+      "id": "map-import-naruto-bridge-memorial",
+      "kind": "poi",
+      "maps_query": "漩渦之丘 大鳴門橋紀念館",
+      "name": "漩渦之丘 大鳴門橋紀念館"
+    },
+    {
+      "address": "2963-4 Nakada, Awaji, Hyogo 656-2163",
+      "id": "map-import-o-awaji",
+      "kind": "restaurant",
+      "maps_query": "O AWAJI",
+      "name": "O AWAJI"
+    },
+    {
+      "address": "816 Nojimahikinoura, Awaji, Hyogo 656-1721",
+      "id": "map-import-ocean-terrace",
+      "kind": "poi",
+      "maps_query": "Ocean Terrace",
+      "name": "Ocean Terrace"
+    },
+    {
+      "address": "1 Chome-2 Kaigandori, Sumoto, Hyogo 656-0022",
+      "id": "map-import-ohama-park",
+      "kind": "poi",
+      "maps_query": "Ohama Park",
+      "name": "Ohama Park"
+    },
+    {
+      "address": "1028-1 Gunge, Awaji, Hyogo 656-1511",
+      "id": "map-import-picnic-garden",
+      "kind": "restaurant",
+      "maps_query": "Picnic Garden",
+      "name": "Picnic Garden"
+    },
+    {
+      "address": "Suberiiwahama-23-100 Muyacho Okuwajima, Naruto, Tokushima 772-0011",
+      "id": "map-import-pokara-naruto-store",
+      "kind": "restaurant",
+      "maps_query": "ポカラ 鳴門店",
+      "name": "ポカラ 鳴門店"
+    },
+    {
+      "address": "5 Chome-1-37 Honmachi, Sumoto, Hyogo 656-0025",
+      "id": "map-import-poplar-ramen",
+      "kind": "restaurant",
+      "maps_query": "淡路島ラーメン ポプラ",
+      "name": "淡路島ラーメン ポプラ"
+    },
+    {
+      "address": "1 Chome-1-8 Shioya, Sumoto, Hyogo 656-0021",
+      "id": "map-import-sbrick-warehouse",
+      "kind": "poi",
+      "maps_query": "S BRICK 旧:鐘紡工場跡 赤レンガ倉庫",
+      "name": "S BRICK 旧:鐘紡工場跡 赤レンガ倉庫"
+    },
+    {
+      "address": "Heianura-40-6 Aigacho, Sumoto, Hyogo 656-2121",
+      "id": "map-import-taidrobou",
+      "kind": "restaurant",
+      "maps_query": "浮世離れの鯛ドロボー",
+      "name": "浮世離れの鯛ドロボー"
+    },
+    {
+      "address": "Hei-936-3 Fukura, Minamiawaji, Hyogo 656-0503",
+      "id": "map-import-uzuno-oka",
+      "kind": "restaurant",
+      "maps_query": "絶景レストラン うずの丘",
+      "name": "絶景レストラン うずの丘"
+    },
+    {
+      "address": "1035 Ura, Awaji, Hyogo 656-2305",
+      "id": "map-import-yumebutai",
+      "kind": "poi",
+      "maps_query": "夢舞台",
+      "name": "夢舞台"
+    },
+    {
+      "address": "鳴門（地點待補）",
+      "id": "naruto-ferry-fixed-activity",
+      "kind": "poi",
+      "maps_query": "しあわせのパンケーキ",
+      "name": "しあわせのパンケーキ"
+    },
+    {
+      "address": "鳴門町",
+      "id": "naruto-whirlpool-viewpoint",
+      "kind": "poi",
+      "maps_query": "鳴門漩渦觀景橋段",
+      "name": "鳴門漩渦觀景橋段"
+    },
+    {
+      "address": "2-3 Shimoyamatedoori, Chuo, Kobe, Hyogo 650-0011, Japan",
+      "id": "royal-park-canvas-kobe-sannomiya",
+      "kind": "hotel",
+      "maps_query": "The Royal Park Canvas Kobe Sannomiya",
+      "name": "The Royal Park Canvas Kobe Sannomiya"
+    },
+    {
+      "address": "台灣桃園市",
+      "id": "taoyuan-airport",
+      "kind": "airport",
+      "maps_query": "桃園國際機場",
+      "name": "桃園國際機場"
+    },
+    {
+      "address": "金沢１丁目３−44－3号, 德島 770-0871, 日本",
+      "id": "tokushima-seshi-besso-hotel-2",
+      "kind": "hotel",
+      "maps_query": "徳島別荘ホテル2",
+      "name": "徳島別荘ホテル2"
+    }
+  ],
   "preferences": {
     "hard_constraints": [
       {
