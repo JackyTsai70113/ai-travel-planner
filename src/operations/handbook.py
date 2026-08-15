@@ -127,7 +127,14 @@ def _public_provenance(provenance: Any) -> dict[str, Any] | None:
     public = {key: deepcopy(provenance[key]) for key in ("source_type", "provider", "retrieved_at", "status", "confidence") if key in provenance}
     if isinstance(provenance.get("source_url"), str):
         parsed = urlsplit(provenance["source_url"])
-        public["source_url"] = urlunsplit((parsed.scheme, parsed.netloc, parsed.path, "", ""))
+        try:
+            port = parsed.port
+        except ValueError:
+            port = None
+        if parsed.scheme.lower() in {"http", "https"} and parsed.hostname:
+            hostname = parsed.hostname if ":" not in parsed.hostname else f"[{parsed.hostname}]"
+            netloc = f"{hostname}:{port}" if port else hostname
+            public["source_url"] = urlunsplit((parsed.scheme.lower(), netloc, parsed.path, "", ""))
     return public
 
 
