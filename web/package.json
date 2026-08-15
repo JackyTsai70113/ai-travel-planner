@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "echo \"lint: skipped\"",
     "lint:tw": "echo \"lint:tw skipped\"",
-    "validate:data": "python3 ../scripts/check-awaji-contamination.py && python3 ../scripts/build_awaji_public_bundle.py --trip-path ../trips/awaji-naruto-tokushima-kobe-2026/trip.json --output ../trips/awaji-naruto-tokushima-kobe-2026/public-bundle.json",
+    "validate:data": "python3 ../scripts/check-awaji-contamination.py && python3 ../scripts/build_awaji_public_bundle.py --trip-path ../trips/awaji-naruto-tokushima-kobe-2026/trip.json --output ../trips/awaji-naruto-tokushima-kobe-2026/public-bundle.json --web-output public/trips/awaji-2026/public-bundle.json",
     "test": "echo \"No tests in web package\"",
     "test:e2e": "echo \"e2e not configured in this worktree\"",
     "screenshots": "echo \"screenshots not configured in this worktree\"",
