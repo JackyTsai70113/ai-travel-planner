@@ -80,6 +80,23 @@ def _bundle_days(trip: dict) -> list[dict]:
     return days
 
 
+def _bundle_places(places: dict[str, dict[str, object]]) -> list[dict]:
+    return sorted(
+        [
+            {
+                "id": place_id,
+                "name": place.get("name"),
+                "address": place.get("address"),
+                "kind": place.get("kind"),
+                "maps_query": place.get("name"),
+            }
+            for place_id, place in places.items()
+            if isinstance(place, dict)
+        ],
+        key=lambda item: item["id"],
+    )
+
+
 def _bundle_reservations(days: list[dict], places: dict[str, dict[str, object]]) -> list[dict]:
     reservations: list[dict] = []
     for day in days:
@@ -149,6 +166,7 @@ def build_public_bundle(trip: dict, trip_path: Path) -> dict:
         "trip_id": trip.get("id"),
         "title": trip.get("title"),
         "local_timezone": trip.get("local_timezone"),
+        "places": _bundle_places(places),
         "status": trip_status,
         "date_range": trip.get("date_range", {}),
         "traveler_profile": _build_profile(trip),
