@@ -29,5 +29,13 @@ def test_renderer_displays_required_restaurant_attribution():
         "Powered by ホットペッパーグルメ Webサービス",
     ]
     html = build_site(trip)
-    assert "Powered by ホットペッパーグルメ Webサービス" in html
-    assert html.count("Powered by ホットペッパーグルメ Webサービス") == 1
+    assert 'Powered by <a href="http://webservice.recruit.co.jp/">ホットペッパーグルメ Webサービス</a>' in html
+    assert html.count("ホットペッパーグルメ Webサービス") == 1
+
+
+def test_renderer_escapes_unrecognized_restaurant_attribution():
+    trip = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    trip["candidate_sets"]["restaurants"][0]["attributions"] = ["<script>alert(1)</script>"]
+    html = build_site(trip)
+    assert "<script>alert(1)</script>" not in html
+    assert "&lt;script&gt;alert(1)&lt;/script&gt;" in html

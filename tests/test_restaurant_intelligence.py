@@ -154,6 +154,7 @@ def test_official_override_and_same_authority_conflict_are_auditable():
     assert reconciled["alternatives"][0]["field"] == "opening_hours"
     assert reconciled["place"]["address"] == "福岡市中央区"
     assert reconciled["place"]["coordinates"] == {"latitude": 33.59, "longitude": 130.40}
+    assert reconciled["place"]["provenance"]["provider"] == "recorded"
     assert reconciled["attributions"] == ["Provider credit"]
 
     other_official = candidate(provenance={**official_source, "provider": "Official notice"})

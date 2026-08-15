@@ -107,15 +107,10 @@ def reconcile_restaurant_candidates(candidates: Iterable[Mapping[str, object]]) 
 def _reconcile_group(group: Sequence[Mapping[str, object]]) -> dict[str, object]:
     ranked = sorted(group, key=lambda item: (_authority(item), _freshness(item)))
     result = _deep_copy_candidate(ranked[0])
-    result_place = result.get("place")
-    if isinstance(result_place, dict):
-        for candidate in ranked[1:]:
-            source_place = candidate.get("place")
-            if not isinstance(source_place, Mapping):
-                continue
-            for field in ("address", "coordinates", "opening_hours_note", "accessibility_notes"):
-                if field not in result_place and field in source_place:
-                    result_place[field] = _copy_value(source_place[field])
+    place_sources = [candidate for candidate in ranked if isinstance(candidate.get("place"), Mapping)]
+    if place_sources:
+        place_source = min(place_sources, key=_place_rank)
+        result["place"] = _copy_value(place_source["place"])
     source_provenance = _unique_provenance(ranked)
     if source_provenance:
         result["source_provenance"] = source_provenance
@@ -177,6 +172,24 @@ def _authority(candidate: Mapping[str, object]) -> int:
     return {"official": 0, "provider": 1, "community": 2, "derived": 3, "user_input": 4}.get(
         str(_provenance(candidate).get("source_type")), 99
     )
+
+
+def _place_rank(candidate: Mapping[str, object]) -> tuple[int, int, int]:
+    """Keep one source-coherent place record, preferring routing coordinates."""
+
+    place = candidate.get("place")
+    if not isinstance(place, Mapping):
+        return 1, 1, _authority(candidate)
+    coordinates = place.get("coordinates")
+    has_coordinates = (
+        isinstance(coordinates, Mapping)
+        and isinstance(coordinates.get("latitude"), (int, float))
+        and not isinstance(coordinates.get("latitude"), bool)
+        and isinstance(coordinates.get("longitude"), (int, float))
+        and not isinstance(coordinates.get("longitude"), bool)
+    )
+    has_address = isinstance(place.get("address"), str) and bool(place["address"])
+    return int(not has_coordinates), int(not has_address), _authority(candidate)
 
 
 def _freshness(candidate: Mapping[str, object]) -> int:
