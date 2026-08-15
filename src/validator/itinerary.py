@@ -8,9 +8,18 @@ passed in as a :class:`ValidationContext`, making every result reproducible.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, time
+from datetime import datetime
 from enum import Enum
 from typing import Callable, Mapping, Sequence
+
+from src.opening_hours import (
+    Eligibility,
+    OpeningHoursSnapshot,
+    OpeningInterval,
+    evaluate_opening_hours,
+    legacy_snapshot,
+    snapshot_from_mapping,
+)
 
 
 class Outcome(str, Enum):
@@ -38,15 +47,6 @@ class Violation:
 
 
 @dataclass(frozen=True)
-class OpeningInterval:
-    """A local opening interval; weekday uses Python's Monday=0 convention."""
-
-    weekday: int
-    opens_at: time
-    closes_at: time
-
-
-@dataclass(frozen=True)
 class BudgetLimit:
     amount: float
     currency: str
@@ -63,7 +63,7 @@ class ValidationContext:
     """
 
     travel_minutes: Mapping[tuple[str, str], int] = field(default_factory=dict)
-    opening_hours: Mapping[str, Sequence[OpeningInterval]] = field(default_factory=dict)
+    opening_hours: Mapping[str, Sequence[OpeningInterval] | OpeningHoursSnapshot | Mapping[str, object]] = field(default_factory=dict)
     budget_limit: BudgetLimit | None = None
 
 
@@ -153,23 +153,38 @@ def travel_time_rule(trip: dict, context: ValidationContext) -> Sequence[Violati
 
 
 def opening_hours_rule(trip: dict, context: ValidationContext) -> Sequence[Violation]:
+    restaurant_hours = {
+        candidate.get("place", {}).get("id"): candidate.get("opening_hours")
+        for candidate in trip.get("candidate_sets", {}).get("restaurants", [])
+        if isinstance(candidate, Mapping) and isinstance(candidate.get("place"), Mapping)
+    }
+    trip_timezone = str(trip.get("local_timezone", "UTC"))
     violations: list[Violation] = []
     for day_index, day in enumerate(trip.get("days", [])):
         for item_index, item in enumerate(day.get("items", [])):
             if item.get("kind") not in {"visit", "meal"}:
                 continue
             path = _item_path(day_index, item_index)
-            intervals = context.opening_hours.get(item["place_id"])
-            if not intervals:
+            value = context.opening_hours.get(item["place_id"])
+            from_candidate = False
+            if value is None and item.get("kind") == "meal":
+                value = restaurant_hours.get(item["place_id"])
+                from_candidate = value is not None
+            if value is None:
                 violations.append(_warning("opening_hours.unverified", "opening hours are unknown", path))
                 continue
             start, end = _timestamps(item)
-            if start.date() != end.date() or not any(
-                interval.weekday == start.weekday()
-                and interval.opens_at <= start.timetz().replace(tzinfo=None)
-                and end.timetz().replace(tzinfo=None) <= interval.closes_at
-                for interval in intervals
-            ):
+            try:
+                if isinstance(value, Sequence) and not isinstance(value, (str, bytes, Mapping)):
+                    snapshot = legacy_snapshot(value, trip_timezone)
+                else:
+                    snapshot = snapshot_from_mapping(value, default_timezone=None if from_candidate else trip_timezone)
+                result = evaluate_opening_hours(snapshot, start, end)
+            except (KeyError, TypeError, ValueError):
+                result = None
+            if result is None or result.status is Eligibility.UNVERIFIED:
+                violations.append(_warning("opening_hours.unverified", "opening hours are not confirmed for this interval", path))
+            elif result.status is Eligibility.CLOSED:
                 violations.append(_error("opening_hours.closed", "scheduled time falls outside opening hours", path))
     return violations
 

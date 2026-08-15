@@ -21,3 +21,13 @@ def test_renderer_displays_upstream_validation_without_evaluating_it():
     trip = json.loads(FIXTURE.read_text(encoding="utf-8"))
     trip["validation"] = [{"code": "schedule_conflict", "message": "由 validator 提供"}]
     assert "schedule_conflict" in build_site(trip)
+
+
+def test_renderer_displays_required_restaurant_attribution():
+    trip = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    trip["candidate_sets"]["restaurants"][0]["attributions"] = [
+        "Powered by ホットペッパーグルメ Webサービス",
+    ]
+    html = build_site(trip)
+    assert "Powered by ホットペッパーグルメ Webサービス" in html
+    assert html.count("Powered by ホットペッパーグルメ Webサービス") == 1

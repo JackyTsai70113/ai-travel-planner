@@ -15,6 +15,13 @@ class PlanState(str, Enum):
     FAILED = "failed"
 
 
+class UnverifiedRestaurantHoursPolicy(str, Enum):
+    """How planning treats a scheduled meal whose hours are not confirmed."""
+
+    PENALIZE = "penalize"
+    BLOCK = "block"
+
+
 @dataclass(frozen=True)
 class HardConstraint:
     """A non-negotiable planning condition, evaluated before soft scoring.
@@ -51,6 +58,7 @@ class PlannerInput:
     hard_constraints: Sequence[HardConstraint] = ()
     soft_preferences: Sequence[SoftPreference] = ()
     max_repair_iterations: int = 3
+    unverified_restaurant_hours_policy: UnverifiedRestaurantHoursPolicy = UnverifiedRestaurantHoursPolicy.PENALIZE
 
 
 @dataclass(frozen=True)

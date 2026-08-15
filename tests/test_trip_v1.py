@@ -37,6 +37,13 @@ class TripV1Tests(unittest.TestCase):
         with self.assertRaisesRegex(TripValidationError, "does not reference"):
             validate_trip(trip)
 
+    def test_unscheduled_restaurant_candidate_does_not_require_catalog_duplicate(self):
+        trip = copy.deepcopy(self.trip)
+        restaurant = copy.deepcopy(trip["candidate_sets"]["restaurants"][0])
+        restaurant["place"]["id"] = "independent-restaurant"
+        trip["candidate_sets"]["restaurants"].append(restaurant)
+        validate_trip(trip)
+
 
 if __name__ == "__main__":
     unittest.main()

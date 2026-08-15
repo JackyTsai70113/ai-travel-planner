@@ -41,6 +41,11 @@ class SourceAdapter(ABC):
         Each candidate must contain canonical ``provenance`` with ``retrieved_at``.
         """
 
+    def drain_failures(self) -> tuple[AdapterFailure, ...]:
+        """Return nested provider failures captured while preserving candidates."""
+
+        return ()
+
 
 def collect_from_adapters(
     adapters: Iterable[SourceAdapter], query: SourceQuery
@@ -52,6 +57,7 @@ def collect_from_adapters(
     for adapter in adapters:
         try:
             candidates.extend(adapter.fetch(query))
+            failures.extend(adapter.drain_failures())
         except Exception as exc:  # provider/network failures are non-fatal per adapter
             failures.append(AdapterFailure(adapter=adapter.name, message=str(exc)))
     return candidates, failures
