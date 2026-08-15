@@ -184,10 +184,10 @@ function App() {
 
       try {
         const urls = [
-          `${baseUrl}trips/awaji-2026/public-bundle.json`,
           `${baseUrl}public-bundle.json`,
-          '/trips/awaji-2026/public-bundle.json',
-          '/public-bundle.json',
+          `${baseUrl}trips/awaji-2026/public-bundle.json`,
+          './public-bundle.json',
+          './trips/awaji-2026/public-bundle.json',
         ]
         const attemptLogs: string[] = []
         let response: Response | null = null
