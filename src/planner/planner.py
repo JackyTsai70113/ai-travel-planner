@@ -6,9 +6,10 @@ import copy
 from datetime import datetime, timedelta
 from typing import Iterable
 
-from src.validator import Outcome, Violation, validate_itinerary
+from src.conditions import evaluate_conditions
 from src.opening_hours import Eligibility
 from src.restaurant_intelligence import meal_eligibility
+from src.validator import Outcome, Violation, validate_itinerary
 
 from .contracts import (
     CandidatePlan,
@@ -52,7 +53,7 @@ def _evaluate(trip: dict, request: PlannerInput) -> CandidatePlan:
     if _has_errors(violations):
         return CandidatePlan(trip, float("-inf"), PlanState.FAILED, tuple(violations), iterations)
     state = PlanState.REPAIRED if iterations else PlanState.READY
-    return CandidatePlan(trip, _score(trip, request.soft_preferences, violations), state, tuple(violations), iterations)
+    return CandidatePlan(trip, _score(trip, request, violations), state, tuple(violations), iterations)
 
 
 def _validate(trip: dict, request: PlannerInput) -> list[Violation]:
@@ -176,10 +177,10 @@ def _set_json_pointer(document: dict, pointer: str, value: object) -> None:
     current[parts[-1]] = value
 
 
-def _score(trip: dict, preferences: Iterable[SoftPreference], violations: Iterable[Violation]) -> float:
+def _score(trip: dict, request: PlannerInput, violations: Iterable[Violation]) -> float:
     score = 0.0
     item_count = sum(len(day.get("items", [])) for day in trip.get("days", []))
-    for preference in preferences:
+    for preference in request.soft_preferences:
         if preference.kind == "low_fatigue":
             score -= item_count * preference.weight
         elif preference.kind == "few_hotel_changes":
@@ -201,6 +202,15 @@ def _score(trip: dict, preferences: Iterable[SoftPreference], violations: Iterab
         for violation in violations
         if violation.code == "opening_hours.unverified" and violation.path in meal_paths
     )
+    context = request.validation_context
+    if context.condition_snapshot is not None and context.condition_evaluated_at is not None:
+        for day in trip.get("days", []):
+            for item in day.get("items", []):
+                decision = evaluate_conditions(
+                    context.condition_snapshot, item["place_id"], _timestamp(item["start_at"]),
+                    _timestamp(item["end_at"]), context.condition_evaluated_at, context.condition_policy,
+                )
+                score -= decision.soft_penalty
     return score
 
 

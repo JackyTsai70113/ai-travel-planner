@@ -9,6 +9,7 @@ from .itinerary import (
     ValidationContext,
     ValidationResult,
     Violation,
+    dynamic_condition_rule,
     validate_itinerary,
 )
 from .routing import validate_route_availability
@@ -22,6 +23,7 @@ __all__ = [
     "ValidationContext",
     "ValidationResult",
     "Violation",
+    "dynamic_condition_rule",
     "validate_itinerary",
     "validate_route_availability",
 ]

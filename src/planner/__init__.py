@@ -1,23 +1,15 @@
 """Planner public API."""
 
 from .contracts import (
-    CandidatePlan,
-    HardConstraint,
-    PlanState,
-    PlannerInput,
-    PlannerOutput,
-    SoftPreference,
-    UnverifiedRestaurantHoursPolicy,
+    CandidatePlan, HardConstraint, PlanState, PlannerInput, PlannerOutput,
+    ScheduledTrip, ScheduleState, SchedulingInput, SchedulingOutput,
+    SoftPreference, UnverifiedRestaurantHoursPolicy,
 )
 from .planner import plan
+from .scheduler import schedule
 
 __all__ = [
-    "CandidatePlan",
-    "HardConstraint",
-    "PlanState",
-    "PlannerInput",
-    "PlannerOutput",
-    "SoftPreference",
-    "UnverifiedRestaurantHoursPolicy",
-    "plan",
+    "CandidatePlan", "HardConstraint", "PlanState", "PlannerInput", "PlannerOutput",
+    "ScheduledTrip", "ScheduleState", "SchedulingInput", "SchedulingOutput",
+    "SoftPreference", "UnverifiedRestaurantHoursPolicy", "plan", "schedule",
 ]

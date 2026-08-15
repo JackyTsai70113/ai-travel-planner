@@ -1,0 +1,28 @@
+{
+  "profile": "operator-advisory-v1",
+  "provider": "Kyushu road operator official advisory (recorded fixture)",
+  "retrieved_at": "2026-08-12T01:30:00+00:00",
+  "advisories": [
+    {
+      "asset_id": "aso-scenic-road",
+      "source_url": "https://example.invalid/official/aso-road-advisory",
+      "valid_from": "2026-08-15T12:00:00+09:00",
+      "valid_until": "2026-08-16T06:00:00+09:00",
+      "excerpt": "Synthetic official-operator recording used only for deterministic offline tests.",
+      "operational_facts": {
+        "road_closure": true,
+        "official_advisory": "overnight_maintenance"
+      }
+    },
+    {
+      "asset_id": "aso-visitor-centre",
+      "source_url": "https://example.invalid/official/aso-visitor-centre",
+      "valid_from": "2026-08-01",
+      "valid_until": "2026-10-31",
+      "operational_facts": {
+        "last_admission": "16:30",
+        "seasonal_restriction": "weather_dependent"
+      }
+    }
+  ]
+}

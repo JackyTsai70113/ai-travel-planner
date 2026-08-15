@@ -22,6 +22,13 @@ class UnverifiedRestaurantHoursPolicy(str, Enum):
     BLOCK = "block"
 
 
+class ScheduleState(str, Enum):
+    """Result of constructing a candidate itinerary from normalized facts."""
+
+    READY = "ready"
+    FAILED = "failed"
+
+
 @dataclass(frozen=True)
 class HardConstraint:
     """A non-negotiable planning condition, evaluated before soft scoring.
@@ -82,3 +89,37 @@ class PlannerOutput:
     def best_plan(self) -> CandidatePlan | None:
         successful = self.successful_plans
         return successful[0] if successful else None
+
+
+@dataclass(frozen=True)
+class SchedulingInput:
+    """Facts consumed by the deterministic multi-day scheduler.
+
+    ``trip`` is a Canonical Trip shell containing normalized candidates.  A
+    schedulable POI or restaurant must provide a ``schedule`` mapping with at
+    least ``duration_minutes`` and may provide ``day`` (one-based),
+    ``required``, ``fixed_start_at``, parking/walking buffers, and fatigue.
+    The scheduler deliberately rejects missing operational facts rather than
+    deriving them from a provider payload or a template.
+    """
+
+    trip: dict
+    validation_context: ValidationContext
+    daily_start: str = "09:00"
+    daily_end: str = "20:00"
+
+
+@dataclass(frozen=True)
+class ScheduledTrip:
+    trip: dict
+    state: ScheduleState
+    violations: tuple[Violation, ...]
+
+
+@dataclass(frozen=True)
+class SchedulingOutput:
+    candidates: tuple[ScheduledTrip, ...]
+
+    @property
+    def best_trip(self) -> ScheduledTrip | None:
+        return next((candidate for candidate in self.candidates if candidate.state is ScheduleState.READY), None)
