@@ -118,7 +118,7 @@ function App() {
   }
 
   const warningCount = bundle.validation.filter((item) => item.severity === 'warning' || item.severity === 'error').length
-  const unresolvedReservations = bundle.reservations.filter((reservation) => reservation.place_id.includes('naruto-ferry-fixed-activity'))
+  const unresolvedReservations = bundle.reservations.filter((reservation) => reservation.unresolved)
 
   return (
     <main className="shell">
@@ -164,15 +164,15 @@ function App() {
           <ul>
             {bundle.reservations.map((reservation) => (
               <li key={reservation.id}>
-                {reservation.day} · {reservation.time} · {reservation.name || '8/28 17:45 固定預約（項目名稱待補）'}
-                {reservation.unresolved ? '（待補）' : ''}
+                {reservation.day} · {reservation.time} · {reservation.name || '8/28 17:45 固定預約（名稱待補）'}
+                {reservation.unresolved ? '（地點與持續時間待補）' : ''}
               </li>
             ))}
           </ul>
         ) : (
           <p>目前無固定預約。</p>
         )}
-        {unresolvedReservations.length > 0 ? <p>固定預約資訊待補：名稱、地點、duration。</p> : null}
+        {unresolvedReservations.length > 0 ? <p>固定預約資訊待補：地點與持續時間。</p> : null}
         {bundle.meta?.generated_at ? <p>資料產出時間：{bundle.meta.generated_at}</p> : null}
       </section>
 
