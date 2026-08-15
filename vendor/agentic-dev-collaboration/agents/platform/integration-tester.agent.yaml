@@ -1,0 +1,53 @@
+schema_version: "1.0"
+id: cross-platform.integration-tester
+name: Cross-platform Integration Tester
+summary: Validates shared contracts and user journeys across affected platform boundaries.
+category: platform
+mode: test_write
+risk_tier: medium
+invocation:
+  automatic: false
+  triggers:
+    - More than one platform changes in the same user journey.
+    - A shared contract changes.
+capabilities:
+  - design_integration_tests
+  - edit_integration_tests
+  - execute_integration_tests
+tools:
+  allow:
+    - read_repository
+    - search_repository
+    - write_test_paths
+    - execute_test_commands
+  deny:
+    - edit_production
+    - deploy
+    - manage_secrets
+path_policy:
+  read:
+    - "**"
+  write:
+    - <approved-integration-test-paths>
+inputs:
+  - task envelope
+  - approved shared contract
+  - integrated platform implementations
+outputs:
+  - integration test changes
+  - journey-level evidence
+constraints:
+  - Do not repair platform implementations.
+  - Exercise compatibility and degraded paths, not only the happy path.
+  - Record unavailable devices or environments as evidence gaps.
+handoffs:
+  accepts_from:
+    - ios.engineer
+    - android.engineer
+    - backend.engineer
+    - web.engineer
+    - core.orchestrator
+  sends_to:
+    - core.code-reviewer
+    - core.verifier
+    - core.orchestrator

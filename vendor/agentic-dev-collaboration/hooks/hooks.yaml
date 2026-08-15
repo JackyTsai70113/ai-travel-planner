@@ -1,0 +1,172 @@
+schema_version: "2.0"
+hooks:
+  - id: validate-task-envelope
+    event: task.accepted
+    blocking: true
+    command:
+      - python3
+      - scripts/validate.py
+      - --hook-event
+      - "{event_path}"
+      - --artifact-root
+      - "{workspace_root}"
+      - --expected-event
+      - task.accepted
+      - --expected-actor
+      - "{actor_id}"
+      - --expected-mode
+      - "{actor_mode}"
+    purpose: Validate the actual task authorization artifact before routing work.
+  - id: validate-plan-proposal
+    event: plan.proposed
+    blocking: true
+    command:
+      - python3
+      - scripts/validate.py
+      - --hook-event
+      - "{event_path}"
+      - --artifact-root
+      - "{workspace_root}"
+      - --expected-event
+      - plan.proposed
+      - --expected-actor
+      - "{actor_id}"
+      - --expected-mode
+      - "{actor_mode}"
+    purpose: Validate the planner identity and actual proposed plan artifact.
+  - id: validate-plan-approval
+    event: plan.approved
+    blocking: true
+    command:
+      - python3
+      - scripts/validate.py
+      - --hook-event
+      - "{event_path}"
+      - --artifact-root
+      - "{workspace_root}"
+      - --expected-event
+      - plan.approved
+      - --expected-actor
+      - "{actor_id}"
+      - --expected-mode
+      - "{actor_mode}"
+    purpose: Validate actual independent plan approval and acceptance coverage.
+  - id: require-approved-plan
+    event: implementation.started
+    blocking: true
+    command:
+      - python3
+      - scripts/validate.py
+      - --hook-event
+      - "{event_path}"
+      - --artifact-root
+      - "{workspace_root}"
+      - --expected-event
+      - implementation.started
+      - --expected-actor
+      - "{actor_id}"
+      - --expected-mode
+      - "{actor_mode}"
+    purpose: Block implementation unless the referenced task and plan prove approval.
+  - id: validate-write-impact
+    event: file.write.requested
+    blocking: true
+    command:
+      - python3
+      - scripts/validate.py
+      - --hook-event
+      - "{event_path}"
+      - --artifact-root
+      - "{workspace_root}"
+      - --expected-event
+      - file.write.requested
+      - --expected-actor
+      - "{actor_id}"
+      - --expected-mode
+      - "{actor_mode}"
+    purpose: Reject production writes while any platform impact remains unknown.
+  - id: validate-command-request
+    event: command.requested
+    blocking: true
+    command:
+      - python3
+      - scripts/validate.py
+      - --hook-event
+      - "{event_path}"
+      - --artifact-root
+      - "{workspace_root}"
+      - --expected-event
+      - command.requested
+      - --expected-actor
+      - "{actor_id}"
+      - --expected-mode
+      - "{actor_mode}"
+    purpose: Reject shell strings and commands not approved by plan and assignment.
+  - id: validate-review-output
+    event: review.completed
+    blocking: true
+    command:
+      - python3
+      - scripts/validate.py
+      - --hook-event
+      - "{event_path}"
+      - --artifact-root
+      - "{workspace_root}"
+      - --expected-event
+      - review.completed
+      - --expected-actor
+      - "{actor_id}"
+      - --expected-mode
+      - "{actor_mode}"
+    purpose: Validate actual structured findings and their task identity.
+  - id: validate-verdict
+    event: verification.completed
+    blocking: true
+    command:
+      - python3
+      - scripts/validate.py
+      - --hook-event
+      - "{event_path}"
+      - --artifact-root
+      - "{workspace_root}"
+      - --expected-event
+      - verification.completed
+      - --expected-actor
+      - "{actor_id}"
+      - --expected-mode
+      - "{actor_mode}"
+    purpose: Validate actual acceptance coverage and fresh verification evidence.
+  - id: validate-completion
+    event: task.completed
+    blocking: true
+    command:
+      - python3
+      - scripts/validate.py
+      - --hook-event
+      - "{event_path}"
+      - --artifact-root
+      - "{workspace_root}"
+      - --expected-event
+      - task.completed
+      - --expected-actor
+      - "{actor_id}"
+      - --expected-mode
+      - "{actor_mode}"
+    purpose: Reject closeout without completed lifecycle and required PASS verdicts.
+  - id: validate-blocked-transition
+    event: task.blocked
+    blocking: true
+    command:
+      - python3
+      - scripts/validate.py
+      - --hook-event
+      - "{event_path}"
+      - --artifact-root
+      - "{workspace_root}"
+      - --expected-event
+      - task.blocked
+      - --expected-actor
+      - "{actor_id}"
+      - --expected-mode
+      - "{actor_mode}"
+    purpose: Restrict blocked lifecycle transitions to the canonical coordinator.

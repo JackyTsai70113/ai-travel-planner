@@ -1,0 +1,96 @@
+{
+  "schema_version": "1.0",
+  "framework": {
+    "upstream_url": "https://github.com/JackyTsai70113/agentic-dev-collaboration.git",
+    "commit": "4aa2761290074eb364043e0406fc0024981b2e1f",
+    "snapshot_path": "vendor/agentic-dev-collaboration",
+    "lock_path": "vendor/agentic-dev-collaboration.lock.json",
+    "expected_file_count": 92
+  },
+  "delivery": {
+    "base_branch": "main",
+    "remote": "origin",
+    "branch_pattern": "^(agent|codex)/issue-[1-9][0-9]*-[a-z0-9][a-z0-9-]*$",
+    "canonical_branch_prefix": "agent",
+    "worktree_parent": ".worktrees",
+    "pull_request_state": "ready",
+    "automatic_merge": false
+  },
+  "parallelism": {
+    "one_issue_per_worktree": true,
+    "one_writer_per_path": true,
+    "reviewers_read_only": true,
+    "require_declared_write_paths": true
+  },
+  "risk": {
+    "high": [
+      "AGENTS.md",
+      ".github/**",
+      "agent-collaboration/**",
+      "vendor/**",
+      "src/application/production.py",
+      "src/schemas/**",
+      "src/validator/**"
+    ],
+    "medium": [
+      "src/**",
+      "scripts/**",
+      "fixtures/**",
+      "tests/**"
+    ],
+    "low": [
+      "README.md",
+      "docs/**"
+    ]
+  },
+  "roles": {
+    "low": {
+      "implementation": ["core.executor"],
+      "review": ["core.code-reviewer"]
+    },
+    "medium": {
+      "implementation": ["core.planner", "core.executor", "core.test-engineer"],
+      "review": ["core.code-reviewer"]
+    },
+    "high": {
+      "implementation": [
+        "core.explorer",
+        "core.architect",
+        "core.planner",
+        "core.executor",
+        "core.test-engineer"
+      ],
+      "review": ["core.spec-reviewer", "core.code-reviewer", "core.verifier"]
+    }
+  },
+  "domain_reviewers": [
+    {
+      "id": "domain.trip-schema-reviewer",
+      "manifest": "agent-collaboration/agents/trip-schema-reviewer.agent.json",
+      "paths": ["src/schemas/**", "fixtures/trips/**", "docs/canonical-trip-v1.md"]
+    },
+    {
+      "id": "domain.itinerary-invariant-reviewer",
+      "manifest": "agent-collaboration/agents/itinerary-invariant-reviewer.agent.json",
+      "paths": [
+        "src/planner/**",
+        "src/optimizer/**",
+        "src/validator/**",
+        "src/routing/**",
+        "src/application/production.py",
+        "src/orchestrator/**"
+      ]
+    },
+    {
+      "id": "domain.source-provenance-auditor",
+      "manifest": "agent-collaboration/agents/source-provenance-auditor.agent.json",
+      "paths": [
+        "src/sources/**",
+        "src/restaurant_intelligence.py",
+        "docs/source-evidence-priority.md",
+        "docs/flight-hotel-providers.md"
+      ]
+    }
+  ],
+  "required_checks": ["framework", "python", "website"]
+}

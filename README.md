@@ -83,6 +83,37 @@ boundary are documented in [`docs/flight-hotel-providers.md`](docs/flight-hotel-
 - **Evidence-backed research**：候選景點、餐廳、住宿與交通資訊應保留來源與查詢時間。
 - **Japan-first, extensible later**：第一階段優先支援日本旅遊資料源與使用情境，但核心 schema 與 planner 不綁定日本。
 
+## Multi-agent GitHub development
+
+The repository includes an Issue-scoped collaboration control plane adapted
+from `agentic-dev-collaboration`. Multiple development agents can work in
+parallel through separate GitHub Issues, branches, pull requests, and external
+Git worktrees while write ownership is checked before handoff or publication.
+
+Validate the pinned framework and project overlay:
+
+```sh
+python3 scripts/validate_agent_collaboration.py
+```
+
+Route a proposed change, then prepare one isolated worktree per Issue:
+
+```sh
+python3 -m scripts.agent.collaboration route src/intent/parser.py tests/test_travel_intent.py
+
+python3 -m scripts.agent.collaboration prepare 28 \
+  --slug request-constraints \
+  --write-path 'src/intent/**' \
+  --write-path 'tests/test_travel_intent.py'
+```
+
+The repository rejects overlapping active write scopes. After implementation,
+run `check` and `handoff` inside that Issue worktree. `publish` pushes the
+branch and opens a regular non-Draft PR; it never auto-merges.
+
+The complete lifecycle, role routing, parallel ownership examples, and exact
+commands are in [`docs/agents/DEVELOPMENT.md`](docs/agents/DEVELOPMENT.md).
+
 ## Target pipeline
 
 ```text

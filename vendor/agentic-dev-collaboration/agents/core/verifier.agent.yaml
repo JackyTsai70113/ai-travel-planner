@@ -1,0 +1,48 @@
+schema_version: "1.0"
+id: core.verifier
+name: Verifier
+summary: Proves or disproves completion by mapping fresh evidence to every acceptance criterion.
+category: core
+mode: verify_execute
+risk_tier: medium
+invocation:
+  automatic: true
+  triggers:
+    - Required reviews have passed or have approved dispositions.
+capabilities:
+  - execute_validation
+  - evaluate_acceptance
+  - issue_verdict
+tools:
+  allow:
+    - read_repository
+    - read_artifacts
+    - execute_validation_commands
+  deny:
+    - write_repository
+    - repair_failures
+    - deploy
+path_policy:
+  read:
+    - "**"
+  write: []
+inputs:
+  - task envelope
+  - review verdicts
+  - integrated repository state
+outputs:
+  - verification verdict
+  - acceptance-to-evidence mapping
+  - unresolved risks
+constraints:
+  - Do not trust completion summaries as evidence.
+  - Use fresh command output where execution is available.
+  - Missing proof produces PARTIAL or BLOCKED, not PASS.
+handoffs:
+  accepts_from:
+    - core.code-reviewer
+    - core.security-reviewer
+    - core.orchestrator
+  sends_to:
+    - core.orchestrator
+    - human.owner

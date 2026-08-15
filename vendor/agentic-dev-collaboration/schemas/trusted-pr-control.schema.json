@@ -1,0 +1,372 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/trusted-pr-control.schema.json",
+  "title": "Trusted Pull Request Control",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "trusted_base",
+    "source_trust",
+    "change_run",
+    "diff_lock",
+    "required_checks",
+    "deterministic_blockers",
+    "trust_anchors",
+    "approval_evidence",
+    "automation_dependencies",
+    "permissions",
+    "model_controls",
+    "secret_scanning",
+    "merge_control",
+    "deterministic_status"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "trusted_base": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "ref", "commit"],
+      "properties": {
+        "repository": {"$ref": "#/$defs/portableRemote"},
+        "ref": {"type": "string", "minLength": 1},
+        "commit": {"$ref": "#/$defs/commit"}
+      }
+    },
+    "source_trust": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["origin", "diff_classification", "external_provider_handling"],
+      "properties": {
+        "origin": {"enum": ["trusted_base", "same_repository", "fork"]},
+        "diff_classification": {"const": "untrusted_inert"},
+        "external_provider_handling": {
+          "enum": ["not_applicable", "reject", "manual_review"]
+        }
+      }
+    },
+    "change_run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "implementer_identity",
+        "changed_paths",
+        "reviewed_head_sha",
+        "diff_digest"
+      ],
+      "properties": {
+        "implementer_identity": {"$ref": "#/$defs/identity"},
+        "changed_paths": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$"
+          }
+        },
+        "reviewed_head_sha": {"$ref": "#/$defs/commit"},
+        "diff_digest": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "diff_lock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "base_commit",
+        "head_before",
+        "head_after",
+        "digest_before",
+        "digest_after",
+        "unchanged_required"
+      ],
+      "properties": {
+        "base_commit": {"$ref": "#/$defs/commit"},
+        "head_before": {"$ref": "#/$defs/commit"},
+        "head_after": {"$ref": "#/$defs/commit"},
+        "digest_before": {"$ref": "#/$defs/sha256"},
+        "digest_after": {"$ref": "#/$defs/sha256"},
+        "unchanged_required": {"const": true}
+      }
+    },
+    "required_checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required_names", "results"],
+      "properties": {
+        "required_names": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "results": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "attempt",
+              "latest_attempt",
+              "head_sha",
+              "conclusion"
+            ],
+            "properties": {
+              "name": {"type": "string", "minLength": 1},
+              "attempt": {"type": "integer", "minimum": 1},
+              "latest_attempt": {"const": true},
+              "head_sha": {"$ref": "#/$defs/commit"},
+              "conclusion": {"enum": ["PASS", "FAIL", "PENDING", "MISSING"]}
+            }
+          }
+        }
+      }
+    },
+    "deterministic_blockers": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "untrusted_base",
+          "fork_external_processing",
+          "head_changed",
+          "diff_digest_changed",
+          "missing_required_check",
+          "duplicate_required_check",
+          "stale_check_attempt",
+          "failed_required_check",
+          "trust_anchor_changed_without_meta_review",
+          "review_not_read_only",
+          "merge_authority_not_separated"
+        ]
+      }
+    },
+    "trust_anchors": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile",
+        "paths",
+        "human_approval_required",
+        "meta_review_required"
+      ],
+      "properties": {
+        "profile": {"const": "portable-v1"},
+        "paths": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1},
+          "allOf": [
+            {"contains": {"const": ".github/workflows/**"}},
+            {"contains": {"const": "AGENTS.md"}},
+            {"contains": {"const": "agents/**"}},
+            {"contains": {"const": "hooks/**"}},
+            {"contains": {"const": "policies/**"}},
+            {"contains": {"const": "registries/**"}},
+            {"contains": {"const": "schemas/**"}},
+            {"contains": {"const": "skills/**"}},
+            {"contains": {"const": "scripts/validate.py"}}
+          ]
+        },
+        "human_approval_required": {"const": true},
+        "meta_review_required": {"const": true}
+      }
+    },
+    "approval_evidence": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/approvalEvidence"}
+    },
+    "automation_dependencies": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "immutable_ref"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1},
+          "immutable_ref": {
+            "type": "string",
+            "pattern": "^(?:[0-9a-f]{40}|sha256:[0-9a-f]{64})$"
+          }
+        }
+      }
+    },
+    "permissions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["review", "merge", "separated"],
+      "properties": {
+        "review": {"const": "read_only"},
+        "merge": {"const": "write_separate_controller"},
+        "separated": {"const": true}
+      }
+    },
+    "model_controls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "verdict_cannot_override_blockers",
+        "untrusted_values_in_repair_prompt"
+      ],
+      "properties": {
+        "verdict_cannot_override_blockers": {"const": true},
+        "untrusted_values_in_repair_prompt": {"const": false}
+      }
+    },
+    "secret_scanning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "defense_in_depth_only"],
+      "properties": {
+        "enabled": {"const": true},
+        "defense_in_depth_only": {"const": true}
+      }
+    },
+    "merge_control": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "automatic_merge_workflow_provided",
+        "authorization",
+        "expected_head",
+        "atomic_expected_head_required"
+      ],
+      "properties": {
+        "automatic_merge_workflow_provided": {"const": false},
+        "authorization": {"const": "human_or_external_trusted_controller"},
+        "expected_head": {"$ref": "#/$defs/commit"},
+        "atomic_expected_head_required": {"const": true}
+      }
+    },
+    "deterministic_status": {"enum": ["PASS", "BLOCKED"]}
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "source_trust": {
+            "properties": {"origin": {"const": "fork"}}
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "source_trust": {
+            "properties": {
+              "external_provider_handling": {
+                "enum": ["reject", "manual_review"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "source_trust": {
+            "properties": {
+              "origin": {"const": "fork"},
+              "external_provider_handling": {"const": "reject"}
+            },
+            "required": ["origin", "external_provider_handling"]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "deterministic_blockers": {
+            "contains": {"const": "fork_external_processing"}
+          },
+          "deterministic_status": {"const": "BLOCKED"}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "source_trust": {
+            "properties": {
+              "origin": {"const": "fork"},
+              "external_provider_handling": {"const": "manual_review"}
+            },
+            "required": ["origin", "external_provider_handling"]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "approval_evidence": {
+            "contains": {
+              "properties": {
+                "kind": {"const": "fork_manual_review"}
+              },
+              "required": ["kind"]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "identity": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@-]{1,127}$"
+    },
+    "portableRemote": {
+      "type": "string",
+      "anyOf": [
+        {
+          "pattern": "^https://(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.)+[A-Za-z](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?::[0-9]{1,5})?/[A-Za-z0-9._~-]+(?:/[A-Za-z0-9._~-]+)*$"
+        },
+        {
+          "pattern": "^ssh://(?:[A-Za-z0-9._-]+@)?(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.)+[A-Za-z](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?::[0-9]{1,5})?/[A-Za-z0-9._~-]+(?:/[A-Za-z0-9._~-]+)*$"
+        },
+        {
+          "pattern": "^[A-Za-z0-9._-]+@(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.)+[A-Za-z](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?:[A-Za-z0-9._~-]+(?:/[A-Za-z0-9._~-]+)*$"
+        }
+      ]
+    },
+    "approvalEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "reviewer_identity",
+        "reviewer_type",
+        "reviewed_head_sha",
+        "diff_digest",
+        "verdict",
+        "reviewed_at",
+        "evidence_ref"
+      ],
+      "properties": {
+        "kind": {
+          "enum": ["trust_anchor_meta_review", "fork_manual_review"]
+        },
+        "reviewer_identity": {"$ref": "#/$defs/identity"},
+        "reviewer_type": {"const": "human"},
+        "reviewed_head_sha": {"$ref": "#/$defs/commit"},
+        "diff_digest": {"$ref": "#/$defs/sha256"},
+        "verdict": {"const": "PASS"},
+        "reviewed_at": {"type": "string", "format": "date-time"},
+        "evidence_ref": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/verdict.schema.json",
+  "title": "Verification Verdict",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "task_id",
+    "verifier",
+    "verdict",
+    "started_at",
+    "acceptance_results",
+    "commands",
+    "unresolved_risks",
+    "completed_at"
+  ],
+  "properties": {
+    "schema_version": {"const": "3.0"},
+    "task_id": {"type": "string"},
+    "verifier": {"type": "string"},
+    "verdict": {"enum": ["PASS", "FAIL", "PARTIAL", "BLOCKED"]},
+    "started_at": {"type": "string", "format": "date-time"},
+    "acceptance_results": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "acceptance_id",
+          "status",
+          "applicable",
+          "evidence",
+          "not_applicable_reason"
+        ],
+        "properties": {
+          "acceptance_id": {
+            "type": "string",
+            "pattern": "^AC-[0-9]{2,}$"
+          },
+          "status": {
+            "enum": ["pass", "fail", "unproven", "not_applicable"]
+          },
+          "applicable": {"type": "boolean"},
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["reference", "observed_at", "fresh"],
+              "properties": {
+                "reference": {"type": "string", "minLength": 1},
+                "observed_at": {"type": "string", "format": "date-time"},
+                "fresh": {"type": "boolean"}
+              }
+            }
+          },
+          "not_applicable_reason": {"type": ["string", "null"]}
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"status": {"const": "not_applicable"}}},
+            "then": {
+              "properties": {
+                "not_applicable_reason": {"type": "string", "minLength": 10}
+              }
+            }
+          }
+        ]
+      }
+    },
+    "commands": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "command_id",
+          "argv",
+          "exit_code",
+          "required",
+          "observed_at",
+          "fresh"
+        ],
+        "properties": {
+          "command_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]+$"
+          },
+          "argv": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"type": "string", "minLength": 1}
+          },
+          "exit_code": {"type": "integer"},
+          "required": {"type": "boolean"},
+          "observed_at": {"type": "string", "format": "date-time"},
+          "fresh": {"type": "boolean"},
+          "output_reference": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "unresolved_risks": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "completed_at": {"type": "string", "format": "date-time"}
+  }
+}

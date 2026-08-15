@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/hook-event.schema.json",
+  "title": "Canonical Hook Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "event_id",
+    "event",
+    "occurred_at",
+    "run_id",
+    "task_id",
+    "actor",
+    "payload"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "4.0"
+    },
+    "event_id": {
+      "type": "string"
+    },
+    "event": {
+      "enum": [
+        "session.started",
+        "task.accepted",
+        "plan.proposed",
+        "plan.approved",
+        "implementation.started",
+        "file.write.requested",
+        "command.requested",
+        "review.completed",
+        "verification.completed",
+        "task.completed",
+        "task.blocked"
+      ]
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "task_id": {
+      "type": "string"
+    },
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "agent_id",
+        "mode"
+      ],
+      "properties": {
+        "agent_id": {
+          "type": "string"
+        },
+        "mode": {
+          "type": "string"
+        }
+      }
+    },
+    "payload": {
+      "type": "object"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "event": {"const": "command.requested"}
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "task_envelope_path",
+              "plan_path",
+              "handoff_path",
+              "command_id",
+              "argv"
+            ],
+            "properties": {
+              "task_envelope_path": {"type": "string", "minLength": 1},
+              "plan_path": {"type": "string", "minLength": 1},
+              "handoff_path": {"type": "string", "minLength": 1},
+              "command_id": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]+$"
+              },
+              "argv": {
+                "type": "array",
+                "minItems": 1,
+                "items": {"type": "string", "minLength": 1}
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event": {"const": "review.completed"}
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["review_verdict_path"],
+            "properties": {
+              "review_verdict_path": {"type": "string", "minLength": 1}
+            }
+          }
+        }
+      }
+    }
+  ]
+}

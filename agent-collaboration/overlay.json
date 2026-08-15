@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "precedence": [
+    "consumer_root",
+    "project_domain_overlay",
+    "pinned_framework"
+  ],
+  "conflict_resolution": "stricter_wins_fail_closed",
+  "layers": {
+    "consumer_root": ["AGENTS.md"],
+    "project_domain_overlay": [
+      "agent-collaboration/project-policy.json",
+      "agent-collaboration/agents/"
+    ],
+    "pinned_framework": [
+      "vendor/agentic-dev-collaboration.lock.json",
+      "vendor/agentic-dev-collaboration/AGENTS.md"
+    ]
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/consumer-overlay.schema.json",
+  "title": "Consumer Policy Overlay",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "precedence",
+    "conflict_resolution",
+    "layers"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "precedence": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "prefixItems": [
+        {"const": "consumer_root"},
+        {"const": "project_domain_overlay"},
+        {"const": "pinned_framework"},
+        {"const": "generated_adapter"}
+      ],
+      "items": false
+    },
+    "conflict_resolution": {"const": "stricter_wins_fail_closed"},
+    "layers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "consumer_root",
+        "project_domain_overlay",
+        "pinned_framework",
+        "generated_adapter"
+      ],
+      "properties": {
+        "consumer_root": {"$ref": "#/$defs/layer"},
+        "project_domain_overlay": {"$ref": "#/$defs/layer"},
+        "pinned_framework": {"$ref": "#/$defs/layer"},
+        "generated_adapter": {"$ref": "#/$defs/layer"}
+      }
+    }
+  },
+  "$defs": {
+    "layer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sources", "may_weaken_higher_layer"],
+      "properties": {
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "may_weaken_higher_layer": {"const": false}
+      }
+    }
+  }
+}

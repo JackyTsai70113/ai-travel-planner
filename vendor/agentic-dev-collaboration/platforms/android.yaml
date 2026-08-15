@@ -1,0 +1,25 @@
+schema_version: "1.0"
+id: android
+display_name: Android
+agents:
+  - android.engineer
+  - core.test-engineer
+  - core.code-reviewer
+  - core.verifier
+change_surfaces:
+  - Kotlin and Java source
+  - activity, process, and lifecycle behavior
+  - persistence and migration
+  - permissions and manifest
+  - Gradle, signing, and store release
+required_checks:
+  - formatting and static analysis
+  - unit tests
+  - build for an approved variant
+  - instrumentation or UI checks for affected journeys
+review_concerns:
+  - supported API levels and device compatibility
+  - process recreation and offline behavior
+  - coroutine and lifecycle safety
+  - secure storage and privacy declarations
+  - backend compatibility during staged mobile rollout

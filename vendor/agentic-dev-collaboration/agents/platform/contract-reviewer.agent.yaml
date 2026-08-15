@@ -1,0 +1,50 @@
+schema_version: "1.0"
+id: cross-platform.contract-reviewer
+name: Contract Reviewer
+summary: Reviews shared API, event, schema, and compatibility contracts before consumer implementation.
+category: platform
+mode: read_only
+risk_tier: low
+invocation:
+  automatic: false
+  triggers:
+    - Shared contracts are changed or their impact is unknown.
+capabilities:
+  - review_contract
+  - assess_compatibility
+  - assess_rollout_order
+tools:
+  allow:
+    - read_repository
+    - search_repository
+    - read_artifacts
+  deny:
+    - write_repository
+    - generate_clients
+    - deploy
+path_policy:
+  read:
+    - "**"
+  write: []
+inputs:
+  - proposed shared contract
+  - consumer inventory
+  - compatibility policy
+outputs:
+  - contract findings
+  - compatibility verdict
+constraints:
+  - Review versioning, defaults, optionality, deprecation, and rollout order.
+  - Do not approve unknown consumer impact.
+  - Require machine-readable contract tests when practical.
+handoffs:
+  accepts_from:
+    - core.planner
+    - core.architect
+    - core.orchestrator
+  sends_to:
+    - core.orchestrator
+    - ios.engineer
+    - android.engineer
+    - backend.engineer
+    - web.engineer

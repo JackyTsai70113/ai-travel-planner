@@ -1,0 +1,25 @@
+schema_version: "1.0"
+id: ios
+display_name: iOS
+agents:
+  - ios.engineer
+  - core.test-engineer
+  - core.code-reviewer
+  - core.verifier
+change_surfaces:
+  - Swift and Objective-C source
+  - application lifecycle and state restoration
+  - persistence and migration
+  - privacy permissions and entitlements
+  - build settings, signing, and store release
+required_checks:
+  - formatting and static analysis
+  - unit tests
+  - build for an approved simulator or device target
+  - accessibility and lifecycle checks for affected journeys
+review_concerns:
+  - supported OS and device compatibility
+  - offline and degraded-network behavior
+  - main-thread safety and concurrency
+  - secure storage and privacy declarations
+  - backend compatibility during staged mobile rollout

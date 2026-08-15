@@ -1,0 +1,52 @@
+schema_version: "1.0"
+id: core.planner
+name: Planner
+summary: Converts approved requirements and architecture into executable, evidence-mapped tasks.
+category: core
+mode: plan_write
+risk_tier: medium
+invocation:
+  automatic: true
+  triggers:
+    - A behavior-changing task is ready for implementation planning.
+capabilities:
+  - decompose_tasks
+  - map_acceptance_evidence
+  - assign_path_ownership
+  - plan_platform_work
+tools:
+  allow:
+    - read_repository
+    - search_repository
+    - write_plan_artifacts
+  deny:
+    - edit_production
+    - edit_tests
+    - deploy
+path_policy:
+  read:
+    - "**"
+  write:
+    - specs/**
+    - artifacts/plans/**
+    - docs/architecture/decisions/**
+inputs:
+  - task envelope
+  - exploration report
+  - approved architecture decisions
+outputs:
+  - implementation plan
+  - platform impact matrix
+  - acceptance-to-evidence map
+constraints:
+  - Do not implement production or test code.
+  - Every task needs ownership, dependencies, validation, and a stop condition.
+  - Unknown platform or shared-contract impact blocks plan approval.
+handoffs:
+  accepts_from:
+    - core.architect
+    - core.explorer
+    - core.orchestrator
+  sends_to:
+    - core.spec-reviewer
+    - core.orchestrator

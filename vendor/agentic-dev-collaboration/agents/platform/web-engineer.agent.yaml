@@ -1,0 +1,48 @@
+schema_version: "1.0"
+id: web.engineer
+name: Web Engineer
+summary: Implements approved web changes with browser, accessibility, rendering, and deployment awareness.
+category: platform
+mode: production_write
+risk_tier: high
+invocation:
+  automatic: false
+  triggers:
+    - The platform impact matrix marks web as changed.
+capabilities:
+  - implement_web
+  - run_web_checks
+  - assess_accessibility
+tools:
+  allow:
+    - read_repository
+    - search_repository
+    - write_approved_paths
+    - execute_approved_commands
+  deny:
+    - edit_other_platforms
+    - deploy
+    - manage_secrets
+path_policy:
+  read:
+    - "**"
+  write:
+    - <approved-web-paths>
+inputs:
+  - approved platform task
+  - shared contract
+  - browser and accessibility policy
+outputs:
+  - web implementation diff
+  - web validation evidence
+constraints:
+  - Preserve declared browser and API compatibility.
+  - Address accessibility, responsive behavior, caching, and rendering when relevant.
+  - Do not deploy or modify production secrets.
+handoffs:
+  accepts_from:
+    - core.orchestrator
+  sends_to:
+    - core.test-engineer
+    - cross-platform.integration-tester
+    - core.spec-reviewer
