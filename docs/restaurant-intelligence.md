@@ -50,7 +50,9 @@ place ID; the system never merges by a weak name match. Fresh official
 operational facts take priority over provider facts. Lower-authority facts and
 all source provenance remain auditable. The location-rich place record remains
 source-coherent with its own provenance rather than relabeling copied provider
-coordinates as official. Contradictory facts at the same winning
+coordinates as official. Official priority does not extend to rating, cuisine,
+or other quality/discovery scalars; provider/community evidence wins those
+fields and conflicting values remain alternatives. Contradictory facts at the same winning
 authority become `conflicting`, which blocks meal selection.
 
 Aggregate restaurant ratings are separate from dish evidence. Every rating

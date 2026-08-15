@@ -146,8 +146,10 @@ def test_official_override_and_same_authority_conflict_are_auditable():
     provider["place"]["address"] = "福岡市中央区"
     provider["place"]["coordinates"] = {"latitude": 33.59, "longitude": 130.40}
     provider["attributions"] = ["Provider credit"]
+    provider.update({"rating": 4.7, "rating_source": "Google Places", "review_count": 120, "cuisine": "ramen"})
     official_source = {**PROVENANCE, "source_type": "official", "provider": "Restaurant official site"}
     official = candidate(provenance=official_source, intervals=[{"weekday": 2, "opens_at": "17:00", "closes_at": "20:00"}])
+    official.update({"rating": 1.0, "rating_source": "self_claimed", "review_count": 1, "cuisine": "official category"})
     reconciled = reconcile_restaurant_candidates([provider, official])[0]
     assert reconciled["opening_hours"]["intervals"][0]["opens_at"] == "17:00"
     assert len(reconciled["source_provenance"]) == 2
@@ -156,6 +158,11 @@ def test_official_override_and_same_authority_conflict_are_auditable():
     assert reconciled["place"]["coordinates"] == {"latitude": 33.59, "longitude": 130.40}
     assert reconciled["place"]["provenance"]["provider"] == "recorded"
     assert reconciled["attributions"] == ["Provider credit"]
+    assert (reconciled["rating"], reconciled["rating_source"], reconciled["review_count"], reconciled["cuisine"]) == (
+        4.7, "Google Places", 120, "ramen",
+    )
+    alternative_fields = {alternative["field"] for alternative in reconciled["alternatives"]}
+    assert {"rating", "rating_source", "review_count", "cuisine"} <= alternative_fields
 
     other_official = candidate(provenance={**official_source, "provider": "Official notice"})
     conflict = reconcile_restaurant_candidates([official, other_official])[0]
