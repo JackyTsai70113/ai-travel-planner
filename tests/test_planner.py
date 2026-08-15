@@ -8,9 +8,12 @@ from src.planner import (
     HardConstraint,
     PlanState,
     PlannerInput,
+    ScheduleState,
+    SchedulingInput,
     SoftPreference,
     UnverifiedRestaurantHoursPolicy,
     plan,
+    schedule,
 )
 from src.validator import BudgetLimit, OpeningInterval, ValidationContext
 
@@ -165,6 +168,57 @@ class PlannerTests(unittest.TestCase):
         self.assertIsNone(result.best_plan)
         violation = next(item for item in result.plans[0].violations if item.code == "opening_hours.unverified")
         self.assertEqual(violation.severity, "error")
+
+    def test_scheduler_builds_five_day_route_aware_plan_and_preserves_day_assignments(self):
+        trip = copy.deepcopy(self.trip)
+        trip["days"] = []
+        for index, place in enumerate(trip["candidate_sets"]["places"]):
+            if place["id"] in {"tpe", "fuk", "hakata-hotel", "ramen-shop"}:
+                continue
+            place["schedule"] = {"duration_minutes": 90, "day": index - 2, "required": True, "parking_buffer_minutes": 10, "walking_buffer_minutes": 5}
+        restaurant = trip["candidate_sets"]["restaurants"][0]
+        restaurant["schedule"] = {"duration_minutes": 60, "day": 2, "required": True}
+        context = verified_context()
+        routes = dict(context.travel_minutes)
+        hours = dict(context.opening_hours)
+        hours["ramen-shop"] = [OpeningInterval(weekday, time(8), time(22)) for weekday in range(7)]
+        for place_id in ("ohori-park", "dazaifu", "yufuin", "beppu", "canal-city", "ramen-shop"):
+            routes[("hakata-hotel", place_id)] = 20
+            routes[(place_id, "hakata-hotel")] = 20
+        routes[("dazaifu", "ramen-shop")] = 20
+        output = schedule(SchedulingInput(trip, ValidationContext(routes, hours, context.budget_limit)))
+        candidate = output.best_trip
+        self.assertIsNotNone(candidate)
+        assert candidate is not None
+        self.assertEqual(candidate.state, ScheduleState.READY)
+        self.assertEqual(len(candidate.trip["days"]), 5)
+        self.assertEqual(candidate.trip["days"][0]["items"][0]["place_id"], "ohori-park")
+        self.assertEqual(candidate.trip["days"][1]["items"][0]["place_id"], "dazaifu")
+
+    def test_scheduler_refuses_closed_or_unknown_operational_facts(self):
+        trip = copy.deepcopy(self.trip)
+        trip["days"] = []
+        trip["candidate_sets"]["places"][3]["schedule"] = {"duration_minutes": 120, "day": 1, "required": True}
+        result = schedule(SchedulingInput(trip, ValidationContext()))
+        self.assertIsNone(result.best_trip)
+        self.assertIn("schedule.route_unknown", {violation.code for violation in result.candidates[0].violations})
+
+    def test_scheduler_keeps_confirmed_reservation_time_unchanged(self):
+        trip = copy.deepcopy(self.trip)
+        trip["days"] = []
+        restaurant = trip["candidate_sets"]["restaurants"][0]
+        restaurant["schedule"] = {
+            "duration_minutes": 60, "day": 1, "required": True,
+            "fixed_start_at": "2026-04-10T12:00:00+09:00", "fixed_end_at": "2026-04-10T13:00:00+09:00",
+        }
+        hours = {"ramen-shop": [OpeningInterval(weekday, time(8), time(22)) for weekday in range(7)]}
+        routes = {("hakata-hotel", "ramen-shop"): 20, ("ramen-shop", "hakata-hotel"): 20}
+        candidate = schedule(SchedulingInput(trip, ValidationContext(routes, hours))).best_trip
+        self.assertIsNotNone(candidate)
+        assert candidate is not None
+        item = candidate.trip["days"][0]["items"][0]
+        self.assertEqual(item["start_at"], "2026-04-10T12:00:00+09:00")
+        self.assertEqual(item["end_at"], "2026-04-10T13:00:00+09:00")
 
 
 if __name__ == "__main__":
