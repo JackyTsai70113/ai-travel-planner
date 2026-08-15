@@ -160,6 +160,31 @@ ai-travel-planner/
 └── tests/
 ```
 
+## Issue 52: Awaji 2026 Golden Trip (in-progress)
+
+### 核心檔案
+
+- `trips/awaji-naruto-tokushima-kobe-2026/trip.json`
+- `trips/awaji-naruto-tokushima-kobe-2026/public-bundle.json`
+- `trips/awaji-naruto-tokushima-kobe-2026/evidence.json`
+- `trips/awaji-naruto-tokushima-kobe-2026/conditions.json`
+- `docs/trips/awaji-2026/`
+- `scripts/build_awaji_public_bundle.py`
+- `scripts/check-awaji-contamination.py`
+
+### 快速操作
+
+```sh
+python3 scripts/build_awaji_public_bundle.py \
+  --trip-path trips/awaji-naruto-tokushima-kobe-2026/trip.json \
+  --output trips/awaji-naruto-tokushima-kobe-2026/public-bundle.json
+
+python3 scripts/check-awaji-contamination.py
+```
+
+Issue 52 直接發布於本 repo 既有 GitHub Pages 的子路徑：
+`https://jackytsai70113.github.io/ai-travel-planner/trips/awaji-2026/`
+
 ## First milestone
 
 > 輸入「五天四夜 XX 日本行 + 人數 + 預算 + 偏好」後，產生結構化 Trip 資料，驗證時間 / 路程 / 預算，並生成可在旅途中使用的 mobile-first 網站。

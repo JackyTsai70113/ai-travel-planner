@@ -1,0 +1,153 @@
+{
+  "source_map_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+  "accepted_count": 15,
+  "excluded_count": 1,
+  "accepted": [
+    {
+      "name": "ポカラ 鳴門店",
+      "address": "Suberiiwahama-23-100 Muyacho Okuwajima, Naruto, Tokushima 772-0011",
+      "coordinates": {
+        "lat": 34.183504,
+        "lng": 134.6123529
+      },
+      "import_note": "awaji_or_naruto"
+    },
+    {
+      "name": "Ocean Terrace",
+      "address": "816 Nojimahikinoura, Awaji, Hyogo 656-1721",
+      "coordinates": {
+        "lat": 34.562084999999996,
+        "lng": 134.94875
+      },
+      "import_note": "awaji_or_naruto"
+    },
+    {
+      "name": "S BRICK 旧:鐘紡工場跡 赤レンガ倉庫",
+      "address": "1 Chome-1-8 Shioya, Sumoto, Hyogo 656-0021",
+      "coordinates": {
+        "lat": 34.3454531,
+        "lng": 134.8953604
+      },
+      "import_note": "awaji_or_naruto"
+    },
+    {
+      "name": "絶景レストラン うずの丘",
+      "address": "Hei-936-3 Fukura, Minamiawaji, Hyogo 656-0503",
+      "coordinates": {
+        "lat": 34.254788999999995,
+        "lng": 134.6846986
+      },
+      "import_note": "awaji_or_naruto"
+    },
+    {
+      "name": "夢舞台",
+      "address": "1035 Ura, Awaji, Hyogo 656-2305",
+      "coordinates": {
+        "lat": 34.5440994,
+        "lng": 134.9941742
+      },
+      "import_note": "awaji_or_naruto"
+    },
+    {
+      "name": "漩渦之丘 大鳴門橋紀念館",
+      "address": "Hei-936-3 Fukura, Minamiawaji, Hyogo 656-0503",
+      "coordinates": {
+        "lat": 34.2547535,
+        "lng": 134.68468919999998
+      },
+      "import_note": "awaji_or_naruto"
+    },
+    {
+      "name": "淡路島ラーメン ポプラ",
+      "address": "5 Chome-1-37 Honmachi, Sumoto, Hyogo 656-0025",
+      "coordinates": {
+        "lat": 34.3403814,
+        "lng": 134.89526619999998
+      },
+      "import_note": "awaji_or_naruto"
+    },
+    {
+      "name": "Ohama Park",
+      "address": "1 Chome-2 Kaigandori, Sumoto, Hyogo 656-0022",
+      "coordinates": {
+        "lat": 34.340348899999995,
+        "lng": 134.9041265
+      },
+      "import_note": "awaji_or_naruto"
+    },
+    {
+      "name": "Garb Costa Orange",
+      "address": "1033-1 Gunge, Awaji, Hyogo 656-1511",
+      "coordinates": {
+        "lat": 34.4890632,
+        "lng": 134.8552703
+      },
+      "import_note": "awaji_or_naruto"
+    },
+    {
+      "name": "浮世離れの鯛ドロボー",
+      "address": "Heianura-40-6 Aigacho, Sumoto, Hyogo 656-2121",
+      "coordinates": {
+        "lat": 34.3934886,
+        "lng": 134.89471079999998
+      },
+      "import_note": "awaji_or_naruto"
+    },
+    {
+      "name": "O AWAJI",
+      "address": "2963-4 Nakada, Awaji, Hyogo 656-2163",
+      "coordinates": {
+        "lat": 34.4372787,
+        "lng": 134.8813168
+      },
+      "import_note": "awaji_or_naruto"
+    },
+    {
+      "name": "Boulangerie RURAL",
+      "address": "1467-4 Otani, Awaji, Hyogo 656-2224",
+      "coordinates": {
+        "lat": 34.4471588,
+        "lng": 134.8998377
+      },
+      "import_note": "awaji_or_naruto"
+    },
+    {
+      "name": "Picnic Garden",
+      "address": "1028-1 Gunge, Awaji, Hyogo 656-1511",
+      "coordinates": {
+        "lat": 34.4881234,
+        "lng": 134.8545567
+      },
+      "import_note": "awaji_or_naruto"
+    },
+    {
+      "name": "慶野松原海水浴場",
+      "address": "Matsuhokeino, Minamiawaji, Hyogo 656-0304",
+      "coordinates": {
+        "lat": 34.3390892,
+        "lng": 134.7341361
+      },
+      "import_note": "awaji_or_naruto"
+    },
+    {
+      "name": "Hyogo Prefecture Awaji Hanasajiki",
+      "address": "2805-7 Kusumoto, Awaji, Hyogo 656-2301",
+      "coordinates": {
+        "lat": 34.5535521,
+        "lng": 134.9780291
+      },
+      "import_note": "awaji_or_naruto"
+    }
+  ],
+  "excluded": [
+    {
+      "name": "高級芋菓子しみず 京都松井山手店",
+      "address": "〒614-8295 Kyoto, Yawata, Kinmeidaichuo, ５５−9",
+      "coordinates": {
+        "lat": 34.8341917,
+        "lng": 135.72016829999998
+      },
+      "import_note": "outside_awaji_naruto_scope"
+    }
+  ]
+}

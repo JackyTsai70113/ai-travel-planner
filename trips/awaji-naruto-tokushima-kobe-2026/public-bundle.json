@@ -1,0 +1,464 @@
+{
+  "budget": {
+    "categories": {
+      "contingency": {
+        "amount": 10000,
+        "currency": "JPY"
+      },
+      "flights": {
+        "amount": 104000,
+        "currency": "JPY"
+      },
+      "food": {
+        "amount": 30000,
+        "currency": "JPY"
+      },
+      "hotel": {
+        "amount": 68000,
+        "currency": "JPY"
+      },
+      "transport": {
+        "amount": 12000,
+        "currency": "JPY"
+      }
+    },
+    "currency": "JPY",
+    "total": {
+      "amount": 214000,
+      "currency": "JPY"
+    }
+  },
+  "date_range": {
+    "end_date": "2026-08-31",
+    "start_date": "2026-08-27"
+  },
+  "days": [
+    {
+      "date": "2026-08-27",
+      "items": [
+        {
+          "end_at": "2026-08-27T10:30:00+09:00",
+          "id": "day1-flight-arrival",
+          "kind": "transport",
+          "notes": "台北飛往神戶，入境入場後出發前往住宿",
+          "place_id": "kobe-airport",
+          "start_at": "2026-08-27T10:30:00+09:00"
+        },
+        {
+          "end_at": "2026-08-27T14:30:00+09:00",
+          "id": "day1-transfer-to-hotel",
+          "kind": "transport",
+          "notes": null,
+          "place_id": "awaji-riverside-hotel",
+          "start_at": "2026-08-27T13:45:00+09:00"
+        },
+        {
+          "end_at": "2026-08-27T15:30:00+09:00",
+          "id": "day1-checkin",
+          "kind": "check_in",
+          "notes": null,
+          "place_id": "awaji-riverside-hotel",
+          "start_at": "2026-08-27T15:00:00+09:00"
+        },
+        {
+          "end_at": "2026-08-27T19:00:00+09:00",
+          "id": "day1-dinner",
+          "kind": "meal",
+          "notes": null,
+          "place_id": "awaji-harbor-diner",
+          "start_at": "2026-08-27T18:00:00+09:00"
+        }
+      ],
+      "summary": "抵達後入住淡路北部，完成第一晚接駁"
+    },
+    {
+      "date": "2026-08-28",
+      "items": [
+        {
+          "end_at": "2026-08-28T11:00:00+09:00",
+          "id": "day2-morning-park",
+          "kind": "visit",
+          "notes": null,
+          "place_id": "awaji-nakajima-park",
+          "start_at": "2026-08-28T09:30:00+09:00"
+        },
+        {
+          "end_at": "2026-08-28T16:30:00+09:00",
+          "id": "day2-naruto-viewpoint",
+          "kind": "visit",
+          "notes": null,
+          "place_id": "naruto-whirlpool-viewpoint",
+          "start_at": "2026-08-28T14:30:00+09:00"
+        },
+        {
+          "end_at": "2026-08-28T17:45:00+09:00",
+          "id": "fixed-2026-08-28-17-45",
+          "kind": "visit",
+          "notes": "固定預約：8/28 17:45 しあわせのパンケーキ。地點與持續時間仍待補。",
+          "place_id": "naruto-ferry-fixed-activity",
+          "start_at": "2026-08-28T17:45:00+09:00"
+        },
+        {
+          "end_at": "2026-08-28T20:30:00+09:00",
+          "id": "day2-dinner",
+          "kind": "meal",
+          "notes": null,
+          "place_id": "awaji-harbor-diner",
+          "start_at": "2026-08-28T19:15:00+09:00"
+        }
+      ],
+      "summary": "淡路北岸與南側移動，預留鳴門固定預約窗"
+    },
+    {
+      "date": "2026-08-29",
+      "items": [
+        {
+          "end_at": "2026-08-29T11:00:00+09:00",
+          "id": "day3-checkout-riverside",
+          "kind": "check_out",
+          "notes": null,
+          "place_id": "awaji-riverside-hotel",
+          "start_at": "2026-08-29T10:30:00+09:00"
+        },
+        {
+          "end_at": "2026-08-29T12:45:00+09:00",
+          "id": "day3-transfer-tokushima",
+          "kind": "transport",
+          "notes": null,
+          "place_id": "tokushima-seshi-besso-hotel-2",
+          "start_at": "2026-08-29T11:30:00+09:00"
+        },
+        {
+          "end_at": "2026-08-29T14:15:00+09:00",
+          "id": "day3-checkin",
+          "kind": "check_in",
+          "notes": null,
+          "place_id": "tokushima-seshi-besso-hotel-2",
+          "start_at": "2026-08-29T13:45:00+09:00"
+        },
+        {
+          "end_at": "2026-08-29T17:30:00+09:00",
+          "id": "day3-rest-at-tokushima",
+          "kind": "free_time",
+          "notes": null,
+          "place_id": "tokushima-seshi-besso-hotel-2",
+          "start_at": "2026-08-29T15:00:00+09:00"
+        }
+      ],
+      "summary": "淡路南部轉場與前往德島住宿"
+    },
+    {
+      "date": "2026-08-30",
+      "items": [
+        {
+          "end_at": "2026-08-30T12:10:00+09:00",
+          "id": "day4-transfer-tokushima-to-kobe",
+          "kind": "transport",
+          "notes": null,
+          "place_id": "royal-park-canvas-kobe-sannomiya",
+          "start_at": "2026-08-30T10:00:00+09:00"
+        },
+        {
+          "end_at": "2026-08-30T15:30:00+09:00",
+          "id": "day4-checkin-kobe",
+          "kind": "check_in",
+          "notes": null,
+          "place_id": "royal-park-canvas-kobe-sannomiya",
+          "start_at": "2026-08-30T15:00:00+09:00"
+        },
+        {
+          "end_at": "2026-08-30T17:00:00+09:00",
+          "id": "day4-rest",
+          "kind": "free_time",
+          "notes": null,
+          "place_id": "royal-park-canvas-kobe-sannomiya",
+          "start_at": "2026-08-30T15:45:00+09:00"
+        },
+        {
+          "end_at": "2026-08-30T20:00:00+09:00",
+          "id": "day4-supplier-night-snack",
+          "kind": "meal",
+          "notes": null,
+          "place_id": "royal-park-canvas-kobe-sannomiya",
+          "start_at": "2026-08-30T18:30:00+09:00"
+        }
+      ],
+      "summary": "前往神戶住宿與返程準備"
+    },
+    {
+      "date": "2026-08-31",
+      "items": [
+        {
+          "end_at": "2026-08-31T08:00:00+09:00",
+          "id": "day5-checkout-kobe",
+          "kind": "check_out",
+          "notes": null,
+          "place_id": "royal-park-canvas-kobe-sannomiya",
+          "start_at": "2026-08-31T07:30:00+09:00"
+        },
+        {
+          "end_at": "2026-08-31T10:45:00+09:00",
+          "id": "day5-to-airport",
+          "kind": "transport",
+          "notes": null,
+          "place_id": "kobe-airport",
+          "start_at": "2026-08-31T09:45:00+09:00"
+        },
+        {
+          "end_at": "2026-08-31T12:45:00+09:00",
+          "id": "day5-departure-flight",
+          "kind": "transport",
+          "notes": null,
+          "place_id": "taoyuan-airport",
+          "start_at": "2026-08-31T12:45:00+09:00"
+        }
+      ],
+      "summary": "神戶入住整理與返程機場準備"
+    }
+  ],
+  "local_timezone": "Asia/Tokyo",
+  "meta": {
+    "generated_at": "2026-08-15T18:39:02+00:00",
+    "source_path": "trips/awaji-naruto-tokushima-kobe-2026/trip.json",
+    "source_sha256": "c646e71521dfd44db246d199138e30fd0759a783806552dc19e4d524b1447ddb"
+  },
+  "places": [
+    {
+      "address": "淡路市洲本",
+      "id": "awaji-beach",
+      "kind": "poi",
+      "maps_query": "淡路島南岸景觀公園",
+      "name": "淡路島南岸景觀公園"
+    },
+    {
+      "address": "淡路市",
+      "id": "awaji-harbor-diner",
+      "kind": "restaurant",
+      "maps_query": "淡路海岸茶咖（待確認）",
+      "name": "淡路海岸茶咖（待確認）"
+    },
+    {
+      "address": "淡路市",
+      "id": "awaji-nakajima-park",
+      "kind": "poi",
+      "maps_query": "淡路島北部公園步道",
+      "name": "淡路島北部公園步道"
+    },
+    {
+      "address": "淡路市清水町",
+      "id": "awaji-riverside-hotel",
+      "kind": "hotel",
+      "maps_query": "Awaji Riverside Terrace",
+      "name": "Awaji Riverside Terrace"
+    },
+    {
+      "address": "兵庫縣神戶市",
+      "id": "kobe-airport",
+      "kind": "airport",
+      "maps_query": "神戶(神戶機場)",
+      "name": "神戶(神戶機場)"
+    },
+    {
+      "address": "2805-7 Kusumoto, Awaji, Hyogo 656-2301",
+      "id": "map-import-awaji-hanasajiki",
+      "kind": "poi",
+      "maps_query": "Hyogo Prefecture Awaji Hanasajiki",
+      "name": "Hyogo Prefecture Awaji Hanasajiki"
+    },
+    {
+      "address": "1467-4 Otani, Awaji, Hyogo 656-2224",
+      "id": "map-import-boulangerie-rural",
+      "kind": "restaurant",
+      "maps_query": "Boulangerie RURAL",
+      "name": "Boulangerie RURAL"
+    },
+    {
+      "address": "1033-1 Gunge, Awaji, Hyogo 656-1511",
+      "id": "map-import-garb-costa-orange",
+      "kind": "restaurant",
+      "maps_query": "Garb Costa Orange",
+      "name": "Garb Costa Orange"
+    },
+    {
+      "address": "Matsuhokeino, Minamiawaji, Hyogo 656-0304",
+      "id": "map-import-keino-beach",
+      "kind": "poi",
+      "maps_query": "慶野松原海水浴場",
+      "name": "慶野松原海水浴場"
+    },
+    {
+      "address": "Hei-936-3 Fukura, Minamiawaji, Hyogo 656-0503",
+      "id": "map-import-naruto-bridge-memorial",
+      "kind": "poi",
+      "maps_query": "漩渦之丘 大鳴門橋紀念館",
+      "name": "漩渦之丘 大鳴門橋紀念館"
+    },
+    {
+      "address": "2963-4 Nakada, Awaji, Hyogo 656-2163",
+      "id": "map-import-o-awaji",
+      "kind": "restaurant",
+      "maps_query": "O AWAJI",
+      "name": "O AWAJI"
+    },
+    {
+      "address": "816 Nojimahikinoura, Awaji, Hyogo 656-1721",
+      "id": "map-import-ocean-terrace",
+      "kind": "poi",
+      "maps_query": "Ocean Terrace",
+      "name": "Ocean Terrace"
+    },
+    {
+      "address": "1 Chome-2 Kaigandori, Sumoto, Hyogo 656-0022",
+      "id": "map-import-ohama-park",
+      "kind": "poi",
+      "maps_query": "Ohama Park",
+      "name": "Ohama Park"
+    },
+    {
+      "address": "1028-1 Gunge, Awaji, Hyogo 656-1511",
+      "id": "map-import-picnic-garden",
+      "kind": "restaurant",
+      "maps_query": "Picnic Garden",
+      "name": "Picnic Garden"
+    },
+    {
+      "address": "Suberiiwahama-23-100 Muyacho Okuwajima, Naruto, Tokushima 772-0011",
+      "id": "map-import-pokara-naruto-store",
+      "kind": "restaurant",
+      "maps_query": "ポカラ 鳴門店",
+      "name": "ポカラ 鳴門店"
+    },
+    {
+      "address": "5 Chome-1-37 Honmachi, Sumoto, Hyogo 656-0025",
+      "id": "map-import-poplar-ramen",
+      "kind": "restaurant",
+      "maps_query": "淡路島ラーメン ポプラ",
+      "name": "淡路島ラーメン ポプラ"
+    },
+    {
+      "address": "1 Chome-1-8 Shioya, Sumoto, Hyogo 656-0021",
+      "id": "map-import-sbrick-warehouse",
+      "kind": "poi",
+      "maps_query": "S BRICK 旧:鐘紡工場跡 赤レンガ倉庫",
+      "name": "S BRICK 旧:鐘紡工場跡 赤レンガ倉庫"
+    },
+    {
+      "address": "Heianura-40-6 Aigacho, Sumoto, Hyogo 656-2121",
+      "id": "map-import-taidrobou",
+      "kind": "restaurant",
+      "maps_query": "浮世離れの鯛ドロボー",
+      "name": "浮世離れの鯛ドロボー"
+    },
+    {
+      "address": "Hei-936-3 Fukura, Minamiawaji, Hyogo 656-0503",
+      "id": "map-import-uzuno-oka",
+      "kind": "restaurant",
+      "maps_query": "絶景レストラン うずの丘",
+      "name": "絶景レストラン うずの丘"
+    },
+    {
+      "address": "1035 Ura, Awaji, Hyogo 656-2305",
+      "id": "map-import-yumebutai",
+      "kind": "poi",
+      "maps_query": "夢舞台",
+      "name": "夢舞台"
+    },
+    {
+      "address": "鳴門（地點待補）",
+      "id": "naruto-ferry-fixed-activity",
+      "kind": "poi",
+      "maps_query": "しあわせのパンケーキ",
+      "name": "しあわせのパンケーキ"
+    },
+    {
+      "address": "鳴門町",
+      "id": "naruto-whirlpool-viewpoint",
+      "kind": "poi",
+      "maps_query": "鳴門漩渦觀景橋段",
+      "name": "鳴門漩渦觀景橋段"
+    },
+    {
+      "address": "2-3 Shimoyamatedoori, Chuo, Kobe, Hyogo 650-0011, Japan",
+      "id": "royal-park-canvas-kobe-sannomiya",
+      "kind": "hotel",
+      "maps_query": "The Royal Park Canvas Kobe Sannomiya",
+      "name": "The Royal Park Canvas Kobe Sannomiya"
+    },
+    {
+      "address": "台灣桃園市",
+      "id": "taoyuan-airport",
+      "kind": "airport",
+      "maps_query": "桃園國際機場",
+      "name": "桃園國際機場"
+    },
+    {
+      "address": "金沢１丁目３−44－3号, 德島 770-0871, 日本",
+      "id": "tokushima-seshi-besso-hotel-2",
+      "kind": "hotel",
+      "maps_query": "徳島別荘ホテル2",
+      "name": "徳島別荘ホテル2"
+    }
+  ],
+  "preferences": {
+    "hard_constraints": [
+      {
+        "description": "17:15 後不得新增固定時段景點，保留 8/28 17:45 固定預約可調整時間窗",
+        "id": "no-hard-activity-after-17-15"
+      },
+      {
+        "description": "保留 8/28 17:45 固定預約（名稱：しあわせのパンケーキ）",
+        "id": "fixed-17-45-reservation"
+      }
+    ],
+    "soft_preferences": [
+      {
+        "description": "每日維持低到中等體能節奏，偏早退到達安排",
+        "id": "day-fatigue-control"
+      },
+      {
+        "description": "遇到疲憊時改為短距離移動與備用休息時段",
+        "id": "elderly-rest-margin"
+      }
+    ]
+  },
+  "reservations": [
+    {
+      "day": "2026-08-28",
+      "id": "fixed-2026-08-28-17-45",
+      "kind": "placeholder-anchored-reservation",
+      "name": "しあわせのパンケーキ",
+      "place_id": "naruto-ferry-fixed-activity",
+      "time": "2026-08-28T17:45:00+09:00",
+      "unresolved": true
+    }
+  ],
+  "selected": {
+    "flight_ids": [
+      "xj-834-outbound",
+      "xj-1835-return"
+    ],
+    "hotel_place_ids": [
+      "awaji-riverside-hotel",
+      "tokushima-seshi-besso-hotel-2",
+      "royal-park-canvas-kobe-sannomiya"
+    ]
+  },
+  "status": "warning",
+  "title": "2026 淡路島・鳴門家庭旅行",
+  "traveler_profile": {
+    "adults": 6,
+    "children_ages": [
+      2
+    ],
+    "children_count": 1
+  },
+  "trip_id": "awaji-naruto-tokushima-kobe-2026",
+  "validation": [
+    {
+      "code": "RESERVATION_UNCONFIRMED",
+      "message": "固定預約 8/28 17:45 名稱已確認（しあわせのパンケーキ），但地點與 duration 待補",
+      "path": "/days/2026-08-28/items/fixed-2026-08-28-17-45",
+      "severity": "warning"
+    }
+  ]
+}

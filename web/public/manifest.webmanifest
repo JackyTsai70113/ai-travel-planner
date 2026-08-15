@@ -1,0 +1,10 @@
+{
+  "name": "Awaji 2026 Golden Trip",
+  "short_name": "Awaji2026",
+  "start_url": "/trips/awaji-2026/",
+  "display": "standalone",
+  "background_color": "#071026",
+  "theme_color": "#0f6a69",
+  "description": "5-day offline-first trip guide for 淡路島・鳴門 family trip.",
+  "icons": []
+}
