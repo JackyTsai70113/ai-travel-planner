@@ -71,8 +71,10 @@ class OperationalFact:
         """Return freshness-derived status without mutating recorded evidence."""
 
         now = _aware(now)
-        if self.status == FactStatus.CONTRADICTORY:
-            return FactStatus.CONTRADICTORY
+        if self.status != FactStatus.CONFIRMED:
+            return self.status
+        if _aware(self.evidence.retrieved_at) > now:
+            return FactStatus.UNVERIFIED
         if self.valid_from is not None and now < _aware(self.valid_from):
             return FactStatus.UNVERIFIED
         if self.valid_until is not None and now > _aware(self.valid_until):
@@ -251,6 +253,8 @@ def is_temporarily_closed(
     usable = [fact for fact in applicable if fact.status == FactStatus.CONFIRMED]
     if not usable:
         return None
+    if any(not isinstance(fact.value, bool) for fact in usable):
+        return None
     return any(fact.value is True for fact in usable)
 
 
@@ -338,6 +342,14 @@ def _facts_from_map(
         if value is None:
             errors.append(f"{path}.facts.{raw_kind} has no value")
             continue
+        if kind in {FactKind.TEMPORARY_CLOSURE, FactKind.ROAD_CLOSURE} and not isinstance(
+            value, bool
+        ):
+            errors.append(f"{path}.facts.{raw_kind} must be a boolean")
+            continue
+        if kind == FactKind.LAST_ADMISSION and not _is_local_time(value):
+            errors.append(f"{path}.facts.{raw_kind} must be an ISO local time")
+            continue
         output.append(
             OperationalFact(
                 subject_id,
@@ -376,6 +388,16 @@ def _parse_datetime(value: object, *, end_of_day: bool = False) -> datetime | No
         return _aware(datetime.fromisoformat(value.replace("Z", "+00:00")))
     except ValueError:
         return None
+
+
+def _is_local_time(value: object) -> bool:
+    if not isinstance(value, str):
+        return False
+    try:
+        parsed = time.fromisoformat(value)
+    except ValueError:
+        return False
+    return parsed.tzinfo is None
 
 
 def _aware(value: datetime) -> datetime:

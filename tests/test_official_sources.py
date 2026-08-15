@@ -120,6 +120,48 @@ class OfficialFixtureParserTests(unittest.TestCase):
         self.assertEqual(result.facts, ())
         self.assertEqual(len(result.errors), 2)
 
+    def test_closure_facts_require_boolean_values(self):
+        for kind in ("temporary_closure", "road_closure"):
+            with self.subTest(kind=kind):
+                recorded = json.dumps(
+                    {
+                        "site": "official",
+                        "retrieved_at": "2026-08-01T00:00:00Z",
+                        "records": [
+                            {
+                                "subject_id": "place-1",
+                                "source_url": "https://official.example/place-1",
+                                "facts": {kind: "yes"},
+                            }
+                        ],
+                    }
+                )
+
+                result = parse_official_fixture(recorded, "tourism-site-v1")
+
+                self.assertEqual(result.facts, ())
+                self.assertTrue(result.errors)
+
+    def test_last_admission_requires_valid_iso_local_time(self):
+        recorded = json.dumps(
+            {
+                "site": "official",
+                "retrieved_at": "2026-08-01T00:00:00Z",
+                "records": [
+                    {
+                        "subject_id": "place-1",
+                        "source_url": "https://official.example/place-1",
+                        "facts": {"last_admission": "25:00"},
+                    }
+                ],
+            }
+        )
+
+        result = parse_official_fixture(recorded, "tourism-site-v1")
+
+        self.assertEqual(result.facts, ())
+        self.assertTrue(result.errors)
+
 
 class AuthorityReconciliationTests(unittest.TestCase):
     def test_official_wins_provider_and_community_conflict_deterministically(self):
@@ -200,6 +242,27 @@ class AuthorityReconciliationTests(unittest.TestCase):
 
         self.assertEqual(result.status, FactStatus.UNVERIFIED)
 
+    def test_fresh_explicit_stale_fact_is_not_promoted_to_confirmed(self):
+        result = reconcile_facts(
+            [make_fact("17:00", status=FactStatus.STALE)], now=NOW
+        )[0]
+
+        self.assertEqual(result.status, FactStatus.STALE)
+
+    def test_fresh_explicit_unverified_fact_is_not_promoted_to_confirmed(self):
+        result = reconcile_facts(
+            [make_fact("17:00", status=FactStatus.UNVERIFIED)], now=NOW
+        )[0]
+
+        self.assertEqual(result.status, FactStatus.UNVERIFIED)
+
+    def test_future_retrieval_timestamp_is_not_confirmed(self):
+        result = reconcile_facts(
+            [make_fact("17:00", retrieved_at=NOW + timedelta(minutes=1))], now=NOW
+        )[0]
+
+        self.assertEqual(result.status, FactStatus.UNVERIFIED)
+
 
 class SharedOperationalEvaluationTests(unittest.TestCase):
     def test_temporary_closure_uses_confirmed_applicable_window(self):
@@ -228,6 +291,15 @@ class SharedOperationalEvaluationTests(unittest.TestCase):
         road_closure = make_fact(True, kind=FactKind.ROAD_CLOSURE)
 
         self.assertTrue(evaluate_temporary_closure([road_closure], NOW))
+
+    def test_malformed_confirmed_closure_value_is_unknown(self):
+        malformed = make_fact(
+            "false",
+            kind=FactKind.TEMPORARY_CLOSURE,
+            status=FactStatus.CONFIRMED,
+        )
+
+        self.assertIsNone(evaluate_temporary_closure([malformed], NOW))
 
     def test_last_admission_returns_only_confirmed_applicable_valid_time(self):
         admission = make_fact(
