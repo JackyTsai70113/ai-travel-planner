@@ -9,7 +9,7 @@ from __future__ import annotations
 from copy import deepcopy
 from datetime import datetime, timezone
 from typing import Any
-from urllib.parse import quote_plus
+from urllib.parse import quote_plus, urlsplit, urlunsplit
 
 
 _CONFIRMATION_KEYS = {"confirmation_number", "confirmationnumber", "confirmationcode", "booking_reference", "bookingreference", "reservation_code", "reservationcode"}
@@ -65,6 +65,7 @@ def _place_facts(records: list[dict[str, Any]], places: dict[str, dict[str, Any]
         if place_id not in places or place_id not in used:
             continue
         item = {key: deepcopy(value) for key, value in record.items() if key not in {"place_id", "place_name"}}
+        item["provenance"] = _public_provenance(item.get("provenance"))
         item.update({"place_id": place_id, "place_name": places[place_id].get("name", place_id)})
         item["freshness"] = _freshness(item.get("provenance"), reference, freshness_days)
         result.append(item)
@@ -82,6 +83,7 @@ def _reservation(record: dict[str, Any], places: dict[str, dict[str, Any]], used
     # cannot safely establish the public boundary.
     allowed = {"kind", "place_id", "flight_id", "transport_leg_id", "start_at", "end_at", "status", "recheck_at", "provenance"}
     item = {key: deepcopy(value) for key, value in record.items() if key in allowed}
+    item["provenance"] = _public_provenance(item.get("provenance"))
     confirmation = _confirmation_display(record)
     if confirmation:
         item["confirmation_display"] = confirmation
@@ -97,6 +99,7 @@ def _evidence_records(records: list[dict[str, Any]], used: set[str], reference: 
         if record.get("place_id") not in used:
             continue
         item = deepcopy(record)
+        item["provenance"] = _public_provenance(item.get("provenance"))
         item["freshness"] = _freshness(item.get("provenance"), reference, freshness_days)
         result.append(item)
     return result
@@ -115,6 +118,17 @@ def _freshness(provenance: Any, reference: datetime, freshness_days: int) -> dic
     if age_days < 0:
         return {"state": "invalid", "retrieved_at": provenance["retrieved_at"]}
     return {"state": "stale" if age_days > freshness_days else "fresh", "retrieved_at": provenance["retrieved_at"]}
+
+
+def _public_provenance(provenance: Any) -> dict[str, Any] | None:
+    """Keep only source metadata that is safe for a public static handbook."""
+    if not isinstance(provenance, dict):
+        return None
+    public = {key: deepcopy(provenance[key]) for key in ("source_type", "provider", "retrieved_at", "status", "confidence") if key in provenance}
+    if isinstance(provenance.get("source_url"), str):
+        parsed = urlsplit(provenance["source_url"])
+        public["source_url"] = urlunsplit((parsed.scheme, parsed.netloc, parsed.path, "", ""))
+    return public
 
 
 def _confirmation_display(record: dict[str, Any]) -> str | None:
