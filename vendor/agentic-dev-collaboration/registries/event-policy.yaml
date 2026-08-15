@@ -1,0 +1,77 @@
+schema_version: "3.0"
+events:
+  session.started:
+    allowed_modes: [coordinator]
+    allowed_agents: [core.orchestrator]
+    assignment_required: false
+    blocking_required: false
+  task.accepted:
+    allowed_modes: [coordinator]
+    allowed_agents: [core.orchestrator]
+    assignment_required: false
+    blocking_required: true
+  plan.proposed:
+    allowed_modes: [plan_write]
+    allowed_agents: [core.planner]
+    assignment_required: false
+    blocking_required: true
+  plan.approved:
+    allowed_modes: [read_only]
+    allowed_agents: [core.spec-reviewer]
+    assignment_required: false
+    blocking_required: true
+  implementation.started:
+    allowed_modes: [production_write, test_write]
+    allowed_agents: []
+    assignment_required: true
+    blocking_required: true
+  file.write.requested:
+    allowed_modes: [plan_write, production_write, test_write]
+    allowed_agents: []
+    assignment_required: true
+    blocking_required: true
+  command.requested:
+    allowed_modes: [production_write, test_write, verify_execute]
+    allowed_agents: []
+    assignment_required: true
+    blocking_required: true
+  review.completed:
+    allowed_modes: [read_only]
+    allowed_agents:
+      - core.spec-reviewer
+      - core.code-reviewer
+      - core.security-reviewer
+      - cross-platform.contract-reviewer
+    assignment_required: false
+    blocking_required: true
+  verification.completed:
+    allowed_modes: [verify_execute]
+    allowed_agents: [core.verifier]
+    assignment_required: false
+    blocking_required: true
+  task.completed:
+    allowed_modes: [coordinator]
+    allowed_agents: [core.orchestrator]
+    assignment_required: false
+    blocking_required: true
+  task.blocked:
+    allowed_modes: [coordinator]
+    allowed_agents: [core.orchestrator]
+    assignment_required: false
+    blocking_required: true
+allowed_executables:
+  - name: make
+    kind: direct_tool
+denied_executables:
+  - bash
+  - busybox
+  - cmd
+  - dash
+  - env
+  - ksh
+  - powershell
+  - pwsh
+  - rm
+  - sh
+  - sudo
+  - zsh

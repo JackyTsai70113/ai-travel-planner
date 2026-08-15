@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/consumer-snapshot-lock.schema.json",
+  "title": "Consumer Snapshot Lock",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "upstream_url",
+    "commit",
+    "included_paths",
+    "snapshot_identity_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "upstream_url": {"$ref": "#/$defs/portableRemote"},
+    "commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "included_paths": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "mode", "sha256"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$"
+          },
+          "mode": {
+            "enum": ["100644", "100755"]
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    "snapshot_identity_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "$defs": {
+    "portableRemote": {
+      "type": "string",
+      "anyOf": [
+        {
+          "pattern": "^https://(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.)+[A-Za-z](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?::[0-9]{1,5})?/[A-Za-z0-9._~-]+(?:/[A-Za-z0-9._~-]+)*$"
+        },
+        {
+          "pattern": "^ssh://(?:[A-Za-z0-9._-]+@)?(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.)+[A-Za-z](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?::[0-9]{1,5})?/[A-Za-z0-9._~-]+(?:/[A-Za-z0-9._~-]+)*$"
+        },
+        {
+          "pattern": "^[A-Za-z0-9._-]+@(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.)+[A-Za-z](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?:[A-Za-z0-9._~-]+(?:/[A-Za-z0-9._~-]+)*$"
+        }
+      ]
+    }
+  }
+}

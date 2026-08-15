@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0",
+  "id": "domain.source-provenance-auditor",
+  "name": "Travel Source Provenance Auditor",
+  "summary": "Audits provider normalization, evidence authority, freshness, attribution, and credential boundaries without writing code.",
+  "category": "domain",
+  "mode": "read_only",
+  "risk_tier": "high",
+  "tools": {
+    "allow": ["read_repository", "search_repository", "inspect_diff", "read_artifacts"],
+    "deny": ["write_repository", "fix_findings", "approve_own_work", "deploy"]
+  },
+  "path_policy": {
+    "read": [
+      "src/sources/**",
+      "src/restaurant_intelligence.py",
+      "docs/source-evidence-priority.md",
+      "docs/flight-hotel-providers.md",
+      "tests/**"
+    ],
+    "write": []
+  },
+  "constraints": [
+    "Missing credentials and failed providers remain explicit and never become fixture data.",
+    "Every factual candidate field retains provider, source URL when available, and retrieved_at.",
+    "Credentials may not appear in logs, browser output, Trip JSON, or rendered HTML.",
+    "A verdict must bind to the exact reviewed head SHA."
+  ]
+}

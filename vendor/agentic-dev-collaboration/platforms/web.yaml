@@ -1,0 +1,25 @@
+schema_version: "1.0"
+id: web
+display_name: Web
+agents:
+  - web.engineer
+  - core.test-engineer
+  - core.code-reviewer
+  - core.verifier
+change_surfaces:
+  - browser user interface
+  - API clients and state management
+  - server and client rendering
+  - accessibility and responsive layout
+  - bundling, caching, and deployment
+required_checks:
+  - formatting, linting, and type analysis
+  - unit and component tests
+  - browser journey tests for affected behavior
+  - accessibility checks
+review_concerns:
+  - supported browsers and responsive behavior
+  - keyboard and assistive-technology access
+  - cache invalidation and stale clients
+  - client and server trust boundaries
+  - performance and observability

@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "include": [
+    "AGENTS.md",
+    "LICENSE",
+    "agents",
+    "skills",
+    "schemas",
+    "hooks",
+    "specs",
+    "docs",
+    "platforms",
+    "registries",
+    "consumer",
+    "collaboration/examples/trusted-pr-control.yaml",
+    "scripts"
+  ]
+}

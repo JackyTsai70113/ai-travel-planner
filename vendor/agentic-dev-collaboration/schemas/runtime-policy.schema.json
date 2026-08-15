@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/runtime-policy.schema.json",
+  "title": "Capability and Tool Runtime Policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "capabilities", "tools", "mode_allowlists"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/id"}
+    },
+    "tools": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/id"}
+    },
+    "mode_allowlists": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "coordinator",
+        "read_only",
+        "plan_write",
+        "production_write",
+        "test_write",
+        "verify_execute"
+      ],
+      "properties": {
+        "coordinator": {"$ref": "#/$defs/allowlist"},
+        "read_only": {"$ref": "#/$defs/allowlist"},
+        "plan_write": {"$ref": "#/$defs/allowlist"},
+        "production_write": {"$ref": "#/$defs/allowlist"},
+        "test_write": {"$ref": "#/$defs/allowlist"},
+        "verify_execute": {"$ref": "#/$defs/allowlist"}
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "allowlist": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capabilities", "tools"],
+      "properties": {
+        "capabilities": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/id"}
+        },
+        "tools": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/id"}
+        }
+      }
+    }
+  }
+}

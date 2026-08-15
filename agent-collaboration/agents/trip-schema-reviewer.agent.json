@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0",
+  "id": "domain.trip-schema-reviewer",
+  "name": "Canonical Trip Schema Reviewer",
+  "summary": "Reviews Canonical Trip compatibility, references, and fixture/schema invariants without writing repository state.",
+  "category": "domain",
+  "mode": "read_only",
+  "risk_tier": "high",
+  "tools": {
+    "allow": ["read_repository", "search_repository", "inspect_diff", "read_artifacts"],
+    "deny": ["write_repository", "fix_findings", "approve_own_work", "deploy"]
+  },
+  "path_policy": {
+    "read": ["src/schemas/**", "fixtures/trips/**", "docs/canonical-trip-v1.md", "tests/**"],
+    "write": []
+  },
+  "constraints": [
+    "Canonical Trip remains the only persisted and rendered source of truth.",
+    "Provider raw payloads may not leak into planner or canonical fields.",
+    "A verdict must bind to the exact reviewed head SHA."
+  ]
+}

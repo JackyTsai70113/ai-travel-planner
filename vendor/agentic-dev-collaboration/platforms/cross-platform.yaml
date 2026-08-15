@@ -1,0 +1,25 @@
+schema_version: "1.0"
+id: cross-platform
+display_name: Cross-platform Integration
+agents:
+  - cross-platform.contract-reviewer
+  - cross-platform.integration-tester
+  - core.architect
+  - core.verifier
+change_surfaces:
+  - shared API and event contracts
+  - end-to-end user journeys
+  - compatibility windows
+  - feature flags and rollout order
+  - cross-platform observability
+required_checks:
+  - machine-readable contract validation
+  - producer and consumer contract tests
+  - at least one integrated user journey
+  - compatibility and rollback evidence
+review_concerns:
+  - released mobile clients
+  - rollout sequencing
+  - schema defaults and optionality
+  - partial deployment failure
+  - consistent behavior and telemetry

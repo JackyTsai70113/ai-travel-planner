@@ -1,0 +1,81 @@
+schema_version: "1.0"
+trusted_base:
+  repository: https://example.invalid/framework.git
+  ref: refs/heads/main
+  commit: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+source_trust:
+  origin: same_repository
+  diff_classification: untrusted_inert
+  external_provider_handling: not_applicable
+change_run:
+  implementer_identity: executor-17
+  changed_paths:
+    - docs/architecture/trusted-pr-control.md
+    - schemas/trusted-pr-control.schema.json
+  reviewed_head_sha: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+  diff_digest: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+diff_lock:
+  base_commit: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  head_before: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+  head_after: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+  digest_before: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+  digest_after: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+  unchanged_required: true
+required_checks:
+  required_names:
+    - contract-validation
+    - tests
+  results:
+    - name: contract-validation
+      attempt: 1
+      latest_attempt: true
+      head_sha: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+      conclusion: PASS
+    - name: tests
+      attempt: 1
+      latest_attempt: true
+      head_sha: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+      conclusion: PASS
+deterministic_blockers: []
+trust_anchors:
+  profile: portable-v1
+  paths:
+    - .github/workflows/**
+    - AGENTS.md
+    - agents/**
+    - hooks/**
+    - policies/**
+    - registries/**
+    - schemas/**
+    - skills/**
+    - scripts/validate.py
+  human_approval_required: true
+  meta_review_required: true
+approval_evidence:
+  - kind: trust_anchor_meta_review
+    reviewer_identity: maintainer-reviewer-42
+    reviewer_type: human
+    reviewed_head_sha: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+    diff_digest: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+    verdict: PASS
+    reviewed_at: "2026-07-30T10:30:00+08:00"
+    evidence_ref: artifacts/reviews/trust-anchor-meta-review.yaml
+automation_dependencies:
+  - name: validation-runner
+    immutable_ref: dddddddddddddddddddddddddddddddddddddddd
+permissions:
+  review: read_only
+  merge: write_separate_controller
+  separated: true
+model_controls:
+  verdict_cannot_override_blockers: true
+  untrusted_values_in_repair_prompt: false
+secret_scanning:
+  enabled: true
+  defense_in_depth_only: true
+merge_control:
+  automatic_merge_workflow_provided: false
+  authorization: human_or_external_trusted_controller
+  expected_head: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+  atomic_expected_head_required: true
+deterministic_status: PASS

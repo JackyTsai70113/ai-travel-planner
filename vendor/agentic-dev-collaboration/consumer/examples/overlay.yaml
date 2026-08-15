@@ -1,0 +1,27 @@
+schema_version: "1.0"
+precedence:
+  - consumer_root
+  - project_domain_overlay
+  - pinned_framework
+  - generated_adapter
+conflict_resolution: stricter_wins_fail_closed
+layers:
+  consumer_root:
+    sources:
+      - AGENTS.md
+      - policies/security.yaml
+    may_weaken_higher_layer: false
+  project_domain_overlay:
+    sources:
+      - overlays/project.yaml
+      - overlays/domain.yaml
+    may_weaken_higher_layer: false
+  pinned_framework:
+    sources:
+      - framework/consumer-snapshot.lock.json
+      - framework/AGENTS.md
+    may_weaken_higher_layer: false
+  generated_adapter:
+    sources:
+      - generated/runtime/
+    may_weaken_higher_layer: false

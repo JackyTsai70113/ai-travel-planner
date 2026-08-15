@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "upstream_url": "https://example.invalid/framework.git",
+  "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "included_paths": [
+    {
+      "path": "AGENTS.md",
+      "mode": "100644",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "path": "LICENSE",
+      "mode": "100644",
+      "sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+  ],
+  "snapshot_identity_sha256": "0ead5ad7dd460b0d9158ecee758296354d4c02cbdc8cf772f76d20505f5a40d2"
+}

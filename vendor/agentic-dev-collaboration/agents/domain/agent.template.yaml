@@ -1,0 +1,39 @@
+schema_version: "1.0"
+id: domain.example-reviewer
+name: Example Domain Reviewer
+summary: Replace this text with the exact domain invariants and evidence responsibility.
+category: domain
+mode: read_only
+risk_tier: low
+invocation:
+  automatic: false
+  triggers:
+    - Replace with a precise risk or file trigger.
+capabilities:
+  - review_domain_invariants
+tools:
+  allow:
+    - read_repository
+    - search_repository
+  deny:
+    - write_repository
+    - fix_findings
+path_policy:
+  read:
+    - <authoritative-domain-paths>
+  write: []
+inputs:
+  - task envelope
+  - authoritative domain sources
+outputs:
+  - domain findings
+  - domain verdict
+constraints:
+  - Do not infer missing domain facts.
+  - Cite authoritative evidence and freshness.
+handoffs:
+  accepts_from:
+    - core.orchestrator
+  sends_to:
+    - core.verifier
+    - core.orchestrator
