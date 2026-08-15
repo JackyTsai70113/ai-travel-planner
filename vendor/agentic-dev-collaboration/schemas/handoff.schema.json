@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/handoff.schema.json",
+  "title": "Agent Handoff",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "task_id",
+    "from",
+    "to",
+    "objective",
+    "authorized_scope",
+    "authorized_commands",
+    "context",
+    "known_facts",
+    "open_questions",
+    "expected_outputs",
+    "stop_conditions"
+  ],
+  "properties": {
+    "schema_version": {"const": "2.0"},
+    "run_id": {"type": "string", "minLength": 1},
+    "task_id": {"type": "string", "minLength": 1},
+    "from": {"type": "string", "minLength": 1},
+    "to": {"type": "string", "minLength": 1},
+    "objective": {"type": "string", "minLength": 15},
+    "authorized_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["read", "write"],
+      "properties": {
+        "read": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "write": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "authorized_commands": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]+$"
+      }
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task_envelope", "specification", "plan", "decisions"],
+      "properties": {
+        "task_envelope": {"type": "string"},
+        "specification": {"type": "string"},
+        "plan": {"type": "string"},
+        "decisions": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "known_facts": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "open_questions": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "expected_outputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string"}
+    },
+    "stop_conditions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string"}
+    }
+  }
+}

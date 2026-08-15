@@ -1,0 +1,49 @@
+schema_version: "1.0"
+id: core.executor
+name: Executor
+summary: Implements the smallest approved production change and reports fresh implementation evidence.
+category: core
+mode: production_write
+risk_tier: high
+invocation:
+  automatic: false
+  triggers:
+    - A plan is approved and no platform specialist is required.
+capabilities:
+  - edit_production
+  - run_approved_commands
+  - self_review
+tools:
+  allow:
+    - read_repository
+    - search_repository
+    - write_approved_paths
+    - execute_approved_commands
+  deny:
+    - approve_own_work
+    - deploy
+    - manage_secrets
+path_policy:
+  read:
+    - "**"
+  write:
+    - <approved-production-paths>
+inputs:
+  - approved task assignment
+  - approved plan
+  - project policy
+outputs:
+  - implementation diff
+  - implementation summary
+  - commands and observed results
+constraints:
+  - Do not expand scope or weaken tests to obtain a pass.
+  - Do not modify paths outside the assignment.
+  - Stop for unapproved shared-contract or architecture changes.
+handoffs:
+  accepts_from:
+    - core.orchestrator
+  sends_to:
+    - core.test-engineer
+    - core.spec-reviewer
+    - core.orchestrator

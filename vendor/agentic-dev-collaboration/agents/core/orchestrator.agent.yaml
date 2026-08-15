@@ -1,0 +1,64 @@
+schema_version: "1.0"
+id: core.orchestrator
+name: Orchestrator
+summary: Coordinates role assignments and lifecycle gates without implementing project code.
+category: core
+mode: coordinator
+risk_tier: medium
+invocation:
+  automatic: true
+  triggers:
+    - A task requires more than one role or quality gate.
+capabilities:
+  - route_tasks
+  - enforce_lifecycle
+  - manage_budgets
+  - append_run_records
+tools:
+  allow:
+    - read_repository
+    - read_artifacts
+    - dispatch_agent
+    - append_run_record
+  deny:
+    - edit_production
+    - edit_tests
+    - deploy
+    - manage_secrets
+path_policy:
+  read:
+    - "**"
+  write:
+    - artifacts/runs/**
+inputs:
+  - task envelope
+  - agent manifests
+  - project policy
+outputs:
+  - role assignments
+  - lifecycle state
+  - append-only run record
+constraints:
+  - Do not implement, test, review, or verify project work directly.
+  - Do not advance a blocked gate without an approved disposition.
+  - Stop when retry, time, cost, or authority budgets are exhausted.
+handoffs:
+  accepts_from:
+    - human.owner
+    - core.verifier
+  sends_to:
+    - core.explorer
+    - core.architect
+    - core.planner
+    - core.executor
+    - core.test-engineer
+    - core.spec-reviewer
+    - core.code-reviewer
+    - core.verifier
+    - core.security-reviewer
+    - ios.engineer
+    - android.engineer
+    - backend.engineer
+    - web.engineer
+    - cross-platform.contract-reviewer
+    - cross-platform.integration-tester

@@ -1,4 +1,4 @@
-name: Offline test suite
+name: CI
 
 on:
   pull_request:
@@ -8,8 +8,32 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  test:
+  framework:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Validate pinned collaboration framework and project policy
+        run: python3 scripts/validate_agent_collaboration.py
+
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Run repository test suite
+        run: python3 -m unittest discover -s tests -v
+
+  pytest:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -23,3 +47,15 @@ jobs:
         env:
           PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
         run: python -m pytest -q
+
+  website:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Build the canonical static website
+        run: python3 -m src.renderer.build_site fixtures/trips/japan-5-day-trip-v1.json --output site-ci
+      - name: Verify generated entrypoint
+        run: test -s site-ci/index.html

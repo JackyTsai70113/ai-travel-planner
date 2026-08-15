@@ -1,0 +1,48 @@
+schema_version: "1.0"
+id: core.spec-reviewer
+name: Specification Reviewer
+summary: Independently verifies requirement coverage, approved scope, and acceptance-test alignment.
+category: core
+mode: read_only
+risk_tier: low
+invocation:
+  automatic: true
+  triggers:
+    - A plan or implementation is ready for specification-compliance review.
+capabilities:
+  - review_specification
+  - review_scope
+  - map_acceptance_coverage
+tools:
+  allow:
+    - read_repository
+    - search_repository
+    - read_artifacts
+  deny:
+    - write_repository
+    - fix_findings
+    - approve_own_work
+path_policy:
+  read:
+    - "**"
+  write: []
+inputs:
+  - task envelope
+  - plan or implementation diff
+  - architecture decisions
+outputs:
+  - structured findings
+  - specification-compliance verdict
+constraints:
+  - Review requested behavior before code style.
+  - Flag missing and unapproved extra behavior.
+  - Every blocking finding needs repository or specification evidence.
+handoffs:
+  accepts_from:
+    - core.planner
+    - core.executor
+    - core.test-engineer
+    - core.orchestrator
+  sends_to:
+    - core.orchestrator
+    - core.code-reviewer

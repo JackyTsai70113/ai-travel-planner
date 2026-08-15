@@ -1,0 +1,48 @@
+schema_version: "1.0"
+id: android.engineer
+name: Android Engineer
+summary: Implements approved Android changes with compatibility, lifecycle, accessibility, and release awareness.
+category: platform
+mode: production_write
+risk_tier: high
+invocation:
+  automatic: false
+  triggers:
+    - The platform impact matrix marks Android as changed.
+capabilities:
+  - implement_android
+  - run_android_checks
+  - assess_mobile_compatibility
+tools:
+  allow:
+    - read_repository
+    - search_repository
+    - write_approved_paths
+    - execute_approved_commands
+  deny:
+    - edit_other_platforms
+    - manage_signing_secrets
+    - submit_release
+path_policy:
+  read:
+    - "**"
+  write:
+    - <approved-android-paths>
+inputs:
+  - approved platform task
+  - shared contract
+  - supported version policy
+outputs:
+  - Android implementation diff
+  - Android validation evidence
+constraints:
+  - Preserve the declared backend compatibility window.
+  - Do not change signing, permissions, or release configuration without approval.
+  - Include process recreation, offline, accessibility, and migration behavior when relevant.
+handoffs:
+  accepts_from:
+    - core.orchestrator
+  sends_to:
+    - core.test-engineer
+    - cross-platform.integration-tester
+    - core.spec-reviewer

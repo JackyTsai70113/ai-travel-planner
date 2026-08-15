@@ -1,0 +1,182 @@
+schema_version: "1.0"
+capabilities:
+  - analyze_architecture
+  - append_run_records
+  - assess_accessibility
+  - assess_compatibility
+  - assess_mobile_compatibility
+  - assess_privilege
+  - assess_reliability
+  - assess_rollout_order
+  - assess_security
+  - assess_supply_chain
+  - assign_path_ownership
+  - classify_findings
+  - decompose_tasks
+  - design_integration_tests
+  - design_tests
+  - diagnose_flakiness
+  - edit_integration_tests
+  - edit_production
+  - edit_tests
+  - enforce_lifecycle
+  - evaluate_acceptance
+  - evaluate_tradeoffs
+  - execute_integration_tests
+  - execute_validation
+  - identify_change_surface
+  - implement_android
+  - implement_backend
+  - implement_ios
+  - implement_web
+  - inspect_repository
+  - issue_verdict
+  - manage_budgets
+  - map_acceptance_coverage
+  - map_acceptance_evidence
+  - map_dependencies
+  - plan_platform_work
+  - plan_rollout
+  - propose_decisions
+  - review_code
+  - review_contract
+  - review_scope
+  - review_security
+  - review_specification
+  - route_tasks
+  - run_android_checks
+  - run_approved_commands
+  - run_backend_checks
+  - run_ios_checks
+  - run_tests
+  - run_web_checks
+  - self_review
+  - threat_model
+tools:
+  - access_secrets
+  - append_run_record
+  - approve_own_work
+  - deploy
+  - dispatch_agent
+  - edit_other_platforms
+  - edit_production
+  - edit_tests
+  - execute_approved_commands
+  - execute_mutating_commands
+  - execute_test_commands
+  - execute_validation_commands
+  - fix_findings
+  - generate_clients
+  - inspect_diff
+  - inspect_history
+  - manage_production_data
+  - manage_secrets
+  - manage_signing_secrets
+  - network_write
+  - read_artifacts
+  - read_dependency_metadata
+  - read_diagnostics
+  - read_repository
+  - repair_failures
+  - search_repository
+  - submit_release
+  - write_approved_paths
+  - write_plan_artifacts
+  - write_repository
+  - write_test_paths
+mode_allowlists:
+  coordinator:
+    capabilities:
+      - append_run_records
+      - enforce_lifecycle
+      - manage_budgets
+      - route_tasks
+    tools:
+      - append_run_record
+      - dispatch_agent
+      - read_artifacts
+      - read_repository
+  read_only:
+    capabilities:
+      - analyze_architecture
+      - assess_compatibility
+      - assess_privilege
+      - assess_reliability
+      - assess_rollout_order
+      - assess_security
+      - assess_supply_chain
+      - classify_findings
+      - evaluate_tradeoffs
+      - identify_change_surface
+      - inspect_repository
+      - map_acceptance_coverage
+      - map_dependencies
+      - propose_decisions
+      - review_code
+      - review_contract
+      - review_scope
+      - review_security
+      - review_specification
+      - threat_model
+    tools:
+      - inspect_diff
+      - inspect_history
+      - read_artifacts
+      - read_dependency_metadata
+      - read_diagnostics
+      - read_repository
+      - search_repository
+  plan_write:
+    capabilities:
+      - assign_path_ownership
+      - decompose_tasks
+      - map_acceptance_evidence
+      - plan_platform_work
+    tools:
+      - read_repository
+      - search_repository
+      - write_plan_artifacts
+  production_write:
+    capabilities:
+      - assess_accessibility
+      - assess_mobile_compatibility
+      - edit_production
+      - implement_android
+      - implement_backend
+      - implement_ios
+      - implement_web
+      - plan_rollout
+      - run_android_checks
+      - run_approved_commands
+      - run_backend_checks
+      - run_ios_checks
+      - run_web_checks
+      - self_review
+    tools:
+      - execute_approved_commands
+      - read_repository
+      - search_repository
+      - write_approved_paths
+  test_write:
+    capabilities:
+      - design_integration_tests
+      - design_tests
+      - diagnose_flakiness
+      - edit_integration_tests
+      - edit_tests
+      - execute_integration_tests
+      - run_tests
+    tools:
+      - execute_test_commands
+      - read_repository
+      - search_repository
+      - write_test_paths
+  verify_execute:
+    capabilities:
+      - evaluate_acceptance
+      - execute_validation
+      - issue_verdict
+    tools:
+      - execute_validation_commands
+      - read_artifacts
+      - read_repository

@@ -1,0 +1,26 @@
+schema_version: "1.0"
+id: backend
+display_name: Backend
+agents:
+  - backend.engineer
+  - core.test-engineer
+  - core.security-reviewer
+  - core.code-reviewer
+  - core.verifier
+change_surfaces:
+  - APIs and events
+  - services and background jobs
+  - persistence and migrations
+  - authorization and rate limits
+  - observability and rollout
+required_checks:
+  - formatting, linting, and static analysis
+  - unit and integration tests
+  - contract tests
+  - migration and rollback validation when data changes
+review_concerns:
+  - backward compatibility
+  - authorization and tenant isolation
+  - idempotency and concurrency
+  - failure recovery and observability
+  - staged rollout and rollback

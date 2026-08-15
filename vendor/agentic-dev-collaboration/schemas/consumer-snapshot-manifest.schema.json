@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/consumer-snapshot-manifest.schema.json",
+  "title": "Consumer Snapshot Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "include"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "include": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "AGENTS.md",
+          "LICENSE",
+          "agents",
+          "skills",
+          "schemas",
+          "hooks",
+          "specs",
+          "docs",
+          "platforms",
+          "registries",
+          "consumer",
+          "collaboration/examples/trusted-pr-control.yaml",
+          "scripts"
+        ]
+      }
+    }
+  }
+}

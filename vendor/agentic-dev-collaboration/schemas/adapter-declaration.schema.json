@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/adapter-declaration.schema.json",
+  "title": "Runtime Adapter Declaration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "adapter",
+    "runtime",
+    "compatibility_level",
+    "agent_discovery",
+    "skill_discovery",
+    "tool_mappings",
+    "hook_event_mapping",
+    "unsupported_capabilities",
+    "permission_enforcement",
+    "automatic_writes",
+    "automatic_commands",
+    "generated_paths",
+    "installation",
+    "removal"
+  ],
+  "properties": {
+    "schema_version": {"const": "2.0"},
+    "adapter": {"$ref": "#/$defs/namedVersion"},
+    "runtime": {"$ref": "#/$defs/namedVersion"},
+    "compatibility_level": {"type": "integer", "minimum": 0, "maximum": 4},
+    "agent_discovery": {"type": "string", "minLength": 1},
+    "skill_discovery": {"type": "string", "minLength": 1},
+    "tool_mappings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "capability",
+          "canonical_tool",
+          "runtime_tool",
+          "supported"
+        ],
+        "properties": {
+          "capability": {"type": "string"},
+          "canonical_tool": {"type": "string"},
+          "runtime_tool": {"type": ["string", "null"]},
+          "supported": {"type": "boolean"}
+        }
+      }
+    },
+    "hook_event_mapping": {
+      "type": "object",
+      "additionalProperties": {"type": "string"}
+    },
+    "unsupported_capabilities": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string"}
+    },
+    "permission_enforcement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "path", "approval", "trusted_identity"],
+      "properties": {
+        "mode": {"type": "boolean"},
+        "path": {"type": "boolean"},
+        "approval": {"type": "boolean"},
+        "trusted_identity": {"type": "boolean"}
+      }
+    },
+    "automatic_writes": {"type": "boolean"},
+    "automatic_commands": {"type": "boolean"},
+    "generated_paths": {
+      "type": "array",
+      "items": {"type": "string", "pattern": "^generated/"}
+    },
+    "installation": {"type": "string", "minLength": 1},
+    "removal": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "namedVersion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "versions"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "versions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string"}
+        }
+      }
+    }
+  }
+}

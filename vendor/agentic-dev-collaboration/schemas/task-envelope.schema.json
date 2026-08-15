@@ -1,0 +1,211 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/task-envelope.schema.json",
+  "title": "Task Envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "task_id",
+    "objective",
+    "scope",
+    "acceptance_criteria",
+    "platform_impact",
+    "risk",
+    "budgets",
+    "status"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "2.0"
+    },
+    "task_id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]+$"
+    },
+    "objective": {
+      "type": "string",
+      "minLength": 20
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "in",
+        "out"
+      ],
+      "properties": {
+        "in": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "out": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "statement",
+          "evidence"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^AC-[0-9]{2,}$"
+          },
+          "statement": {
+            "type": "string",
+            "minLength": 10
+          },
+          "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "platform_impact": {
+      "$ref": "#/$defs/platformImpact"
+    },
+    "risk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "level",
+        "reasons"
+      ],
+      "properties": {
+        "level": {
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "critical"
+          ]
+        },
+        "reasons": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "budgets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_rework_cycles"
+      ],
+      "properties": {
+        "max_rework_cycles": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "max_elapsed_minutes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "max_cost_units": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        }
+      }
+    },
+    "status": {
+      "enum": [
+        "accepted",
+        "explored",
+        "planned",
+        "plan_approved",
+        "implementing",
+        "reviewing",
+        "verifying",
+        "completed",
+        "rework",
+        "blocked",
+        "cancelled"
+      ]
+    }
+  },
+  "$defs": {
+    "impactValue": {
+      "enum": [
+        "none",
+        "compatible",
+        "changed",
+        "unknown"
+      ]
+    },
+    "platformImpact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ios",
+        "android",
+        "backend",
+        "web",
+        "shared_contracts",
+        "data",
+        "observability",
+        "operations"
+      ],
+      "properties": {
+        "ios": {
+          "$ref": "#/$defs/impactValue"
+        },
+        "android": {
+          "$ref": "#/$defs/impactValue"
+        },
+        "backend": {
+          "$ref": "#/$defs/impactValue"
+        },
+        "web": {
+          "$ref": "#/$defs/impactValue"
+        },
+        "shared_contracts": {
+          "$ref": "#/$defs/impactValue"
+        },
+        "data": {
+          "$ref": "#/$defs/impactValue"
+        },
+        "observability": {
+          "$ref": "#/$defs/impactValue"
+        },
+        "operations": {
+          "$ref": "#/$defs/impactValue"
+        }
+      }
+    }
+  }
+}
