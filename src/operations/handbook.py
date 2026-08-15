@@ -12,7 +12,7 @@ from typing import Any
 from urllib.parse import quote_plus
 
 
-_SENSITIVE_KEYS = {"confirmation_number", "booking_reference", "reservation_code", "email", "phone", "secret", "token", "password"}
+_CONFIRMATION_KEYS = {"confirmation_number", "confirmationnumber", "confirmationcode", "booking_reference", "bookingreference", "reservation_code", "reservationcode"}
 
 
 def build_handbook(trip: dict[str, Any], evidence: dict[str, Any] | None = None, *, now: datetime | None = None, freshness_days: int = 7) -> dict[str, Any]:
@@ -30,7 +30,7 @@ def build_handbook(trip: dict[str, Any], evidence: dict[str, Any] | None = None,
 
     daily = [_daily_route(day, places) for day in trip.get("days", [])]
     facts = _place_facts(evidence.get("place_operations", []), places, used_place_ids, reference, freshness_days)
-    reservations = [_reservation(record, places, reference, freshness_days) for record in evidence.get("reservations", [])]
+    reservations = [_reservation(record, places, used_place_ids, trip, reference, freshness_days) for record in evidence.get("reservations", [])]
     reservations = [record for record in reservations if record is not None]
     conditions = _evidence_records(evidence.get("conditions", []), used_place_ids, reference, freshness_days)
     supplies = _evidence_records(evidence.get("supplies", []), used_place_ids, reference, freshness_days)
@@ -71,11 +71,20 @@ def _place_facts(records: list[dict[str, Any]], places: dict[str, dict[str, Any]
     return result
 
 
-def _reservation(record: dict[str, Any], places: dict[str, dict[str, Any]], reference: datetime, freshness_days: int) -> dict[str, Any] | None:
+def _reservation(record: dict[str, Any], places: dict[str, dict[str, Any]], used: set[str], trip: dict[str, Any], reference: datetime, freshness_days: int) -> dict[str, Any] | None:
     place_id = record.get("place_id")
-    if place_id is not None and place_id not in places:
+    selected_flights = set(trip.get("selected", {}).get("flight_ids", []))
+    transport_legs = {leg.get("id") for leg in trip.get("candidate_sets", {}).get("transport_legs", [])}
+    if not ((place_id in places and place_id in used) or record.get("flight_id") in selected_flights or record.get("transport_leg_id") in transport_legs):
         return None
-    item = _redact(deepcopy(record))
+    # The public read model is an allowlist.  Booking payloads are frequently
+    # provider-shaped and may contain arbitrary PII, so copying then redacting
+    # cannot safely establish the public boundary.
+    allowed = {"kind", "place_id", "flight_id", "transport_leg_id", "start_at", "end_at", "status", "recheck_at", "provenance"}
+    item = {key: deepcopy(value) for key, value in record.items() if key in allowed}
+    confirmation = _confirmation_display(record)
+    if confirmation:
+        item["confirmation_display"] = confirmation
     if place_id is not None:
         item["place_name"] = places[place_id].get("name", place_id)
     item["freshness"] = _freshness(item.get("provenance"), reference, freshness_days)
@@ -85,7 +94,7 @@ def _reservation(record: dict[str, Any], places: dict[str, dict[str, Any]], refe
 def _evidence_records(records: list[dict[str, Any]], used: set[str], reference: datetime, freshness_days: int) -> list[dict[str, Any]]:
     result = []
     for record in records:
-        if record.get("place_id") is not None and record["place_id"] not in used:
+        if record.get("place_id") not in used:
             continue
         item = deepcopy(record)
         item["freshness"] = _freshness(item.get("provenance"), reference, freshness_days)
@@ -102,19 +111,18 @@ def _freshness(provenance: Any, reference: datetime, freshness_days: int) -> dic
             raise ValueError
     except (TypeError, ValueError):
         return {"state": "unknown", "retrieved_at": provenance.get("retrieved_at")}
-    age_days = max(0, (reference - retrieved).total_seconds() / 86400)
+    age_days = (reference - retrieved).total_seconds() / 86400
+    if age_days < 0:
+        return {"state": "invalid", "retrieved_at": provenance["retrieved_at"]}
     return {"state": "stale" if age_days > freshness_days else "fresh", "retrieved_at": provenance["retrieved_at"]}
 
 
-def _redact(value: Any, key: str | None = None) -> Any:
-    if isinstance(value, dict):
-        return {name: _redact(item, name) for name, item in value.items()}
-    if key in _SENSITIVE_KEYS and value not in (None, ""):
-        text = str(value)
-        return f"…{text[-4:]}" if key in {"confirmation_number", "booking_reference", "reservation_code"} else "[redacted]"
-    if isinstance(value, list):
-        return [_redact(item) for item in value]
-    return value
+def _confirmation_display(record: dict[str, Any]) -> str | None:
+    for key, value in record.items():
+        normalized = "".join(character.lower() for character in key if character.isalnum())
+        if normalized in _CONFIRMATION_KEYS and value not in (None, ""):
+            return f"…{str(value)[-4:]}"
+    return None
 
 
 def _traveler_notes(trip: dict[str, Any]) -> dict[str, Any]:
@@ -133,13 +141,13 @@ def _departure_recheck(trip: dict[str, Any], reservations: list[dict[str, Any]])
 
 
 def _sources(*groups: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    seen, sources = set(), []
+    sources = []
     for item in (entry for group in groups for entry in group):
         provenance = item.get("provenance")
         if not isinstance(provenance, dict) or not provenance.get("source_url"):
             continue
         url = provenance["source_url"]
-        if url not in seen:
-            seen.add(url)
-            sources.append({"source_url": url, "provider": provenance.get("provider"), "retrieved_at": provenance.get("retrieved_at"), "freshness": item["freshness"]})
+        # Do not collapse equal URLs: their retrieval times may differ and
+        # every stale operational fact must remain visible to the reader.
+        sources.append({"source_url": url, "provider": provenance.get("provider"), "retrieved_at": provenance.get("retrieved_at"), "freshness": item["freshness"]})
     return sources
