@@ -275,18 +275,20 @@ def last_admission_at(
         for fact in records
         if fact.subject_id == subject_id and fact.kind == FactKind.LAST_ADMISSION
     ]
-    for fact in candidates:
-        probe = datetime.combine(on, time(12), tzinfo=timezone.utc)
-        if fact.status != FactStatus.CONFIRMED or not _within(
-            probe, fact.valid_from, fact.valid_until
-        ):
-            continue
-        if isinstance(fact.value, str):
-            try:
-                return time.fromisoformat(fact.value)
-            except ValueError:
-                return None
-    return None
+    probe = datetime.combine(on, time(12), tzinfo=timezone.utc)
+    usable = [
+        fact
+        for fact in candidates
+        if fact.status == FactStatus.CONFIRMED
+        and _within(probe, fact.valid_from, fact.valid_until)
+    ]
+    if not usable:
+        return None
+    parsed = [_parse_local_time(fact.value) for fact in usable]
+    if any(value is None for value in parsed):
+        return None
+    distinct = {value for value in parsed if value is not None}
+    return next(iter(distinct)) if len(distinct) == 1 else None
 
 
 # Verbose aliases make call sites self-documenting.
@@ -391,13 +393,17 @@ def _parse_datetime(value: object, *, end_of_day: bool = False) -> datetime | No
 
 
 def _is_local_time(value: object) -> bool:
+    return _parse_local_time(value) is not None
+
+
+def _parse_local_time(value: object) -> time | None:
     if not isinstance(value, str):
-        return False
+        return None
     try:
         parsed = time.fromisoformat(value)
     except ValueError:
-        return False
-    return parsed.tzinfo is None
+        return None
+    return parsed if parsed.tzinfo is None else None
 
 
 def _aware(value: datetime) -> datetime:

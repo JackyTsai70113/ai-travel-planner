@@ -346,6 +346,36 @@ class SharedOperationalEvaluationTests(unittest.TestCase):
             )
         )
 
+    def test_last_admission_valid_and_malformed_conflict_is_unknown_in_any_order(self):
+        valid = make_fact("17:00")
+        malformed = make_fact("not-a-time")
+
+        for facts in ([valid, malformed], [malformed, valid]):
+            with self.subTest(order=[fact.value for fact in facts]):
+                self.assertIsNone(
+                    evaluate_last_admission(facts, date(2026, 8, 15))
+                )
+
+    def test_different_confirmed_last_admissions_are_unknown_in_any_order(self):
+        earlier = make_fact("16:30")
+        later = make_fact("17:00")
+
+        for facts in ([earlier, later], [later, earlier]):
+            with self.subTest(order=[fact.value for fact in facts]):
+                self.assertIsNone(
+                    evaluate_last_admission(facts, date(2026, 8, 15))
+                )
+
+    def test_identical_confirmed_last_admissions_return_deterministic_time(self):
+        first = make_fact("17:00", source_url="https://official.example/a")
+        second = make_fact("17:00", source_url="https://official.example/b")
+
+        for facts in ([first, second], [second, first]):
+            with self.subTest(order=[fact.evidence.source_url for fact in facts]):
+                result = evaluate_last_admission(facts, date(2026, 8, 15))
+                self.assertIsNotNone(result)
+                self.assertEqual(result.isoformat(), "17:00:00")
+
 
 if __name__ == "__main__":
     unittest.main()
