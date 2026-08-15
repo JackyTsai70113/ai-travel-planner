@@ -479,6 +479,9 @@ def condition_rule(trip: dict, context: ValidationContext) -> Sequence[Violation
                     context.condition_snapshot, place_id, start, end, context.condition_evaluated_at, context.condition_policy
                 )
             except (TypeError, ValueError):
+                violations.append(
+                    _warning("condition.unverified", "condition interval is invalid", _item_path(day_index, item_index))
+                )
                 continue
             violations.extend(
                 Violation(item.code, item.severity, item.message, _item_path(day_index, item_index)) for item in decision.findings
