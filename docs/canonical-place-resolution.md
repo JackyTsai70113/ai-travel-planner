@@ -5,9 +5,11 @@ Canonical Place 是 research observations 與 Trip、routing、renderer 之間�
 ## Identity and matching
 
 - `google_place_id`、canonicalized `official_url`、有 provider namespace 的 `provider_reference` 是 stable place identifiers。相同 type/value 形成 deterministic match。
+- Resolver 以 observation provenance 的 provider 作為 `provider_reference` namespace；不同 provider 的相同裸 reference 不相等。
 - reservation observation 可同時攜帶 `reservation_reference` 與真正的 place identifier，藉此連到既有 Canonical Place。reservation reference 只是 evidence linkage，不是 place identity key；相同 reservation reference 不得合併不同分店。
 - 名稱、alias、地址與距離只能作為候選 evidence。name-only observation 的狀態是 `clarification_required`，不得自動合併。
 - 連鎖店分店擁有不同 stable identifier，縱使名稱相同也維持不同 Canonical Place。
+- 若 shared official URL 或 provider reference 形成的 component 同時包含多個 Google Place IDs，resolver 必須拆開分店並將相關 decision 標為 `clarification_required`；不得以 transitive match 輸出 confidence 1。
 
 ## Authority-aware merge
 

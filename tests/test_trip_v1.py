@@ -3,8 +3,6 @@ import json
 from pathlib import Path
 import unittest
 
-import jsonschema
-
 from src.schemas import TripValidationError, validate_trip
 
 
@@ -53,9 +51,6 @@ class TripV1Tests(unittest.TestCase):
         self.assertNotEqual(place["navigation_points"][0].get("coordinates"), place.get("coordinates"))
 
     def test_navigation_point_requires_a_routing_reference(self):
-        schema_path = Path(__file__).parents[1] / "src/schemas/trip_v1.schema.json"
-        schema = json.loads(schema_path.read_text(encoding="utf-8"))
-        validator = jsonschema.Draft202012Validator(schema, format_checker=jsonschema.FormatChecker())
         mutations = (
             lambda point, place: (point.pop("coordinates"), point.pop("mapcode")),
             lambda point, place: point.update(coordinates={"latitude": 91, "longitude": 130}),
@@ -69,8 +64,15 @@ class TripV1Tests(unittest.TestCase):
                 trip = copy.deepcopy(self.trip)
                 place = next(item for item in trip["candidate_sets"]["places"] if item["id"] == "dazaifu")
                 mutate(place["navigation_points"][0], place)
-                with self.assertRaises(jsonschema.ValidationError):
-                    validator.validate(trip)
+                with self.assertRaises(TripValidationError):
+                    validate_trip(trip)
+
+    def test_empty_field_provenance_is_rejected(self):
+        trip = copy.deepcopy(self.trip)
+        place = next(item for item in trip["candidate_sets"]["places"] if item["id"] == "dazaifu")
+        place["field_provenance"] = {"name": []}
+        with self.assertRaisesRegex(TripValidationError, "non-empty"):
+            validate_trip(trip)
 
 
 if __name__ == "__main__":

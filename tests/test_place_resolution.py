@@ -2,9 +2,8 @@ import json
 from itertools import permutations
 from pathlib import Path
 
-import jsonschema
-
 from src.places import NavigationPoint, PlaceObservation, resolve_places, select_navigation_target
+from src.schemas import validate_trip
 
 
 FIXTURE = Path("fixtures/places/japan-place-observations.json")
@@ -79,6 +78,33 @@ def test_reservation_collision_does_not_bridge_different_google_places():
     assert len({item.canonical_place_id for item in result.decisions}) == 2
 
 
+def test_shared_brand_identifiers_do_not_merge_conflicting_google_branches():
+    official = {"source_type": "official", "provider": "brand", "retrieved_at": "2026-08-01T00:00:00Z", "status": "confirmed"}
+    for shared in (
+        {"official_url": "https://chain.example/", "google_place_id": "branch-a"},
+        {"provider_reference": "brand-page", "google_place_id": "branch-a"},
+    ):
+        other = dict(shared, google_place_id="branch-b")
+        result = resolve_places([
+            PlaceObservation("branch-a", "Chain A", "restaurant", official, identifiers=shared),
+            PlaceObservation("branch-b", "Chain B", "restaurant", official, identifiers=other),
+        ])
+        assert len(result.places) == 2
+        assert all(item.state == "clarification_required" for item in result.decisions)
+        assert all(item.confidence < 1 for item in result.decisions)
+
+
+def test_provider_references_are_namespaced_by_provider():
+    provider_a = {"source_type": "provider", "provider": "catalog-a", "retrieved_at": "2026-08-01T00:00:00Z", "status": "confirmed"}
+    provider_b = {"source_type": "provider", "provider": "catalog-b", "retrieved_at": "2026-08-01T00:00:00Z", "status": "confirmed"}
+    result = resolve_places([
+        PlaceObservation("catalog-a", "First", "poi", provider_a, identifiers={"provider_reference": "123"}),
+        PlaceObservation("catalog-b", "Second", "poi", provider_b, identifiers={"provider_reference": "123"}),
+    ])
+    assert len(result.places) == 2
+    assert len({item.canonical_place_id for item in result.decisions}) == 2
+
+
 def test_name_only_matches_require_clarification_instead_of_auto_merge():
     provenance = {"source_type": "community", "provider": "notes", "retrieved_at": "2026-08-01T00:00:00Z", "status": "unverified"}
     resolution = resolve_places([
@@ -116,10 +142,9 @@ def test_identifier_provenance_is_bound_to_each_identifier_and_schema_valid():
     assert identifiers["https://www.dazaifutenmangu.or.jp"] == "travel video"
     assert all(rendered["field_provenance"].values())
 
-    schema = json.loads(Path("src/schemas/trip_v1.schema.json").read_text(encoding="utf-8"))
     trip = json.loads(Path("fixtures/trips/japan-5-day-trip-v1.json").read_text(encoding="utf-8"))
     trip["candidate_sets"]["places"].append(rendered)
-    jsonschema.Draft202012Validator(schema, format_checker=jsonschema.FormatChecker()).validate(trip)
+    validate_trip(trip)
 
 
 def test_navigation_selector_supports_walking_meeting_and_main_fallback():

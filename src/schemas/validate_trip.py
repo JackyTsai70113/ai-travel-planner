@@ -32,8 +32,9 @@ def validate_trip(trip: dict) -> None:
     place_ids = {place["id"] for place in places}
     if len(place_ids) != len(places):
         raise TripValidationError("candidate_sets.places contains duplicate place IDs")
-    for place in places:
+    for index, place in enumerate(places):
         _require_canonical_id(place.get("id"), "candidate_sets.places[].id")
+        _validate_place(place, f"candidate_sets.places[{index}]")
     transport_ids = {leg["id"] for leg in trip["candidate_sets"].get("transport_legs", [])}
     restaurant_ids: set[str] = set()
     for index, candidate in enumerate(trip["candidate_sets"].get("restaurants", [])):
@@ -70,6 +71,86 @@ def _require_offset(value: str, path: str) -> None:
             raise TripValidationError(f"{path} must include a timezone offset")
     except (TypeError, ValueError) as exc:
         raise TripValidationError(f"{path} is not ISO 8601 date-time") from exc
+
+
+def _validate_place(place: object, path: str) -> None:
+    if not isinstance(place, dict):
+        raise TripValidationError(f"{path} must be an object")
+    if "coordinates" in place:
+        _validate_coordinates(place["coordinates"], f"{path}.coordinates")
+    if "timezone" in place:
+        try:
+            ZoneInfo(place["timezone"])
+        except (ZoneInfoNotFoundError, TypeError) as exc:
+            raise TripValidationError(f"{path}.timezone must be a valid IANA timezone") from exc
+    identifiers = place.get("identifiers", [])
+    if not isinstance(identifiers, list):
+        raise TripValidationError(f"{path}.identifiers must be an array")
+    for index, identifier in enumerate(identifiers):
+        identifier_path = f"{path}.identifiers[{index}]"
+        if not isinstance(identifier, dict) or set(identifier) != {"type", "value", "provenance"}:
+            raise TripValidationError(f"{identifier_path} has invalid fields")
+        if identifier.get("type") not in {"google_place_id", "official_url", "provider_reference", "reservation_reference"}:
+            raise TripValidationError(f"{identifier_path}.type is invalid")
+        if not isinstance(identifier.get("value"), str) or not identifier["value"].strip():
+            raise TripValidationError(f"{identifier_path}.value is required")
+        _require_provenance(identifier.get("provenance"), f"{identifier_path}.provenance")
+    points = place.get("navigation_points", [])
+    if not isinstance(points, list):
+        raise TripValidationError(f"{path}.navigation_points must be an array")
+    allowed_point_fields = {"id", "kind", "name", "coordinates", "google_maps_url", "phone", "mapcode", "provenance"}
+    for index, point in enumerate(points):
+        point_path = f"{path}.navigation_points[{index}]"
+        if not isinstance(point, dict) or set(point) - allowed_point_fields:
+            raise TripValidationError(f"{point_path} has invalid fields")
+        _require_canonical_id(point.get("id"), f"{point_path}.id")
+        if point.get("kind") not in {"entrance", "parking", "station_exit", "meeting_point", "other"}:
+            raise TripValidationError(f"{point_path}.kind is invalid")
+        if not any(key in point for key in ("coordinates", "google_maps_url", "phone", "mapcode")):
+            raise TripValidationError(f"{point_path} requires a routing reference")
+        if "coordinates" in point:
+            _validate_coordinates(point["coordinates"], f"{point_path}.coordinates")
+        if "provenance" in point:
+            _require_provenance(point["provenance"], f"{point_path}.provenance")
+    conflicts = place.get("coordinate_conflicts", [])
+    if not isinstance(conflicts, list):
+        raise TripValidationError(f"{path}.coordinate_conflicts must be an array")
+    for index, conflict in enumerate(conflicts):
+        conflict_path = f"{path}.coordinate_conflicts[{index}]"
+        if not isinstance(conflict, dict) or set(conflict) != {"coordinates", "provenance"}:
+            raise TripValidationError(f"{conflict_path} has invalid fields")
+        _validate_coordinates(conflict["coordinates"], f"{conflict_path}.coordinates")
+        _require_provenance(conflict["provenance"], f"{conflict_path}.provenance")
+    field_provenance = place.get("field_provenance", {})
+    if not isinstance(field_provenance, dict):
+        raise TripValidationError(f"{path}.field_provenance must be an object")
+    for field_name, values in field_provenance.items():
+        provenance_path = f"{path}.field_provenance.{field_name}"
+        if not isinstance(values, list) or not values:
+            raise TripValidationError(f"{provenance_path} must be a non-empty array")
+        for index, value in enumerate(values):
+            _require_provenance(value, f"{provenance_path}[{index}]")
+    resolution = place.get("resolution")
+    if resolution is not None:
+        if not isinstance(resolution, dict) or set(resolution) - {"state", "confidence", "clarification"}:
+            raise TripValidationError(f"{path}.resolution has invalid fields")
+        if resolution.get("state") not in {"resolved", "clarification_required", "unresolved"}:
+            raise TripValidationError(f"{path}.resolution.state is invalid")
+        confidence = resolution.get("confidence")
+        if not isinstance(confidence, (int, float)) or isinstance(confidence, bool) or not 0 <= confidence <= 1:
+            raise TripValidationError(f"{path}.resolution.confidence must be between 0 and 1")
+
+
+def _validate_coordinates(value: object, path: str) -> None:
+    if not isinstance(value, dict) or set(value) != {"latitude", "longitude"}:
+        raise TripValidationError(f"{path} requires latitude and longitude")
+    latitude, longitude = value["latitude"], value["longitude"]
+    if (
+        not isinstance(latitude, (int, float)) or isinstance(latitude, bool)
+        or not isinstance(longitude, (int, float)) or isinstance(longitude, bool)
+        or not -90 <= latitude <= 90 or not -180 <= longitude <= 180
+    ):
+        raise TripValidationError(f"{path} is outside coordinate bounds")
 
 
 def _validate_restaurant(candidate: object, index: int) -> None:

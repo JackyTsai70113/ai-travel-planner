@@ -31,6 +31,14 @@ def _identifier_value(kind: str, value: str) -> str:
     return value.casefold()
 
 
+def _match_key(observation: "PlaceObservation", kind: str, value: str) -> tuple[str, str]:
+    normalized = _identifier_value(kind, value)
+    if kind == "provider_reference":
+        provider = _normalise(str(observation.provenance.get("provider", "")))
+        normalized = f"{provider}:{normalized}"
+    return kind, normalized
+
+
 @dataclass(frozen=True)
 class NavigationPoint:
     id: str
@@ -137,7 +145,7 @@ class PlaceResolution:
 
 def resolve_places(observations: Iterable[PlaceObservation]) -> PlaceResolution:
     """Resolve observations using connected components of strong identifiers."""
-    observations = tuple(observations)
+    observations = tuple(sorted(observations, key=lambda item: item.observation_id))
     parent = list(range(len(observations)))
 
     def find(index: int) -> int:
@@ -156,26 +164,50 @@ def resolve_places(observations: Iterable[PlaceObservation]) -> PlaceResolution:
         for kind, raw in observation.identifiers.items():
             if kind not in STRONG_IDENTIFIER_TYPES or not raw.strip():
                 continue
-            key = (kind, _identifier_value(kind, raw))
+            key = _match_key(observation, kind, raw)
             if key in seen:
                 union(index, seen[key])
             else:
                 seen[key] = index
 
-    groups: dict[int, list[PlaceObservation]] = {}
+    components: dict[int, list[PlaceObservation]] = {}
     for index, observation in enumerate(observations):
-        groups.setdefault(find(index), []).append(observation)
+        components.setdefault(find(index), []).append(observation)
+
+    groups: list[tuple[list[PlaceObservation], bool]] = []
+    for component in components.values():
+        google_ids = {
+            _identifier_value("google_place_id", item.identifiers["google_place_id"])
+            for item in component if item.identifiers.get("google_place_id", "").strip()
+        }
+        if len(google_ids) <= 1:
+            groups.append((component, False))
+            continue
+        for google_id in sorted(google_ids):
+            groups.append(([
+                item for item in component
+                if _identifier_value("google_place_id", item.identifiers.get("google_place_id", "")) == google_id
+            ], True))
+        groups.extend(([item], True) for item in component if not item.identifiers.get("google_place_id", "").strip())
 
     places: list[CanonicalPlace] = []
     decisions: list[MatchDecision] = []
-    for group in groups.values():
+    for group, identifier_conflict in groups:
         place = merge_observations(group)
         places.append(place)
         has_identifier = any(
             kind in STRONG_IDENTIFIER_TYPES for observation in group for kind in observation.identifiers
         )
         for observation in group:
-            if len(group) > 1 or has_identifier:
+            if identifier_conflict:
+                decisions.append(MatchDecision(
+                    observation.observation_id,
+                    place.id,
+                    0.5,
+                    "clarification_required",
+                    clarification="Strong identifiers connect multiple Google Place IDs；請人工確認正確分店。",
+                ))
+            elif len(group) > 1 or has_identifier:
                 matched = tuple(sorted(kind for kind in observation.identifiers if kind in STRONG_IDENTIFIER_TYPES))
                 decisions.append(MatchDecision(observation.observation_id, place.id, 1.0, "resolved", matched))
             else:
@@ -214,9 +246,10 @@ def merge_observations(observations: Iterable[PlaceObservation]) -> CanonicalPla
             identifiers.setdefault(kind, set()).add(value)
             identifier_provenance.setdefault((kind, value), dict(item.provenance))
     stable = sorted(
-        f"{kind}:{_identifier_value(kind, value)}"
-        for kind, values in identifiers.items() if kind in STRONG_IDENTIFIER_TYPES
-        for value in values
+        f"{kind}:{normalized}"
+        for item in ranked
+        for kind, value in item.identifiers.items() if kind in STRONG_IDENTIFIER_TYPES
+        for _, normalized in [_match_key(item, kind, value)]
     )
     seed = stable[0] if stable else f"observation:{primary.observation_id}"
     canonical_id = "place-" + sha256(seed.encode()).hexdigest()[:12]
