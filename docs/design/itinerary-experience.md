@@ -116,3 +116,35 @@ Issue #67 讀取基礎為 `web/src/App.tsx` 現況：
 1. Core itinerary UX 1–2 項通過即可進行下一版擴充。
 2. 每完成一個 AC 群組，對應新增/更新測試。
 3. 避免任一 render 中對未知值回退為 0。
+
+## Review handoff 結果（給 issue61 實作者）
+
+### 立即可驗證項目
+1. `web/src/App.tsx` 目前已整併 theme + maps link + 基本 status，建議本 issue 67 的剩餘實作採「增量改造」方式繼續，不要重構整頁。
+2. 目前 `unresolvedReservations` 的 `useMemo` 可能有重複 dependency 的型別污染風險（目前檔案上已現身 2 次），建議在 refactor 時順手清理。
+3. `setActiveDay(Math.min(0, Math.max(data.days.length - 1, 0)))` 為邊界 bug（永遠回傳 0）；建議使用 `setActiveDay(Math.max(0, Math.min(initialIndex, data.days.length - 1)))`，並在 `bundle` 無資料時保持 0。
+
+### 優先修正（對應 AC）
+1. Day 導覽
+1.1. `role=tablist` 保留不變，新增 `tablist` 水平可捲、selected/today/completed/future 狀態 class。
+1.2. 深連結改用 `hash=day-<index>` 或 `#day=<date>` 均可，需回到對應 section.
+2. Timeline 分類視覺
+2.1. 在 `BundleDayItem.kind` 以外再加入 status metadata（fixed/optional/cancelable/unresolved）轉譯。
+2.2. 未知 start/end 時顯示 `待補`，不得顯示 0 分鐘。
+3. Plan A/B/C / Decision Gate
+3.1. 不改動已排程事實，僅切頁/顯示 validator 允許項目。
+3.2. 無可行替代時顯示明確 `unavailable` 區塊，不顯示空白建議。
+4. 搜尋與 filters
+4.1. 建立 public-safe 倒排欄位 index：中日名稱、類型、地址、day、notes、status。
+4.2. 點擊結果跳到當日與該項目（加上可重取焦點的 anchor）。
+5. now / next quick mode
+5.1. 僅在時間可比較時計算，否則顯示 `unknown`。
+5.2. fixed anchor 倒數需標明「時間未齊全」與 fallback。
+
+### 里程碑建議（可直接提交 commit 的順序）
+1. 新增 `day-tabs + header metrics + timeline token`（含 state 標籤）
+2. 新增 `search index + search panel + filter panel`
+3. 新增 `plan tabs` 與 `unavailable` 狀態
+4. 新增 `decision gates` 與 item anchor 關聯
+5. 新增 `now/next quick mode`
+6. 進行 a11y/print / breakpoints 最後收斂
