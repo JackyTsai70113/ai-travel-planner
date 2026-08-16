@@ -69,12 +69,13 @@ function readinessClass(readiness: string): string {
 }
 
 function renderCard(item: TripCatalogEntry, setRoute: RouteSetter) {
+  const cardMedia =
+    item.cover_media.kind === 'image' && item.cover_media.url
+      ? `linear-gradient(120deg, rgba(12,17,36,0.6), rgba(12,17,36,0.45)), url(${item.cover_media.url}) center/cover no-repeat`
+      : item.cover_media.gradient
   return (
     <article className="trip-card" key={item.slug}>
-      <div className="trip-card-media" style={{
-        background:
-          item.cover_media.kind === 'image' ? `linear-gradient(120deg, rgba(12,17,36,0.6), rgba(12,17,36,0.45)), url(${item.cover_media.url}) center/cover no-repeat` : item.cover_media.gradient,
-      }}>
+      <div className="trip-card-media" style={{ background: cardMedia }}>
         <span className={statusClass(item.status)}>{statusText(item.status)}</span>
         <span className={readinessClass(item.readiness)}>{readinessText(item.readiness)}</span>
       </div>
