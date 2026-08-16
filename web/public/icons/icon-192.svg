@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" fill="none">
+  <rect width="192" height="192" rx="28" fill="#0f6a69"/>
+  <path d="M40 136h112v20H40z" fill="#eef6ff"/>
+  <circle cx="96" cy="80" r="28" fill="#0f6a69" stroke="#e7f5ff" stroke-width="6"/>
+  <path d="M52 100c6-20 26-36 44-36s38 16 44 36" stroke="#e7f5ff" stroke-width="8" stroke-linecap="round"/>
+  <path d="M80 60V36l6-4 6 4v24" stroke="#f8fbff" stroke-width="8" stroke-linecap="round"/>
+  <path d="M110 60V40l6-4 6 4v20" stroke="#f8fbff" stroke-width="8" stroke-linecap="round"/>
+  <text x="96" y="166" text-anchor="middle" font-size="22" fill="#e7f5ff" font-family="Arial, Noto Sans TC">AWAJI</text>
+</svg>
