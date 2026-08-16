@@ -3,9 +3,12 @@ import json
 from pathlib import Path
 import unittest
 
+from scripts.build_awaji_public_bundle import build_public_bundle
 from src.schemas import validate_trip
 
 TRIP_PATH = Path("trips/awaji-naruto-tokushima-kobe-2026/trip.json")
+EVIDENCE_PATH = Path("trips/awaji-naruto-tokushima-kobe-2026/evidence.json")
+CONDITIONS_PATH = Path("trips/awaji-naruto-tokushima-kobe-2026/conditions.json")
 
 
 class AwajiTripFixtureTests(unittest.TestCase):
@@ -84,3 +87,71 @@ class AwajiTripFixtureTests(unittest.TestCase):
         self.assertIn("notes", inbound)
         self.assertEqual(outbound["arrival"]["at"], "2026-08-27T10:30:00+09:00")
         self.assertEqual(inbound["departure"]["at"], "2026-08-31T12:45:00+09:00")
+
+    def test_flight_carrier_and_unknown_time_precision_are_distinct(self):
+        outbound = next(flight for flight in self.trip["candidate_sets"]["flights"] if flight["id"] == "xj-834-outbound")
+        inbound = next(flight for flight in self.trip["candidate_sets"]["flights"] if flight["id"] == "xj-1835-return")
+        self.assertEqual(outbound["carrier"], "Starlux")
+        self.assertIsNone(outbound["departure"]["at"])
+        self.assertEqual(inbound["arrival"]["at"], None)
+
+    def test_no_invalid_source_domains_in_trip_payload(self):
+        payload_text = TRIP_PATH.read_text(encoding="utf-8")
+        self.assertNotIn("example.invalid", payload_text)
+        self.assertNotIn("airline.example.invalid", payload_text)
+        self.assertNotIn("github.com/your-org", payload_text)
+
+    def test_public_bundle_evidence_gate_tracks_critical_issues(self):
+        trip = json.loads(TRIP_PATH.read_text(encoding="utf-8"))
+        bundle = build_public_bundle(trip, TRIP_PATH)
+        self.assertIn("evidence_gate", bundle)
+        self.assertEqual(bundle["evidence_gate"]["status"], "ok")
+        self.assertIsInstance(bundle["evidence_gate"]["critical_issues"], list)
+        self.assertEqual(bundle["evidence_gate"]["critical_issues"], [])
+        
+    def test_selected_facts_have_tracked_evidence(self):
+        evidence = json.loads(EVIDENCE_PATH.read_text(encoding="utf-8"))
+        required_ids = set(self.trip["selected"]["flight_ids"] + self.trip["selected"]["hotel_place_ids"])
+        evidence_ids = set()
+        for entry in evidence.get("entries", []):
+            reference_id = entry.get("reference_id")
+            if isinstance(reference_id, str) and reference_id.startswith("selected-") and "/" in reference_id:
+                evidence_ids.add(reference_id.split("/", 1)[1])
+            else:
+                evidence_ids.add(reference_id)
+        missing = sorted(required_ids - evidence_ids)
+        self.assertEqual(missing, [])
+
+    def test_conditions_include_visibility_and_validity_interval(self):
+        conditions = json.loads(CONDITIONS_PATH.read_text(encoding="utf-8"))
+        self.assertIn("conditions", conditions)
+        for condition in conditions["conditions"]:
+            self.assertIn("visibility", condition)
+            self.assertIn("official_source", condition)
+            self.assertIn("validity", condition)
+            self.assertIn("supporting_sources", condition)
+
+    def test_public_bundle_marks_invalid_source_urls_as_error(self):
+        mutated = copy.deepcopy(json.loads(TRIP_PATH.read_text(encoding="utf-8")))
+        trip = mutated["candidate_sets"]["flights"][0]
+        trip["provenance"]["source_url"] = "https://example.invalid/test-airline"
+        bundle = build_public_bundle(mutated, TRIP_PATH)
+        self.assertEqual(bundle["evidence_gate"]["status"], "error")
+        self.assertTrue(any("invalid source" in issue for issue in bundle["evidence_gate"]["critical_issues"]))
+
+    def test_public_bundle_marks_stale_evidence_as_error(self):
+        original = EVIDENCE_PATH.read_text(encoding="utf-8")
+        try:
+            evidence = json.loads(original)
+            for entry in evidence.get("entries", []):
+                if isinstance(entry, dict) and entry.get("reference_id") == "selected-flight/xj-834-outbound":
+                    validity = entry.setdefault("validity", {})
+                    if isinstance(validity, dict):
+                        validity["valid_until"] = "2024-01-01T00:00:00+09:00"
+            EVIDENCE_PATH.write_text(json.dumps(evidence, ensure_ascii=False, indent=2), encoding="utf-8")
+
+            bundle = build_public_bundle(json.loads(TRIP_PATH.read_text(encoding="utf-8")), TRIP_PATH)
+            self.assertEqual(bundle["evidence_gate"]["status"], "error")
+            self.assertTrue(any("stale" in issue for issue in bundle["evidence_gate"]["critical_issues"]))
+        finally:
+            EVIDENCE_PATH.write_text(original, encoding="utf-8")

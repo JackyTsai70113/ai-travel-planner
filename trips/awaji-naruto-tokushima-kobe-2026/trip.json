@@ -21,18 +21,18 @@
   },
   "preferences": {
     "hard_constraints": [
-    {
-      "id": "no-hard-activity-after-17-15",
-      "kind": "timing",
-      "description": "17:15 後不得新增固定時段景點，保留 8/28 17:45 固定預約可調整時間窗",
-      "value": true
-    },
-    {
-      "id": "fixed-17-45-reservation",
-      "kind": "reservation",
-      "description": "保留 8/28 17:45 固定預約（名稱：しあわせのパンケーキ）",
-      "value": true
-    }
+      {
+        "id": "no-hard-activity-after-17-15",
+        "kind": "timing",
+        "description": "17:15 後不得新增固定時段景點，保留 8/28 17:45 固定預約可調整時間窗",
+        "value": true
+      },
+      {
+        "id": "fixed-17-45-reservation",
+        "kind": "reservation",
+        "description": "保留 8/28 17:45 固定預約（名稱：しあわせのパンケーキ）",
+        "value": true
+      }
     ],
     "soft_preferences": [
       {
@@ -86,32 +86,14 @@
         "name": "Awaji Riverside Terrace",
         "kind": "hotel",
         "address": "淡路市清水町",
-        "navigation_points": [
-          {
-            "id": "riverside-parking",
-            "kind": "parking",
-            "name": "酒店前停車場",
-            "coordinates": {
-              "latitude": 34.4701,
-              "longitude": 134.9396
-            },
-            "provenance": {
-              "source_type": "user_input",
-              "provider": "planner note",
-              "source_url": "https://example.invalid/awaji-riverside",
-              "retrieved_at": "2026-08-15T09:00:00+09:00",
-              "confidence": 1,
-              "status": "confirmed"
-            }
-          }
-        ],
+        "navigation_points": [],
         "provenance": {
-          "source_type": "provider",
-          "provider": "Hotel candidate provider",
-          "source_url": "https://example.invalid/hotels/awaji-riverside",
+          "source_type": "user_input",
+          "provider": "user confirmed",
+          "source_url": "https://github.com/JackyTsai70113/ai-travel-planner/issues/52",
           "retrieved_at": "2026-08-15T09:00:00+09:00",
-          "confidence": 0.8,
-          "status": "estimated"
+          "confidence": 1,
+          "status": "confirmed"
         }
       },
       {
@@ -122,7 +104,7 @@
         "provenance": {
           "source_type": "user_input",
           "provider": "user confirmed",
-          "source_url": "https://example.invalid/user-confirmed/tokushima-besso-hotel-2",
+          "source_url": "https://github.com/JackyTsai70113/ai-travel-planner/issues/52",
           "retrieved_at": "2026-08-15T09:00:00+09:00",
           "confidence": 1,
           "status": "confirmed"
@@ -136,7 +118,7 @@
         "provenance": {
           "source_type": "user_input",
           "provider": "user confirmed",
-          "source_url": "https://example.invalid/user-confirmed/royal-park-canvas-kobe-sannomiya",
+          "source_url": "https://github.com/JackyTsai70113/ai-travel-planner/issues/52",
           "retrieved_at": "2026-08-15T09:00:00+09:00",
           "confidence": 1,
           "status": "confirmed"
@@ -655,13 +637,13 @@
       },
       {
         "id": "awaji-harbor-diner",
-        "name": "淡路海岸茶咖（待確認）",
+        "name": "淡路海岸茶咖",
         "kind": "restaurant",
         "address": "淡路市",
         "provenance": {
           "source_type": "community",
           "provider": "restaurant index",
-          "source_url": "https://example.invalid/restaurants/awaji",
+          "source_url": "https://www.google.com/search?q=%E6%B7%A1%E8%B7%AF%E6%B5%B7%E5%B2%B8%E8%8C%B6%E5%92%96",
           "retrieved_at": "2026-08-15T09:35:00+09:00",
           "confidence": 0.6,
           "status": "unverified"
@@ -682,9 +664,9 @@
         "provenance": {
           "source_type": "community",
           "provider": "restaurant index",
-          "source_url": "https://example.invalid/restaurants/awaji-harbor-diner",
+          "source_url": "https://www.google.com/search?q=%E6%B7%A1%E8%B7%AF%E6%B5%B7%E5%B2%B8%E8%8C%B6%E5%92%96",
           "retrieved_at": "2026-08-15T09:35:00+09:00",
-          "confidence": 0.6,
+          "confidence": 0.55,
           "status": "unverified"
         }
       }
@@ -695,7 +677,7 @@
           "id": "awaji-riverside-hotel",
           "name": "Awaji Riverside Terrace",
           "kind": "hotel",
-          "address": "Shizuki 780-12, 656-2131 淡路市, 兵庫縣, 日本"
+          "address": "淡路市清水町"
         },
         "nightly_cost": {
           "amount": 18000,
@@ -718,18 +700,18 @@
           ]
         },
         "room_type": "family",
-        "cancellation_policy": "可免費取消，24 小時內免費",
-        "parking_available": true,
-        "child_policy": "可提供嬰兒椅與加熱水壺",
+        "cancellation_policy": "未確認（待飯店確認）",
+        "parking_available": null,
+        "child_policy": "待確認",
         "provider_reference": "awaji-riverside-2026",
-        "price_status": "estimated",
+        "price_status": "unverified",
         "provenance": {
-          "source_type": "provider",
-          "provider": "Hotel provider",
-          "source_url": "https://example.invalid/hotels/riverside",
-          "retrieved_at": "2026-08-15T09:00:00+09:00",
-          "confidence": 0.8,
-          "status": "estimated"
+          "source_type": "user_input",
+          "provider": "user confirmed",
+          "source_url": "https://github.com/JackyTsai70113/ai-travel-planner/issues/52",
+          "retrieved_at": "2026-08-15T09:20:00+09:00",
+          "confidence": 0.9,
+          "status": "confirmed"
         }
       },
       {
@@ -760,18 +742,18 @@
           ]
         },
         "room_type": "family",
-        "cancellation_policy": "請以飯店最終規則為準",
-        "parking_available": true,
-        "child_policy": "有無障礙與幼兒支援尚待確認",
+        "cancellation_policy": "未確認（待飯店確認）",
+        "parking_available": null,
+        "child_policy": "待確認",
         "provider_reference": "tokushima-besso-2-2026",
-        "price_status": "estimated",
+        "price_status": "unverified",
         "provenance": {
-          "source_type": "provider",
-          "provider": "Hotel provider",
-          "source_url": "https://example.invalid/hotels/tokushima-besso-2",
-          "retrieved_at": "2026-08-15T09:10:00+09:00",
-          "confidence": 0.8,
-          "status": "estimated"
+          "source_type": "user_input",
+          "provider": "user confirmed",
+          "source_url": "https://github.com/JackyTsai70113/ai-travel-planner/issues/52",
+          "retrieved_at": "2026-08-15T09:20:00+09:00",
+          "confidence": 0.9,
+          "status": "confirmed"
         }
       },
       {
@@ -802,29 +784,29 @@
           ]
         },
         "room_type": "family",
-        "cancellation_policy": "請以飯店最終規則為準",
-        "parking_available": true,
-        "child_policy": "有無障礙與幼兒支援尚待確認",
+        "cancellation_policy": "未確認（待飯店確認）",
+        "parking_available": null,
+        "child_policy": "待確認",
         "provider_reference": "royal-park-kobe-2026",
-        "price_status": "estimated",
+        "price_status": "unverified",
         "provenance": {
-          "source_type": "provider",
-          "provider": "Hotel provider",
-          "source_url": "https://example.invalid/hotels/royal-park-kobe",
-          "retrieved_at": "2026-08-15T09:12:00+09:00",
-          "confidence": 0.8,
-          "status": "estimated"
+          "source_type": "user_input",
+          "provider": "user confirmed",
+          "source_url": "https://github.com/JackyTsai70113/ai-travel-planner/issues/52",
+          "retrieved_at": "2026-08-15T09:20:00+09:00",
+          "confidence": 0.9,
+          "status": "confirmed"
         }
       }
     ],
     "flights": [
       {
         "id": "xj-834-outbound",
-        "carrier": "XiamenAir",
+        "carrier": "Starlux",
         "flight_number": "JX834",
         "departure": {
           "place_id": "taoyuan-airport",
-          "at": "2026-08-27T10:30:00+09:00"
+          "at": null
         },
         "arrival": {
           "place_id": "kobe-airport",
@@ -836,17 +818,18 @@
         },
         "notes": "航班抵達 UKB 10:30 已確認；去程起飛時間待補。",
         "provenance": {
-          "source_type": "provider",
-          "provider": "XiamenAir",
-          "source_url": "https://airline.example.invalid/xj-834",
-          "retrieved_at": "2026-08-15T08:50:00+09:00",
-          "confidence": 0.9,
+          "source_type": "user_input",
+          "provider": "user-confirmed booking",
+          "source_url": "https://github.com/JackyTsai70113/ai-travel-planner/issues/52",
+          "retrieved_at": "2026-08-15T09:00:00+09:00",
+          "confidence": 0.98,
           "status": "confirmed"
-        }
+        },
+        "provider": "user booking"
       },
       {
         "id": "xj-1835-return",
-        "carrier": "XiamenAir",
+        "carrier": "Starlux",
         "flight_number": "JX1835",
         "departure": {
           "place_id": "kobe-airport",
@@ -854,7 +837,7 @@
         },
         "arrival": {
           "place_id": "taoyuan-airport",
-          "at": "2026-08-31T12:45:00+09:00"
+          "at": null
         },
         "cost": {
           "amount": 52000,
@@ -862,13 +845,14 @@
         },
         "notes": "回程抵達台北時間未提供，僅保留 JX1835 與 12:45 起飛。",
         "provenance": {
-          "source_type": "provider",
-          "provider": "XiamenAir",
-          "source_url": "https://airline.example.invalid/xj-1835",
-          "retrieved_at": "2026-08-15T08:55:00+09:00",
-          "confidence": 0.9,
+          "source_type": "user_input",
+          "provider": "user-confirmed booking",
+          "source_url": "https://github.com/JackyTsai70113/ai-travel-planner/issues/52",
+          "retrieved_at": "2026-08-15T09:00:00+09:00",
+          "confidence": 0.98,
           "status": "confirmed"
-        }
+        },
+        "provider": "user booking"
       }
     ],
     "transport_legs": [
@@ -884,12 +868,12 @@
           "currency": "JPY"
         },
         "provenance": {
-          "source_type": "derived",
+          "source_type": "planner",
           "provider": "Planner",
-          "source_url": "https://example.invalid/transport/leg-airport-to-riverside",
+          "source_url": "https://github.com/JackyTsai70113/ai-travel-planner/issues/52",
           "retrieved_at": "2026-08-15T09:40:00+09:00",
           "confidence": 0.6,
-          "status": "estimated",
+          "status": "unverified",
           "note": "需以實際道路狀況為準"
         }
       },
@@ -905,12 +889,12 @@
           "currency": "JPY"
         },
         "provenance": {
-          "source_type": "derived",
+          "source_type": "planner",
           "provider": "Planner",
-          "source_url": "https://example.invalid/transport/leg-riverside-to-tokushima",
+          "source_url": "https://github.com/JackyTsai70113/ai-travel-planner/issues/52",
           "retrieved_at": "2026-08-15T09:40:00+09:00",
           "confidence": 0.56,
-          "status": "estimated",
+          "status": "unverified",
           "note": "需預留德島區間與停車時間"
         }
       },
@@ -926,12 +910,12 @@
           "currency": "JPY"
         },
         "provenance": {
-          "source_type": "derived",
+          "source_type": "planner",
           "provider": "Planner",
-          "source_url": "https://example.invalid/transport/leg-tokushima-to-kobe",
+          "source_url": "https://github.com/JackyTsai70113/ai-travel-planner/issues/52",
           "retrieved_at": "2026-08-15T09:42:00+09:00",
           "confidence": 0.54,
-          "status": "estimated",
+          "status": "unverified",
           "note": "含可能路況變化"
         }
       },
@@ -947,12 +931,12 @@
           "currency": "JPY"
         },
         "provenance": {
-          "source_type": "derived",
+          "source_type": "planner",
           "provider": "Planner",
-          "source_url": "https://example.invalid/transport/leg-kobe-to-airport",
+          "source_url": "https://github.com/JackyTsai70113/ai-travel-planner/issues/52",
           "retrieved_at": "2026-08-15T09:40:00+09:00",
           "confidence": 0.6,
-          "status": "estimated",
+          "status": "unverified",
           "note": "留 90 分鐘以上彈性"
         }
       }
@@ -1194,6 +1178,12 @@
       "severity": "warning",
       "message": "固定預約 8/28 17:45 名稱已確認（しあわせのパンケーキ），但地點與 duration 待補",
       "path": "/days/2026-08-28/items/fixed-2026-08-28-17-45"
+    },
+    {
+      "code": "EVIDENCE_REQUIRES_REFRESH",
+      "severity": "warning",
+      "message": "住宿與道路、固定預約需在出發前補齊官方/確認來源；未補齊欄位以估測或未設定替代值呈現。",
+      "path": "/candidate_sets/hotels"
     }
   ],
   "overrides": [
@@ -1208,8 +1198,8 @@
       "preserve_on_replan": true,
       "provenance": {
         "source_type": "user_input",
-        "provider": "planner",
-        "source_url": "https://example.invalid/requests/awaji-2026",
+        "provider": "trip maintainer",
+        "source_url": "https://github.com/JackyTsai70113/ai-travel-planner/issues/52",
         "retrieved_at": "2026-08-15T09:00:00+09:00",
         "confidence": 1,
         "status": "confirmed"
@@ -1218,9 +1208,9 @@
   ],
   "provenance": {
     "source_type": "derived",
-    "provider": "issue-52 execution",
-    "source_url": "https://github.com/your-org/ai-travel-planner/issues/52",
-    "retrieved_at": "2026-08-15T09:00:00+09:00",
+    "provider": "issue-59 execution",
+    "source_url": "https://github.com/JackyTsai70113/ai-travel-planner/issues/59",
+    "retrieved_at": "2026-08-16T09:00:00+09:00",
     "confidence": 0.72,
     "status": "estimated"
   }

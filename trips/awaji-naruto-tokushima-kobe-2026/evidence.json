@@ -1,24 +1,150 @@
 {
   "trip_id": "awaji-naruto-tokushima-kobe-2026",
+  "generated_at": "2026-08-16T10:00:00+09:00",
   "entries": [
     {
+      "reference_id": "selected-flight/xj-834-outbound",
       "kind": "flight",
-      "status": "confirmed",
-      "provider": "XiamenAir",
-      "note": "出發與回程航班時間已鎖定，仍以官方時刻表為準"
+      "source_type": "user_confirmed",
+      "provider": "user",
+      "title": "JX834 去程已確認到達時間",
+      "source_url": "https://github.com/JackyTsai70113/ai-travel-planner/issues/52",
+      "supports": [
+        "arrival_at",
+        "carrier",
+        "booking_reference"
+      ],
+      "confidence": 0.98,
+      "retrieved_at": "2026-08-15T09:00:00+09:00",
+      "validity": {
+        "valid_from": "2026-08-15T00:00:00+09:00",
+        "valid_until": "2026-08-27T23:59:59+09:00",
+        "freshness": "manual"
+      },
+      "conflict": null,
+      "visibility": "public",
+      "status": "confirmed"
     },
     {
+      "reference_id": "selected-flight/xj-1835-return",
+      "kind": "flight",
+      "source_type": "user_confirmed",
+      "provider": "user",
+      "title": "JX1835 回程已確認離境時間",
+      "source_url": "https://github.com/JackyTsai70113/ai-travel-planner/issues/52",
+      "supports": [
+        "departure_at",
+        "carrier",
+        "booking_reference"
+      ],
+      "confidence": 0.97,
+      "retrieved_at": "2026-08-15T09:00:00+09:00",
+      "validity": {
+        "valid_from": "2026-08-15T00:00:00+09:00",
+        "valid_until": "2026-08-31T23:59:59+09:00",
+        "freshness": "manual"
+      },
+      "conflict": null,
+      "visibility": "public",
+      "status": "confirmed"
+    },
+    {
+      "reference_id": "selected-hotel/awaji-riverside-hotel",
       "kind": "lodge",
-      "status": "confirmed",
-      "provider": "planner",
-      "note": "住宿保留以確認信件為主，入住/退房時間待與飯店最終核對"
+      "source_type": "user_confirmed",
+      "provider": "user",
+      "title": "Awaji Riverside Terrace 住宿確認",
+      "source_url": "https://github.com/JackyTsai70113/ai-travel-planner/issues/52",
+      "supports": [
+        "hotel",
+        "check-in-out-window",
+        "guest_count"
+      ],
+      "confidence": 1,
+      "retrieved_at": "2026-08-15T09:00:00+09:00",
+      "validity": {
+        "valid_from": "2026-08-20T00:00:00+09:00",
+        "valid_until": "2026-09-01T00:00:00+09:00",
+        "freshness": "manual"
+      },
+      "conflict": {
+        "message": "停車、取消條件與兒童友善設施待實際退房頁面確認",
+        "severity": "medium"
+      },
+      "visibility": "public",
+      "status": "partial"
     },
     {
+      "reference_id": "selected-hotel/tokushima-seshi-besso-hotel-2",
+      "kind": "lodge",
+      "source_type": "user_confirmed",
+      "provider": "user",
+      "title": "徳島別荘ホテル2 住宿確認",
+      "source_url": "https://github.com/JackyTsai70113/ai-travel-planner/issues/52",
+      "supports": [
+        "hotel",
+        "booking_window"
+      ],
+      "confidence": 0.99,
+      "retrieved_at": "2026-08-15T09:00:00+09:00",
+      "validity": {
+        "valid_from": "2026-08-20T00:00:00+09:00",
+        "valid_until": "2026-09-01T00:00:00+09:00",
+        "freshness": "manual"
+      },
+      "conflict": {
+        "message": "停車、取消、兒童設施待官方回覆",
+        "severity": "high"
+      },
+      "visibility": "public",
+      "status": "partial"
+    },
+    {
+      "reference_id": "selected-hotel/royal-park-canvas-kobe-sannomiya",
+      "kind": "lodge",
+      "source_type": "user_confirmed",
+      "provider": "user",
+      "title": "The Royal Park Canvas Kobe Sannomiya 住宿確認",
+      "source_url": "https://github.com/JackyTsai70113/ai-travel-planner/issues/52",
+      "supports": [
+        "hotel",
+        "booking_window"
+      ],
+      "confidence": 1,
+      "retrieved_at": "2026-08-15T09:00:00+09:00",
+      "validity": {
+        "valid_from": "2026-08-20T00:00:00+09:00",
+        "valid_until": "2026-09-01T00:00:00+09:00",
+        "freshness": "manual"
+      },
+      "conflict": {
+        "message": "停車、取消、兒童/無障礙設施待官方回覆",
+        "severity": "high"
+      },
+      "visibility": "public",
+      "status": "partial"
+    },
+    {
+      "reference_id": "reservation/naruto-ferry-fixed-activity",
       "kind": "reservation",
-      "status": "unresolved",
-      "provider": "naruto-tourism",
-      "note": "鳴門固定預約活動名稱、是否需現場報到待補"
+      "source_type": "reservation",
+      "provider": "trip maintainer",
+      "title": "鳴門固定預約名稱已確認，細節待補",
+      "source_url": "https://github.com/JackyTsai70113/ai-travel-planner/issues/52",
+      "supports": [
+        "name",
+        "time"
+      ],
+      "confidence": 1,
+      "retrieved_at": "2026-08-15T09:30:00+09:00",
+      "validity": {
+        "valid_from": "2026-08-27T00:00:00+09:00",
+        "valid_until": "2026-08-31T23:59:59+09:00",
+        "freshness": "manual"
+      },
+      "conflict": null,
+      "visibility": "public",
+      "status": "unresolved"
     }
-  ],
-  "notes": "issue-52 canonicalization 對應資料基準，非即時最終行程資料"
+  ]
 }
