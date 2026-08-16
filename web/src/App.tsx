@@ -318,12 +318,6 @@ function normalizeSourceText(value: unknown): string {
   return ''
 }
 
-function toFriendlyStatus(status: Bundle['status']): string {
-  if (status === 'ok') return '可執行'
-  if (status === 'warning') return '待補資訊'
-  return '嚴重訊息'
-}
-
 function mapStatusTone(status: Bundle['status']): DataStatusTone {
   return bundleStatusTone(status as BundleStatus)
 }
