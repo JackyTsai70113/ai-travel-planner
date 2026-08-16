@@ -193,13 +193,13 @@ export default function TripApp() {
       return <ReservationsPage bundle={bundleLoader.bundle} />
     }
     if (selectedSection === 'tides') {
-      return <TidesPage />
+      return <TidesPage bundle={bundleLoader.bundle} />
     }
     if (selectedSection === 'food') {
-      return <FoodPage />
+      return <FoodPage bundle={bundleLoader.bundle} />
     }
     if (selectedSection === 'lodging') {
-      return <LodgingPage />
+      return <LodgingPage bundle={bundleLoader.bundle} />
     }
     if (selectedSection === 'handbook') {
       return <HandbookPage bundle={bundleLoader.bundle} />
