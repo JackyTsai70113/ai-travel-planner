@@ -118,7 +118,7 @@ export default function TripApp() {
     const selectedDay = bundleLoader.bundle ? deriveDayFromRoute(bundleLoader.bundle, route) : null
     const hasInvalidDay = route.day ? selectedDay === null : false
     setRouteNotFound(hasInvalidDay)
-  }, [bundleLoader.bundle, isDayScopedSection, route.day, route.section])
+  }, [bundleLoader.bundle, isDayScopedSection, route.day, route.section, routeSectionNotFound])
 
   const itineraryDayFromLastNavigation = useMemo(() => {
     if (!bundleLoader.bundle) return undefined
