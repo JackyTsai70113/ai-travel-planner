@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
+import { availableThemes, getThemeById } from './contracts/theme'
+import { bundleStatusTone, statusLabel, type BundleStatus, type DataStatusTone } from './design-system/status'
 
 interface BundleDayItem {
   id: string
@@ -66,6 +68,7 @@ interface Bundle {
   validation: { code: string; message: string; severity: string }[]
   meta: {
     generated_at: string
+    theme_id?: string
   }
 }
 
@@ -77,6 +80,7 @@ const STORAGE_KEYS = {
   checklist: 'awaji_2026_checklist',
   notes: 'awaji_2026_notes',
   budget: 'awaji_2026_budget',
+  theme: 'awaji_2026_theme',
 } as const
 
 const DEFAULT_CHECKLIST: ChecklistState = {
@@ -91,6 +95,12 @@ const DEFAULT_CHECKLIST: ChecklistState = {
   car_docs: false,
   stroller: false,
   first_aid: false,
+}
+
+function safeThemeId(themeId: unknown, fallbackThemeId: string): string {
+  if (typeof themeId !== 'string') return fallbackThemeId
+  if (!themeId.trim()) return fallbackThemeId
+  return getThemeById(themeId).id
 }
 
 function safeParseJson<T>(value: string | null, fallback: T): T {
@@ -130,10 +140,12 @@ function toFriendlyStatus(status: Bundle['status']): string {
   return '嚴重訊息'
 }
 
-function mapStatusClass(status: Bundle['status']): string {
-  if (status === 'ok') return 'status ok'
-  if (status === 'warning') return 'status warning'
-  return 'status error'
+function mapStatusTone(status: Bundle['status']): DataStatusTone {
+  return bundleStatusTone(status as BundleStatus)
+}
+
+function themeClassName(themeId: string): string {
+  return `theme-${themeId}`
 }
 
 function App() {
@@ -146,11 +158,18 @@ function App() {
   const [checklist, setChecklist] = useState<ChecklistState>(DEFAULT_CHECKLIST)
   const [notes, setNotes] = useState<string>('')
   const [tripBudgetMemo, setTripBudgetMemo] = useState<string>('')
+  const [themeId, setThemeId] = useState<string>(getThemeById('fallback-japan').id)
 
   useEffect(() => {
     setChecklist(safeParseJson(localStorage.getItem(STORAGE_KEYS.checklist), DEFAULT_CHECKLIST))
     setNotes(safeParseJson(localStorage.getItem(STORAGE_KEYS.notes), ''))
     setTripBudgetMemo(safeParseJson(localStorage.getItem(STORAGE_KEYS.budget), ''))
+    setThemeId(
+      safeThemeId(
+        safeParseJson(localStorage.getItem(STORAGE_KEYS.theme), ''),
+        getThemeById('fallback-japan').id,
+      ),
+    )
     setIsOnline(window.navigator.onLine)
 
     const handleOnline = () => setIsOnline(true)
@@ -175,6 +194,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.budget, JSON.stringify(tripBudgetMemo))
   }, [tripBudgetMemo])
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.theme, JSON.stringify(themeId))
+  }, [themeId])
 
   useEffect(() => {
     const load = async () => {
@@ -211,6 +234,8 @@ function App() {
         }
         const data = (await response.json()) as Bundle
         setBundle(data)
+        const nextTheme = getThemeById(data.meta?.theme_id ?? getThemeById(null).id)
+        setThemeId(nextTheme.id)
         setActiveDay(Math.min(0, Math.max(data.days.length - 1, 0)))
       } catch (err) {
         setError(err instanceof Error ? err.message : '載入發生未知錯誤')
@@ -223,7 +248,9 @@ function App() {
   }, [])
 
   const totalDays = useMemo(() => bundle?.days.length ?? 0, [bundle])
+  const selectedTheme = useMemo(() => getThemeById(themeId), [themeId])
   const placeList = useMemo(() => bundle?.places ?? [], [bundle])
+  const statusTone = useMemo(() => bundle ? mapStatusTone(bundle.status) : ('unverified' as DataStatusTone), [bundle])
   const warningCount = useMemo(
     () => bundle?.validation.filter((item) => item.severity === 'warning' || item.severity === 'error').length ?? 0,
     [bundle],
@@ -260,17 +287,33 @@ function App() {
   }
 
   return (
-    <main className="shell">
-      <header className="hero">
-        <p className="eyebrow">2026 淡路島・鳴門家庭旅行</p>
+      <main className={`shell trip-theme ${themeClassName(selectedTheme.id)}`}>
+        <header className="hero">
+        <p className="eyebrow">{selectedTheme.hero.title}</p>
         <h1>{bundle.title}</h1>
         <div className="hero-meta">
           <span>{bundle.date_range.start_date} ~ {bundle.date_range.end_date}</span>
-          <span className={mapStatusClass(bundle.status)}>行程狀態：{toFriendlyStatus(bundle.status)}</span>
+          <span className={`status-chip status-${statusTone}`}>{statusLabel(statusTone)}</span>
         </div>
+        <p className="hero-subtitle">狀態語意：{statusLabel(statusTone)} · 主題 {selectedTheme.displayName}</p>
         <p className={isOnline ? 'online' : 'offline'}>
           {isOnline ? '已啟用線上版本（會即時更新公有資料快照）' : '目前離線模式：以快取資料顯示'}
         </p>
+        <label className="theme-switcher" htmlFor="themeSwitch">
+          主題
+          <select
+            id="themeSwitch"
+            value={selectedTheme.id}
+            onChange={(event) => setThemeId(event.target.value)}
+            aria-label="選擇行程主題"
+          >
+            {availableThemes.map((theme) => (
+              <option key={theme.id} value={theme.id}>
+                {theme.displayName}
+              </option>
+            ))}
+          </select>
+        </label>
       </header>
 
       <section className="card">
@@ -340,6 +383,7 @@ function App() {
                     <button
                       type="button"
                       onClick={() => copyText(`${currentDay.date}-${item.id}`, findPlaceLabel(placeList, item.place_id))}
+                      aria-label={`複製地點：${findPlaceLabel(placeList, item.place_id)}`}
                     >
                       {copiedId === `${currentDay.date}-${item.id}` ? '已複製' : '複製地點'}
                     </button>
@@ -363,6 +407,7 @@ function App() {
                 <button
                   type="button"
                   onClick={() => copyText(reservation.id, `${reservation.day} ${reservation.time ?? ''} ${reservation.name ?? ''}`.trim())}
+                  aria-label={`複製預約：${reservation.id}`}
                 >
                   {copiedId === reservation.id ? '已複製' : '複製預約'}
                 </button>
@@ -379,6 +424,7 @@ function App() {
       <section className="card">
         <h2>預算與重點提醒</h2>
         <p>總預算：{formatMoney(bundle.budget.total)}</p>
+        <p className="muted">主題備註：{selectedTheme.attribution}</p>
         <dl>
           {Object.entries(bundle.budget.categories).map(([category, amount]) => (
             <div className="budget-row" key={category}>
@@ -388,12 +434,13 @@ function App() {
           ))}
         </dl>
         <label className="budget-note" htmlFor="budgetMemo">出發前預算補充（僅本機儲存）</label>
-        <textarea
-          id="budgetMemo"
-          value={tripBudgetMemo}
-          onChange={(event) => setTripBudgetMemo(event.target.value)}
-          placeholder="例如：某日臨時超商、收費路線停車補貼"
-        />
+            <textarea
+              id="budgetMemo"
+              value={tripBudgetMemo}
+              onChange={(event) => setTripBudgetMemo(event.target.value)}
+              placeholder="例如：某日臨時超商、收費路線停車補貼"
+              aria-label="出發前預算補充"
+            />
       </section>
 
       <section className="card">
@@ -437,6 +484,7 @@ function App() {
           value={notes}
           onChange={(event) => setNotes(event.target.value)}
           placeholder="例如：8/28 前往鳴門前是否遇到塞車，或替代店家安排"
+          aria-label="臨時備註"
         />
       </section>
 

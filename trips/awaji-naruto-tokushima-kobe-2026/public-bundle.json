@@ -1,4 +1,5 @@
 {
+  "alternatives": [],
   "budget": {
     "categories": {
       "contingency": {
@@ -28,6 +29,26 @@
       "currency": "JPY"
     }
   },
+  "conditions": {
+    "closures": [],
+    "freshness": "unknown",
+    "tide": {
+      "status": "unknown",
+      "status_label": "官方未確認"
+    },
+    "weather": {
+      "status": "unknown",
+      "status_label": "官方未確認"
+    }
+  },
+  "critical_alerts": [
+    {
+      "id": "RESERVATION_UNCONFIRMED",
+      "level": "warning",
+      "message": "固定預約 8/28 17:45 名稱已確認（しあわせのパンケーキ），但地點與 duration 待補",
+      "path": "/days/2026-08-28/items/fixed-2026-08-28-17-45"
+    }
+  ],
   "date_range": {
     "end_date": "2026-08-31",
     "start_date": "2026-08-27"
@@ -218,9 +239,33 @@
   ],
   "local_timezone": "Asia/Tokyo",
   "meta": {
-    "generated_at": "2026-08-15T18:39:02+00:00",
+    "generated_at": "2026-08-16T13:47:59+00:00",
+    "source_coverage": {
+      "days": 5,
+      "places": 25,
+      "selected_flights": 2,
+      "selected_hotels": 3
+    },
     "source_path": "trips/awaji-naruto-tokushima-kobe-2026/trip.json",
-    "source_sha256": "c646e71521dfd44db246d199138e30fd0759a783806552dc19e4d524b1447ddb"
+    "source_sha256": "c646e71521dfd44db246d199138e30fd0759a783806552dc19e4d524b1447ddb",
+    "trip_schema": "trip-v1"
+  },
+  "operations": {
+    "emergency": [],
+    "fuel": {},
+    "handbook": [],
+    "returns": [],
+    "supplies": []
+  },
+  "overview": {
+    "critical_unknown_count": 1,
+    "next_recheck_at": null,
+    "trip_scope": [
+      "awaji",
+      "naruto",
+      "tokushima",
+      "kobe"
+    ]
   },
   "places": [
     {
@@ -432,6 +477,7 @@
       "unresolved": true
     }
   ],
+  "schema": "awaji-public-bundle-v1",
   "selected": {
     "flight_ids": [
       "xj-834-outbound",
@@ -443,8 +489,402 @@
       "royal-park-canvas-kobe-sannomiya"
     ]
   },
+  "source_ledger": [
+    {
+      "authority": "issue-52 execution",
+      "confidence": 0.72,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T09:00:00+09:00",
+      "source_url": "https://github.com/your-org/ai-travel-planner/issues/52",
+      "status": "estimated",
+      "supports": "trip.meta"
+    },
+    {
+      "authority": "TAIWAN Airport",
+      "confidence": 0.9,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T09:00:00+08:00",
+      "source_url": "https://www.taoyuan-airport.com/",
+      "status": "confirmed",
+      "supports": "place:taoyuan-airport"
+    },
+    {
+      "authority": "Hyogo Prefecture",
+      "confidence": 0.9,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T09:00:00+09:00",
+      "source_url": "https://www.kansai-airport.or.jp/",
+      "status": "confirmed",
+      "supports": "place:kobe-airport"
+    },
+    {
+      "authority": "Hotel candidate provider",
+      "confidence": 0.8,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T09:00:00+09:00",
+      "source_url": "https://example.invalid/hotels/awaji-riverside",
+      "status": "estimated",
+      "supports": "place:awaji-riverside-hotel"
+    },
+    {
+      "authority": "user confirmed",
+      "confidence": 1.0,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T09:00:00+09:00",
+      "source_url": "https://example.invalid/user-confirmed/tokushima-besso-hotel-2",
+      "status": "confirmed",
+      "supports": "place:tokushima-seshi-besso-hotel-2"
+    },
+    {
+      "authority": "user confirmed",
+      "confidence": 1.0,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T09:00:00+09:00",
+      "source_url": "https://example.invalid/user-confirmed/royal-park-canvas-kobe-sannomiya",
+      "status": "confirmed",
+      "supports": "place:royal-park-canvas-kobe-sannomiya"
+    },
+    {
+      "authority": "Awaji City",
+      "confidence": 0.88,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T09:15:00+09:00",
+      "source_url": "https://www.city.awaji.lg.jp/",
+      "status": "confirmed",
+      "supports": "place:awaji-nakajima-park"
+    },
+    {
+      "authority": "Awaji City",
+      "confidence": 0.86,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T09:20:00+09:00",
+      "source_url": "https://www.city.awaji.lg.jp/",
+      "status": "confirmed",
+      "supports": "place:awaji-beach"
+    },
+    {
+      "authority": "Kagawa Tourism",
+      "confidence": 0.85,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T09:25:00+09:00",
+      "source_url": "https://www.britto-kagawa.jp/",
+      "status": "reported",
+      "supports": "place:naruto-whirlpool-viewpoint"
+    },
+    {
+      "authority": "Issue comment",
+      "confidence": 0.3,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T09:30:00+09:00",
+      "source_url": "https://github.com/JackyTsai70113/ai-travel-planner/issues/52",
+      "status": "confirmed",
+      "supports": "place:naruto-ferry-fixed-activity"
+    },
+    {
+      "authority": "Google Maps",
+      "confidence": null,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T10:20:00+09:00",
+      "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+      "status": "estimated",
+      "supports": "place:map-import-pokara-naruto-store"
+    },
+    {
+      "authority": "Google Maps",
+      "confidence": null,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T10:20:00+09:00",
+      "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+      "status": "estimated",
+      "supports": "place:map-import-ocean-terrace"
+    },
+    {
+      "authority": "Google Maps",
+      "confidence": null,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T10:20:00+09:00",
+      "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+      "status": "estimated",
+      "supports": "place:map-import-sbrick-warehouse"
+    },
+    {
+      "authority": "Google Maps",
+      "confidence": null,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T10:20:00+09:00",
+      "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+      "status": "estimated",
+      "supports": "place:map-import-uzuno-oka"
+    },
+    {
+      "authority": "Google Maps",
+      "confidence": null,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T10:20:00+09:00",
+      "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+      "status": "estimated",
+      "supports": "place:map-import-yumebutai"
+    },
+    {
+      "authority": "Google Maps",
+      "confidence": null,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T10:20:00+09:00",
+      "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+      "status": "estimated",
+      "supports": "place:map-import-naruto-bridge-memorial"
+    },
+    {
+      "authority": "Google Maps",
+      "confidence": null,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T10:20:00+09:00",
+      "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+      "status": "estimated",
+      "supports": "place:map-import-poplar-ramen"
+    },
+    {
+      "authority": "Google Maps",
+      "confidence": null,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T10:20:00+09:00",
+      "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+      "status": "estimated",
+      "supports": "place:map-import-ohama-park"
+    },
+    {
+      "authority": "Google Maps",
+      "confidence": null,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T10:20:00+09:00",
+      "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+      "status": "estimated",
+      "supports": "place:map-import-garb-costa-orange"
+    },
+    {
+      "authority": "Google Maps",
+      "confidence": null,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T10:20:00+09:00",
+      "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+      "status": "estimated",
+      "supports": "place:map-import-taidrobou"
+    },
+    {
+      "authority": "Google Maps",
+      "confidence": null,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T10:20:00+09:00",
+      "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+      "status": "estimated",
+      "supports": "place:map-import-o-awaji"
+    },
+    {
+      "authority": "Google Maps",
+      "confidence": null,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T10:20:00+09:00",
+      "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+      "status": "estimated",
+      "supports": "place:map-import-boulangerie-rural"
+    },
+    {
+      "authority": "Google Maps",
+      "confidence": null,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T10:20:00+09:00",
+      "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+      "status": "estimated",
+      "supports": "place:map-import-picnic-garden"
+    },
+    {
+      "authority": "Google Maps",
+      "confidence": null,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T10:20:00+09:00",
+      "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+      "status": "estimated",
+      "supports": "place:map-import-keino-beach"
+    },
+    {
+      "authority": "Google Maps",
+      "confidence": null,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T10:20:00+09:00",
+      "source_url": "https://maps.app.goo.gl/d8uJyAX5x9ba8P2g6?g_st=i",
+      "status": "estimated",
+      "supports": "place:map-import-awaji-hanasajiki"
+    },
+    {
+      "authority": "restaurant index",
+      "confidence": 0.6,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T09:35:00+09:00",
+      "source_url": "https://example.invalid/restaurants/awaji",
+      "status": "unverified",
+      "supports": "place:awaji-harbor-diner"
+    },
+    {
+      "authority": "XiamenAir",
+      "confidence": 0.9,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T08:50:00+09:00",
+      "source_url": "https://airline.example.invalid/xj-834",
+      "status": "confirmed",
+      "supports": "flight"
+    },
+    {
+      "authority": "XiamenAir",
+      "confidence": 0.9,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T08:55:00+09:00",
+      "source_url": "https://airline.example.invalid/xj-1835",
+      "status": "confirmed",
+      "supports": "flight"
+    },
+    {
+      "authority": "restaurant index",
+      "confidence": 0.6,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T09:35:00+09:00",
+      "source_url": "https://example.invalid/restaurants/awaji-harbor-diner",
+      "status": "unverified",
+      "supports": "restaurant"
+    },
+    {
+      "authority": "Hotel provider",
+      "confidence": 0.8,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T09:00:00+09:00",
+      "source_url": "https://example.invalid/hotels/riverside",
+      "status": "estimated",
+      "supports": "hotel"
+    },
+    {
+      "authority": "Hotel provider",
+      "confidence": 0.8,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T09:10:00+09:00",
+      "source_url": "https://example.invalid/hotels/tokushima-besso-2",
+      "status": "estimated",
+      "supports": "hotel"
+    },
+    {
+      "authority": "Hotel provider",
+      "confidence": 0.8,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-15T09:12:00+09:00",
+      "source_url": "https://example.invalid/hotels/royal-park-kobe",
+      "status": "estimated",
+      "supports": "hotel"
+    },
+    {
+      "authority": "未指定",
+      "confidence": null,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": null,
+      "source_url": null,
+      "status": "unknown",
+      "supports": "validation"
+    }
+  ],
   "status": "warning",
   "title": "2026 淡路島・鳴門家庭旅行",
+  "transport_legs": [
+    {
+      "arrival_at": "2026-08-27T14:30:00+09:00",
+      "departure_at": "2026-08-27T13:45:00+09:00",
+      "distance_km": null,
+      "estimated_duration_minutes": null,
+      "from_label": "神戶(神戶機場)",
+      "from_place": "kobe-airport",
+      "id": "leg-airport-to-riverside",
+      "mode": "car",
+      "note": null,
+      "source_refs": [],
+      "status": "unknown",
+      "to_label": "Awaji Riverside Terrace",
+      "to_place": "awaji-riverside-hotel"
+    },
+    {
+      "arrival_at": "2026-08-29T13:30:00+09:00",
+      "departure_at": "2026-08-29T11:30:00+09:00",
+      "distance_km": null,
+      "estimated_duration_minutes": null,
+      "from_label": "Awaji Riverside Terrace",
+      "from_place": "awaji-riverside-hotel",
+      "id": "leg-riverside-to-tokushima",
+      "mode": "car",
+      "note": null,
+      "source_refs": [],
+      "status": "unknown",
+      "to_label": "徳島別荘ホテル2",
+      "to_place": "tokushima-seshi-besso-hotel-2"
+    },
+    {
+      "arrival_at": "2026-08-30T12:10:00+09:00",
+      "departure_at": "2026-08-30T10:00:00+09:00",
+      "distance_km": null,
+      "estimated_duration_minutes": null,
+      "from_label": "徳島別荘ホテル2",
+      "from_place": "tokushima-seshi-besso-hotel-2",
+      "id": "leg-tokushima-to-kobe",
+      "mode": "car",
+      "note": null,
+      "source_refs": [],
+      "status": "unknown",
+      "to_label": "The Royal Park Canvas Kobe Sannomiya",
+      "to_place": "royal-park-canvas-kobe-sannomiya"
+    },
+    {
+      "arrival_at": "2026-08-31T10:45:00+09:00",
+      "departure_at": "2026-08-31T09:45:00+09:00",
+      "distance_km": null,
+      "estimated_duration_minutes": null,
+      "from_label": "The Royal Park Canvas Kobe Sannomiya",
+      "from_place": "royal-park-canvas-kobe-sannomiya",
+      "id": "leg-kobe-to-airport",
+      "mode": "car",
+      "note": null,
+      "source_refs": [],
+      "status": "unknown",
+      "to_label": "神戶(神戶機場)",
+      "to_place": "kobe-airport"
+    }
+  ],
   "traveler_profile": {
     "adults": 6,
     "children_ages": [
@@ -458,6 +898,7 @@
       "code": "RESERVATION_UNCONFIRMED",
       "message": "固定預約 8/28 17:45 名稱已確認（しあわせのパンケーキ），但地點與 duration 待補",
       "path": "/days/2026-08-28/items/fixed-2026-08-28-17-45",
+      "reference": null,
       "severity": "warning"
     }
   ]

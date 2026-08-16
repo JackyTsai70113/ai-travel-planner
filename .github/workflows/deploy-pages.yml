@@ -38,6 +38,52 @@ jobs:
         run: |
           mkdir -p site/trips/awaji-2026
           cp -R web/dist/. site/trips/awaji-2026/
+      - name: Create root trip selector page
+        run: |
+          cat > site/index.html <<'EOF'
+          <!doctype html>
+          <html lang="zh-Hant">
+            <head>
+              <meta charset="UTF-8" />
+              <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+              <meta http-equiv="refresh" content="0;url=./trips/awaji-2026/" />
+              <title>Awaji Trip Dashboard</title>
+              <style>
+                body {
+                  margin: 0;
+                  font-family: Arial, Helvetica, sans-serif;
+                  background: #f3f7fc;
+                  color: #10233a;
+                }
+                .wrap {
+                  max-width: 720px;
+                  margin: 80px auto;
+                  padding: 16px;
+                  background: #fff;
+                  border-radius: 14px;
+                  border: 1px solid #c7d7ea;
+                  box-shadow: 0 8px 22px rgba(0, 8, 30, 0.12);
+                }
+                a {
+                  color: #1667b2;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="wrap">
+                <h1>Awaji 2026 Golden Trip</h1>
+                <p>請點選下列連結開啟旅途中可用頁面：</p>
+                <ul>
+                  <li>
+                    <a href="./trips/awaji-2026/">2026 淡路島・鳴門家庭旅行</a>
+                  </li>
+                </ul>
+                <p><a href="./trips/awaji-2026/public-bundle.json">Trip public bundle JSON</a></p>
+                <noscript>若未自動跳轉，請點擊上方 trip 連結。</noscript>
+              </div>
+            </body>
+          </html>
+          EOF
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
