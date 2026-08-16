@@ -10,12 +10,14 @@ interface TripOverviewPageProps {
   setRoute: RouteSetter
   trip: TripCatalogEntry | null | undefined
   bundle: PublicTripBundle | null
+  bundleLoading: boolean
+  bundleError: string
   swStatus: { status: SwUiStatus; message: string }
 }
 
-export default function TripOverviewPage({ route, setRoute, trip, bundle, swStatus }: TripOverviewPageProps) {
+export default function TripOverviewPage({ route, setRoute, trip, bundle, bundleLoading, bundleError, swStatus }: TripOverviewPageProps) {
   if (route.route !== 'trip') return null
-  const error = bundle ? '' : '資料載入中'
+  const error = bundleLoading ? '' : bundleError
   return (
     <TripLandingOverview
       trip={trip || null}

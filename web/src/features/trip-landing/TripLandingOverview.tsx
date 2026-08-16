@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 import type {
   PublicTripBundle,
   TripCatalogEntry,
@@ -47,6 +49,8 @@ function criticalCount(bundle: PublicTripBundle | null): number {
 }
 
 export default function TripLandingOverview({ trip, bundle, error, setRoute, swStatus }: TripLandingOverviewProps) {
+  const [imageFailed, setImageFailed] = useState(false)
+
   if (!trip) {
     return (
       <div className="trip-overview-shell card-shell">
@@ -56,12 +60,23 @@ export default function TripLandingOverview({ trip, bundle, error, setRoute, swS
     )
   }
 
-  const bgStyle = trip.cover_media.kind === 'gradient'
-    ? trip.cover_media.gradient || 'linear-gradient(130deg, #0f172a, #1d4ed8)'
-    : `linear-gradient(120deg, rgba(8, 16, 32, 0.65), rgba(8, 16, 32, 0.5)), url(${trip.cover_media.url}) center/cover no-repeat`
+  const tripSummary = trip.hero_summary || '目前無摘要資料。'
+  const coverFallback = trip.cover_media.gradient || 'linear-gradient(130deg, #0f172a, #1d4ed8)'
+  const showImageMedia = trip.cover_media.kind === 'image' && !!trip.cover_media.url
+  const bgStyle = showImageMedia && !imageFailed && trip.cover_media.url
+    ? `linear-gradient(120deg, rgba(8, 16, 32, 0.65), rgba(8, 16, 32, 0.5)), url(${trip.cover_media.url}) center/cover no-repeat`
+    : coverFallback
 
   return (
     <article className="trip-overview-shell">
+      {showImageMedia && trip.cover_media.url && (
+        <img
+          src={trip.cover_media.url}
+          alt={trip.cover_media.alt || trip.title}
+          onError={() => setImageFailed(true)}
+          style={{ display: 'none' }}
+        />
+      )}
       <section className="trip-overview-hero" style={{ background: bgStyle }}>
         <div>
           <button type="button" onClick={() => setRoute({ route: 'home' })}>返回 catalog</button>
@@ -75,8 +90,9 @@ export default function TripLandingOverview({ trip, bundle, error, setRoute, swS
             <span className={resolveBadgeClass(trip.readiness)}>{resolveReadinessText(trip.readiness)}</span>
             <span className="status-pill">提醒 {trip.critical_alert_count + criticalCount(bundle)} 則</span>
           </div>
-          <p className="hero-summary">{trip.hero_summary}</p>
+          <p className="hero-summary">{tripSummary}</p>
           {trip.key_messages.map((message) => <p key={message} className="muted">• {message}</p>)}
+          {imageFailed && trip.cover_media.fallback && <p className="muted">封面預覽失敗，已改用備援視覺。</p>}
         </div>
       </section>
 
@@ -95,8 +111,8 @@ export default function TripLandingOverview({ trip, bundle, error, setRoute, swS
 
       <section className="card-shell" id="full-itinerary">
         <h2>行程摘要</h2>
-        {!bundle && !error && <p className="muted">資料載入中…</p>}
         {error && <p className="meta-error">資料讀取失敗：{error}</p>}
+        {!bundle && !error && <p className="muted">資料載入中…</p>}
         {bundle && (
           <>
             <h3>每日主題</h3>

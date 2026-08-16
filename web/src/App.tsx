@@ -15,6 +15,12 @@ import './styles.css'
 type SwUiStatus = 'unknown' | 'registering' | 'ready' | 'failed' | 'unsupported'
 interface SwUiState { status: SwUiStatus; message: string }
 
+interface BundleFetchState {
+  loading: boolean
+  error: string
+  data: PublicTripBundle | null
+}
+
 export const SW_STATUS_KEY = 'trip_portal_sw_status'
 
 type RouteState = { route: 'home' | 'trip'; slug?: string }
@@ -119,7 +125,7 @@ export default function App() {
   const basePath = useMemo(() => String(import.meta.env.BASE_URL || '/'), [])
   const [route, setRoute] = useState<RouteState>(() => resolveRouteFromLocation(basePath))
   const [catalog, setCatalog] = useState<TripCatalogEntry[]>(fallbackRegistry)
-  const [bundleMap, setBundleMap] = useState<Record<string, PublicTripBundle | null>>({})
+  const [bundleMap, setBundleMap] = useState<Record<string, BundleFetchState>>({})
   const [swStatus, setSwStatus] = useState<SwUiState>({ status: 'unknown', message: '' })
 
   const catalogLookup = useMemo(() => {
@@ -233,9 +239,27 @@ export default function App() {
   useEffect(() => {
     if (route.route !== 'trip' || !route.slug) return
     const tripId = route.slug
-    parseBundle(`${basePath}trips/${tripId}/public-bundle.json`).then((data) => {
-      setBundleMap((prev) => ({ ...prev, [tripId]: data }))
-    })
+    setBundleMap((prev) => ({
+      ...prev,
+      [tripId]: prev[tripId] || { loading: true, error: '', data: null },
+    }))
+    parseBundle(`${basePath}trips/${tripId}/public-bundle.json`)
+      .then((data) => {
+        if (data) {
+          setBundleMap((prev) => ({ ...prev, [tripId]: { loading: false, error: '', data } }))
+          return
+        }
+        setBundleMap((prev) => ({
+          ...prev,
+          [tripId]: { loading: false, error: 'public-bundle 載入失敗，請稍後再試', data: null },
+        }))
+      })
+      .catch(() => {
+        setBundleMap((prev) => ({
+          ...prev,
+          [tripId]: { loading: false, error: 'public-bundle 載入發生錯誤，請稍後再試', data: null },
+        }))
+      })
   }, [basePath, route.route, route.slug])
 
   useEffect(() => {
@@ -253,7 +277,10 @@ export default function App() {
     setRoute(next)
   }
 
-  const activeBundle = route.slug ? bundleMap[route.slug] || null : null
+  const activeBundleState = route.slug ? bundleMap[route.slug] : null
+  const activeBundleLoading = activeBundleState ? activeBundleState.loading : !!route.slug
+  const activeBundleError = activeBundleState?.error || ''
+  const activeBundle = activeBundleState?.data || null
 
   return (
     <main className="portal-shell">
@@ -277,6 +304,8 @@ export default function App() {
         setRoute={goRoute}
         trip={selectedTrip}
         bundle={activeBundle}
+        bundleLoading={activeBundleLoading}
+        bundleError={activeBundleError}
         swStatus={swStatus}
       />
 
