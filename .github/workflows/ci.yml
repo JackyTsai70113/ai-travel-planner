@@ -100,6 +100,11 @@ jobs:
           npm --prefix web run lint:tw
           npm --prefix web run typecheck
           npm --prefix web run test
+      - name: Run frontend runtime quality checks
+        run: |
+          npm --prefix web run test:e2e
+          npm --prefix web run screenshots
+          npm --prefix web run lighthouse
       - name: Build web PWA bundle
         run: npm --prefix web run build
       - name: Build the canonical static website
@@ -111,6 +116,25 @@ jobs:
             --output /tmp/awaji-public-bundle.json \
             --web-output web/public/trips/awaji-2026/public-bundle.json
           python3 scripts/check-awaji-contamination.py
+      - name: Validate release-safety of Awaji public bundle
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          bundle_path = Path("web/public/trips/awaji-2026/public-bundle.json")
+          if not bundle_path.exists():
+              raise SystemExit("Missing Awaji public bundle")
+          payload = json.loads(bundle_path.read_text(encoding="utf-8"))
+          if payload.get("status") == "error":
+              raise SystemExit("Blocking release: bundle status is error")
+          if not payload.get("trip_id"):
+              raise SystemExit("Missing trip_id in public bundle")
+          if not payload.get("days"):
+              raise SystemExit("Missing itinerary days in public bundle")
+          if payload.get("validation") and not isinstance(payload["validation"], list):
+              raise SystemExit("Invalid validation payload format")
+          print("Release-safety checks passed:", payload.get("trip_id"), len(payload.get("days", [])))
+          PY
       - name: Verify rendered entrypoint and critical outputs
         run: |
           test -s site-ci/index.html
