@@ -492,7 +492,8 @@ button[disabled] {
   .theme-switcher,
   .online,
   .offline,
-  button {
+  button,
+  .print-private {
     display: none;
   }
 

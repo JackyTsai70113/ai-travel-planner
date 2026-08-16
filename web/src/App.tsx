@@ -34,6 +34,57 @@ interface BundleTransportLeg {
   source_refs: string[]
 }
 
+interface BundleConditionSnapshot {
+  status: string
+  status_label: string
+  summary?: string | null
+  last_checked?: string | null
+  recheck_at?: string | null
+}
+
+interface BundleClosure {
+  place_id?: string | null
+  name?: string | null
+  status?: string | null
+  summary?: string | null
+}
+
+interface BundleConditions {
+  weather?: BundleConditionSnapshot | null
+  tide?: BundleConditionSnapshot | null
+  closures?: BundleClosure[] | null
+  freshness?: string | null
+}
+
+interface BundleAlternative {
+  id: string
+  title: string
+  status?: string | null
+  summary?: string | null
+  reasons?: string[] | null
+  conditions?: string[] | null
+  decision_gate?: string | null
+}
+
+interface BundleOperations {
+  fuel?: string[] | Record<string, string> | null
+  supplies?: string[] | null
+  emergency?: string[] | null
+  handbook?: string[] | null
+  returns?: string[] | null
+}
+
+interface BundleSourceLedgerItem {
+  supports: string
+  authority?: string | null
+  last_checked?: string | null
+  status?: string | null
+  confidence?: number | null
+  freshness?: string | null
+  conflicts?: boolean | null
+  source_url?: string | null
+}
+
 interface SearchMatch {
   type: 'place' | 'day-item' | 'reservation'
   id: string
@@ -84,11 +135,26 @@ interface Bundle {
     soft_preferences: Constraint[]
   }
   transport_legs?: BundleTransportLeg[]
+  overview?: {
+    trip_scope?: string[] | null
+    critical_unknown_count?: number | null
+    next_recheck_at?: string | null
+  } | null
+  conditions?: BundleConditions | null
+  alternatives?: BundleAlternative[] | null
+  critical_alerts?: {
+    id: string
+    level: string
+    message: string
+    path?: string | null
+  }[] | null
+  operations?: BundleOperations | null
   budget: {
     currency: string
     total: { amount: number; currency: string }
     categories: Record<string, { amount: number; currency: string }>
   }
+  source_ledger?: BundleSourceLedgerItem[] | null
   validation: { code: string; message: string; severity: string }[]
   meta: {
     generated_at: string
@@ -169,6 +235,87 @@ function buildTransportRouteHref(leg: BundleTransportLeg): string {
 function containsQuery(value: string | null | undefined, query: string): boolean {
   if (!value) return false
   return value.toLowerCase().includes(query)
+}
+
+function safeArray<T>(value: T | T[] | null | undefined): T[] {
+  if (!value) return []
+  return Array.isArray(value) ? value : [value]
+}
+
+function toStringList(value: string | string[] | Record<string, string> | null | undefined): string[] {
+  if (!value) return []
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === 'string' && item.length > 0)
+  }
+  if (typeof value === 'object') {
+    return Object.entries(value)
+      .map(([key, item]) => {
+        if (!key || typeof item !== 'string' || !item.length) return key
+        return `${key}: ${item}`
+      })
+  }
+  return []
+}
+
+function escapeIcsText(value: string): string {
+  return value
+    .replace(/\\/g, '\\\\')
+    .replace(/\r?\n/g, '\\n')
+    .replace(/,/g, '\\,')
+    .replace(/;/g, '\\;')
+}
+
+function addDaysIso(dateIso: string, delta: number): string {
+  const base = new Date(`${dateIso}T00:00:00+09:00`)
+  if (Number.isNaN(base.getTime())) {
+    return dateIso
+  }
+  base.setDate(base.getDate() + delta)
+  return base.toISOString().slice(0, 10)
+}
+
+function buildIcsCalendar(bundle: Bundle): string {
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//ai-travel-planner//Awaji2026//zh-TW',
+    `X-WR-CALNAME:${escapeIcsText(bundle.title)}`,
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+  ]
+  bundle.days.forEach((day) => {
+    const start = day.date.replace(/-/g, '')
+    const end = addDaysIso(day.date, 1).replace(/-/g, '')
+    const header = `${day.summary || '行程'} · ${day.date}`
+    const body = day.items
+      .map((item) => `・${item.kind} ${item.start_at ?? ''} ${findPlaceLabel(bundle.places ?? [], item.place_id)}`)
+      .join('；')
+    lines.push(
+      'BEGIN:VEVENT',
+      `UID:${bundle.trip_id || bundle.title}-${day.date}`,
+      `DTSTAMP:${start}T000000Z`,
+      `DTSTART;VALUE=DATE:${start}`,
+      `DTEND;VALUE=DATE:${end}`,
+      `SUMMARY:${escapeIcsText(`${bundle.title} ${header}`)}`,
+      `DESCRIPTION:${escapeIcsText(body || '行程內容待補')}`,
+      `LOCATION:${escapeIcsText(bundle.places?.[0]?.name || '淡路島')}`,
+      'END:VEVENT',
+    )
+  })
+  lines.push('END:VCALENDAR')
+  return lines.join('\r\n')
+}
+
+function buildShareSummary(bundle: Bundle): string {
+  const scope = bundle.overview?.trip_scope?.join('、') || 'awaji'
+  const critical = bundle.overview?.critical_unknown_count ?? bundle.validation.length
+  const status = statusLabel(bundleStatusTone(bundle.status as BundleStatus))
+  return `行程：${bundle.title}\n期間：${bundle.date_range.start_date} ~ ${bundle.date_range.end_date}\n行程主軸：${scope}\n狀態：${status}\n待確認訊息：${critical} 筆\n`
+}
+
+function normalizeSourceText(value: unknown): string {
+  if (typeof value === 'string') return value.trim()
+  return ''
 }
 
 function toFriendlyStatus(status: Bundle['status']): string {
@@ -381,6 +528,15 @@ function App() {
 
   const currentDay = bundle?.days[activeDay] ?? null
 
+  const conditions = bundle.conditions ?? null
+  const overview = bundle.overview ?? null
+  const alternatives = bundle.alternatives ?? []
+  const criticalAlerts = bundle.critical_alerts ?? []
+  const operations = bundle.operations ?? {}
+  const sourceLedger = bundle.source_ledger ?? []
+
+  const softHintCount = useMemo(() => (bundle?.preferences.soft_preferences.length ?? 0), [bundle?.preferences.soft_preferences])
+
   const checklistProgress = useMemo(() => {
     const total = Object.keys(DEFAULT_CHECKLIST).length
     const done = Object.entries(checklist).filter((entry) => entry[1]).length
@@ -395,6 +551,31 @@ function App() {
     } catch {
       setError('複製失敗：你的瀏覽器未允許剪貼簿操作')
     }
+  }
+
+  const copySummary = () => {
+    if (!bundle) {
+      return
+    }
+    copyText('trip-summary', buildShareSummary(bundle))
+  }
+
+  const downloadIcs = () => {
+    if (!bundle) {
+      return
+    }
+    const content = buildIcsCalendar(bundle)
+    const blob = new Blob([content], { type: 'text/calendar;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = `${bundle.title || 'awaji-trip'}.ics`
+    anchor.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const printPublic = () => {
+    window.print()
   }
 
   if (loading) {
@@ -474,6 +655,142 @@ function App() {
       </section>
 
       <section className="card">
+        <h2>共享與匯出</h2>
+        <p className="muted">以下操作不會包含本機備忘與個人 checklist，僅以公有快照輸出。</p>
+        <div className="journey-meta">
+          <button type="button" onClick={copySummary}>
+            複製行程摘要
+          </button>
+          <button type="button" onClick={printPublic}>
+            列印頁面
+          </button>
+          <button type="button" onClick={downloadIcs}>
+            下載日程 ICS
+          </button>
+        </div>
+      </section>
+
+      <section className="card">
+        <h2>環境與風險摘要</h2>
+        <div className="notes">
+          <p>行程範圍：{overview?.trip_scope?.join('、') || '淡路島・鳴門・德島・神戶'}</p>
+          <p>Critical Unknown：{overview?.critical_unknown_count ?? 0}</p>
+          <p>下次檢查：{overview?.next_recheck_at || '未提供'}</p>
+          {conditions ? (
+            <>
+              <p>天氣：{conditions.weather?.status_label || conditions.weather?.status || '未提供'} · {conditions.weather?.summary || ''}</p>
+              <p>潮汐：{conditions.tide?.status_label || conditions.tide?.status || '未提供'} · {conditions.tide?.summary || ''}</p>
+              <p>資料新鮮度：{conditions.freshness || 'unknown'}</p>
+            </>
+          ) : null}
+        </div>
+        {conditions?.closures && conditions.closures.length > 0 ? (
+          <ul>
+            {conditions.closures.map((closure, index) => (
+              <li key={`${closure.place_id || closure.name || index}`}>
+                例外：
+                {closure.name || closure.place_id}
+                {closure.summary ? `（${closure.summary}）` : ''}
+                {closure.status ? `，狀態：${closure.status}` : ''}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </section>
+
+      <section className="card">
+        <h2>Plan A/B/C</h2>
+        {alternatives.length > 0 ? (
+          <ul>
+            {alternatives.map((alternative) => (
+              <li key={alternative.id} className="journey-item">
+                <div>
+                  <strong>{alternative.title}</strong>
+                  <span> · {alternative.status || 'to-review'}</span>
+                </div>
+                <div className="journey-meta">
+                  <span>決策門檻：{alternative.decision_gate || '未指定'}</span>
+                  <span>條件：{alternative.conditions?.length ? alternative.conditions.join('、') : '待補'}</span>
+                  <span>{alternative.summary || '待補'}</span>
+                </div>
+                {alternative.reasons && alternative.reasons.length > 0 ? (
+                  <ul>
+                    {alternative.reasons.map((reason) => (
+                      <li key={reason}>{reason}</li>
+                    ))}
+                  </ul>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>目前未提供 Plan A/B/C。</p>
+        )}
+      </section>
+
+      <section className="card">
+        <h2>Operations / Handbook</h2>
+        <h3>補給</h3>
+        <ul>
+          {safeArray(operations.supplies).map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+        <h3>行前手冊</h3>
+        <ul>
+          {safeArray(operations.handbook).map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+        <h3>加油與車輛</h3>
+        <ul>
+          {toStringList(operations.fuel).map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+        <h3>緊急</h3>
+        <ul>
+          {safeArray(operations.emergency).map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+        <h3>返程 / 還車</h3>
+        <ul>
+          {safeArray(operations.returns).map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="card">
+        <h2>資料來源</h2>
+        {criticalAlerts.length ? (
+          <ul>
+            {criticalAlerts.map((item) => (
+              <li key={item.id}>
+                <span>{item.level} · {item.message}</span>
+                {item.path ? <span> · {item.path}</span> : null}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>無關鍵提醒。</p>
+        )}
+        {sourceLedger.length ? (
+          <ul>
+            {sourceLedger.map((ledger, index) => (
+              <li key={`${ledger.supports}-${ledger.authority || 'unknown'}-${index}`}>
+                <span>{ledger.supports} / {ledger.authority || '未指定'}</span>
+                <span className="muted"> · {ledger.status || 'unknown'} · {ledger.last_checked || '未檢核'} · {normalizeSourceText(ledger.source_url)}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>目前未提供來源憑證。</p>
+        )}
+      </section>
+
+      <section className="card">
         <h2>旅程總覽</h2>
         <div className="grid two-col">
           <p>時區：{bundle.local_timezone}</p>
@@ -488,6 +805,7 @@ function App() {
           <p>住宿：{bundle.selected.hotel_place_ids.join('、') || '待補'}</p>
           <p>航班：{bundle.selected.flight_ids.join('、') || '待補'}</p>
           <p>資料最後更新：{bundle.meta.generated_at}</p>
+          <p>軟性偏好：{softHintCount}</p>
         </div>
       </section>
 
@@ -611,7 +929,7 @@ function App() {
         {unresolvedReservations.length > 0 ? <p>固定預約資訊待補：地點與持續時間。</p> : null}
       </section>
 
-      <section className="card">
+      <section className="card print-private">
         <h2>預算與重點提醒</h2>
         <p>總預算：{formatMoney(bundle.budget.total)}</p>
         <p className="muted">主題備註：{selectedTheme.attribution}</p>
@@ -633,7 +951,7 @@ function App() {
             />
       </section>
 
-      <section className="card">
+      <section className="card print-private">
         <h2>行李與備忘（本機保存）</h2>
         <div className="muted">完成率：{checklistProgress.done}/{checklistProgress.total}（{checklistProgress.rate}%）</div>
         <ul className="checklist">
