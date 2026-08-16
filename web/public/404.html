@@ -7,10 +7,19 @@
     <title>重導向中</title>
   </head>
   <body>
-    <p>頁面不存在，正在導向 2026 淡路島・鳴門家庭旅行頁面…</p>
-    <a href="./">如果沒有自動跳轉，請點此前往。</a>
+    <p>頁面不存在，正在返回入口…</p>
+    <a id="fallback-link" href="./">如果沒有自動跳轉，請點此前往。</a>
     <script>
-      window.location.replace('./');
+      (function () {
+        const path = window.location.pathname || '/';
+        const base = path.includes('/trips/') ? path.slice(0, path.lastIndexOf('/') + 1) : '/';
+        const next = encodeURIComponent(window.location.pathname + (window.location.search || ''));
+        const target = `${base}?route=${next}`;
+        window.history.replaceState({}, '', target);
+        const link = document.getElementById('fallback-link');
+        if (link) link.setAttribute('href', target);
+        window.location.replace(target);
+      })();
     </script>
   </body>
 </html>
