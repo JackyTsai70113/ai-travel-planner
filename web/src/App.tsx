@@ -609,7 +609,7 @@ function buildRouteSegments(rawSegments: unknown, fallbackStops: DisplayStop[]):
       departureText: '—',
       arrivalText: '—',
       warningText: ['無法從 read-model 取得段落估時，請出發前再次確認。'],
-      canNavigate: true,
+      canNavigate: false,
     }
   })
 }
