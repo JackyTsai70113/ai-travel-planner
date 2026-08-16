@@ -234,9 +234,8 @@ function App() {
         }
         const data = (await response.json()) as Bundle
         setBundle(data)
-        const nextTheme = getThemeById(data.meta?.theme_id ?? getThemeById(null).id)
-        setThemeId(nextTheme.id)
-        setActiveDay(Math.min(0, Math.max(data.days.length - 1, 0)))
+        setThemeId(safeThemeId(data.meta?.theme_id, getThemeById(null).id))
+        setActiveDay(0)
       } catch (err) {
         setError(err instanceof Error ? err.message : '載入發生未知錯誤')
       } finally {
