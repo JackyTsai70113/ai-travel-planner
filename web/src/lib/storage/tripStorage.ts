@@ -34,8 +34,6 @@ export interface WriteTripStorageOptions<T> {
   value: T
 }
 
-const CURRENT_STORAGE_SCHEMA_VERSION = 1
-
 export const DEFAULT_TRIP_ID = 'awaji-2026'
 
 export function mkTripStorageKey(tripId: string, module: string, version: number): string {
@@ -164,7 +162,7 @@ export function writeTripStorage<T>(options: WriteTripStorageOptions<T>): TripSt
   const { tripId, module, schemaVersion, value } = options
   const targetKey = mkTripStorageKey(tripId, module, schemaVersion)
   const envelope: VersionedStorageEnvelope<T> = {
-    schemaVersion: CURRENT_STORAGE_SCHEMA_VERSION,
+    schemaVersion,
     tripId,
     updatedAt: new Date().toISOString(),
     data: value,
