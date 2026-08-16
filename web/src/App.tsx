@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { availableThemes, getThemeById } from './contracts/theme'
 import { bundleStatusTone, statusLabel, type BundleStatus, type DataStatusTone } from './design-system/status'
+import { buildMapsSearchLink, buildRouteDirectionChunks, type MapsStop } from './lib/google-maps-links'
 
 interface BundleDayItem {
   id: string
@@ -17,6 +18,20 @@ interface BundlePlace {
   address?: string | null
   kind?: string | null
   maps_query?: string | null
+}
+
+interface BundleTransportLeg {
+  id: string
+  mode: string
+  status: string
+  from_place: string
+  to_place: string
+  from_label: string
+  to_label: string
+  departure_at: string | null
+  arrival_at: string | null
+  note: string | null
+  source_refs: string[]
 }
 
 interface BundleDay {
@@ -60,6 +75,7 @@ interface Bundle {
     hard_constraints: Constraint[]
     soft_preferences: Constraint[]
   }
+  transport_legs?: BundleTransportLeg[]
   budget: {
     currency: string
     total: { amount: number; currency: string }
@@ -118,11 +134,6 @@ function formatMoney(value: { amount: number; currency: string } | null): string
   return `${value.currency} ${value.amount.toLocaleString()}`
 }
 
-function buildMapsLink(placeLabel: string): string {
-  const query = encodeURIComponent(placeLabel.trim())
-  return `https://www.google.com/maps/search/?api=1&query=${query}`
-}
-
 function findPlaceLabel(places: BundlePlace[] = [], placeId: string): string {
   const found = places.find((place) => place.id === placeId)
   if (!found) return placeId
@@ -132,6 +143,19 @@ function findPlaceLabel(places: BundlePlace[] = [], placeId: string): string {
 function findPlaceAddress(places: BundlePlace[] = [], placeId: string): string {
   const found = places.find((place) => place.id === placeId)
   return found?.address || ''
+}
+
+function buildPlaceMapsQuery(places: BundlePlace[] = [], placeId: string): string {
+  const found = places.find((place) => place.id === placeId)
+  return found?.maps_query || found?.name || placeId
+}
+
+function buildTransportRouteHref(leg: BundleTransportLeg): string {
+  const chunks = buildRouteDirectionChunks([
+    { label: leg.from_label, mapsQuery: leg.from_label } as MapsStop,
+    { label: leg.to_label, mapsQuery: leg.to_label } as MapsStop,
+  ])
+  return chunks[0]?.href || buildMapsSearchLink(`${leg.from_label} 到 ${leg.to_label}`)
 }
 
 function toFriendlyStatus(status: Bundle['status']): string {
@@ -376,7 +400,7 @@ function App() {
                     ) : null}
                     {item.notes ? <span>備註: {item.notes}</span> : null}
                     <a
-                      href={buildMapsLink(findPlaceLabel(placeList, item.place_id))}
+                      href={buildMapsSearchLink(buildPlaceMapsQuery(placeList, item.place_id))}
                       target="_blank"
                       rel="noreferrer"
                     >
@@ -395,6 +419,39 @@ function App() {
             </ul>
           </article>
         ) : null}
+      </section>
+
+      <section className="card">
+        <h2>日常路線</h2>
+        {bundle.transport_legs?.length ? (
+          <ul>
+            {bundle.transport_legs.map((leg) => (
+              <li className="journey-item" key={leg.id}>
+                <div>
+                  <strong>{leg.mode === 'car' ? '開車' : '行程'}</strong>
+                  <span> · 狀態：{leg.status}</span>
+                </div>
+                <div className="journey-meta">
+                  <span>從：{leg.from_label}</span>
+                  <span>到：{leg.to_label}</span>
+                  <span>
+                    時間：{leg.departure_at ?? '待補'} ~ {leg.arrival_at ?? '待補'}
+                  </span>
+                  <a
+                    href={buildTransportRouteHref(leg)}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    開啟 Google Maps 路線
+                  </a>
+                  {leg.note ? <span>備註：{leg.note}</span> : null}
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>目前無路線資料，請使用地點名稱自行搜尋。</p>
+        )}
       </section>
 
       <section className="card">
