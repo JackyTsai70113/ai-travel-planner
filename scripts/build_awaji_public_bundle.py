@@ -68,6 +68,18 @@ def _safe_time(value: str | None) -> str | None:
     return parsed.replace(microsecond=0, second=0).isoformat()
 
 
+def _parse_iso_datetime(value: object) -> datetime | None:
+    if not isinstance(value, str):
+        return None
+    try:
+        dt = datetime.fromisoformat(value)
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        return dt
+    return dt
+
+
 def _write_json(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
@@ -179,6 +191,45 @@ def _collect_critical_issues(trip: dict, trip_path: Path, evidence_ids: set[str]
             ):
                 issues.append(f"selected-flight/{flight_id}: both endpoints unknown")
 
+    return issues
+
+
+def _load_evidence_payload(trip_path: Path) -> dict:
+    evidence_path = trip_path.with_name("evidence.json")
+    if not evidence_path.exists():
+        return {}
+    try:
+        return json.loads(evidence_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def _collect_stale_selected_evidence_issues(trip: dict, trip_path: Path, now: datetime) -> list[str]:
+    now_local = now.astimezone(ZoneInfo(trip.get("local_timezone", "Asia/Tokyo")))
+    payload = _load_evidence_payload(trip_path)
+    raw_entries = payload.get("entries", []) if isinstance(payload, dict) else []
+    evidence_by_id: dict[str, dict] = {}
+    for entry in raw_entries:
+        if not isinstance(entry, dict):
+            continue
+        normalized = _normalize_evidence_reference_id(entry.get("reference_id"))
+        if normalized:
+            evidence_by_id[normalized] = entry
+
+    issues: list[str] = []
+    for fact_id in _collect_selected_fact_ids(trip.get("selected", {})):
+        entry = evidence_by_id.get(fact_id)
+        if not isinstance(entry, dict):
+            continue
+        validity = entry.get("validity")
+        if not isinstance(validity, dict):
+            issues.append(f"selected:{fact_id}: evidence missing validity interval")
+            continue
+        valid_until = _parse_iso_datetime(validity.get("valid_until"))
+        if valid_until is None:
+            continue
+        if valid_until.astimezone(now_local.tzinfo) < now_local:
+            issues.append(f"selected:{fact_id}: evidence stale (valid_until={valid_until.isoformat()})")
     return issues
 
 
@@ -325,7 +376,9 @@ def _public_preferences(preferences: dict) -> dict:
 def build_public_bundle(trip: dict, trip_path: Path) -> dict:
     evidence_ids = _collect_evidence_ids(trip, trip_path)
     source_hygiene_failures = _source_issues(trip)
+    now_local = _now_local(trip.get("local_timezone", "Asia/Tokyo"))
     critical_issues = _collect_critical_issues(trip, trip_path, evidence_ids)
+    critical_issues.extend(_collect_stale_selected_evidence_issues(trip, trip_path, now_local))
     if source_hygiene_failures:
         critical_issues.extend(
             [f"invalid source URL: {entry}" for entry in source_hygiene_failures]

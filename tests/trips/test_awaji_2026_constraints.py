@@ -138,3 +138,20 @@ class AwajiTripFixtureTests(unittest.TestCase):
         bundle = build_public_bundle(mutated, TRIP_PATH)
         self.assertEqual(bundle["evidence_gate"]["status"], "error")
         self.assertTrue(any("invalid source" in issue for issue in bundle["evidence_gate"]["critical_issues"]))
+
+    def test_public_bundle_marks_stale_evidence_as_error(self):
+        original = EVIDENCE_PATH.read_text(encoding="utf-8")
+        try:
+            evidence = json.loads(original)
+            for entry in evidence.get("entries", []):
+                if isinstance(entry, dict) and entry.get("reference_id") == "selected-flight/xj-834-outbound":
+                    validity = entry.setdefault("validity", {})
+                    if isinstance(validity, dict):
+                        validity["valid_until"] = "2024-01-01T00:00:00+09:00"
+            EVIDENCE_PATH.write_text(json.dumps(evidence, ensure_ascii=False, indent=2), encoding="utf-8")
+
+            bundle = build_public_bundle(json.loads(TRIP_PATH.read_text(encoding="utf-8")), TRIP_PATH)
+            self.assertEqual(bundle["evidence_gate"]["status"], "error")
+            self.assertTrue(any("stale" in issue for issue in bundle["evidence_gate"]["critical_issues"]))
+        finally:
+            EVIDENCE_PATH.write_text(original, encoding="utf-8")
