@@ -5,11 +5,19 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 TRIP_PATH_DEFAULT = Path("trips/awaji-naruto-tokushima-kobe-2026/trip.json")
 OUTPUT_DEFAULT = Path("trips/awaji-naruto-tokushima-kobe-2026/public-bundle.json")
+INVALID_SOURCE_MARKERS = ("example.invalid", "airline.example.invalid", "your-org/ai-travel-planner")
+REFRESH_WINDOWS = [
+    {"label": "T-7", "days_before": 7, "status": "required"},
+    {"label": "T-3", "days_before": 3, "status": "required"},
+    {"label": "T-1", "days_before": 1, "status": "required"},
+    {"label": "day-of", "days_before": 0, "status": "required"},
+]
 
 
 def _read_json(path: Path) -> dict:
@@ -24,6 +32,10 @@ def _sha256(path: Path) -> str:
 
 def _today_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def _now_local(local_timezone: str) -> datetime:
+    return datetime.now(ZoneInfo(local_timezone))
 
 
 def _build_profile(trip: dict) -> dict:
@@ -78,6 +90,119 @@ def _bundle_days(trip: dict) -> list[dict]:
             "items": day_items,
         })
     return days
+
+
+def _has_invalid_source_url(node: object) -> bool:
+    if not isinstance(node, dict):
+        return False
+    source_url = node.get("source_url")
+    if isinstance(source_url, str):
+        return any(marker in source_url for marker in INVALID_SOURCE_MARKERS)
+    return False
+
+
+def _source_issues(value: object, path: str = "", accumulator: list[str] | None = None) -> list[str]:
+    if accumulator is None:
+        accumulator = []
+    if isinstance(value, dict):
+        if _has_invalid_source_url(value):
+            accumulator.append(f"{path or '/'}")
+        for key, child in value.items():
+            child_path = f"{path}.{key}" if path else key
+            _source_issues(child, child_path, accumulator)
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            _source_issues(child, f"{path}[{index}]", accumulator)
+    return accumulator
+
+
+def _find_place(trip: dict, place_id: str) -> dict:
+    for place in trip.get("candidate_sets", {}).get("places", []):
+        if isinstance(place, dict) and place.get("id") == place_id:
+            return place
+    return {}
+
+
+def _find_flight(trip: dict, flight_id: str) -> dict:
+    for flight in trip.get("candidate_sets", {}).get("flights", []):
+        if isinstance(flight, dict) and flight.get("id") == flight_id:
+            return flight
+    return {}
+
+
+def _is_evidence_weak(item: object) -> bool:
+    if not isinstance(item, dict):
+        return True
+    provenance = item.get("provenance")
+    if not isinstance(provenance, dict):
+        return True
+    if _has_invalid_source_url(provenance):
+        return True
+    if provenance.get("status") in {"unverified", "estimated"}:
+        return True
+    return False
+
+
+def _collect_critical_issues(trip: dict) -> list[str]:
+    selected = trip.get("selected", {})
+    issues: list[str] = []
+
+    for hotel_id in selected.get("hotel_place_ids", []):
+        place = _find_place(trip, hotel_id)
+        if _is_evidence_weak(place):
+            issues.append(f"selected-hotel/{hotel_id}: no strong evidence")
+
+    for flight_id in selected.get("flight_ids", []):
+        flight = _find_flight(trip, flight_id)
+        if _is_evidence_weak(flight):
+            issues.append(f"selected-flight/{flight_id}: no strong evidence")
+        else:
+            departure = flight.get("departure", {})
+            arrival = flight.get("arrival", {})
+            if (
+                isinstance(departure, dict)
+                and isinstance(arrival, dict)
+                and departure.get("at") is None
+                and arrival.get("at") is None
+            ):
+                issues.append(f"selected-flight/{flight_id}: both endpoints unknown")
+
+    return issues
+
+
+def _compute_next_refresh(trip: dict, now: datetime) -> dict[str, str | None]:
+    local_tz = ZoneInfo(trip.get("local_timezone", "Asia/Tokyo"))
+    now_local = now.astimezone(local_tz)
+    trip_start = trip.get("date_range", {}).get("start_date")
+    if not isinstance(trip_start, str):
+        return {"next_refresh_at": None, "next_refresh_label": None}
+
+    try:
+        trip_start_date = datetime.fromisoformat(trip_start).replace(tzinfo=local_tz)
+    except ValueError:
+        return {"next_refresh_at": None, "next_refresh_label": None}
+
+    windows = []
+    for window in REFRESH_WINDOWS:
+        refresh_at = (trip_start_date - timedelta(days=window["days_before"])).replace(
+            hour=8, minute=0, second=0, microsecond=0
+        )
+        windows.append({
+            "label": window["label"],
+            "status": window["status"],
+            "due_at": refresh_at.isoformat(),
+        })
+
+    upcoming = [entry for entry in windows if datetime.fromisoformat(entry["due_at"]) >= now_local]
+    if not upcoming:
+        return {
+            "next_refresh_at": windows[-1]["due_at"],
+            "next_refresh_label": windows[-1]["label"],
+        }
+    return {
+        "next_refresh_at": upcoming[0]["due_at"],
+        "next_refresh_label": upcoming[0]["label"],
+    }
 
 
 def _bundle_places(places: dict[str, dict[str, object]]) -> list[dict]:
@@ -149,6 +274,7 @@ def _public_preferences(preferences: dict) -> dict:
 
 
 def build_public_bundle(trip: dict, trip_path: Path) -> dict:
+    critical_issues = _collect_critical_issues(trip)
     places = {place.get("id"): place for place in trip.get("candidate_sets", {}).get("places", []) if isinstance(place, dict)}
     days = _bundle_days(trip)
     reservations = _bundle_reservations(days, places)
@@ -159,8 +285,10 @@ def build_public_bundle(trip: dict, trip_path: Path) -> dict:
     trip_status = "ok"
     if "error" in severities:
         trip_status = "error"
-    elif "warning" in severities:
+    elif "warning" in severities or critical_issues:
         trip_status = "warning"
+    if critical_issues:
+        trip_status = "error"
 
     return {
         "trip_id": trip.get("id"),
@@ -187,10 +315,30 @@ def build_public_bundle(trip: dict, trip_path: Path) -> dict:
             for item in validation
             if isinstance(item, dict)
         ],
+        "evidence_gate": {
+            "status": "error" if critical_issues else "ok",
+            "critical_issues": critical_issues,
+            "source_hygiene_failures": _source_issues(trip),
+        },
+        "refresh_schedule": {
+            "windows": [
+                {
+                    "label": window["label"],
+                    "days_before_trip_start": window["days_before"],
+                    "status": window["status"],
+                }
+                for window in REFRESH_WINDOWS
+            ],
+            "next_refresh": _compute_next_refresh(
+                trip,
+                _now_local(trip.get("local_timezone", "Asia/Tokyo")),
+            ),
+        },
         "meta": {
             "generated_at": _today_iso(),
             "source_path": str(trip_path),
             "source_sha256": _sha256(trip_path),
+            "trust_gate_version": "issue-59-v1",
         },
     }
 
