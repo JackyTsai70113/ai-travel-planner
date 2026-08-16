@@ -23,6 +23,12 @@ class RouteStatus(str, Enum):
     ERROR = "error"
 
 
+class RouteFreshness(str, Enum):
+    FRESH = "fresh"
+    STALE = "stale"
+    UNKNOWN = "unknown"
+
+
 @dataclass(frozen=True)
 class PlaceRef:
     """A canonical place ID, optionally accompanied by coordinates for a provider."""
@@ -40,6 +46,7 @@ class PlaceRef:
 class RouteProvenance:
     provider: str
     retrieved_at: datetime
+    freshness: RouteFreshness = RouteFreshness.FRESH
     source_type: str = "provider"
     source_url: str | None = None
     note: str | None = None
