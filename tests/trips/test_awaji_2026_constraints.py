@@ -105,9 +105,10 @@ class AwajiTripFixtureTests(unittest.TestCase):
         trip = json.loads(TRIP_PATH.read_text(encoding="utf-8"))
         bundle = build_public_bundle(trip, TRIP_PATH)
         self.assertIn("evidence_gate", bundle)
-        self.assertIn(bundle["evidence_gate"]["status"], {"ok", "error"})
+        self.assertEqual(bundle["evidence_gate"]["status"], "ok")
         self.assertIsInstance(bundle["evidence_gate"]["critical_issues"], list)
-
+        self.assertEqual(bundle["evidence_gate"]["critical_issues"], [])
+        
     def test_selected_facts_have_tracked_evidence(self):
         evidence = json.loads(EVIDENCE_PATH.read_text(encoding="utf-8"))
         required_ids = set(self.trip["selected"]["flight_ids"] + self.trip["selected"]["hotel_place_ids"])
@@ -129,3 +130,11 @@ class AwajiTripFixtureTests(unittest.TestCase):
             self.assertIn("official_source", condition)
             self.assertIn("validity", condition)
             self.assertIn("supporting_sources", condition)
+
+    def test_public_bundle_marks_invalid_source_urls_as_error(self):
+        mutated = copy.deepcopy(json.loads(TRIP_PATH.read_text(encoding="utf-8")))
+        trip = mutated["candidate_sets"]["flights"][0]
+        trip["provenance"]["source_url"] = "https://example.invalid/test-airline"
+        bundle = build_public_bundle(mutated, TRIP_PATH)
+        self.assertEqual(bundle["evidence_gate"]["status"], "error")
+        self.assertTrue(any("invalid source" in issue for issue in bundle["evidence_gate"]["critical_issues"]))

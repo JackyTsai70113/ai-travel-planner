@@ -20,6 +20,14 @@ REFRESH_WINDOWS = [
 ]
 
 
+def _normalize_evidence_reference_id(raw: object) -> str | None:
+    if not isinstance(raw, str):
+        return None
+    if raw.startswith("selected-") and "/" in raw:
+        return raw.split("/", 1)[1]
+    return raw
+
+
 def _read_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -143,9 +151,13 @@ def _is_evidence_weak(item: object) -> bool:
     return False
 
 
-def _collect_critical_issues(trip: dict) -> list[str]:
+def _collect_critical_issues(trip: dict, trip_path: Path, evidence_ids: set[str]) -> list[str]:
     selected = trip.get("selected", {})
     issues: list[str] = []
+
+    for fact_id in _collect_selected_fact_ids(selected):
+        if fact_id not in evidence_ids:
+            issues.append(f"selected:{fact_id}: missing evidence")
 
     for hotel_id in selected.get("hotel_place_ids", []):
         place = _find_place(trip, hotel_id)
@@ -168,6 +180,43 @@ def _collect_critical_issues(trip: dict) -> list[str]:
                 issues.append(f"selected-flight/{flight_id}: both endpoints unknown")
 
     return issues
+
+
+def _collect_evidence_ids(trip: dict, trip_path: Path) -> set[str]:
+    evidence_path = trip_path.with_name("evidence.json")
+    if not evidence_path.exists():
+        return set()
+    try:
+        payload = json.loads(evidence_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return set()
+
+    return {
+        normalized_id
+        for raw in [
+            _normalize_evidence_reference_id(entry.get("reference_id"))
+            for entry in payload.get("entries", [])
+            if isinstance(entry, dict)
+        ]
+        for normalized_id in [raw]
+        if normalized_id
+    }
+
+
+def _collect_selected_fact_ids(selected: dict[str, object]) -> set[str]:
+    selected_fact_keys = {
+        "flight_ids": "selected-flight",
+        "hotel_place_ids": "selected-hotel",
+        "place_ids": "selected-place",
+    }
+    required: set[str] = set()
+
+    for key in selected_fact_keys:
+        ids = selected.get(key)
+        if isinstance(ids, list):
+            required.update(id_ for id_ in ids if isinstance(id_, str))
+
+    return required
 
 
 def _compute_next_refresh(trip: dict, now: datetime) -> dict[str, str | None]:
@@ -274,7 +323,13 @@ def _public_preferences(preferences: dict) -> dict:
 
 
 def build_public_bundle(trip: dict, trip_path: Path) -> dict:
-    critical_issues = _collect_critical_issues(trip)
+    evidence_ids = _collect_evidence_ids(trip, trip_path)
+    source_hygiene_failures = _source_issues(trip)
+    critical_issues = _collect_critical_issues(trip, trip_path, evidence_ids)
+    if source_hygiene_failures:
+        critical_issues.extend(
+            [f"invalid source URL: {entry}" for entry in source_hygiene_failures]
+        )
     places = {place.get("id"): place for place in trip.get("candidate_sets", {}).get("places", []) if isinstance(place, dict)}
     days = _bundle_days(trip)
     reservations = _bundle_reservations(days, places)
@@ -318,7 +373,7 @@ def build_public_bundle(trip: dict, trip_path: Path) -> dict:
         "evidence_gate": {
             "status": "error" if critical_issues else "ok",
             "critical_issues": critical_issues,
-            "source_hygiene_failures": _source_issues(trip),
+            "source_hygiene_failures": source_hygiene_failures,
         },
         "refresh_schedule": {
             "windows": [
