@@ -24,12 +24,21 @@ export function useBundleLoader(): BundleLoaderState {
 
   const candidates = useMemo(() => {
     const baseUrl = String(import.meta.env.BASE_URL || '/')
+    const safeBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
+    const pathname = window.location.pathname || '/'
+    const normalizedPath = pathname.startsWith(safeBase) ? pathname.slice(safeBase.length - 1) : pathname
+    const segments = normalizedPath.split('/').filter(Boolean)
+    const tripsIndex = segments.indexOf('trips')
+    const tripSlug = tripsIndex >= 0 ? segments[tripsIndex + 1] : ''
+    const tripBundlePath = tripSlug ? `${safeBase}trips/${tripSlug}/public-bundle.json` : ''
+    const localTripBundlePath = tripSlug ? `./trips/${tripSlug}/public-bundle.json` : ''
+
     return [
-      `${baseUrl}public-bundle.json`,
-      `${baseUrl}trips/awaji-2026/public-bundle.json`,
+      `${safeBase}public-bundle.json`,
+      tripBundlePath,
       './public-bundle.json',
-      './trips/awaji-2026/public-bundle.json',
-    ]
+      localTripBundlePath,
+    ].filter(Boolean)
   }, [])
 
   const checkVersion = useCallback((data: Bundle) => {
