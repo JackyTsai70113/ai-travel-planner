@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+from enum import Enum
 
 from .models import ConditionKind, ConditionPolicy, ConditionSnapshot, ConditionStatus, EvidenceClass
 
@@ -21,7 +22,33 @@ class ConditionDecision:
     soft_penalty: float
 
 
-def evaluate_conditions(snapshot: ConditionSnapshot, place_id: str, starts_at: datetime, ends_at: datetime, evaluated_at: datetime, policy: ConditionPolicy) -> ConditionDecision:
+class ConditionDecisionMode(str, Enum):
+    WARN = "warn"
+    ERROR = "error"
+
+
+class ConditionGateStatus(str, Enum):
+    PASS = "pass"
+    WARN = "warn"
+    BLOCK = "block"
+
+
+@dataclass(frozen=True)
+class ConditionGate:
+    status: ConditionGateStatus
+    findings: tuple[ConditionFinding, ...]
+    soft_penalty: float
+
+
+def evaluate_conditions(
+    snapshot: ConditionSnapshot,
+    place_id: str,
+    starts_at: datetime,
+    ends_at: datetime,
+    evaluated_at: datetime,
+    policy: ConditionPolicy,
+    mode: ConditionDecisionMode = ConditionDecisionMode.WARN,
+) -> ConditionDecision:
     for value, label in ((starts_at, "starts_at"), (ends_at, "ends_at"), (evaluated_at, "evaluated_at")):
         if value.tzinfo is None or value.utcoffset() is None:
             raise ValueError(f"{label} must be timezone-aware")
@@ -29,6 +56,8 @@ def evaluate_conditions(snapshot: ConditionSnapshot, place_id: str, starts_at: d
         raise ValueError("condition interval end must be after start")
     findings: list[ConditionFinding] = []
     penalty = 0.0
+    unknown_as_error = mode is ConditionDecisionMode.ERROR
+    missing_severity = "error" if unknown_as_error else "warning"
     requirements = {r.kind for r in snapshot.requirements if r.place_id == place_id}
     records = [r for r in snapshot.records if place_id in r.place_ids]
     kinds = requirements | {r.kind for r in records}
@@ -55,16 +84,17 @@ def evaluate_conditions(snapshot: ConditionSnapshot, place_id: str, starts_at: d
             findings.append(ConditionFinding(f"condition.{kind.value}.closed", "error", f"authoritative {kind.value} makes the place unavailable"))
 
         if not overlapping:
-            findings.append(ConditionFinding("condition.unverified", "warning", f"{kind.value} has no snapshot overlapping the scheduled interval"))
+            findings.append(ConditionFinding("condition.unverified", missing_severity, f"{kind.value} has no snapshot overlapping the scheduled interval"))
             continue
         if not fresh:
-            findings.append(ConditionFinding("condition.stale", "warning", f"{kind.value} snapshot is stale"))
+            findings.append(ConditionFinding("condition.stale", missing_severity, f"{kind.value} snapshot is stale"))
             continue
         if not full_coverage:
-            findings.append(ConditionFinding("condition.unverified", "warning", f"{kind.value} has no fresh snapshot covering the scheduled interval and forecast horizon"))
+            findings.append(ConditionFinding("condition.unverified", missing_severity, f"{kind.value} has no fresh snapshot covering the scheduled interval and forecast horizon"))
 
         if any(r.status is ConditionStatus.UNKNOWN for r in full_coverage):
-            findings.append(ConditionFinding("condition.unverified", "warning", f"{kind.value} status is unknown"))
+            unknown_severity = "error" if unknown_as_error else "warning"
+            findings.append(ConditionFinding("condition.unverified", unknown_severity, f"{kind.value} status is unknown"))
 
         kind_penalties: list[float] = []
         if kind in policy.containment_kinds:
@@ -114,3 +144,23 @@ def _hard_interval_overlaps(record, starts_at: datetime, ends_at: datetime) -> b
     if record.forecast_until is not None:
         intersection_end = min(intersection_end, record.forecast_until)
     return intersection_start < intersection_end
+
+
+def evaluate_condition_gate(
+    snapshot: ConditionSnapshot,
+    place_id: str,
+    starts_at: datetime,
+    ends_at: datetime,
+    evaluated_at: datetime,
+    policy: ConditionPolicy,
+    mode: ConditionDecisionMode = ConditionDecisionMode.WARN,
+) -> ConditionGate:
+    decision = evaluate_conditions(snapshot, place_id, starts_at, ends_at, evaluated_at, policy, mode)
+    severities = {finding.severity for finding in decision.findings}
+    if "error" in severities:
+        status = ConditionGateStatus.BLOCK
+    elif "warning" in severities:
+        status = ConditionGateStatus.WARN
+    else:
+        status = ConditionGateStatus.PASS
+    return ConditionGate(status, decision.findings, decision.soft_penalty)
