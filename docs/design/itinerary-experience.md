@@ -148,3 +148,43 @@ Issue #67 讀取基礎為 `web/src/App.tsx` 現況：
 4. 新增 `decision gates` 與 item anchor 關聯
 5. 新增 `now/next quick mode`
 6. 進行 a11y/print / breakpoints 最後收斂
+
+## 直接交接給 reviewer 的待修項目（issue 67） 
+
+### 1. High 影響（必先修）
+1. Day tab 深連結與鍵盤操作
+1.1. 確認 `#day=<date>` 或 `#day=<index>` 可重現定位
+1.2. keyboard 左右鍵在 focus state 下可切換日
+
+2. 行程資訊辨識度
+2.1. 每日時間軸需有固定/可選/可取消/未完成四種狀態標籤
+2.2. unknown 時間不得顯示 00:00 或 0 分鐘；需顯示 `待補`
+
+3. Plan A/B/C
+3.1. `Plan` panel 內 `unavailable` 要顯示明確 CTA 或「無可行替代」
+3.2. fixed anchor（flight/hotel）在所有方案保留
+
+### 2. Medium 影響（建議修）
+4. Search index
+4.1. index key 限定 public-safe 欄位
+4.2. 搜尋結果點擊時帶出對應 day 與 item id
+
+5. Decision Gates
+5.1. gate 卡要有 `trigger`、`tradeoff`、`linked item`（可跳）
+
+6. Quick mode
+6.1. now/next 顯示邏輯需有可判斷條件保護（例如 timezone/時間缺失）
+
+### 3. 低風險收斂
+7. Layout 與 print
+7.1. 手機 390×844 / 430×932 長文換行與按鈕最小 44px
+7.2. print mode 僅輸出核心時間軸、fixed anchors、routes、decision gates
+
+## PR 交接稿（可直接貼到 issue comment）
+1. 目前 PR 77 現況
+1.1. 已完成：Issue 67 需求拆解、現況 review、缺口與實作順序
+1.2. 未完成：`web/src` UI 程式實作（權限仍在 issue61）
+
+2. 要求的下一步簽核
+2.1. 請在 issue61 完成 `web/src` 寫權後，先合併本 PR 的設計指引為正式交付規格
+2.2. 再由 issue61 實作者依本文件逐條實作並補 PR 驗證
