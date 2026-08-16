@@ -348,7 +348,6 @@ function parseNavigationPoint(raw: unknown): StopNavigationTarget | null {
   const point = asRecord(raw)
   if (!point) return null
 
-  const id = asString(point.id) || `navigation-${Math.random().toString(36).slice(2, 9)}`
   const kind = asString(point.kind) || 'poi'
   const label = asString(point.name) || asString(point.label) || asString(point.title) || `${kind} 點位`
   const mapsQuery =
@@ -360,9 +359,10 @@ function parseNavigationPoint(raw: unknown): StopNavigationTarget | null {
 
   const coordinates = asCoordinate(point.coordinates)
   const finalQuery = mapsQuery || (coordinates ? `${coordinates.lat},${coordinates.lng}` : undefined)
+  const stableId = asString(point.id) || [kind, label, finalQuery, asString(point.phone)].join('|')
 
   return {
-    id,
+    id: stableId,
     kind,
     label,
     mapsQuery: finalQuery,
