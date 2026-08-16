@@ -792,6 +792,7 @@ def build_public_bundle(trip: dict, trip_path: Path) -> dict:
             "source_sha256": _sha256(trip_path),
             "trust_gate_version": "issue-59-v1",
             "trip_schema": trip.get("schema_version"),
+            "theme_id": "setouchi-awaji",
             "source_coverage": {
                 "places": len(place_index),
                 "days": len(days),

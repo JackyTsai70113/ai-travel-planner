@@ -239,15 +239,16 @@
   ],
   "local_timezone": "Asia/Tokyo",
   "meta": {
-    "generated_at": "2026-08-16T13:47:59+00:00",
+    "generated_at": "2026-08-16T14:00:06+00:00",
     "source_coverage": {
       "days": 5,
       "places": 25,
       "selected_flights": 2,
       "selected_hotels": 3
     },
-    "source_path": "trips/awaji-naruto-tokushima-kobe-2026/trip.json",
+    "source_path": "/Users/jackytsai/Documents/Repo/.worktrees/ai-travel-planner/issue-61-awaji-2026-public-bundle-site/trips/awaji-naruto-tokushima-kobe-2026/trip.json",
     "source_sha256": "c646e71521dfd44db246d199138e30fd0759a783806552dc19e4d524b1447ddb",
+    "theme_id": "setouchi-awaji",
     "trip_schema": "trip-v1"
   },
   "operations": {

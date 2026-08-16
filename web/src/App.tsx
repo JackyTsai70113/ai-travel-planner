@@ -234,7 +234,10 @@ function App() {
         }
         const data = (await response.json()) as Bundle
         setBundle(data)
-        setThemeId(safeThemeId(data.meta?.theme_id, getThemeById(null).id))
+        setThemeId((current) => {
+          const remoteThemeId = safeThemeId(data.meta?.theme_id, '')
+          return remoteThemeId || current
+        })
         setActiveDay(0)
       } catch (err) {
         setError(err instanceof Error ? err.message : '載入發生未知錯誤')
