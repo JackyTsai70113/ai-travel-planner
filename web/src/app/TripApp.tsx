@@ -8,6 +8,7 @@ import {
   SectionId,
   TripRoute,
   parseSection,
+  SECTION_BY_ID,
 } from './route-registry'
 import { OverviewPage } from '../pages/OverviewPage'
 import { ItineraryPage } from '../pages/ItineraryPage'
@@ -65,6 +66,16 @@ export default function TripApp() {
 
   const selectedSection = parseSection(route.section, 'overview')
   const isDayScopedSection = selectedSection === 'today' || selectedSection === 'tides'
+  const requestedSection = route.raw
+    ? (() => {
+      try {
+        return decodeURIComponent(route.raw.split('/')[0] || '')
+      } catch {
+        return ''
+      }
+    })()
+    : ''
+  const routeSectionNotFound = requestedSection ? !SECTION_BY_ID.has(requestedSection) : false
 
   const shellStatus: TripStatusType = useMemo<TripStatusType>(() => {
     if (routeNotFound) return 'route-not-found'
@@ -96,8 +107,12 @@ export default function TripApp() {
   }, [bundleLoader.bundle, isDayScopedSection, route.day, normalizeDay])
 
   useEffect(() => {
-    if (!isDayScopedSection) {
+    if (!isDayScopedSection && !routeSectionNotFound) {
       setRouteNotFound(false)
+      return
+    }
+    if (routeSectionNotFound) {
+      setRouteNotFound(true)
       return
     }
     const selectedDay = bundleLoader.bundle ? deriveDayFromRoute(bundleLoader.bundle, route) : null
