@@ -962,6 +962,10 @@ function App() {
     return buildRouteDirectionChunks(mapsStops, 8)
   }, [dayRoute])
 
+  const routeChunksNavigable = Boolean(
+    dayRoute && dayRoute.stops.length >= 2 && dayRoute.segments.length > 0 && dayRoute.segments.every((segment) => segment.canNavigate),
+  )
+
   const drivingOps = useMemo(() => parseDrivingOperations(bundle), [bundle])
 
   const checklistProgress = useMemo(() => {
@@ -1186,7 +1190,7 @@ function App() {
                     <div className="route-links">
                       {routeChunks.map((chunk) => (
                         <div key={`${chunk.id}-${chunk.label}`} className="route-link-row">
-                          {isOnline ? (
+                          {isOnline && routeChunksNavigable ? (
                             <a
                               href={chunk.href}
                               target="_blank"
@@ -1196,6 +1200,8 @@ function App() {
                               {chunk.label}（{chunk.sourceLabel} → {chunk.destinationLabel}）
                               {chunk.fallbackReason ? <span className="muted">，已回退為關鍵字搜尋</span> : null}
                             </a>
+                          ) : isOnline ? (
+                            <span className="offline-note">目前有不可導航路段，請先以停靠順序與段落摘要確認後再規劃。</span>
                           ) : (
                             <span className="offline-note">離線：{chunk.label} 需要網路開啟</span>
                           )}
