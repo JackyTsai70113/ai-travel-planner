@@ -77,6 +77,9 @@ END:VCALENDAR`
 
 export function ReservationsPage({ bundle }: ReservationsPageProps) {
   const [copying, setCopying] = useState('')
+  const reservationStatuses = useMemo(() => {
+    return bundle.reservations.map((reservation) => resolveReservationStatus(reservation, reservation.unresolved || false))
+  }, [bundle.reservations])
 
   const grouped = useMemo(() => {
     const byDay = new Map<string, BundleReservation[]>()
@@ -96,8 +99,9 @@ export function ReservationsPage({ bundle }: ReservationsPageProps) {
     }))
   }, [bundle.days, bundle.reservations])
 
-  const unresolvedCount = bundle.reservations.filter((reservation) => reservation.unresolved).length
-  const estimatedCount = bundle.reservations.length - unresolvedCount
+  const estimatedCount = reservationStatuses.filter((item) => item === 'estimated' || item === 'unverified').length
+  const pendingCount = reservationStatuses.filter((item) => item === 'unresolved').length
+  const confirmedCount = reservationStatuses.filter((item) => item === 'confirmed').length
 
   const copyText = async (key: string, text: string) => {
     try {
@@ -105,8 +109,9 @@ export function ReservationsPage({ bundle }: ReservationsPageProps) {
       setCopying(key)
       setTimeout(() => setCopying((current) => (current === key ? '' : current)), 1500)
     } catch {
-      setCopying(`${key}-err`)
-      setTimeout(() => setCopying((current) => (current === `${key}-err` ? '' : current)), 1200)
+      const errKey = `${key}-err`
+      setCopying(errKey)
+      setTimeout(() => setCopying((current) => (current === errKey ? '' : current)), 1200)
     }
   }
 
@@ -121,15 +126,16 @@ export function ReservationsPage({ bundle }: ReservationsPageProps) {
         <>
           <div className="hub-stats">
             <p>總件數：{bundle.reservations.length}</p>
-            <p>未補齊：{unresolvedCount}</p>
-            <p>待驗證：{estimatedCount}</p>
+            <p>已確認：{confirmedCount}</p>
+            <p>待驗證/待補：{estimatedCount}</p>
+            <p>未補齊：{pendingCount}</p>
           </div>
 
           <div className="shell-message">
             資料版本：{bundle.meta.generated_at}
           </div>
 
-          {unresolvedCount > 0 ? (
+          {pendingCount > 0 ? (
             <p className="hub-alert">
               有尚未補齊關鍵欄位（時間、場景、地址、聯絡資訊）的預約，將保留「未補齊」狀態。
             </p>

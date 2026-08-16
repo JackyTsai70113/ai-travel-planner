@@ -2,12 +2,15 @@ import { useMemo } from 'react'
 import { Bundle, findPlaceLabel } from '../contracts/trip'
 import { buildMapsLink } from '../contracts/trip'
 import { buildRoutePath } from '../app/route-registry'
+import { useState } from 'react'
 
 interface FoodPageProps {
   bundle: Bundle
 }
 
 export function FoodPage({ bundle }: FoodPageProps) {
+  const [copying, setCopying] = useState('')
+
   const mealGroups = useMemo(() => {
     return bundle.days
       .map((day) => ({
@@ -16,6 +19,18 @@ export function FoodPage({ bundle }: FoodPageProps) {
       }))
       .filter((group) => group.meals.length > 0)
   }, [bundle.days])
+
+  const copyText = async (key: string, text: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopying(key)
+      setTimeout(() => setCopying((current) => (current === key ? '' : current)), 1500)
+    } catch {
+      const errKey = `${key}-err`
+      setCopying(errKey)
+      setTimeout(() => setCopying((current) => (current === errKey ? '' : current)), 1200)
+    }
+  }
 
   return (
     <section className="card hub-card-wrapper" aria-label="餐飲與補給">
@@ -54,10 +69,10 @@ export function FoodPage({ bundle }: FoodPageProps) {
                     <button
                       type="button"
                       onClick={() =>
-                        navigator.clipboard.writeText(`餐食：${findPlaceLabel(bundle.places, meal.place_id)}（${group.date}）`)
+                        copyText(`meal-${meal.id}`, `餐食：${findPlaceLabel(bundle.places, meal.place_id)}（${group.date}）`)
                       }
                     >
-                      複製餐廳
+                      {copying === `meal-${meal.id}` ? '已複製' : copying === `meal-${meal.id}-err` ? '複製失敗' : '複製餐廳'}
                     </button>
                   </div>
                   <p className="hub-meta">open status: public-safe 未提供 / queue risk: 未提供 / 替代方案：待補</p>
@@ -74,4 +89,3 @@ export function FoodPage({ bundle }: FoodPageProps) {
     </section>
   )
 }
-
