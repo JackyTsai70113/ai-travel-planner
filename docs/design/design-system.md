@@ -37,6 +37,7 @@
   - tokens alias
 - `validateTripThemeContract(value)`：最小 runtime 驗證
 - `coerceTheme(source, fallback)`：在資料不齊全時回退安全主題
+- `coerceStatusTone(value, aliases)`：將 legacy 狀態字串映射到 design status tone
 
 ## 3. Primitives
 
