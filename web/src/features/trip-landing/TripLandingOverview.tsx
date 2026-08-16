@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import type {
   PublicTripBundle,
@@ -50,6 +50,11 @@ function criticalCount(bundle: PublicTripBundle | null): number {
 
 export default function TripLandingOverview({ trip, bundle, error, setRoute, swStatus }: TripLandingOverviewProps) {
   const [imageFailed, setImageFailed] = useState(false)
+  const imageSource = trip?.cover_media.kind === 'image' ? trip?.cover_media.url || '' : ''
+
+  useEffect(() => {
+    setImageFailed(false)
+  }, [imageSource, trip?.slug])
 
   if (!trip) {
     return (
