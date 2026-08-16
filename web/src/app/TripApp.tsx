@@ -24,6 +24,7 @@ import { JapanesePage } from '../pages/JapanesePage'
 import { SourcesPage } from '../pages/SourcesPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
 import { TripStatusType } from '../layouts/TripShell'
+import type { TripCatalogEntry } from '../contracts/trip-registry'
 
 type AppStatusType =
   | 'loading'
@@ -33,6 +34,10 @@ type AppStatusType =
   | 'offline-no-cache'
   | 'route-not-found'
   | 'normal'
+
+interface TripAppProps {
+  tripMeta?: TripCatalogEntry | null
+}
 
 function deriveDayFromRoute(bundle: Bundle, route: TripRoute): number | null {
   if (!route.day) return bundle.days.length ? 0 : null
@@ -57,7 +62,7 @@ function resolveStatus(
   return 'normal'
 }
 
-export default function TripApp() {
+export default function TripApp({ tripMeta = null }: TripAppProps) {
   const bundleLoader = useBundleLoader()
   const { current: route, navigate } = useTripNavigation({ defaultSection: 'overview' })
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -164,21 +169,32 @@ export default function TripApp() {
   const gotoRoute = useCallback((next: Partial<TripRoute>) => navigate(next), [navigate])
 
   const mainSection = useMemo(() => {
-    if (!bundleLoader.bundle) return null
     if (routeNotFound) {
       return <NotFoundPage path={effectiveRoute.raw || 'n/a'} />
     }
+    const bundle = bundleLoader.bundle
+
+    if (!bundle && selectedSection !== 'overview') {
+      return (
+        <section className="card">
+          <h2>資料載入中…</h2>
+          <p className="muted">正在載入行程資料，請稍後。</p>
+        </section>
+      )
+    }
 
     if (selectedSection === 'overview') {
-      return <OverviewPage bundle={bundleLoader.bundle} />
+      return <OverviewPage bundle={bundle} trip={tripMeta} />
     }
+    if (!bundle) return <OverviewPage bundle={null} trip={tripMeta} />
+
     if (selectedSection === 'today') {
       return (
         <ItineraryPage
-          bundle={bundleLoader.bundle}
+          bundle={bundle}
           route={{
             ...effectiveRoute,
-            day: effectiveRoute.day || bundleLoader.bundle.days[0]?.date,
+            day: effectiveRoute.day || bundle.days[0]?.date,
             section: 'today',
             raw: effectiveRoute.raw,
           }}
@@ -190,7 +206,7 @@ export default function TripApp() {
       return <MapPage route={effectiveRoute} currentDay={effectiveRoute.day || itineraryDayFromLastNavigation} />
     }
     if (selectedSection === 'reservation') {
-      return <ReservationsPage bundle={bundleLoader.bundle} />
+      return <ReservationsPage bundle={bundle} />
     }
     if (selectedSection === 'tides') {
       return <TidesPage />
@@ -202,22 +218,22 @@ export default function TripApp() {
       return <LodgingPage />
     }
     if (selectedSection === 'handbook') {
-      return <HandbookPage bundle={bundleLoader.bundle} />
+      return <HandbookPage bundle={bundle} />
     }
     if (selectedSection === 'packing') {
-      return <PackingPage bundle={bundleLoader.bundle} />
+      return <PackingPage bundle={bundle} />
     }
     if (selectedSection === 'budget') {
-      return <BudgetPage bundle={bundleLoader.bundle} />
+      return <BudgetPage bundle={bundle} />
     }
     if (selectedSection === 'japanese') {
       return <JapanesePage />
     }
     if (selectedSection === 'sources') {
-      return <SourcesPage bundle={bundleLoader.bundle} />
+      return <SourcesPage bundle={bundle} />
     }
     return <NotFoundPage path={effectiveRoute.raw || 'n/a'} />
-  }, [bundleLoader.bundle, effectiveRoute, itineraryDayFromLastNavigation, routeNotFound, selectedSection])
+  }, [bundleLoader.bundle, effectiveRoute, gotoRoute, itineraryDayFromLastNavigation, routeNotFound, selectedSection, tripMeta])
 
   const statusLabel = toFriendlyStatus(bundleLoader.bundle?.status || 'warning')
   const renderBundleLoading = !bundleLoader.bundle && shellStatus === 'loading'
