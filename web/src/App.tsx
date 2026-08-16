@@ -34,6 +34,14 @@ interface BundleTransportLeg {
   source_refs: string[]
 }
 
+interface SearchMatch {
+  type: 'place' | 'day-item' | 'reservation'
+  id: string
+  label: string
+  detail?: string
+  dayIndex?: number
+}
+
 interface BundleDay {
   date: string
   summary: string
@@ -158,6 +166,11 @@ function buildTransportRouteHref(leg: BundleTransportLeg): string {
   return chunks[0]?.href || buildMapsSearchLink(`${leg.from_label} 到 ${leg.to_label}`)
 }
 
+function containsQuery(value: string | null | undefined, query: string): boolean {
+  if (!value) return false
+  return value.toLowerCase().includes(query)
+}
+
 function toFriendlyStatus(status: Bundle['status']): string {
   if (status === 'ok') return '可執行'
   if (status === 'warning') return '待補資訊'
@@ -183,6 +196,7 @@ function App() {
   const [notes, setNotes] = useState<string>('')
   const [tripBudgetMemo, setTripBudgetMemo] = useState<string>('')
   const [themeId, setThemeId] = useState<string>(getThemeById('fallback-japan').id)
+  const [searchQuery, setSearchQuery] = useState<string>('')
 
   useEffect(() => {
     setChecklist(safeParseJson(localStorage.getItem(STORAGE_KEYS.checklist), DEFAULT_CHECKLIST))
@@ -285,6 +299,85 @@ function App() {
     () => bundle?.reservations.filter((reservation) => reservation.unresolved) ?? [],
     [bundle],
   )
+  const normalizedQuery = useMemo(() => searchQuery.trim().toLowerCase(), [searchQuery])
+  const searchMatches = useMemo(() => {
+    if (!bundle || !normalizedQuery) return []
+
+    const matches: SearchMatch[] = []
+    const placeMatches = new Set<string>()
+    const reservationMatches = new Set<string>()
+    const dayItemMatches = new Set<string>()
+
+    placeList.forEach((place) => {
+      const sourceLabel = place.name || place.maps_query || place.id
+      if (
+        containsQuery(place.id, normalizedQuery) ||
+        containsQuery(sourceLabel, normalizedQuery) ||
+        containsQuery(place.address, normalizedQuery) ||
+        containsQuery(place.kind, normalizedQuery)
+      ) {
+        const id = place.id
+        if (!placeMatches.has(id)) {
+          matches.push({
+            type: 'place',
+            id,
+            label: sourceLabel,
+            detail: place.address || undefined,
+          })
+          placeMatches.add(id)
+        }
+      }
+    })
+
+    bundle.days.forEach((day, index) => {
+      day.items.forEach((item) => {
+        const placeLabel = findPlaceLabel(placeList, item.place_id)
+        const key = `${item.id}-${index}`
+        if (
+          containsQuery(item.id, normalizedQuery) ||
+          containsQuery(item.kind, normalizedQuery) ||
+          containsQuery(item.notes, normalizedQuery) ||
+          containsQuery(item.start_at, normalizedQuery) ||
+          containsQuery(item.end_at, normalizedQuery) ||
+          containsQuery(placeLabel, normalizedQuery)
+        ) {
+          if (!dayItemMatches.has(key)) {
+            matches.push({
+              type: 'day-item',
+              id: key,
+              label: `${day.date} ${day.summary}`,
+              detail: `${item.kind}｜${placeLabel}`,
+              dayIndex: index,
+            })
+            dayItemMatches.add(key)
+          }
+        }
+      })
+    })
+
+    bundle.reservations.forEach((reservation) => {
+      const summary = `${reservation.day} ${reservation.time ?? ''} ${reservation.name ?? ''}`.trim()
+      if (
+        containsQuery(reservation.id, normalizedQuery) ||
+        containsQuery(reservation.name, normalizedQuery) ||
+        containsQuery(reservation.day, normalizedQuery) ||
+        containsQuery(reservation.time, normalizedQuery) ||
+        containsQuery(reservation.place_id, normalizedQuery)
+      ) {
+        if (!reservationMatches.has(reservation.id)) {
+          matches.push({
+            type: 'reservation',
+            id: reservation.id,
+            label: summary || reservation.id,
+            detail: `${reservation.kind}`,
+          })
+          reservationMatches.add(reservation.id)
+        }
+      }
+    })
+
+    return matches
+  }, [bundle, normalizedQuery, placeList])
 
   const currentDay = bundle?.days[activeDay] ?? null
 
@@ -341,6 +434,44 @@ function App() {
           </select>
         </label>
       </header>
+
+      <section className="card">
+        <h2>全行程搜尋</h2>
+        <input
+          id="tripSearch"
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.target.value)}
+          placeholder="輸入景點、餐飲、住宿、預約、備註"
+          aria-label="全行程搜尋"
+        />
+        {normalizedQuery ? (
+          <>
+            <p className="muted">共找到 {searchMatches.length} 筆結果</p>
+            {searchMatches.length ? (
+              <ul>
+                {searchMatches.map((match) => (
+                  <li className="journey-item" key={`${match.type}-${match.id}`}>
+                    <strong>{match.type}</strong>
+                    <div className="journey-meta">
+                      <span>{match.label}</span>
+                      {match.detail ? <span>· {match.detail}</span> : null}
+                      {typeof match.dayIndex === 'number' ? (
+                        <button type="button" onClick={() => setActiveDay(match.dayIndex as number)}>
+                          跳到對應天
+                        </button>
+                      ) : null}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="muted">找不到符合結果</p>
+            )}
+          </>
+        ) : (
+          <p className="muted">輸入關鍵字可搜尋景點、日程、預約</p>
+        )}
+      </section>
 
       <section className="card">
         <h2>旅程總覽</h2>
