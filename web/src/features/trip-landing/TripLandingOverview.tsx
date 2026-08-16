@@ -154,6 +154,16 @@ export default function TripLandingOverview({ trip, bundle, error, setRoute, swS
         )}
       </section>
 
+      <section className="card-shell" id="map">
+        <h2>地圖</h2>
+        <p className="muted">地圖整合尚在建置，將於後續加上航線與景點定位。</p>
+      </section>
+
+      <section className="card-shell" id="booking">
+        <h2>固定預約</h2>
+        <p className="muted">固定預約整合尚在建置，將於後續加上可直接複製與追蹤。</p>
+      </section>
+
       <section className="card-shell">
         <h2>原始資料時間與可信度</h2>
         {bundle && (
