@@ -318,6 +318,24 @@ function normalizeSourceText(value: unknown): string {
   return ''
 }
 
+function toPercent(value: number | null | undefined): string {
+  if (!Number.isFinite(value as number)) return 'unknown'
+  return `${Math.round(value * 100)}%`
+}
+
+function formatSourceUrl(value: string | null | undefined): JSX.Element | null {
+  const normalized = normalizeSourceText(value)
+  if (!normalized) return null
+  if (/^https?:\/\//i.test(normalized)) {
+    return (
+      <a href={normalized} target="_blank" rel="noreferrer">
+        {normalized}
+      </a>
+    )
+  }
+  return <span>{normalized}</span>
+}
+
 function mapStatusTone(status: Bundle['status']): DataStatusTone {
   return bundleStatusTone(status as BundleStatus)
 }
@@ -775,7 +793,20 @@ function App() {
             {sourceLedger.map((ledger, index) => (
               <li key={`${ledger.supports}-${ledger.authority || 'unknown'}-${index}`}>
                 <span>{ledger.supports} / {ledger.authority || '未指定'}</span>
-                <span className="muted"> · {ledger.status || 'unknown'} · {ledger.last_checked || '未檢核'} · {normalizeSourceText(ledger.source_url)}</span>
+                <span className="muted">
+                  {' '}
+                  · {ledger.status || 'unknown'}
+                  {' · '}
+                  {ledger.last_checked || '未檢核'}
+                  {' · '}
+                  {ledger.freshness || '未設定'}
+                  {' · confidence:'}
+                  {' '}
+                  {toPercent(ledger.confidence)}
+                  {' · '}
+                  {ledger.conflicts ? '有衝突' : '無衝突'}
+                </span>
+                {formatSourceUrl(ledger.source_url) ? <span> · {formatSourceUrl(ledger.source_url)}</span> : null}
               </li>
             ))}
           </ul>
