@@ -5,11 +5,26 @@ from __future__ import annotations
 import copy
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
 from typing import Any
+
+from src.conditions import (
+    ConditionDecisionMode,
+    ConditionKind,
+    ConditionPolicy,
+    ConditionSnapshot,
+    evaluate_condition_gate,
+    load_condition_snapshot,
+)
 
 from src.validator import BudgetLimit, OpeningInterval, ValidationContext, validate_itinerary
 from src.validator.itinerary import Outcome
 
+TRIGGER_CONDITION_KINDS = {
+    "rain": ConditionKind.WEATHER,
+    "queue": ConditionKind.CROWD,
+    "closure": ConditionKind.CLOSURE,
+}
 
 TRIGGER_PRIORITIES = {
     "rain": "high",
@@ -65,6 +80,7 @@ def analyze_contingencies(trip: dict[str, Any]) -> dict[str, Any]:
 
     candidate_places = _index_candidates(trip)
     context = _validation_context(trip)
+    condition_snapshot = _load_condition_snapshot(trip.get("conditions"))
     contingencies: list[dict[str, Any]] = []
 
     for day_index, day in enumerate(day_sets):
@@ -83,7 +99,16 @@ def analyze_contingencies(trip: dict[str, Any]) -> dict[str, Any]:
                 continue
             for trigger in _triggers_for_item(day_index, item_index, item, trip, items, context, candidate_places):
                 contingencies.append(
-                    _build_contingency(trip, day_index, item_index, item, trigger, candidate_places, context)
+                    _build_contingency(
+                        trip,
+                        day_index,
+                        item_index,
+                        item,
+                        trigger,
+                        candidate_places,
+                        context,
+                        condition_snapshot,
+                    )
                 )
 
     contingencies.sort(
@@ -109,6 +134,7 @@ def _build_contingency(
     trigger: str,
     candidate_places: dict[str, _Candidate],
     context: ValidationContext,
+    condition_snapshot: ConditionSnapshot | None,
 ) -> dict[str, Any]:
     alternatives = [
         _build_alternative(trip, day_index, item_index, item, candidate, trigger, context)
@@ -116,7 +142,13 @@ def _build_contingency(
     ]
     alternatives = [candidate for candidate in alternatives if candidate is not None]
 
-    return {
+    decision_gate = _evaluate_condition_gate(
+        trip,
+        item,
+        trigger,
+        condition_snapshot,
+    )
+    result = {
         "id": f"{trigger}:{trip.get('id','trip')}:{day_index}:{item.get('id', item_index)}",
         "trigger": trigger,
         "label": TRIGGER_LABELS[trigger],
@@ -125,9 +157,11 @@ def _build_contingency(
         "item": _item_reference(day_index, item_index, item, candidate_places),
         "status": "available" if alternatives else "unavailable",
         "instruction": INSTRUCTIONS[trigger],
+        "decision": decision_gate,
         "alternatives": alternatives,
         "validation": _snapshot_validation(trip, context),
     }
+    return result
 
 
 def _build_alternative(
@@ -236,6 +270,98 @@ def _snapshot_validation(trip: dict[str, Any], context: ValidationContext) -> di
         "violations": [item.as_dict() for item in snapshot.violations],
         "is_complete": snapshot.outcome is not Outcome.INVALID,
     }
+
+
+def _evaluate_condition_gate(
+    trip: dict[str, Any],
+    item: dict[str, Any],
+    trigger: str,
+    snapshot: ConditionSnapshot | None,
+) -> dict[str, Any]:
+    if snapshot is None:
+        return {
+            "status": "unknown",
+            "reason": "no_condition_snapshot",
+            "kind": TRIGGER_CONDITION_KINDS.get(trigger, "none"),
+        }
+
+    kind = TRIGGER_CONDITION_KINDS.get(trigger)
+    if kind is None:
+        return {"status": "unknown", "reason": "no_condition_mapping", "kind": trigger}
+
+    place_id = item.get("place_id")
+    if not isinstance(place_id, str):
+        return {"status": "unknown", "reason": "invalid_place_id", "kind": kind.value}
+
+    starts_at = _parse_datetime(item.get("start_at"))
+    ends_at = _parse_datetime(item.get("end_at"))
+    if starts_at is None or ends_at is None:
+        return {"status": "unknown", "reason": "invalid_item_window", "kind": kind.value}
+    if ends_at <= starts_at:
+        return {"status": "unknown", "reason": "invalid_interval_order", "kind": kind.value}
+
+    evaluated_at = _resolve_condition_evaluated_at(trip, snapshot)
+    if evaluated_at is None:
+        return {"status": "unknown", "reason": "missing_evaluation_time", "kind": kind.value}
+
+    gate = evaluate_condition_gate(
+        snapshot,
+        place_id=place_id,
+        starts_at=starts_at,
+        ends_at=ends_at,
+        evaluated_at=evaluated_at,
+        policy=ConditionPolicy(),
+        mode=ConditionDecisionMode.WARN,
+    )
+    return {
+        "status": gate.status.value,
+        "mode": ConditionDecisionMode.WARN.value,
+        "kind": kind.value,
+        "evaluated_at": evaluated_at.isoformat(),
+        "soft_penalty": gate.soft_penalty,
+        "findings": [
+            {"code": finding.code, "severity": finding.severity, "message": finding.message}
+            for finding in gate.findings
+        ],
+    }
+
+
+def _load_condition_snapshot(payload: Any) -> ConditionSnapshot | None:
+    if payload is None:
+        return None
+    if not isinstance(payload, (dict, str, Path)):
+        return None
+    try:
+        if isinstance(payload, dict):
+            return load_condition_snapshot(payload)
+        path = Path(payload)
+        if path.exists():
+            return load_condition_snapshot(path)
+    except Exception:
+        return None
+    return None
+
+
+def _resolve_condition_evaluated_at(trip: dict[str, Any], snapshot: ConditionSnapshot) -> datetime | None:
+    timestamps = [record.retrieved_at for record in snapshot.records]
+    if timestamps:
+        return max(timestamps)
+    source = trip.get("provenance")
+    if isinstance(source, dict):
+        return _parse_datetime(source.get("retrieved_at"))
+    return None
+
+
+def _parse_datetime(value: Any) -> datetime | None:
+    if not isinstance(value, str):
+        return None
+    try:
+        parsed = datetime.fromisoformat(value)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        return None
+    return parsed
 
 
 def _route_impact(items: list[dict[str, Any]], item_index: int, replacement_id: str, context: ValidationContext) -> dict[str, Any]:
