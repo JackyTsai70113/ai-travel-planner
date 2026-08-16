@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+from dataclasses import replace
 from typing import Callable
 
-from .models import PlaceRef, Route, RouteMode
+from .models import PlaceRef, Route, RouteMode, RouteFreshness
 from .provider import RoutingProvider
 
 
@@ -32,12 +33,13 @@ class RouteMatrix:
         key = (mode.value, origin.place_id, destination.place_id)
         cached = self._cache.get(key)
         if cached is not None and not self._expired(cached[1]):
-            return cached[0]
+            return self._with_freshness(cached[0], self._freshness(cached[1]))
         route = self.provider.fetch(origin, destination, mode)
         if route.cache_key != key:
             raise ValueError("routing provider returned a route for a different request")
-        self._cache[key] = (route, self._now())
-        return route
+        stamped = self._with_freshness(route, RouteFreshness.FRESH)
+        self._cache[key] = (stamped, self._now())
+        return stamped
 
     def routes(self, places: list[PlaceRef] | tuple[PlaceRef, ...], mode: RouteMode) -> tuple[Route, ...]:
         """Warm and return a multi-POI directed matrix, using provider batching when possible."""
@@ -51,7 +53,7 @@ class RouteMatrix:
                 route = supplied.get(key)
                 if route is None or route.cache_key != key:
                     raise ValueError("routing provider did not return requested matrix route")
-                self._cache[key] = (route, self._now())
+                self._cache[key] = (self._with_freshness(route, RouteFreshness.FRESH), self._now())
         return tuple(self.route(origin, destination, mode) for origin in refs for destination in refs if origin != destination)
 
     def invalidate(self, key: tuple[str, str, str] | None = None) -> None:
@@ -66,4 +68,14 @@ class RouteMatrix:
 
     @property
     def cached_routes(self) -> tuple[Route, ...]:
-        return tuple(item[0] for item in self._cache.values())
+        return tuple(item[0] for _, item in self._cache.items() if not self._expired(item[1]))
+
+    def _with_freshness(self, route: Route, freshness: RouteFreshness) -> Route:
+        if route.provenance.freshness is freshness:
+            return route
+        return replace(route, provenance=replace(route.provenance, freshness=freshness))
+
+    def _freshness(self, stored_at: datetime) -> RouteFreshness:
+        if self.ttl is None:
+            return RouteFreshness.FRESH
+        return RouteFreshness.FRESH if self._now() - stored_at < self.ttl else RouteFreshness.STALE

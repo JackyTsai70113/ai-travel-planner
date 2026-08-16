@@ -3,13 +3,30 @@
 from __future__ import annotations
 
 import copy
+import json
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime, time
+from pathlib import Path
+from zoneinfo import ZoneInfo
 from typing import Any
+
+from src.conditions import (
+    ConditionDecisionMode,
+    ConditionKind,
+    ConditionPolicy,
+    ConditionSnapshot,
+    evaluate_condition_gate,
+    load_condition_snapshot,
+)
 
 from src.validator import BudgetLimit, OpeningInterval, ValidationContext, validate_itinerary
 from src.validator.itinerary import Outcome
 
+TRIGGER_CONDITION_KINDS = {
+    "rain": ConditionKind.WEATHER,
+    "queue": ConditionKind.CROWD,
+    "closure": ConditionKind.CLOSURE,
+}
 
 TRIGGER_PRIORITIES = {
     "rain": "high",
@@ -65,6 +82,7 @@ def analyze_contingencies(trip: dict[str, Any]) -> dict[str, Any]:
 
     candidate_places = _index_candidates(trip)
     context = _validation_context(trip)
+    condition_snapshot = _load_condition_snapshot(trip.get("conditions"))
     contingencies: list[dict[str, Any]] = []
 
     for day_index, day in enumerate(day_sets):
@@ -83,7 +101,16 @@ def analyze_contingencies(trip: dict[str, Any]) -> dict[str, Any]:
                 continue
             for trigger in _triggers_for_item(day_index, item_index, item, trip, items, context, candidate_places):
                 contingencies.append(
-                    _build_contingency(trip, day_index, item_index, item, trigger, candidate_places, context)
+                    _build_contingency(
+                        trip,
+                        day_index,
+                        item_index,
+                        item,
+                        trigger,
+                        candidate_places,
+                        context,
+                        condition_snapshot,
+                    )
                 )
 
     contingencies.sort(
@@ -109,6 +136,7 @@ def _build_contingency(
     trigger: str,
     candidate_places: dict[str, _Candidate],
     context: ValidationContext,
+    condition_snapshot: ConditionSnapshot | None,
 ) -> dict[str, Any]:
     alternatives = [
         _build_alternative(trip, day_index, item_index, item, candidate, trigger, context)
@@ -116,7 +144,13 @@ def _build_contingency(
     ]
     alternatives = [candidate for candidate in alternatives if candidate is not None]
 
-    return {
+    decision_gate = _evaluate_condition_gate(
+        trip,
+        item,
+        trigger,
+        condition_snapshot,
+    )
+    result = {
         "id": f"{trigger}:{trip.get('id','trip')}:{day_index}:{item.get('id', item_index)}",
         "trigger": trigger,
         "label": TRIGGER_LABELS[trigger],
@@ -125,9 +159,11 @@ def _build_contingency(
         "item": _item_reference(day_index, item_index, item, candidate_places),
         "status": "available" if alternatives else "unavailable",
         "instruction": INSTRUCTIONS[trigger],
+        "decision": decision_gate,
         "alternatives": alternatives,
         "validation": _snapshot_validation(trip, context),
     }
+    return result
 
 
 def _build_alternative(
@@ -146,7 +182,13 @@ def _build_alternative(
     replaced = copy.deepcopy(trip)
     replaced["days"][day_index]["items"][item_index]["place_id"] = replacement_id
     validation = validate_itinerary(replaced, context)
-    route_impact = _route_impact(replaced["days"][day_index]["items"], item_index, replacement_id, context)
+    route_impact = _route_impact(
+        replaced["days"][day_index]["items"],
+        item_index,
+        replacement_id,
+        replaced,
+        context,
+    )
     tradeoff = _tradeoff(trigger, item)
 
     return {
@@ -238,22 +280,192 @@ def _snapshot_validation(trip: dict[str, Any], context: ValidationContext) -> di
     }
 
 
-def _route_impact(items: list[dict[str, Any]], item_index: int, replacement_id: str, context: ValidationContext) -> dict[str, Any]:
+def _evaluate_condition_gate(
+    trip: dict[str, Any],
+    item: dict[str, Any],
+    trigger: str,
+    snapshot: ConditionSnapshot | None,
+) -> dict[str, Any]:
+    if snapshot is None:
+        return {
+            "status": "unknown",
+            "reason": "no_condition_snapshot",
+            "kind": TRIGGER_CONDITION_KINDS.get(trigger, "none"),
+        }
+
+    kind = TRIGGER_CONDITION_KINDS.get(trigger)
+    if kind is None:
+        return {"status": "unknown", "reason": "no_condition_mapping", "kind": trigger}
+
+    place_id = item.get("place_id")
+    if not isinstance(place_id, str):
+        return {"status": "unknown", "reason": "invalid_place_id", "kind": kind.value}
+
+    starts_at = _parse_datetime(item.get("start_at"))
+    ends_at = _parse_datetime(item.get("end_at"))
+    if starts_at is None or ends_at is None:
+        return {"status": "unknown", "reason": "invalid_item_window", "kind": kind.value}
+    if ends_at <= starts_at:
+        return {"status": "unknown", "reason": "invalid_interval_order", "kind": kind.value}
+
+    evaluated_at = _resolve_condition_evaluated_at(trip, snapshot)
+    if evaluated_at is None:
+        return {"status": "unknown", "reason": "missing_evaluation_time", "kind": kind.value}
+
+    gate = evaluate_condition_gate(
+        snapshot,
+        place_id=place_id,
+        starts_at=starts_at,
+        ends_at=ends_at,
+        evaluated_at=evaluated_at,
+        policy=ConditionPolicy(),
+        mode=ConditionDecisionMode.WARN,
+    )
+    return {
+        "status": gate.status.value,
+        "mode": ConditionDecisionMode.WARN.value,
+        "kind": kind.value,
+        "evaluated_at": evaluated_at.isoformat(),
+        "soft_penalty": gate.soft_penalty,
+        "findings": [
+            {"code": finding.code, "severity": finding.severity, "message": finding.message}
+            for finding in gate.findings
+        ],
+    }
+
+
+def _load_condition_snapshot(payload: Any) -> ConditionSnapshot | None:
+    if payload is None:
+        return None
+    if not isinstance(payload, (dict, list, str, Path)):
+        return None
+    if isinstance(payload, list):
+        payload = {"records": payload}
+    try:
+        if isinstance(payload, dict):
+            if isinstance(payload.get("conditions"), list) and "records" not in payload:
+                payload = _legacy_conditions_to_snapshot(payload["conditions"])
+            return load_condition_snapshot(payload)
+        if isinstance(payload, str):
+            text = payload.strip()
+            if text.startswith("{") and text.endswith("}"):
+                payload = json.loads(text)
+                if (
+                    isinstance(payload, dict)
+                    and isinstance(payload.get("conditions"), list)
+                    and "records" not in payload
+                ):
+                    payload = _legacy_conditions_to_snapshot(payload["conditions"])
+                return load_condition_snapshot(payload)
+            path = Path(text)
+            if path.exists():
+                return load_condition_snapshot(path)
+        else:
+            path = Path(payload)
+            if path.exists():
+                return load_condition_snapshot(path)
+    except Exception:
+        return None
+    return None
+
+
+def _legacy_conditions_to_snapshot(records: list[Any]) -> dict[str, Any]:
+    converted_records = []
+    for index, item in enumerate(records):
+        if not isinstance(item, dict):
+            continue
+        kind = ConditionKind.WEATHER if item.get("weather") else ConditionKind.CLOSURE
+        place_id = item.get("place_id")
+        if not isinstance(place_id, str):
+            continue
+        parsed_date = _parse_legacy_date(item.get("date"))
+        if parsed_date is None:
+            continue
+        converted_records.append({
+            "id": f"legacy-{index}-{place_id}",
+            "kind": kind.value,
+            "place_ids": [place_id],
+            "status": "unknown",
+            "provenance": {
+                "provider": "legacy-condition-document",
+                "source_url": "urn:provider:legacy-conditions",
+                "retrieved_at": datetime.now(ZoneInfo("Asia/Tokyo")).isoformat(),
+                "evidence_class": "forecast",
+                "source_type": "legacy-conditions",
+            },
+            "valid_from": datetime.combine(parsed_date, time.min, tzinfo=ZoneInfo("Asia/Tokyo")).isoformat(),
+            "valid_until": datetime.combine(parsed_date, time.max, tzinfo=ZoneInfo("Asia/Tokyo")).isoformat(),
+            "eligibility_windows": [],
+            "soft_penalty": 1.0,
+            "details": item,
+        })
+
+    return {"records": converted_records}
+
+
+def _parse_legacy_date(value: Any) -> date | None:
+    if not isinstance(value, str):
+        return None
+    for fmt in ("%Y-%m-%d", "%Y/%m/%d"):
+        try:
+            return datetime.strptime(value, fmt).date()
+        except ValueError:
+            pass
+    return None
+
+
+def _resolve_condition_evaluated_at(trip: dict[str, Any], snapshot: ConditionSnapshot) -> datetime | None:
+    timestamps = [record.retrieved_at for record in snapshot.records]
+    if timestamps:
+        return max(timestamps)
+    source = trip.get("provenance")
+    if isinstance(source, dict):
+        return _parse_datetime(source.get("retrieved_at"))
+    return None
+
+
+def _parse_datetime(value: Any) -> datetime | None:
+    if not isinstance(value, str):
+        return None
+    try:
+        parsed = datetime.fromisoformat(value)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        return None
+    return parsed
+
+
+def _route_impact(
+    items: list[dict[str, Any]],
+    item_index: int,
+    replacement_id: str,
+    trip: dict[str, Any],
+    context: ValidationContext,
+) -> dict[str, Any]:
     previous_id = items[item_index - 1]["place_id"] if item_index > 0 else None
     next_id = items[item_index + 1]["place_id"] if item_index + 1 < len(items) else None
     original_id = items[item_index]["place_id"]
 
-    base_minutes = []
-    alternative_minutes = []
+    base_segments: list[tuple[str, str]] = []
+    replacement_segments: list[tuple[str, str]] = []
     if previous_id is not None:
-        base_minutes.append(context.travel_minutes.get((previous_id, original_id)))
-        alternative_minutes.append(context.travel_minutes.get((previous_id, replacement_id)))
+        base_segments.append((previous_id, original_id))
+        replacement_segments.append((previous_id, replacement_id))
     if next_id is not None:
-        base_minutes.append(context.travel_minutes.get((original_id, next_id)))
-        alternative_minutes.append(context.travel_minutes.get((replacement_id, next_id)))
+        base_segments.append((original_id, next_id))
+        replacement_segments.append((replacement_id, next_id))
+
+    route_index = _index_transport_legs(trip.get("candidate_sets", {}))
+
+    base_impact = [_route_segment_impact(context, route_index, pair[0], pair[1]) for pair in base_segments]
+    replacement_impact = [_route_segment_impact(context, route_index, pair[0], pair[1]) for pair in replacement_segments]
+
+    base_minutes = [item["minutes"] for item in base_impact]
+    replacement_minutes = [item["minutes"] for item in replacement_impact]
 
     base_unknown = any(value is None for value in base_minutes) or len(base_minutes) == 0
-    replacement_unknown = any(value is None for value in alternative_minutes) or len(alternative_minutes) == 0
+    replacement_unknown = any(value is None for value in replacement_minutes) or len(replacement_minutes) == 0
 
     if base_unknown or replacement_unknown:
         status = "unverified"
@@ -262,18 +474,112 @@ def _route_impact(items: list[dict[str, Any]], item_index: int, replacement_id: 
         delta = None
     else:
         base_total = sum(int(value) for value in base_minutes)
-        replacement_total = sum(int(value) for value in alternative_minutes)
+        replacement_total = sum(int(value) for value in replacement_minutes)
         status = "verified"
         delta = replacement_total - base_total
+
+    segment_count = len(base_impact) + len(replacement_impact)
+    complete_segments = len([item for item in (*base_impact, *replacement_impact) if item["is_complete"]])
+    if segment_count == 0:
+        route_freshness = "unknown"
+        minutes_unverified = 0
+        is_complete = False
+    else:
+        route_freshness = _route_freshness((*base_impact, *replacement_impact))
+        minutes_unverified = len([item for item in (*base_impact, *replacement_impact) if not item["is_complete"]])
+        is_complete = complete_segments == segment_count
     return {
         "status": status,
         "from": {"previous": previous_id, "replacement": replacement_id, "original": original_id},
         "to": {"replacement": replacement_id, "next": next_id, "original_next": original_id},
         "base_travel_minutes": base_total,
         "replacement_travel_minutes": replacement_total,
+        "route_freshness": route_freshness,
+        "segments": {
+            "base": base_impact,
+            "replacement": replacement_impact,
+        },
+        "minutes_unverified": minutes_unverified,
+        "coverage": None if segment_count == 0 else complete_segments / segment_count,
+        "is_complete": is_complete,
         "delta_minutes": delta,
         "notes": "衍生層以 transport_legs 為主，不足路段需再以即時路由重新驗證。",
     }
+
+
+def _route_freshness(segments: list[dict[str, Any]]) -> str:
+    states = [segment["freshness"] for segment in segments]
+    if not states:
+        return "unknown"
+    if "stale" in states:
+        return "stale"
+    if "unverified" in states:
+        return "unverified"
+    if "fresh" in states and len({item for item in states if item != "fresh"}) == 0:
+        return "fresh"
+    return "unverified"
+
+
+def _route_segment_impact(
+    context: ValidationContext,
+    route_index: dict[tuple[str, str], dict[str, Any]],
+    origin: str,
+    destination: str,
+) -> dict[str, Any]:
+    segment = route_index.get((origin, destination), {})
+    minutes = context.travel_minutes.get((origin, destination), segment.get("minutes"))
+    is_complete = minutes is not None
+    return {
+        "pair": [origin, destination],
+        "minutes": minutes,
+        "freshness": _normalize_route_freshness(segment.get("freshness")),
+        "is_complete": is_complete,
+        "provider": segment.get("provider"),
+        "status": segment.get("status"),
+    }
+
+
+def _normalize_route_freshness(status: Any) -> str:
+    if not isinstance(status, str):
+        return "unknown"
+    normalized = status.lower()
+    if normalized in {"fresh", "confirmed"}:
+        return "fresh"
+    if normalized in {"stale"}:
+        return "stale"
+    if normalized in {"estimated", "unverified", "reported", "derived", "conflicting"}:
+        return "unverified"
+    return "unknown"
+
+
+def _index_transport_legs(candidate_sets: Any) -> dict[tuple[str, str], dict[str, Any]]:
+    result: dict[tuple[str, str], dict[str, Any]] = {}
+    for route in (candidate_sets or {}).get("transport_legs", []) if isinstance(candidate_sets, dict) else []:
+        if not isinstance(route, dict):
+            continue
+        from_place_id = route.get("from_place_id")
+        to_place_id = route.get("to_place_id")
+        if not isinstance(from_place_id, str) or not isinstance(to_place_id, str):
+            continue
+        provenance = route.get("provenance") or {}
+        departure = route.get("departure_at")
+        arrival = route.get("arrival_at")
+        minutes = None
+        if isinstance(departure, str) and isinstance(arrival, str):
+            try:
+                minutes = max(
+                    1,
+                    int((datetime.fromisoformat(arrival) - datetime.fromisoformat(departure)).total_seconds() / 60),
+                )
+            except ValueError:
+                minutes = None
+        result[(from_place_id, to_place_id)] = {
+            "freshness": provenance.get("status"),
+            "provider": provenance.get("provider"),
+            "status": provenance.get("status"),
+            "minutes": minutes,
+        }
+    return result
 
 
 def _triggers_for_item(
