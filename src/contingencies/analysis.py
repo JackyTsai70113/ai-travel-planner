@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import copy
+import json
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime, time
 from pathlib import Path
+from zoneinfo import ZoneInfo
 from typing import Any
 
 from src.conditions import (
@@ -329,16 +331,80 @@ def _evaluate_condition_gate(
 def _load_condition_snapshot(payload: Any) -> ConditionSnapshot | None:
     if payload is None:
         return None
-    if not isinstance(payload, (dict, str, Path)):
+    if not isinstance(payload, (dict, list, str, Path)):
         return None
+    if isinstance(payload, list):
+        payload = {"records": payload}
     try:
         if isinstance(payload, dict):
+            if isinstance(payload.get("conditions"), list) and "records" not in payload:
+                payload = _legacy_conditions_to_snapshot(payload["conditions"])
             return load_condition_snapshot(payload)
-        path = Path(payload)
-        if path.exists():
-            return load_condition_snapshot(path)
+        if isinstance(payload, str):
+            text = payload.strip()
+            if text.startswith("{") and text.endswith("}"):
+                payload = json.loads(text)
+                if (
+                    isinstance(payload, dict)
+                    and isinstance(payload.get("conditions"), list)
+                    and "records" not in payload
+                ):
+                    payload = _legacy_conditions_to_snapshot(payload["conditions"])
+                return load_condition_snapshot(payload)
+            path = Path(text)
+            if path.exists():
+                return load_condition_snapshot(path)
+        else:
+            path = Path(payload)
+            if path.exists():
+                return load_condition_snapshot(path)
     except Exception:
         return None
+    return None
+
+
+def _legacy_conditions_to_snapshot(records: list[Any]) -> dict[str, Any]:
+    converted_records = []
+    for index, item in enumerate(records):
+        if not isinstance(item, dict):
+            continue
+        kind = ConditionKind.WEATHER if item.get("weather") else ConditionKind.CLOSURE
+        place_id = item.get("place_id")
+        if not isinstance(place_id, str):
+            continue
+        parsed_date = _parse_legacy_date(item.get("date"))
+        if parsed_date is None:
+            continue
+        converted_records.append({
+            "id": f"legacy-{index}-{place_id}",
+            "kind": kind.value,
+            "place_ids": [place_id],
+            "status": "unknown",
+            "provenance": {
+                "provider": "legacy-condition-document",
+                "source_url": "urn:provider:legacy-conditions",
+                "retrieved_at": datetime.now(ZoneInfo("Asia/Tokyo")).isoformat(),
+                "evidence_class": "forecast",
+                "source_type": "legacy-conditions",
+            },
+            "valid_from": datetime.combine(parsed_date, time.min, tzinfo=ZoneInfo("Asia/Tokyo")).isoformat(),
+            "valid_until": datetime.combine(parsed_date, time.max, tzinfo=ZoneInfo("Asia/Tokyo")).isoformat(),
+            "eligibility_windows": [],
+            "soft_penalty": 1.0,
+            "details": item,
+        })
+
+    return {"records": converted_records}
+
+
+def _parse_legacy_date(value: Any) -> date | None:
+    if not isinstance(value, str):
+        return None
+    for fmt in ("%Y-%m-%d", "%Y/%m/%d"):
+        try:
+            return datetime.strptime(value, fmt).date()
+        except ValueError:
+            pass
     return None
 
 
