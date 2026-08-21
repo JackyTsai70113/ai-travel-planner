@@ -66,6 +66,32 @@ must be configured with the GitHub Actions build source; the workflow enables
 that setting and uses `configure-pages`, `upload-pages-artifact`, and
 `deploy-pages`.
 
+## Frontend runtime
+
+The `web/` package has one production entrypoint: `web/src/main.tsx` starts the
+canonical `TripApp`. The build artifact is produced from `web/index.html` and
+the same React route used by local preview, CI, and Pages deployment. Runtime
+bundle loading is registry-driven and validates the public bundle before
+rendering it; user edits use trip-scoped local storage and never mutate the
+Canonical Trip.
+
+Run the frontend quality gate with:
+
+```sh
+npm --prefix web ci
+npm --prefix web run lint
+npm --prefix web run typecheck
+npm --prefix web test
+npm --prefix web run build
+npx --prefix web playwright install chromium
+npm --prefix web run test:e2e
+```
+
+To add a page, extend `web/src/app/route-registry.ts`, add a page component,
+wire it in `web/src/app/TripApp.tsx`, and add a route regression test. See
+[`Frontend runtime architecture`](docs/architecture/frontend-runtime.md) for
+the ownership boundaries and migration inventory.
+
 ## Canonical Trip data contract
 
 [`Trip V1`](docs/canonical-trip-v1.md) 是 planner、validator、renderer、trip storage、map 與 budget 的唯一 source of truth。候選研究資料位於 `candidate_sets`，而最終行程只透過 ID 參照並保留在 `days`，兩者不可混用。

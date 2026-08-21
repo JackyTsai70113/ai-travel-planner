@@ -123,7 +123,6 @@ export default function TripCatalogPage({ catalog, sections, setRoute, searchPla
   const filteredPreview = filterItems(sections.preview, filters)
   const filteredArchived = filterItems(sections.archived, filters)
   const filteredAll = filterItems(catalog, filters)
-  const hasNoFilter = filters.query === '' && filters.region === '' && filters.year === ''
 
   return (
     <div className="catalog-shell">

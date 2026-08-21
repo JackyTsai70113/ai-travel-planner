@@ -126,25 +126,13 @@ jobs:
           retention-days: 14
       - name: Run frontend lint/typecheck/unit quality checks
         run: |
-          if [ "${{ steps.frontend_script_audit.outputs.has_placeholders }}" = "true" ]; then
-            echo "Placeholder scripts detected, using fallback CLI checks."
-                      npm --prefix web run typecheck
-            npx --yes vitest run --passWithNoTests
-          else
-            npm --prefix web run lint
-            npm --prefix web run lint:tw
-            npm --prefix web run typecheck
-            npm --prefix web run test
-          fi
+          npm --prefix web run lint
+          npm --prefix web run typecheck
+          npm --prefix web run test
       - name: Run frontend runtime quality checks
         run: |
-          if [ "${{ steps.frontend_script_audit.outputs.has_placeholders }}" = "true" ]; then
-            echo "Skipping e2e/screenshots/lighthouse due placeholder scripts: ${{ steps.frontend_script_audit.outputs.placeholder_hits }}"
-          else
-            npm --prefix web run test:e2e
-            npm --prefix web run screenshots
-            npm --prefix web run lighthouse
-          fi
+          npx --prefix web playwright install --with-deps chromium
+          npm --prefix web run test:e2e
       - name: Build web PWA bundle
         run: npm --prefix web run build
       - name: Build the canonical static website

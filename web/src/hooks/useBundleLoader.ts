@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Bundle } from '../contracts/trip'
+import { useCallback, useEffect, useState } from 'react'
+import { Bundle, parseBundle } from '../contracts/trip'
 
 type LoadStatus = 'loading' | 'ready' | 'error' | 'offline-with-cache' | 'offline-without-cache'
 
@@ -11,8 +11,12 @@ interface BundleLoaderState {
   isUpdateAvailable: boolean
 }
 
-const STORAGE_KEYS = {
-  remoteVersion: 'golden_trip_remote_version',
+const STORAGE_KEYS = { remoteVersion: 'trip:active:bundle-version:v1' }
+
+export function resolveBundleUrl(baseUrl: string, canonicalUrl: string): string {
+  const base = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
+  const path = canonicalUrl.replace(/^\/+/, '').replace(/\/+$/, '')
+  return new URL(`${path}/public-bundle.json`, new URL(base, window.location.origin)).toString()
 }
 
 export function useBundleLoader(): BundleLoaderState {
@@ -22,24 +26,7 @@ export function useBundleLoader(): BundleLoaderState {
   const [isOnline, setIsOnline] = useState(true)
   const [isUpdateAvailable, setIsUpdateAvailable] = useState(false)
 
-  const candidates = useMemo(() => {
-    const baseUrl = String(import.meta.env.BASE_URL || '/')
-    const safeBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
-    const pathname = window.location.pathname || '/'
-    const normalizedPath = pathname.startsWith(safeBase) ? pathname.slice(safeBase.length - 1) : pathname
-    const segments = normalizedPath.split('/').filter(Boolean)
-    const tripsIndex = segments.indexOf('trips')
-    const tripSlug = tripsIndex >= 0 ? segments[tripsIndex + 1] : ''
-    const tripBundlePath = tripSlug ? `${safeBase}trips/${tripSlug}/public-bundle.json` : ''
-    const localTripBundlePath = tripSlug ? `./trips/${tripSlug}/public-bundle.json` : ''
-
-    return [
-      `${safeBase}public-bundle.json`,
-      tripBundlePath,
-      './public-bundle.json',
-      localTripBundlePath,
-    ].filter(Boolean)
-  }, [])
+  const baseUrl = String(import.meta.env.BASE_URL || '/')
 
   const checkVersion = useCallback((data: Bundle) => {
     const remoteGenerated = data.meta?.generated_at
@@ -54,50 +41,37 @@ export function useBundleLoader(): BundleLoaderState {
   const load = useCallback(async () => {
     setStatus('loading')
     setError('')
-    const attemptLogs: string[] = []
-    let response: Response | null = null
-    let usedUrl = ''
-
-    for (const url of candidates) {
-      try {
-        const result = await fetch(url)
-        if (!result.ok) {
-          attemptLogs.push(`${url} => HTTP ${result.status}`)
-          continue
-        }
-        response = result
-        usedUrl = url
-        break
-      } catch {
-        attemptLogs.push(`${url} => network error`)
-      }
-    }
-
-    if (!response) {
+    let response: Response
+    try {
+      const base = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
+      const registryResponse = await fetch(new URL('trip-registry.json', new URL(base, window.location.origin)))
+      if (!registryResponse.ok) throw new Error(`registry HTTP ${registryResponse.status}`)
+      const registry = await registryResponse.json() as unknown
+      const entry = Array.isArray(registry) && registry[0] && typeof registry[0] === 'object' ? registry[0] as { canonical_url?: unknown } : null
+      if (!entry || typeof entry.canonical_url !== 'string') throw new Error('registry schema 不相容')
+      response = await fetch(resolveBundleUrl(baseUrl, entry.canonical_url))
+      if (!response.ok) throw new Error(`bundle HTTP ${response.status}`)
+    } catch (error) {
       const hasCache = !!bundle
-      const message =
-        (hasCache ? '目前為離線快取資料' : '載入不到行程資料') +
-        `（已嘗試 ${attemptLogs.join('；')}）`
+      const message = `${hasCache ? '目前為離線快取資料' : '載入不到行程資料'}（${error instanceof Error ? error.message : 'network error'}）`
       setError(message)
       setStatus(hasCache ? 'offline-with-cache' : 'offline-without-cache')
       return
     }
 
     try {
-      const data = (await response.json()) as Bundle
+      const parsed = parseBundle(await response.json())
+      if (!parsed.ok) throw new Error(parsed.error)
+      const data = parsed.value
       setBundle(data)
       setIsUpdateAvailable(false)
       checkVersion(data)
       setStatus('ready')
-      const isCached = !response.url || response.url.includes('cache') || usedUrl.includes('public')
-      if (response.type !== 'basic' && !isCached) {
-        setStatus('ready')
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : '資料格式錯誤')
       setStatus('error')
     }
-  }, [bundle, checkVersion, candidates])
+  }, [baseUrl, bundle, checkVersion])
 
   useEffect(() => {
     setIsOnline(window.navigator.onLine)

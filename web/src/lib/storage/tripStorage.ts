@@ -34,8 +34,6 @@ export interface WriteTripStorageOptions<T> {
   value: T
 }
 
-export const DEFAULT_TRIP_ID = 'awaji-2026'
-
 export function mkTripStorageKey(tripId: string, module: string, version: number): string {
   return `trip:${tripId}:${module}:v${version}`
 }

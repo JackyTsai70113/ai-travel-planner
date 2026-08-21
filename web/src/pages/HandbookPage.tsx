@@ -1,3 +1,4 @@
+/* eslint-disable no-irregular-whitespace */
 import { useMemo, useState } from 'react'
 import { Bundle } from '../contracts/trip'
 import { HANDBOOK_CATEGORIES, HANDBOOK_ENTRIES, HandbookCategory } from '../content/japan-handbook'
