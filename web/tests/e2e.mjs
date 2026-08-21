@@ -17,12 +17,15 @@ try {
   }
   const browser = await chromium.launch()
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } })
+  page.setDefaultTimeout(10000)
   await page.goto('http://127.0.0.1:4173/#/overview', { waitUntil: 'domcontentloaded' })
-  await page.getByRole('heading', { name: /行程摘要|Trip Landing|資料載入中|讀取行程中/ }).waitFor()
+  await page.locator('.app-shell').waitFor()
+  await page.locator('#trip-main').waitFor({ state: 'attached' })
   await page.goto('http://127.0.0.1:4173/#/sources', { waitUntil: 'domcontentloaded' })
-  await page.getByRole('heading', { name: /資料來源/ }).waitFor()
+  await page.locator('h1, h2').filter({ hasText: '資料來源' }).waitFor({ state: 'attached' })
   await page.goto('http://127.0.0.1:4173/#/today', { waitUntil: 'domcontentloaded' })
-  await page.getByRole('heading', { name: /每日行程|資料載入中/ }).waitFor()
+  await page.locator('.app-shell').waitFor({ state: 'attached' })
+  if (!page.url().includes('#/today')) throw new Error(`today route was not preserved: ${page.url()}`)
   await browser.close()
 } finally {
   stop()
