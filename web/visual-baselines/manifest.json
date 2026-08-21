@@ -1,0 +1,19 @@
+{
+  "schema": "design-gallery-baseline/v1",
+  "policy": {
+    "pixelTolerance": 0.1,
+    "animation": "disabled",
+    "fontLoading": "wait-for-document-fonts",
+    "clock": "2026-04-12T09:00:00+09:00",
+    "randomSeed": 73,
+    "reviewRequiredForUnexplainedDiff": true
+  },
+  "goldens": [
+    { "scenario": "primitives", "theme": "setouchi-awaji", "viewport": "mobile" },
+    { "scenario": "trip-hero", "theme": "setouchi-awaji", "viewport": "mobile-wide" },
+    { "scenario": "itinerary-timeline", "theme": "generic-japan", "viewport": "tablet" },
+    { "scenario": "operational-hubs", "theme": "setouchi-awaji", "viewport": "desktop" },
+    { "scenario": "handbook-local-tools", "theme": "fallback-japan", "viewport": "mobile" },
+    { "scenario": "failure-and-print", "theme": "setouchi-awaji", "viewport": "desktop" }
+  ]
+}
