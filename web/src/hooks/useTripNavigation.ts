@@ -8,7 +8,7 @@ interface UseTripNavigationOptions {
 
 export function useTripNavigation(options: UseTripNavigationOptions = {}) {
   const defaultSection = options.defaultSection ?? 'overview'
-  const storageKey = options.storageKey ?? 'golden_trip_last_navigation'
+  const storageKey = options.storageKey ?? 'trip:active:navigation:v1'
 
   const parse = useCallback(() => parseRouteFromHash(window.location.hash, defaultSection), [defaultSection])
   const [route, setRoute] = useState<TripRoute>(() => parse())
@@ -40,7 +40,7 @@ export function useTripNavigation(options: UseTripNavigationOptions = {}) {
   )
 
   const current = useMemo(() => route, [route])
-  const lastNavigation = useMemo(() => localStorage.getItem(storageKey) || '', [storageKey, route.raw])
+  const lastNavigation = localStorage.getItem(storageKey) || ''
 
   return { current, navigate, lastNavigation }
 }

@@ -117,6 +117,37 @@ export interface Bundle {
   }
 }
 
+export type BundleValidationResult =
+  | { ok: true; value: Bundle }
+  | { ok: false; error: string }
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function isString(value: unknown): value is string {
+  return typeof value === 'string'
+}
+
+export function validateBundle(value: unknown): value is Bundle {
+  if (!isRecord(value)) return false
+  if (!isString(value.trip_id) || !value.trip_id.trim() || !isString(value.title) || !value.title.trim()) return false
+  if (!['ok', 'warning', 'error'].includes(String(value.status))) return false
+  if (!isString(value.local_timezone)) return false
+  if (!isRecord(value.date_range) || !isString(value.date_range.start_date) || !isString(value.date_range.end_date)) return false
+  if (!Array.isArray(value.days) || !value.days.every((day) => isRecord(day) && isString(day.date) && isString(day.summary) && Array.isArray(day.items))) return false
+  if (!Array.isArray(value.reservations) || !Array.isArray(value.validation)) return false
+  if (!isRecord(value.budget) || !isRecord(value.budget.total) || !isString(value.budget.currency)) return false
+  if (!isRecord(value.meta) || !isString(value.meta.generated_at)) return false
+  return true
+}
+
+export function parseBundle(value: unknown): BundleValidationResult {
+  return validateBundle(value)
+    ? { ok: true, value }
+    : { ok: false, error: '行程資料缺少必要欄位或 schema 不相容。' }
+}
+
 export interface ChecklistState {
   [key: string]: boolean
 }

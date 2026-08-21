@@ -123,12 +123,12 @@ export default function TripApp({ tripMeta = null }: TripAppProps) {
     const selectedDay = bundleLoader.bundle ? deriveDayFromRoute(bundleLoader.bundle, route) : null
     const hasInvalidDay = route.day ? selectedDay === null : false
     setRouteNotFound(hasInvalidDay)
-  }, [bundleLoader.bundle, isDayScopedSection, route.day, route.section, routeSectionNotFound])
+  }, [bundleLoader.bundle, isDayScopedSection, route, routeSectionNotFound])
 
   const itineraryDayFromLastNavigation = useMemo(() => {
     if (!bundleLoader.bundle) return undefined
     if (route.day) return normalizeDay(route.day)
-    const saved = localStorage.getItem(`golden_trip_last_day_${selectedSection}`)
+    const saved = localStorage.getItem(`trip:active:last-day:${selectedSection}:v1`)
     return normalizeDay(saved || undefined) || bundleLoader.bundle.days[0]?.date
   }, [bundleLoader.bundle, normalizeDay, route.day, selectedSection])
 
@@ -145,10 +145,10 @@ export default function TripApp({ tripMeta = null }: TripAppProps) {
   useEffect(() => {
     if (!activeDay) return
     if (selectedSection === 'today') {
-      localStorage.setItem('golden_trip_last_day_today', activeDay.date)
+      localStorage.setItem('trip:active:last-day:today:v1', activeDay.date)
     }
     if (selectedSection === 'tides') {
-      localStorage.setItem('golden_trip_last_day_tides', activeDay.date)
+      localStorage.setItem('trip:active:last-day:tides:v1', activeDay.date)
     }
   }, [activeDay, selectedSection])
 
