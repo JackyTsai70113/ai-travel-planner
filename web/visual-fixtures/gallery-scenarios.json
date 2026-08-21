@@ -1,0 +1,21 @@
+{
+  "schema": "design-gallery-scenario/v1",
+  "clock": "2026-04-12T09:00:00+09:00",
+  "randomSeed": 73,
+  "apiMode": "recorded-fixture",
+  "viewports": [
+    { "name": "mobile", "width": 390, "height": 844 },
+    { "name": "mobile-wide", "width": 430, "height": 932 },
+    { "name": "tablet", "width": 768, "height": 1024 },
+    { "name": "desktop", "width": 1440, "height": 900 }
+  ],
+  "themes": ["setouchi-awaji", "generic-japan", "fallback-japan"],
+  "scenarios": [
+    { "id": "primitives", "title": "Primitives and status vocabulary", "states": ["confirmed", "estimated", "stale", "conflict", "error", "focus"] },
+    { "id": "trip-hero", "title": "Trip hero and day tabs", "states": ["confirmed", "long-text", "missing-media"] },
+    { "id": "itinerary-timeline", "title": "Timeline, travel leg and route stop", "states": ["confirmed", "unresolved", "offline-cached", "long-address"] },
+    { "id": "operational-hubs", "title": "Reservation, lodging, meal and tide patterns", "states": ["confirmed", "empty", "stale", "offline-unavailable"] },
+    { "id": "handbook-local-tools", "title": "Handbook, Japanese phrase and checklist", "states": ["confirmed", "long-japanese", "loading", "broken-image"] },
+    { "id": "failure-and-print", "title": "Failure, offline update and print summary", "states": ["error", "offline-cached", "reduced-motion", "print"] }
+  ]
+}

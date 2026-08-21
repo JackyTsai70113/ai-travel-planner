@@ -1,0 +1,2389 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>淡路島 5 天 4 夜行程表（家庭版）</title>
+    <meta name="description" content="淡路島・鳴門・德島・神戶 5 天 4 夜行程整合表" />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;800&family=Noto+Sans+JP:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap");
+
+      :root {
+        --bg: #f5f8ff;
+        --bg-soft: #eef3fb;
+        --surface: #ffffff;
+        --surface-soft: #f7faff;
+        --line: #b5c6df;
+        --text: #10233f;
+        --text-strong: #0c1f37;
+        --sub: #425b79;
+        --primary: #1f56a7;
+        --primary-soft: #e6eefc;
+        --primary-strong: #143f7c;
+        --chip: #eef4ff;
+        --muted: #f5f9ff;
+        --accent: #e58a41;
+        --good: #0e8a63;
+        --night: #3d5878;
+        --warn: #7c3e1e;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: "Noto Sans JP", "Noto Sans TC", "PingFang TC", "Helvetica Neue", sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at 4% 12%, #edf4ff 0%, transparent 34%),
+          radial-gradient(circle at 98% 8%, #fff2e8 0%, transparent 32%),
+          linear-gradient(180deg, var(--bg) 0%, var(--bg-soft) 55%, #f8fbff 100%);
+        line-height: 1.6;
+      }
+
+      .page {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 16px 12px 48px;
+      }
+
+      .hero {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid #b6cae2;
+        border-radius: 22px;
+        color: #0d2f64;
+        background:
+          linear-gradient(125deg, #ecf4ff 0%, #eaf6ff 45%, #fff6ee 100%);
+        padding: 18px 18px 16px;
+        margin-bottom: 14px;
+        box-shadow: 0 16px 40px rgba(19, 40, 75, 0.1);
+      }
+
+      .hero::after {
+        content: "";
+        position: absolute;
+        top: -30px;
+        right: -20px;
+        width: 130px;
+        height: 130px;
+        border-radius: 50%;
+        background: #f4e4d4;
+        opacity: 0.45;
+      }
+
+      .hero h1 {
+        margin: 0;
+        font-size: clamp(1.35rem, 3vw, 1.9rem);
+        letter-spacing: 0.01em;
+        line-height: 1.25;
+      }
+
+      .hero .lead {
+        margin-top: 8px;
+        display: inline-block;
+        background: var(--surface);
+        border: 1px solid #c8dff2;
+        border-radius: 999px;
+        padding: 6px 12px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--sub);
+      }
+
+      .hero .meta {
+        margin-top: 10px;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 4px;
+        color: #29476c;
+        font-size: 0.9rem;
+      }
+
+      .anchors {
+        margin: 10px 0 0;
+        display: grid;
+        gap: 6px;
+      }
+
+      .anchor-item {
+        background: #ffffffde;
+        border: 1px dashed #b8cff1;
+        border-radius: 10px;
+        padding: 8px 10px;
+        color: #243d5d;
+        font-size: 0.9rem;
+      }
+
+      .anchor-item strong {
+        color: #1e4471;
+      }
+
+      .toolbar {
+        position: sticky;
+        top: 8px;
+        z-index: 20;
+        backdrop-filter: blur(7px);
+        background: linear-gradient(180deg, rgba(242, 248, 254, 0.98), rgba(242, 248, 254, 0.88));
+        border: 1px solid #bccedc;
+        border-radius: 16px;
+        padding: 10px 10px 8px;
+        box-shadow: 0 12px 28px rgba(17, 43, 71, 0.12);
+        margin-bottom: 14px;
+        display: grid;
+        gap: 8px;
+      }
+
+      .mode-row {
+        display: grid;
+        gap: 6px;
+      }
+
+      .mode-title {
+        width: 100%;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #123861;
+        letter-spacing: 0.02em;
+      }
+
+      .mode-tab-row {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #aac0dd transparent;
+      }
+
+      .mode-tab,
+      .tab {
+        border: 1.5px solid #5a78a9;
+        border-radius: 999px;
+        background: #ffffff;
+        color: #102f5f;
+        padding: 10px 14px;
+        cursor: pointer;
+        font-size: 0.82rem;
+        font-weight: 800;
+        line-height: 1.1;
+        white-space: nowrap;
+        flex: 0 0 auto;
+        transition: all 0.18s ease;
+        display: inline-flex;
+        align-items: center;
+        flex-direction: column;
+        gap: 0;
+        text-align: left;
+        min-height: 38px;
+      }
+
+      .mode-tab:hover,
+      .tab:hover {
+        border-color: #315f99;
+        background: #e9f0ff;
+        color: #0d2853;
+        box-shadow: 0 8px 16px rgba(24, 66, 129, 0.12);
+      }
+
+      .mode-tab.is-active,
+      .tab.is-active {
+        color: #ffffff;
+        background: linear-gradient(145deg, #194f9f, #0d3473);
+        border-color: #05275e;
+        box-shadow: 0 12px 24px rgba(18, 54, 118, 0.34);
+        font-weight: 800;
+      }
+
+      .mode-tab.is-active:hover,
+      .tab.is-active:hover {
+        background: linear-gradient(145deg, #1d4f97, #0f315d);
+        border-color: #0d2b60;
+      }
+
+      .mode-tab:focus-visible,
+      .tab:focus-visible {
+        outline: 2px solid #12356d;
+        outline-offset: 2px;
+      }
+
+      .guide-shell {
+        background: linear-gradient(180deg, #f8fbff 0%, #eff6ff 100%);
+        border: 1px solid #bfd3eb;
+        border-radius: 18px;
+        padding: 14px;
+        margin-bottom: 12px;
+        box-shadow: 0 12px 28px rgba(26, 54, 95, 0.08);
+      }
+
+      .guide-title {
+        font-size: 0.98rem;
+        color: #0c396d;
+        margin: 0 0 10px;
+        font-weight: 700;
+      }
+
+      .guide-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .guide-card {
+        border: 1px solid #c3d4ea;
+        border-radius: 14px;
+        padding: 10px 10px 9px;
+        background: #fff;
+        box-shadow: 0 8px 16px rgba(26, 54, 92, 0.06);
+      }
+
+      .guide-card:hover {
+        border-color: #8caed6;
+      }
+
+      .guide-card h3,
+      .guide-title {
+        margin: 0 0 6px;
+        font-size: 0.94rem;
+        color: #0f2f60;
+        line-height: 1.35;
+      }
+
+      .guide-list {
+        margin: 0;
+        padding-left: 18px;
+        color: #374d6e;
+        font-size: 0.8rem;
+        line-height: 1.6;
+      }
+
+      .toolbar-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .toolbar .toolbar-title {
+        width: 100%;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #123861;
+        letter-spacing: 0.02em;
+      }
+
+      .tab-row {
+        width: 100%;
+        display: flex;
+        gap: 7px;
+        flex-wrap: nowrap;
+        overflow: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #9db4d4 transparent;
+        padding-bottom: 2px;
+      }
+
+      .tab-row::-webkit-scrollbar {
+        height: 6px;
+      }
+
+      .tab-row::-webkit-scrollbar-thumb {
+        background: #9db4d4;
+        border-radius: 999px;
+      }
+
+      .tab-sub {
+        display: inline-block;
+        margin: 4px 0 0;
+        font-size: 0.78rem;
+        color: #112f52;
+        opacity: 1;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid #99b5db;
+        border-radius: 18px;
+        padding: 18px 16px;
+        margin: 20px 0;
+        box-shadow: 0 16px 28px rgba(22, 39, 61, 0.08);
+      }
+
+      .day-title {
+        display: grid;
+        gap: 10px;
+        border-bottom: 1px solid #cbdeef;
+        padding-bottom: 18px;
+        margin-bottom: 18px;
+      }
+
+      .day-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 10px;
+      }
+
+      .day-title h2 {
+        margin: 0;
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--text-strong);
+        line-height: 1.2;
+      }
+
+      .day-badge {
+        border-radius: 999px;
+        border: 1px solid #1c4d9c;
+        background: linear-gradient(135deg, #1e57a8, #2f7cc9);
+        color: #f8fbff;
+        padding: 4px 10px;
+        font-weight: 900;
+        font-size: 0.78rem;
+        letter-spacing: 0.01em;
+      }
+
+      .day-date {
+        border-radius: 999px;
+        border: 1px solid #c2d4ea;
+        background: #ffffff;
+        color: #2c4f7f;
+        padding: 4px 10px;
+        font-size: 0.74rem;
+        font-family: "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
+        font-weight: 700;
+      }
+
+      .day-title span {
+        font-size: 0.88rem;
+        color: var(--sub);
+      }
+
+      .day-title .day-code {
+        border: 1px solid #c6d7ef;
+        background: #f6fafe;
+        color: #314c71;
+        padding: 4px 10px;
+        font-size: 0.72rem;
+        font-family: "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
+        border-radius: 999px;
+        line-height: 1.45;
+        letter-spacing: 0.01em;
+        white-space: nowrap;
+        justify-self: end;
+      }
+
+      .day-route {
+        margin-top: 2px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 10px;
+        border-radius: 999px;
+        border: 1px solid #bfd3ea;
+        background: #f6fbff;
+        color: #143d76;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .day-route:hover {
+        background: #e6f0ff;
+        border-color: #97b0d8;
+      }
+
+      .day-theme {
+        font-size: 0.92rem;
+        color: #1f3f65;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        line-height: 1.45;
+      }
+
+      .day-time-summary {
+        margin-top: 0;
+        border: 1px solid #bfd3ea;
+        border-radius: 999px;
+        background: #f7fbff;
+        color: #1c3f70;
+        padding: 6px 10px;
+        font-size: 0.73rem;
+        font-family: "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        width: fit-content;
+      }
+
+      .day-time-summary strong {
+        color: #15365f;
+      }
+
+      .day-time-summary .time-sep {
+        color: #5a6f90;
+        font-size: 0.68rem;
+      }
+
+      .timeline {
+        margin-top: 10px;
+      }
+
+      .segment {
+        border-left: 4px solid var(--primary);
+        margin: 22px 0;
+        padding-left: 14px;
+        padding-bottom: 4px;
+      }
+
+      .segment + .segment {
+        margin-top: 30px;
+      }
+
+      .segment.hidden {
+        display: none;
+      }
+
+      .seg-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: baseline;
+        flex-wrap: wrap;
+      }
+
+      .seg-type {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 3px 10px;
+        background: #e8effd;
+        color: #0f3d75;
+        font-weight: 700;
+        font-size: 0.74rem;
+      }
+
+      .seg-type.breakfast {
+        background: #f7eef8;
+        color: #5d2b77;
+        border: 1px solid #d8b5de;
+      }
+
+      .seg-type.day {
+        background: #eef8f0;
+        color: #145e3d;
+        border: 1px solid #a8d0bc;
+      }
+
+      .seg-type.lunch,
+      .seg-type.afternoon {
+        background: #fff3e1;
+        color: #8a4a10;
+        border: 1px solid #e2bf8f;
+      }
+
+      .seg-type.evening,
+      .seg-type.dinner {
+        background: #f4f0ff;
+        color: #3d2f78;
+        border: 1px solid #c8bbea;
+      }
+
+      .seg-type.night {
+        background: #f7f1f5;
+        color: #643154;
+        border: 1px solid #d6b8c9;
+      }
+
+      .seg-title {
+        font-size: 0.98rem;
+        margin: 8px 0 4px;
+        font-weight: 700;
+        color: #102f5a;
+      }
+
+      .seg-time {
+        font-size: 0.74rem;
+        color: #2f5790;
+        font-family: "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
+      }
+
+      .seg-time-grid {
+        margin-top: 6px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(150px, 1fr));
+        gap: 8px;
+      }
+
+      .seg-time-grid .time-chip {
+        min-width: 0;
+        width: auto;
+      }
+
+      .seg-time-grid .time-chip strong {
+        font-size: 0.88rem;
+        color: #224674;
+      }
+
+      .seg-time-grid .time-chip .meta {
+        font-size: 0.67rem;
+        color: #4d6890;
+      }
+
+      .seg-sub {
+        color: #344e70;
+        margin: 0;
+        font-size: 0.87rem;
+      }
+
+      .seg-grid {
+        margin-top: 8px;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .item-panel {
+        border: 1px solid #d4e0f0;
+        border-radius: 12px;
+        background: #fff;
+        padding: 9px 10px;
+        color: #1f3d66;
+        font-size: 0.81rem;
+        line-height: 1.5;
+        box-shadow: 0 8px 16px rgba(29, 57, 101, 0.04);
+      }
+
+      .pill {
+        padding: 7px 8px;
+        border-radius: 10px;
+        background: var(--chip);
+        border: 1px solid #d5e2f8;
+        font-size: 0.83rem;
+      }
+
+      .pill.note {
+        grid-column: 1 / -1;
+      }
+
+      .pill.flow {
+        line-height: 1.45;
+      }
+
+      .action-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #14478a;
+        text-decoration: none;
+        font-weight: 700;
+        font-family: "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
+        font-size: 0.72rem;
+      }
+
+      .action-link:hover {
+        text-decoration: underline;
+      }
+
+      .route-links {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+        grid-column: 1 / -1;
+      }
+
+      .route-links .action-link {
+        justify-content: center;
+        width: 100%;
+        border: 1.5px solid #6d95ca;
+        background: #edf4ff;
+        color: #10356b;
+        border-radius: 8px;
+        padding: 4px 8px;
+        box-shadow: 0 8px 16px rgba(27, 69, 122, 0.08);
+        text-align: center;
+      }
+
+      .route-links .action-link:hover {
+        border-color: #3d6eaa;
+        background: #dce8ff;
+        color: #072a59;
+      }
+
+      .tiny-text {
+        font-size: 0.78rem;
+        color: #4e5f79;
+        line-height: 1.5;
+      }
+
+      .pill strong {
+        display: block;
+        color: #163c71;
+        margin-bottom: 2px;
+        font-size: 0.72rem;
+        letter-spacing: 0.01em;
+      }
+
+      .pill.meta-small {
+        font-size: 0.66rem;
+        line-height: 1.4;
+        background: #f4f8ff;
+      }
+
+      .pill.meta-small strong {
+        font-size: 0.62rem;
+      }
+
+      .reason-panel ul {
+        margin: 6px 0 0 18px;
+        color: #2e527e;
+        padding: 0;
+      }
+
+      .reason-panel li {
+        margin-bottom: 4px;
+        line-height: 1.45;
+        font-size: 0.74rem;
+      }
+
+      .pill.reason {
+        font-size: 0.74rem;
+        line-height: 1.5;
+      }
+
+      .pill.reason strong {
+        font-size: 0.68rem;
+      }
+
+      .lodging-card {
+        margin: 8px 0 0;
+        border-radius: 12px;
+        border: 1px dashed #9db7db;
+        background: #f2f8ff;
+        padding: 8px 10px;
+        color: #2d4970;
+        font-size: 0.78rem;
+        line-height: 1.5;
+      }
+
+      .lodging-card strong {
+        display: inline-block;
+        margin-right: 6px;
+        color: #123e74;
+      }
+
+      .time-flow {
+        grid-column: 1 / -1;
+        margin-top: 8px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(120px, 1fr));
+        gap: 8px;
+      }
+
+      .time-flow.time-flow-line {
+        grid-template-columns: 1fr;
+      }
+
+      .time-flow.seg-time-grid {
+        grid-template-columns: repeat(3, minmax(150px, 1fr));
+      }
+
+      .time-flow-line {
+        grid-column: 1 / -1;
+        display: grid;
+        gap: 4px;
+      }
+
+      .time-flow-line .flow-item {
+        border-radius: 12px;
+        border: 1px solid #a9c4e8;
+        background: #f6faff;
+        padding: 7px 9px;
+        font-size: 0.67rem;
+        line-height: 1.45;
+        color: #31527d;
+      }
+
+      .time-flow-line .flow-item strong {
+        color: #1b4a7f;
+        font-size: 0.66rem;
+        display: block;
+        letter-spacing: 0.01em;
+      }
+
+      .time-chip {
+        min-width: 120px;
+        padding: 7px 10px;
+        border-radius: 999px;
+        border: 1px solid #d4deef;
+        background: #ffffff;
+        color: #183d6e;
+        font-size: 0.68rem;
+        display: grid;
+        gap: 2px;
+      }
+
+      .time-chip strong {
+        display: block;
+        font-size: 0.7rem;
+        color: #2e5882;
+      }
+
+      .time-chip .meta {
+        color: #46648d;
+        font-size: 0.62rem;
+        font-family: "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
+      }
+
+      .route-link {
+        color: #13407e;
+        font-size: 0.72rem;
+        text-decoration: none;
+        font-weight: 700;
+      }
+
+      .route-link:hover {
+        color: #0a2e66;
+        text-decoration: underline;
+      }
+
+      .seg-subline {
+        padding: 4px 10px;
+        border: 1px solid #c9dcf3;
+        border-radius: 8px;
+        background: #f0f6ff;
+        color: #20416e;
+        font-size: 0.74rem;
+        font-family: "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
+      }
+
+      .time-grid-title {
+        border: 1px solid #c7dcf4;
+        background: #eff5ff;
+        color: #173d72;
+        border-radius: 999px;
+        padding: 4px 8px;
+        font-size: 0.64rem;
+        font-weight: 800;
+        display: inline-block;
+        margin-bottom: 4px;
+      }
+
+      .time-bridge {
+        margin-top: 6px;
+        padding: 6px 10px;
+        border: 1px dashed #bfd0ed;
+        border-radius: 10px;
+        background: #f3f8ff;
+        color: #163b68;
+        font-size: 0.74rem;
+        font-family: "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
+      }
+
+      .time-bridge strong {
+        color: #10355f;
+      }
+
+      .time-bullet {
+        width: 7px;
+        height: 7px;
+        border-radius: 999px;
+        display: inline-block;
+        margin-right: 4px;
+        vertical-align: 1px;
+        background: linear-gradient(130deg, #2b6acb, #1b4f98);
+      }
+
+
+      .notes {
+        margin-top: 10px;
+        padding: 10px 10px 8px;
+        border-radius: 10px;
+        background: #fff8ee;
+        border: 1px dashed #f6c37d;
+        color: #5a4515;
+        font-size: 0.82rem;
+      }
+
+      .notes ul {
+        margin: 6px 0 0 18px;
+        color: #5a4515;
+        font-size: 0.74rem;
+        line-height: 1.55;
+      }
+
+      .notes li {
+        margin: 4px 0 0;
+      }
+
+      .notes summary {
+        cursor: pointer;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #684b14;
+      }
+
+      .meta-stack {
+        display: grid;
+        gap: 7px;
+        margin-top: 7px;
+      }
+
+      .meta-block {
+        display: grid;
+        gap: 4px;
+        border: 1px solid #dbe5f4;
+        border-radius: 10px;
+        background: #fbfdff;
+        padding: 7px 8px;
+      }
+
+      .meta-block h4 {
+        margin: 0;
+        font-size: 0.72rem;
+        color: #153d73;
+        letter-spacing: 0.01em;
+        text-transform: uppercase;
+        font-weight: 800;
+      }
+
+      .meta-block .meta-value {
+        margin: 0;
+        color: #2c4568;
+        font-size: 0.72rem;
+        line-height: 1.45;
+      }
+
+      .meta-block .meta-value .mono {
+        font-family: "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
+        color: #143d79;
+      }
+
+      .time-title {
+        display: inline-flex;
+        gap: 5px;
+        align-items: center;
+        border: 1px solid #bfd2ec;
+        border-radius: 999px;
+        background: #eef4fe;
+        color: #15407b;
+        padding: 4px 8px;
+        font-family: "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
+        font-size: 0.64rem;
+        font-weight: 700;
+        margin-right: 6px;
+      }
+
+      .badge {
+        display: inline-block;
+        margin-right: 6px;
+        margin-bottom: 4px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        border: 1px solid #d3dff2;
+        background: #f4f9ff;
+        color: #1f4f90;
+        font-size: 0.78rem;
+      }
+
+      .tag-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .tag-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 10px;
+      }
+
+      .tag {
+        border-radius: 999px;
+        border: 1px solid #cfdbed;
+        background: #f2f7ff;
+        color: #245089;
+        padding: 4px 9px;
+        font-size: 0.74rem;
+        font-weight: 600;
+      }
+
+      .tag-list .tag {
+        border-color: #9db5d8;
+      }
+
+      .empty {
+        color: #6e7f98;
+        font-size: 0.94rem;
+        border: 1px dashed #c8d7ef;
+        border-radius: 10px;
+        padding: 10px;
+        background: #f6fbff;
+        margin-top: 10px;
+      }
+
+      footer {
+        margin-top: 20px;
+        color: #5b6e90;
+        font-size: 0.9rem;
+        text-align: center;
+      }
+
+      @media (max-width: 720px) {
+        .page {
+          padding: 12px 10px 30px;
+        }
+
+        .toolbar {
+          position: relative;
+          top: 0;
+        }
+
+        .seg-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .time-flow {
+          grid-template-columns: 1fr;
+        }
+
+        .seg-time-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .hero h1 {
+          font-size: 1.3rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <section class="hero">
+        <h1>5 天 4 夜淡路島・鳴門・德島・神戶家庭行程</h1>
+        <span class="lead">淡路島行程 UI：依行程版型邏輯調整（按鈕／分頁／間距）</span>
+        <div class="meta">
+          <span>範圍：2026/8/27（四）～2026/8/31（一）</span>
+          <span>主題：動畫主題 + 全家人行程 + 夜間自由採買（唐吉訶德 / AEON / 大賣場）</span>
+          <span>資料來源：原始行程附件（trip.json / public-bundle / research-evidence）</span>
+          <span>住宿 anchor：</span>
+          <span>8/27～8/28：Awaji Riverside Terrace in Shizuki 780（Shizuki, 淡路市兵庫縣 656-2131）</span>
+          <span>8/29 晚上：1-chōme-3-44-3 Kanazawa（金沢１丁目３−44－3，德島市，〒770-0871）</span>
+          <span>8/30 晚上：The Royal Park Canvas Kobe Sannomiya（神戶市中央區下山手通2丁目3番，〒650-0011）</span>
+          <span>航班時間：8/27 10:30 抵達神戶機場，10:30 取車啟程；8/31 12:45 從神戶機場返台。當天不再安排行程。</span>
+        </div>
+      </section>
+
+      <div class="toolbar">
+        <div class="mode-row">
+          <span class="mode-title">功能分頁（Tabs）</span>
+          <div id="mode-tabs" class="mode-tab-row"></div>
+        </div>
+        <div class="toolbar-row">
+          <span class="toolbar-title">每日分頁（Page）</span>
+          <div id="day-tabs" class="tab-row tab-day" role="tablist" aria-label="日別切換"></div>
+        </div>
+        <div class="toolbar-row">
+          <span class="toolbar-title">行程分類（Filter）</span>
+          <div id="type-tabs" class="tab-row tab-type" role="tablist" aria-label="行程分類"></div>
+        </div>
+      </div>
+
+      <div id="schedule"></div>
+
+      <footer>提示：頁面僅依你提供文字整理，不作營業時間真實驗證。</footer>
+    </div>
+
+    <script>
+      const tripData = {
+        title: '5 天 4 夜行程總覽',
+        days: [
+          {
+            date: '8/27（四）',
+            theme: '神戶啟程 → 北淡路動漫 → 播磨灘日落',
+            lodging: '8/27 夜宿：Awaji Riverside Terrace in Shizuki 780（Shizuki，淡路市，兵庫縣 656-2131）',
+            anchors: [
+              '08/27 10:30 抵達神戶機場（UKB），10:30～10:50 取車',
+              '08/27 10:50～11:20 先到 上島珈琲店（機場）用早餐',
+              '08/27 11:20～12:50 淡路道中（Awaji Service Area→忍里）',
+              '08/27 13:45～14:30 入住 Awaji Riverside Terrace in Shizuki（淡路）',
+              '08/27 18:30 Garb Costa Orange 已預約晚餐',
+            ],
+            rainGuide: [
+              '若早上有大霧或降雨，先將「Awaji Service Area」改為「Service Area 內候補區」等待，等 10 分鐘再進場。',
+              '14:00 前後若下午園區過潮濕，優先切到 Nijigen no Mori 的室內區域，將 Crayon 行程後置。',
+              '晚霞改為室內視野較好的露天玻璃區，並保留車內休息 20 分鐘。',
+            ],
+            items: [
+              {
+                type: '早餐',
+                time: '抵達後',
+                duration: '30–40 分',
+                venue: '上島珈琲店 神戶空港店',
+                location: '神戶機場 2F 大廳',
+                mustPlay: '厚切奶油烤吐司套餐、黑糖牛奶咖啡、培根煎蛋三明治',
+                reason: '抵達神戶機場取車前，快速享用神戶老牌咖啡館的經典現做早餐，作為第一段啟程能量補充。',
+                hours: '06:30–21:00',
+                parking: '機場專用停車場',
+                tags: ['breakfast'],
+              },
+              {
+                type: '早上行程',
+                time: '出發後',
+                duration: '30–40 分',
+                venue: 'Awaji Service Area for Kōbe（淡路休息站 展望台）',
+                location: '淡路市岩屋（自動車道）',
+                mustPlay: '展望台遠眺明石海峽大橋與瀨戶內海海灣、打卡戀人聖地標誌',
+                reason: '跨海抵達淡路島的第一站，讓長輩與小孩先舒展筋骨，先初覽大橋壯闊景觀。',
+                hours: '24 小時開放',
+                parking: '淡路 SA 專用停車場（免費 500+ 台）',
+                rainBackup: '淡路 SA 室內物產館（全室內名產街與咖啡廳）',
+                tags: ['day'],
+              },
+              {
+                type: '午餐',
+                time: '到場',
+                duration: '50–60 分',
+                venue: 'ラーメン一楽（二次元之森 忍里內）',
+                location: '淡路市楠本（火影園區內）',
+                mustPlay: '一樂經典豚骨拉麵、特製味噌拉麵、曉組織造型氣泡飲、造型爆米花桶',
+                reason: '在火影園區內用餐最省時間，且是列表指定必吃店之一。',
+                hours: '11:00–20:00（平日至18:00）',
+                parking: '兵庫縣立淡路島公園 E/F 停車場（完全免費）',
+                tags: ['lunch'],
+              },
+              {
+                type: '下午行程1',
+                time: '行前',
+                duration: '90–120 分',
+                venue: 'Nijigen no Mori Naruto x Boruto Shinobi Village（忍里）',
+                location: '淡路市楠本（Nijigen no Mori 內）',
+                mustPlay: '「天之卷」3 層立體迷宮與「地之卷」解謎卷軸、巨大火影顏岩合影',
+                reason: '指定必玩，沉浸式還原動漫場景，適合大人重溫青春也能讓小孩全情投入。',
+                hours: '10:00–22:00（最終入場 20:00）',
+                parking: '兵庫縣立淡路島公園 E/F 停車場（完全免費）',
+                tags: ['afternoon'],
+              },
+              {
+                type: '下午行程2',
+                time: '接續',
+                duration: '80–90 分',
+                venue: 'Crayon Shin-chan Adventure Park（蠟筆小新冒險公園）',
+                location: '淡路市楠本（二次元之森內）',
+                mustPlay: '森林中逾 50 座小新與春日部防衛隊雕像、木質積木區、滑索與親子活動',
+                reason: '園區綠意盎然，親子互動與全家合照熱點，適合大人放鬆陪伴。',
+                hours: '10:00–18:00（設施營運時間）',
+                parking: '兵庫縣立淡路島公園 E/F 停車場（完全免費）',
+                tags: ['afternoon'],
+                backup: [
+                  {
+                    name: '奇迹之星的植物馆（淡路夢舞台公苑大型溫室）',
+                    reason: '全室內冷氣開放，適合多人同時停留並有備雨替代。',
+                  },
+                ],
+              },
+              {
+                type: '晚上行程',
+                time: '18:30 附近',
+                duration: '45 分',
+                venue: 'CRAFT CIRCUS & Sunset Line（日落漫步）',
+                location: '淡路市野島平林（西海岸）',
+                mustPlay: '沿海景木棧道看播磨灘夕陽、打卡海邊愛心大象、海濱市集夜景',
+                reason: '西海岸著名落日公路第一排，海風吹拂、晚霞明亮，適合一家人慢步回神。',
+                hours: '10:30–20:30',
+                parking: 'CRAFT CIRCUS 專用停車場（免費 80 台）',
+                backup: [
+                  {
+                    name: '青海波 青の舎（西海岸全室內觀景）',
+                    reason: '室內隔窗觀海，便於轉為休息型收尾。',
+                  },
+                ],
+                tags: ['evening'],
+              },
+              {
+                type: '晚餐',
+                time: '18:30 開始',
+                duration: '90–110 分',
+                venue: 'Garb Costa Orange',
+                location: '淡路市郡家（西海岸）',
+                mustPlay: '柴燒現烤海鮮披薩、淡路島洋蔥培根義大利麵、炭烤淡路牛排',
+                reason: '清單收錄並具備日落名店背景，能同時吃到海味與在地主廚元素。',
+                hours: '11:00–21:00（L.O. 20:00）',
+                parking: '餐廳正門及專用停車場（免費 80 台）',
+                tags: ['dinner'],
+              },
+              {
+                type: '夜遊',
+                time: '20:00 後彈性',
+                duration: '45–60 分',
+                venue: 'イオン淡路店 或 Plant（志筑店）',
+                location: '淡路市志築新島（距住宿 5 分）',
+                mustPlay: '水果、淡路鮮乳、泡麵與零食採買',
+                reason: '夜間自由彈性採買點，主要作為補給與機能性行程；不去也不影響行程。',
+                hours: '08:00–22:00（賣場）、8–20（地點依超市有差）',
+                parking: '賣場專屬大型免費停車場（數百車位）',
+                backup: [
+                  {
+                    name: '住宿旁 7-ELEVEN／全家便利商店',
+                    reason: '步行 2 分鐘內最短補給，失敗保底方案。',
+                  },
+                ],
+                tags: ['night'],
+              },
+            ],
+          },
+          {
+            date: '8/28（五）',
+            theme: '中北建築花海 → 鯛魚海鮮 → 幸福鬆餅夕陽',
+            lodging: '8/28 夜宿：Awaji Riverside Terrace in Shizuki 780（Shizuki，淡路市，兵庫縣 656-2131）',
+            rainGuide: [
+              '朝場先做 Awaji Yumebutai 的室內區，若下雨先做展示動線再出外圈。',
+              '午餐若延遲，可直接改到路線中段室內替代站點，並把午後行程前置給店內空間。',
+              '夜間入店前若海風雨大，將 18:30 行程改為店內觀景位，保留 30 分鐘彈性。',
+            ],
+            anchors: [
+              '08/28 08:20 前往 Boulangerie RURAL（生田田尻）',
+              '08/28 08:40～09:00 用早餐',
+              '08/28 09:00～12:55 鑑賞 Awaji Yumebutai（含 12:55 前往午餐）',
+              '08/28 13:00 浮世離れの鯛ドロボー 固定入場',
+              '08/28 17:45 幸福鬆餅 已預約',
+            ],
+            items: [
+              {
+                type: '早餐',
+                time: '早上',
+                duration: '20–30 分',
+                venue: 'Boulangerie RURAL',
+                location: '淡路市生田田尻（中北山間）',
+                mustPlay: '招牌酥脆可頌、明太子法國麵包、淡路島洋蔥鹹派、鹽可頌',
+                reason: '超人氣手作麵包坊，現烤品質高，方便上車前快速補充。',
+                hours: '08:00–18:00（週一、二公休）',
+                parking: '店門前專用免費停車位',
+                tags: ['breakfast'],
+              },
+              {
+                type: '早上行程',
+                time: '前半天',
+                duration: '75–90 分',
+                venue: 'Awaji Yumebutai（淡路夢舞台）',
+                location: '淡路市夢舞台（東海岸）',
+                mustPlay: '百段苑階梯花園、百萬貝殼「貝之濱」、清水模海之教堂',
+                reason: '安藤忠雄經典神作，視覺張力高，老人小孩行走舒適且拍照品質佳。',
+                hours: '07:00–23:00（自由參觀）',
+                parking: '地下專用停車場 P1（600 日圓/次，館內消費滿額可折抵）',
+                backup: [
+                  {
+                    name: '夢舞台國際會議場室內迴廊',
+                    reason: '室內清水模長廊，可作為雨天替代動線。',
+                  },
+                ],
+                tags: ['day'],
+              },
+              {
+                type: '午餐',
+                time: '13:00',
+                duration: '70–80 分',
+                venue: '浮世離れの鯛ドロボー',
+                location: '洲本市安乎町（臨海第一排）',
+                mustPlay: '鯛御膳弐の型、鯛魚生魚片丼、天婦羅、鯛魚茶泡飯',
+                reason: '指定必吃清單中的鯛魚料理代表店，沿海新鮮度與在地食材加值高。',
+                hours: '09:00–17:00（不定休）',
+                parking: '店門前專屬大型停車場（免費 30 台）',
+                backup: [
+                  {
+                    name: 'Coccolare（淡路夢舞台威斯汀內）',
+                    reason: '餐廳備案，提供淡路牛排漢堡排與義大利麵。',
+                  },
+                ],
+                tags: ['lunch'],
+              },
+              {
+                type: '下午行程1',
+                time: '下午',
+                duration: '60–75 分',
+                venue: 'Hyogo Prefectural Awaji Hanasajiki（淡路花迴廊）',
+                location: '淡路市楠本（高原丘陵）',
+                mustPlay: '高原步道、觀景展望台、特濃洋蔥霜淇淋',
+                reason: '8 月下旬花海顏色飽滿，能舒緩早上行程後的疲勞。',
+                hours: '09:00–17:00',
+                parking: '花迴廊專用大型停車場（200 日圓/次）',
+                tags: ['afternoon'],
+              },
+              {
+                type: '下午行程2',
+                time: '下午',
+                duration: '75–90 分',
+                venue: 'S BRICK 旧:鐘紡工場跡 & Ohama Park',
+                location: '洲本市鹽屋 ／ 洲本市中田',
+                mustPlay: '文創空間、KIDS BASE 木質積木區、可帶孩子逛 O AWAJI 甜甜圈',
+                reason: '熱門文青與親子結合的休閒點，空間尺度兼具拍照與放電。',
+                hours: 'S BRICK 10:00–18:00、O AWAJI 至 17:00',
+                parking: 'S BRICK 專用免費停車場 ／ 大濱市營停車場',
+                backup: [
+                  {
+                    name: 'Parchez House of Scents（香草工坊）',
+                    reason: '全室內、可避雨的香草與乾燥花體驗，適合下雨臨時替代。',
+                  },
+                ],
+                tags: ['afternoon'],
+              },
+              {
+                type: '晚上行程',
+                time: '18:30',
+                duration: '90 分',
+                venue: 'A Happy Pancake（幸福鬆餅 幸福亭）',
+                location: '淡路市尾崎（西海岸）',
+                mustPlay: '通往幸福的天梯、海角鞦韆、幸福之鐘，搭配海景露台',
+                reason: '已預約 17:45 入場，緊扣 18:30 黃金落日前後，視覺與情緒集中度最高。',
+                hours: '平日 10:30–19:30、假日 09:00–19:30',
+                parking: '餐廳正對面專用停車場 P1～P4（免費 200 台）',
+                tags: ['evening'],
+              },
+              {
+                type: '晚餐',
+                time: '同上',
+                duration: '75–90 分',
+                venue: 'A Happy Pancake',
+                location: '淡路市尾崎（西海岸）',
+                mustPlay: '幸福舒芙蕾厚鬆餅、季節鮮果厚鬆餅、石窯現烤起司披薩',
+                reason: '和夕陽景觀同步，甜鹹兼具、同場景收尾效率高。',
+                hours: '同晚上行程',
+                parking: '同晚上行程',
+                tags: ['dinner'],
+                fallback: [
+                  {
+                    name: '淡路島ラーメン ポプラ',
+                    reason: '作為晚餐備案，清單備用店。',
+                  },
+                ],
+              },
+              {
+                type: '夜遊',
+                time: '彈性',
+                duration: '30–45 分',
+                venue: 'Cosmos 藥妝超市 志筑店 或 便利商店巡禮',
+                location: '淡路市志筑（住宿周邊）',
+                mustPlay: '日本面膜、眼藥水、合利他命、季節冰棒與零食',
+                reason: '非必去行程，僅用於夜間補貨、臨睡前補件。',
+                hours: '09:00–21:00',
+                parking: '門前專屬大型免費停車場',
+                backup: [
+                  {
+                    name: '住宿旁 7-ELEVEN／全家',
+                    reason: '步行可達，保底補給。',
+                  },
+                ],
+                tags: ['night'],
+              },
+            ],
+          },
+          {
+            date: '8/29（六）',
+            theme: '南淡路觀潮 → 大洋蔥 → 鳴門渦之道 → 德島眉山',
+            lodging: '8/29 夜宿：1-chōme-3-44-3 Kanazawa（德島市金沢１丁目３−44－3，〒770-0871）',
+            rainGuide: [
+              '若 11:40 前後風速偏高，觀潮船票盡量選 13:10 船並保留替代晚間行程。',
+              '下午若橋上步道風大，先改到大冢國際美術館室內段，保留晚霞時間。',
+              '德島夜景行程遇雨，先到眉山停車場等待 15 分，雨勢穩定再決定上線。',
+            ],
+            anchors: [
+              '8/29 10:30～11:00 從 Awaji Riverside Terrace 退房',
+              '8/29 11:30～12:45 接駁前往 徳島別荘ホテル2（金沢1丁目3-44-3號, 德島）',
+              '8/29 13:45～14:15 完成 徳島別荘ホテル2 入住',
+            ],
+            items: [
+              {
+                type: '早餐',
+                time: '早晨',
+                duration: '40 分',
+                venue: '淡路島オニオンキッチン うずの丘店',
+                location: '南淡路市福良丙（紀念館 1F）',
+                mustPlay: '全國冠軍淡路牛洋蔥漢堡、現炸甜洋蔥圈',
+                reason: '清單指定早點，與後續洋蔥主題行程高度對接，口味集中。',
+                hours: '09:00–16:00（週二公休）',
+                parking: '紀念館前專用大型停車場（免費 150 台）',
+                tags: ['breakfast'],
+              },
+              {
+                type: '早上行程',
+                time: '上午',
+                duration: '75 分',
+                venue: 'Uzu no Oka Onaruto Bridge Memorial Museum',
+                location: '南淡路市福良丙',
+                mustPlay: '夾洋蔥機體驗、3D 漩渦科學館、戶外洋蔥拍照景點',
+                reason: '趣味十足、親子適配高，且對應後續觀潮船觀察。',
+                hours: '09:00–17:00（週二公休）',
+                parking: '紀念館前專用大型停車場（免費 150 台）',
+                tags: ['day'],
+              },
+              {
+                type: '午餐',
+                time: '中午',
+                duration: '75 分',
+                venue: '絶景レストラン うずの丘',
+                location: '南淡路市福良丙（紀念館 2F）',
+                mustPlay: '櫻花鱒魚炙燒丼、淡路島洋蔥咖哩飯、淡路島海膽涮涮鍋',
+                reason: '視野與口味同步，吃完可直接銜接後續船上觀潮行程。',
+                hours: '10:00–15:00（L.O. 15:00）',
+                parking: '紀念館前專用大型停車場（免費 150 台）',
+                tags: ['lunch'],
+                backup: [
+                  {
+                    name: '海鮮 お食事処 心 (Shin)',
+                    reason: '同區域老店備案，提供生魚片與定食類。',
+                  },
+                ],
+              },
+              {
+                type: '下午行程1',
+                time: '觀潮時段',
+                duration: '75 分',
+                venue: 'うずしおクルーズ（道の駅 福良）',
+                location: '南淡路市福良港（道の駅 福良）',
+                mustPlay: '搭乘復古帆船觀賞鳴門大橋下方漩渦，體驗大型室內全景客艙',
+                reason: '當日海流最急為 11:40–13:00，13:10 班次為黃金節奏之一，需把握。',
+                hours: '09:30–16:10（依船班）',
+                parking: '道の駅 福良 專用停車場（免費 500+ 台）',
+                tags: ['afternoon'],
+                backup: [
+                  {
+                    name: '大型觀潮船備有室內客艙',
+                    reason: '名義下雨不受影響。',
+                  },
+                ],
+              },
+              {
+                type: '下午行程2',
+                time: '晚潮後',
+                duration: '75–90 分',
+                venue: 'Keino-matsubara Beach & 渦之道',
+                location: '南淡路市慶野松原 → 德島鳴門公園',
+                mustPlay: '沙灘踏浪 + 450m 大橋上步道高空玻璃地板觀景',
+                reason: '同日同一海岸條件，同時滿足沙灘放鬆與跨海震撼視角。',
+                hours: '慶野松原 09:00–18:00、鳴門公園第一停車場 500日圓',
+                parking: '慶野松原免費停車場 ／ 鳴門公園第一停車場',
+                tags: ['afternoon'],
+                backup: [
+                  {
+                    name: '大冢國際美術館（鳴門公園旁）',
+                    reason: '雨天可進入全室內陶板名畫展作為替代活動。',
+                  },
+                ],
+              },
+              {
+                type: '晚上行程',
+                time: '18:30 起',
+                duration: '90 分',
+                venue: '阿波舞會館＋登頂眉山',
+                location: '德島市新町橋 / 新町市中心',
+                mustPlay: '觀看阿波舞現場、空中纜車登頂 360° 夜景',
+                reason: '文化體驗強度高，結合夜景與表演，與德島行尾情緒最匹配。',
+                hours: '阿波舞會館至 21:00、纜車夜間營運中',
+                parking: '阿波舞會館收費停車場（可折抵）',
+                tags: ['evening'],
+              },
+              {
+                type: '晚餐',
+                time: '晚餐',
+                duration: '50–60 分',
+                venue: '徳島ラーメン 麺王 徳島駅前本店',
+                location: '德島市寺島本町東（德島車站前）',
+                mustPlay: '甘甜豚骨醬油拉麵、生蛋拌飯、酥脆煎餃',
+                reason: '回程後可直接吃下，重口味但不會太甜膩，夜間補能效率高。',
+                hours: '11:00–24:00（全年無休）',
+                parking: 'Times / 站前收費停車場（步行 1 分）',
+                backup: [
+                  {
+                    name: 'ポカラ 鳴門店',
+                    reason: '清單收錄備用店，提供爆漿起司烤餅與奶油雞肉咖哩。',
+                  },
+                ],
+                tags: ['dinner'],
+              },
+              {
+                type: '夜遊',
+                time: '彈性',
+                duration: '45–60 分',
+                venue: 'AEONMALL Tokushima（永旺夢樂城）',
+                location: '德島市南末廣町（距住宿 5 分）',
+                mustPlay: '超市、藥妝、名產（金長狸貓饅頭、鳴門金時地瓜甜點）',
+                reason: '規模大、關閉時間晚，回程採買舒適；屬彈性非必去行程。',
+                hours: '商場立體停車場：免費 2,100 台；超市至 23:00',
+                parking: '商場立體停車場',
+                tags: ['night'],
+              },
+            ],
+          },
+          {
+            date: '8/30（日）',
+            theme: '洲本老街懷舊 → 海景牛排 → 明石大橋夜景',
+            lodging: '8/30 夜宿：The Royal Park Canvas Kobe Sannomiya（神戶市中央區下山手通2丁目3番，〒650-0011）',
+            rainGuide: [
+              '若洲本舊城區偏濕，先改到淡路文化史料館等室內站，保留「下山古街散步」到天氣轉好。',
+              '晚間摩天輪路段如風大，直接進入明石大橋景觀室內區觀看夜景。',
+              '回神戶途中若疲勞，夜遊與超市可延後至隔天早晨完成（非強制）。',
+            ],
+            anchors: [
+              '8/30 10:00～12:10 從 徳島別荘ホテル2 前往 The Royal Park Canvas Kobe Sannomiya（神戶）',
+              '8/30 15:00～15:30 入住 The Royal Park Canvas Kobe Sannomiya（2-3 Shimoyamatedoori, Chuo, Kobe）',
+            ],
+            items: [
+              {
+                type: '早餐',
+                time: '上午',
+                duration: '45 分',
+                venue: '珈琲 蔵',
+                location: '德島市新町橋（新町川沿岸）',
+                mustPlay: '晨間吐司套餐、手沖咖啡',
+                reason: '原計畫安排德島市中心清雅早點，節奏偏慢，讓車程從淡路轉德島的前一晚不至於疲累。',
+                hours: '07:30–18:00',
+                parking: '店門前停車位（觀察前台空位與路側可臨停）',
+                trafficGuide: '上午從住宿出發後先以市區慢速前進，前往新町橋方向；有彈性可直接回德島住處調整。',
+                tags: ['breakfast'],
+                backup: [
+                  {
+                    name: '飯店自助早餐',
+                    reason: '若逛市內時間偏晚，可直接在住宿補足。',
+                  },
+                  {
+                    name: 'Cafe Morozoff 三宮中央店',
+                    reason: '也可作為早餐備案，偏甜點氛圍。',
+                  },
+                ],
+              },
+              {
+                type: '早上行程',
+                time: '上午',
+                duration: '80–90 分',
+                venue: 'Sumoto Castle Ruins & 立体舊街道巡禮',
+                location: '洲本市小路谷 ／ 洲本市本町',
+                mustPlay: '登三熊山頂天守閣眺望溫泉海灣、老街巷弄與淡路島洋蔥湯包選物',
+                reason: '行程深度高，兼具歷史與市井休閒，適合作為淡路最後半日收斂。',
+                hours: '洲本城全天開放（老街約 10:00 開）',
+                parking: '洲本城山頂免費停車場／洲本市營免費停車場',
+                backup: [
+                  {
+                    name: '淡路文化史料館（全室內）',
+                    reason: '雨天可轉換為室內文化導覽。',
+                  },
+                ],
+                tags: ['day'],
+              },
+              {
+                type: '午餐',
+                time: '午間',
+                duration: '75–90 分',
+                venue: 'Ocean Terrace',
+                location: '淡路市野島蟇浦（西海岸高處）',
+                mustPlay: '淡路牛肋眼／沙朗炭烤牛排套餐、洋蔥濃湯、海景鮮蔬沙拉吧',
+                reason: '名廚監修的海景牛排體驗，與前一天戶外活動形成肉食補能轉場。',
+                hours: '11:30–15:30（L.O. 14:00）',
+                parking: '餐廳附設專用大型停車場（免費 50 台）',
+                tags: ['lunch'],
+                fallback: [
+                  {
+                    name: '淡路島 鼓亭（洲本市本町老街）',
+                    reason: '備用路線與手打淡路牛肉燥烏龍麵，行程接近本地文化食。',
+                  },
+                ],
+              },
+              {
+                type: '下午行程1',
+                time: '下午',
+                duration: '50–60 分',
+                venue: 'Nojima Scuola（廢校文創）',
+                location: '淡路市野島蟇浦（西北海岸）',
+                mustPlay: '草泥馬（羊駝）互動、洋蔥麵包、農產市集',
+                reason: '結合兒童與文創地景，對大人可觀察小農與地方品牌。',
+                hours: '10:30–19:00（週三公休）',
+                parking: '校舍前專屬大型停車場（免費 80 台）',
+                tags: ['afternoon'],
+              },
+              {
+                type: '下午行程2',
+                time: '接續',
+                duration: '30–40 分',
+                venue: 'Eshima（繪島）',
+                location: '淡路市岩屋港（北端門戶）',
+                mustPlay: '觀察古事記傳說地景，紅白砂岩地形紋理',
+                reason: '淡路北端地質象徵地；路徑短、照相效果好，作為返回神戶前最後地標。',
+                hours: '全天開放',
+                parking: '岩屋港免費停車場（步行 2 分）',
+                backup: [
+                  {
+                    name: 'Road Station Awaji 內物產海鮮館',
+                    reason: '下雨時可改為室內轉場，仍保留地區脈絡。',
+                  },
+                ],
+                tags: ['afternoon'],
+              },
+              {
+                type: '晚上行程',
+                time: '18:30',
+                duration: '60–75 分',
+                venue: 'Awaji Service Area Ferris Wheel（淡路 SA）',
+                location: '淡路市岩屋（自動車道上行線）',
+                mustPlay: '透明摩天輪俯瞰明石海峽日落、夜色與橋上燈光秀',
+                reason: '作為淡路之旅的封箱儀式，視野最完整且有情緒收束感。',
+                hours: '09:00–21:00（SA 24 小時）',
+                parking: '淡路 SA 專用大型停車場（免費 400+ 台）',
+                tags: ['evening'],
+              },
+              {
+                type: '晚餐',
+                time: '晚間',
+                duration: '50–60 分',
+                venue: '淡路 SA 景觀餐廳（Royal Dining / 美食街）',
+                location: '淡路市岩屋（淡路 SA 上行線）',
+                mustPlay: '淡路牛檸檬鐵板牛排、蛸めし、淡路洋蔥牛肉拉麵',
+                reason: '在景觀窗前吃到彩虹點燈夜景，完成後可直接開車進神戶市區住宿。',
+                hours: '07:00–22:00（美食街 24 小時）',
+                parking: '同上',
+                tags: ['dinner'],
+              },
+              {
+                type: '夜遊',
+                time: '回到神戶後可彈性',
+                duration: '45–60 分',
+                venue: '唐吉诃德 三宮店 或 Hankyu Oasis 超市',
+                location: '神戶市中央區下山手通',
+                mustPlay: '日本美妝、藥妝、伴手禮、神戶限定甜點',
+                reason: '入住後可自由散步與最後採買；不去亦可直接休息。',
+                hours: '24 小時（唐吉诃德）',
+                parking: '飯店或周邊停車場，步行 4 分即可到',
+                backup: [
+                  {
+                    name: '住宿旁 Lawson / 全家',
+                    reason: '最保守後備方案。',
+                  },
+                ],
+                tags: ['night'],
+              },
+            ],
+          },
+          {
+            date: '8/31（一）',
+            theme: '8/31 航班日：吃完早餐直接還車，不再安排行程',
+            lodging: '8/31 返台日：由神戶市中央區下山手通住宿附近直接前往機場',
+            rainGuide: ['回程日不新增景點；若天候突變先維持「神戶西村 → 生田神社/機場」最短路徑，夜遊項目全取消。'],
+            anchors: [
+              '8/31 07:30～08:00 從 The Royal Park Canvas Kobe Sannomiya 退房',
+              '8/31 08:30～09:30 神戶西村咖啡店用餐',
+              '8/31 10:30 出發前往神戶機場，完成還車與機場流程',
+              '8/31 12:45 從神戶機場返台（班機起飛）',
+            ],
+            items: [
+              {
+                type: '早餐',
+                time: '07:30–08:20',
+                duration: '50–60 分',
+                venue: '神戶西村咖啡店 中山手本店',
+                location: '神戶市中央區中山手通（離住宿步行 5 分）',
+                mustPlay: '經典晨間厚吐司、三明治、生菜培根、手沖咖啡',
+                reason: '日式舊式喫茶品牌，早晨氛圍完整，為回程留出穩定節奏。',
+                hours: '08:30–23:00',
+                parking: '飯店步行前往',
+                backup: [
+                  {
+                    name: '飯店自助早餐',
+                    reason: '時間不確定時可先用此備用。',
+                  },
+                  {
+                    name: 'Cafe Morozoff 三宮中央店',
+                    reason: '備用高品質早點。',
+                  },
+                ],
+                tags: ['breakfast'],
+              },
+              {
+                type: '行前',
+                time: '10:30',
+                duration: '40 分',
+                venue: '生田神社（可選）→ 神戶機場',
+                location: '神戶市中央區下山手通 ／ 神戶機場',
+                mustPlay: '先到神戶機場還車，再完成行李與登機前流程',
+                reason: '航班日不再加入景點，直接以流程為主，保留時間充裕度。',
+                hours: '10:30 前往機場，12:45 起飛',
+                parking: '生田神社旁停車場／機場租車歸還處',
+                tags: ['day'],
+              },
+            ],
+          },
+        ],
+      }
+
+      const timeFlowByDay = {
+        0: [
+          { journey: '10:30→10:50', visit: '10:50→11:20', transfer: '11:20→11:40' },
+          { journey: '11:20→11:40', visit: '11:40→12:20', transfer: '12:20→12:50' },
+          { journey: '12:50→13:00', visit: '13:00→13:50', transfer: '13:50→14:10' },
+          { journey: '14:10→14:20', visit: '14:20→16:00', transfer: '16:00→16:10' },
+          { journey: '16:10→16:20', visit: '16:20→17:20', transfer: '17:20→17:35' },
+          { journey: '17:35→17:45', visit: '17:45→18:30', transfer: '18:30→18:35' },
+          { journey: '18:30→18:30', visit: '18:30→20:20', transfer: '20:20→20:30' },
+          { journey: '20:30→20:35', visit: '20:35→21:05', transfer: '21:05→21:30' },
+        ],
+        1: [
+          { journey: '08:20→08:30', visit: '08:30→08:50', transfer: '08:50→09:20' },
+          { journey: '09:20→09:35', visit: '09:35→11:35', transfer: '11:35→12:00' },
+          { journey: '12:00→12:45', visit: '13:00→13:50', transfer: '13:50→14:20' },
+          { journey: '14:20→14:30', visit: '14:30→15:20', transfer: '15:20→15:30' },
+          { journey: '15:30→15:40', visit: '15:40→16:55', transfer: '16:55→17:10' },
+          { journey: '17:10→17:20', visit: '17:20→18:00', transfer: '18:00→18:30' },
+          { journey: '18:30→18:35', visit: '18:35→20:10', transfer: '20:10→20:25' },
+          { journey: '20:25→20:30', visit: '20:30→21:00', transfer: '21:00→21:10' },
+        ],
+        2: [
+          { journey: '07:30→07:45', visit: '07:45→08:25', transfer: '08:25→08:40' },
+          { journey: '08:40→08:50', visit: '08:50→10:05', transfer: '10:05→10:20' },
+          { journey: '10:20→10:30', visit: '10:30→11:35', transfer: '11:35→11:50' },
+          { journey: '11:50→12:00', visit: '12:00→13:10', transfer: '13:10→13:20' },
+          { journey: '13:20→13:30', visit: '13:30→14:40', transfer: '14:40→14:55' },
+          { journey: '14:55→15:05', visit: '15:05→16:40', transfer: '16:40→17:00' },
+          { journey: '17:00→17:15', visit: '17:15→18:20', transfer: '18:20→18:30' },
+          { journey: '18:30→18:40', visit: '18:40→20:30', transfer: '20:30→20:45' },
+        ],
+        3: [
+          { journey: '07:30→07:40', visit: '07:40→08:20', transfer: '08:20→08:30' },
+          { journey: '08:30→08:40', visit: '08:40→10:20', transfer: '10:20→10:30' },
+          { journey: '10:30→10:45', visit: '10:45→11:45', transfer: '11:45→12:10' },
+          { journey: '12:10→12:20', visit: '12:20→13:30', transfer: '13:30→13:40' },
+          { journey: '13:40→14:00', visit: '14:00→14:50', transfer: '14:50→15:05' },
+          { journey: '15:05→15:20', visit: '15:20→16:30', transfer: '16:30→16:45' },
+          { journey: '16:45→17:00', visit: '17:00→17:55', transfer: '17:55→18:15' },
+          { journey: '18:15→18:20', visit: '18:20→21:10', transfer: '21:10→21:20' },
+        ],
+        4: [
+          { journey: '07:30→08:20', visit: '08:20→09:15', transfer: '09:15→10:30' },
+          { journey: '10:30→10:40', visit: '10:40→11:50', transfer: '11:50→12:45' },
+        ],
+      }
+
+      const modeTabsEl = document.getElementById('mode-tabs')
+      const dayTabsEl = document.getElementById('day-tabs')
+      const typeTabsEl = document.getElementById('type-tabs')
+      const scheduleEl = document.getElementById('schedule')
+      let activeMode = 'itinerary'
+      let activeDay = -1
+      let activeFilter = 'all'
+
+      const filterOptions = [
+        { id: 'all', label: '全部' },
+        { id: 'breakfast', label: '早餐' },
+        { id: 'day', label: '上午行程' },
+        { id: 'lunch', label: '午餐' },
+        { id: 'afternoon', label: '下午行程' },
+        { id: 'evening', label: '傍晚／晚上' },
+        { id: 'dinner', label: '晚餐' },
+        { id: 'night', label: '夜遊' },
+      ]
+
+      const guideCards = [
+        {
+          id: 'route',
+          title: '🚗 自駕寶典：日程節奏與導航',
+          points: [
+            '每天下午 15:00 前優先完成主要景點位移，18:00 後僅保留「慢速散步 + 休息補給」。',
+            '每次長駕後安排 20–30 分鐘彈性休息，避免小孩與長者持續疲勞。',
+            '若看到「轉場」欄位明顯超過 25 分鐘，可改由景點內部駐足點改用室內替代行程。',
+            '建議每次離開景點先拍 1 張總體照，回程找路時可依照片記住方向，不必完全依手機。',
+          ],
+        },
+        {
+          id: 'parking',
+          title: '🅿️ 停車與燃料節奏',
+          points: [
+            '每晚回到住宿前先確認住宿附屬停車空位是否有夜間平價區；若附近夜間位不穩，先預留 10 分鐘繞行。',
+            '淡路北到南段為長距離移動天，建議每段行前預估油量不足 1/3 就補給，減少臨時焦慮。',
+            '若天候不佳，盡量把大巴士段轉為服務區或室內區域，避免臨時臨時找站。',
+            '夜遊採買點一般無需長時間停留，若停車滿位直接就近換超商補貨。',
+          ],
+        },
+        {
+          id: 'backup',
+          title: '🌧️ 雨備與替代',
+          points: [
+            '全日行程如遇大雨：將戶外步道縮短 30–50 分鐘，改走同地區室內展覽/商店/物產館。',
+            '每晚保留 30 分鐘應急緩衝，不把「景點備案」與「夜遊」硬性綁定，依即時天氣調整。',
+            '兒童用具（外套、雨衣、一次性換洗）在車廂前排位放置，避免下車奔走找不到。',
+            '若連續降雨，晚上可把「逛超市」改為「休息 + 下車補給 + 洗澡」，以睡眠確保次日體力。',
+          ],
+        },
+      ]
+
+      const modeOptions = [
+        { id: 'itinerary', label: '🗺️ 互動排程' },
+        { id: 'guide', label: '🚗 自駕寶典' },
+      ]
+
+      function labelForFilterId(id) {
+        const found = filterOptions.find((item) => item.id === id)
+        return found ? found.label : '全部'
+      }
+
+      function buildMapUrl(item) {
+        const query = [item.venue, item.location].filter(Boolean).join(' ')
+        return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
+      }
+
+      function buildRouteUrl(originItem, destinationItem) {
+        if (!originItem || !destinationItem) {
+          return buildMapUrl(destinationItem)
+        }
+
+        const origin = [originItem.venue, originItem.location].filter(Boolean).join(' ')
+        const destination = [destinationItem.venue, destinationItem.location].filter(Boolean).join(' ')
+
+        if (!origin || !destination) {
+          return buildMapUrl(destinationItem)
+        }
+
+        return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&travelmode=driving`
+      }
+
+      function buildDayRouteUrl(day) {
+        if (!day || !day.items || day.items.length < 2) {
+          return ''
+        }
+
+        const points = []
+        day.items.forEach((item) => {
+          const query = [item.venue, item.location].filter(Boolean).join(' ')
+          if (!query) {
+            return
+          }
+          if (!points.length || points[points.length - 1] !== query) {
+            points.push(query)
+          }
+        })
+
+        if (points.length < 2) {
+          return ''
+        }
+
+        const params = new URLSearchParams({
+          api: '1',
+          travelmode: 'driving',
+          origin: points[0],
+          destination: points[points.length - 1],
+        })
+
+        const via = points.slice(1, -1).join('|')
+        if (via) {
+          params.set('waypoints', via)
+        }
+
+        return `https://www.google.com/maps/dir/?${params.toString()}`
+      }
+
+      function getTrafficGuide(item) {
+        return (
+          item.trafficGuide ||
+          `從前一景點導航到「${item.venue}」，視線路況走最快路段；有小孩與長者同行時優先選擇有遮蔭/有停留休息點的路段。`
+        )
+      }
+
+      function buildTravelGuide(item, prevItem, nextItem, flow, nextFlow) {
+        if (item.trafficGuide) {
+          return item.trafficGuide
+        }
+
+        const fromLabel = prevItem ? prevItem.venue : '起點（抵達/離開住宿）'
+        const nextLabel = nextItem ? nextItem.venue : '當日行程終點'
+        const departTime = parseWindowStart(flow.journey) || parseWindowEnd(flow.journey)
+        const arriveTime = parseWindowEnd(flow.journey) || parseWindowStart(flow.visit)
+        const travel = departTime && arriveTime ? `，預估車程 ${departTime}→${arriveTime}（${durationBetween(`${departTime}→${arriveTime}`)}）` : ''
+        const toNextTime = nextFlow ? parseWindowEnd(flow.visit) : null
+        const toNext = nextFlow && toNextTime
+          ? `；離開後銜接 ${nextLabel}（${toNextTime}→${parseWindowStart(nextFlow.journey)}）`
+          : ''
+
+        return `由「${fromLabel}」前往「${item.venue}」${travel}，完成後銜接到「${nextLabel}」。${toNext}`
+      }
+
+      function toDisplayWindow(value, fallback = '—') {
+        return value || fallback
+      }
+
+      function toMinutes(timeText) {
+        const [hour, minute] = String(timeText || '00:00')
+          .trim()
+          .split(':')
+          .map((value) => Number(value))
+        if (Number.isNaN(hour) || Number.isNaN(minute)) {
+          return null
+        }
+        return hour * 60 + minute
+      }
+
+      function durationBetween(window) {
+        if (!window || typeof window !== 'string' || !window.includes('→')) return '—'
+        const [fromText, toText] = window.split('→')
+        const from = toMinutes(fromText)
+        const to = toMinutes(toText)
+        if (from === null || to === null) return '—'
+        const duration = to >= from ? to - from : to + 1440 - from
+        return `${duration} 分鐘`
+      }
+
+      function parseWindow(window) {
+        const formatted = toDisplayWindow(window)
+        return `${formatted}（${durationBetween(formatted)}）`
+      }
+
+      function parseWindowStart(window) {
+        const source = toDisplayWindow(window)
+        if (typeof source !== 'string') {
+          return null
+        }
+        const start = source.split('→')[0]?.trim()
+        return start || null
+      }
+
+      function parseWindowEnd(window) {
+        const source = toDisplayWindow(window)
+        if (typeof source !== 'string') {
+          return null
+        }
+        const end = source.split('→')[1]?.trim()
+        return end || null
+      }
+
+      function getFlowForItem(dayIndex, itemIndex, item) {
+        const dayFlow = timeFlowByDay[dayIndex] || []
+        const flow = item.timeFlow || dayFlow[itemIndex] || {}
+        return {
+          journey: toDisplayWindow(flow.journey || flow.fromPrevious || item.journeyWindow || item.time),
+          visit: toDisplayWindow(flow.visit || flow.stay || item.timeWindow || flow.time || item.time),
+          transfer: toDisplayWindow(flow.transfer || flow.toNext || item.transferWindow),
+        }
+      }
+
+      function createModeTabs() {
+        modeTabsEl.innerHTML = ''
+        modeOptions.forEach((opt) => {
+          const btn = createElement('button', `mode-tab ${activeMode === opt.id ? 'is-active' : ''}`)
+          btn.type = 'button'
+          btn.dataset.kind = 'mode'
+          btn.dataset.mode = opt.id
+          btn.textContent = opt.label
+          modeTabsEl.appendChild(btn)
+        })
+      }
+
+      function renderGuide() {
+        const guideShell = document.createElement('section')
+        guideShell.className = 'guide-shell'
+
+        const guideTitle = document.createElement('h2')
+        guideTitle.className = 'guide-title'
+        guideTitle.textContent = '自駕寶典（可直接拿到車上）'
+        guideShell.appendChild(guideTitle)
+
+        const grid = document.createElement('div')
+        grid.className = 'guide-grid'
+
+        guideCards.forEach((card) => {
+          const cardElement = document.createElement('article')
+          cardElement.className = 'guide-card'
+          cardElement.innerHTML = `
+            <h3>${card.title}</h3>
+            <ul class="guide-list">
+              ${card.points.map((point) => `<li>${point}</li>`).join('')}
+            </ul>
+          `
+          grid.appendChild(cardElement)
+        })
+
+        const quick = document.createElement('article')
+        quick.className = 'guide-card'
+        quick.innerHTML = `
+          <h3>📌 夜遊 / 雨備切換規則</h3>
+          <ul class="guide-list">
+            <li>每段行程完成後回車時，先確認下一段剩餘時間，超過 20 分鐘仍未可入場，則立即改走備案。</li>
+            <li>夜間路段如雨天，優先選擇「最近室內可補充」再回住宿休息，避免體力集中崩潰。</li>
+            <li>每位成員攜帶 1 套外套與紙尿布/紙巾，防止小孩臨時需求被交通節奏打斷。</li>
+          </ul>
+        `
+        grid.appendChild(quick)
+
+        guideShell.appendChild(grid)
+        scheduleEl.appendChild(guideShell)
+      }
+
+      function renderRainGuide(day, dayIndex) {
+        if (!day.rainGuide || !day.rainGuide.length) {
+          return
+        }
+
+        const detail = document.createElement('details')
+        detail.className = 'notes'
+        detail.innerHTML = `<summary>☔ Day ${dayIndex + 1} 雨備</summary>
+          <ul>${day.rainGuide.map((line) => `<li>${line}</li>`).join('')}</ul>`
+        scheduleEl.appendChild(detail)
+      }
+
+      function createTabs() {
+        dayTabsEl.innerHTML = ''
+        const first = createElement('button', `tab ${activeDay === -1 ? 'is-active' : ''}`)
+        first.type = 'button'
+        first.dataset.kind = 'day'
+        first.dataset.day = '-1'
+        first.textContent = '全部 5 天'
+        dayTabsEl.appendChild(first)
+        tripData.days.forEach((day, index) => {
+          const btn = createElement('button', `tab ${activeDay === index ? 'is-active' : ''}`)
+          btn.type = 'button'
+          btn.dataset.kind = 'day'
+          btn.dataset.day = `${index}`
+          btn.textContent = `Day ${index + 1}`
+          const sub = createElement('span', 'tab-sub')
+          sub.textContent = day.date
+          btn.appendChild(sub)
+          dayTabsEl.appendChild(btn)
+        })
+
+        typeTabsEl.innerHTML = ''
+        filterOptions.forEach((opt) => {
+          const btn = createElement('button', `tab ${activeFilter === opt.id ? 'is-active' : ''}`)
+          btn.type = 'button'
+          btn.dataset.kind = 'type'
+          btn.dataset.type = opt.id
+          btn.textContent = opt.label
+          typeTabsEl.appendChild(btn)
+        })
+
+        const isGuideMode = activeMode === 'guide'
+
+        dayTabsEl.style.display = isGuideMode ? 'none' : 'flex'
+        typeTabsEl.style.display = isGuideMode ? 'none' : 'flex'
+      }
+
+      const SEGMENT_CLASS_BY_TAG = {
+        breakfast: 'breakfast',
+        day: 'day',
+        lunch: 'lunch',
+        afternoon: 'afternoon',
+        evening: 'evening',
+        dinner: 'dinner',
+        night: 'night',
+      }
+
+      function firstTag(item) {
+        return item.tags?.find((tag) => SEGMENT_CLASS_BY_TAG[tag]) || 'day'
+      }
+
+      function createElement(tagName, className, text) {
+        const el = document.createElement(tagName)
+        if (className) {
+          el.className = className
+        }
+        if (text) {
+          el.textContent = text
+        }
+        return el
+      }
+
+      function createMetaField(label, value, options = {}) {
+        const wrap = createElement('article', 'meta-block')
+        const title = createElement('h4')
+        title.textContent = label
+        const body = createElement('p', `meta-value${options.mono ? ' mono' : ''}`)
+        body.textContent = value
+
+        wrap.appendChild(title)
+        wrap.appendChild(body)
+        return wrap
+      }
+
+      function createPill(label, value, variant = '') {
+        const pill = createElement('div', `pill${variant ? ` ${variant}` : ''}`)
+        const pillTitle = createElement('strong')
+        const pillBody = createElement('div')
+        pillTitle.textContent = label
+        pillBody.textContent = value
+        pill.appendChild(pillTitle)
+        pill.appendChild(pillBody)
+        return pill
+      }
+
+      function createTimeChip(label, window) {
+        const chip = createElement('span', 'time-chip')
+        chip.innerHTML = `<strong>${label}</strong><span class="meta">${window}（${durationBetween(window)}）</span>`
+        return chip
+      }
+
+      function createTimeFlowLine(label, from, to, note) {
+        const line = createElement('div', 'flow-item')
+        const start = from || '—'
+        const end = to || '—'
+        const duration = start !== '—' && end !== '—' ? durationBetween(`${start}→${end}`) : '—'
+        line.innerHTML = `<strong>${label}</strong>${start} → ${end}（${duration}）${note ? `｜${note}` : ''}`
+        return line
+      }
+
+      function createTimeFlowPanel(flow, nextFlow) {
+        const flowWrap = createElement('div', 'time-flow time-flow-line')
+        const journeyFrom = parseWindowStart(flow.journey)
+        const journeyTo = parseWindowEnd(flow.journey)
+        const visitFrom = parseWindowStart(flow.visit)
+        const visitTo = parseWindowEnd(flow.visit)
+        const transferTo = nextFlow ? parseWindowStart(nextFlow.journey) : parseWindowStart(flow.transfer)
+        flowWrap.appendChild(createTimeFlowLine('上一步出發 → 本點到達', journeyFrom, journeyTo, '交通段'))
+        flowWrap.appendChild(createTimeFlowLine('本點開始 → 本點結束', visitFrom, visitTo, '景點停留'))
+        flowWrap.appendChild(createTimeFlowLine('本點離場 → 下一點開始', visitTo, transferTo, '後段銜接'))
+        return flowWrap
+      }
+
+      function createPointSequenceLine(flow, nextFlow, nextVenue) {
+        const line = createElement('p', 'seg-subline')
+        const visitStart = parseWindowStart(flow.visit)
+        const visitEnd = parseWindowEnd(flow.visit)
+        const arrival = parseWindowStart(flow.journey)
+        const depart = parseWindowEnd(flow.transfer)
+
+        if (!visitEnd || visitEnd === '—' || !nextFlow) {
+          const finalTime = visitEnd || depart || '—'
+          line.innerHTML = `<strong>本日節點：</strong>${arrival || '—'}到場，${visitStart || visitEnd ? `${visitStart}→${visitEnd}` : '—'}，最後停留到 ${finalTime}。`
+          return line
+        }
+
+        const nextStart = parseWindowStart(nextFlow.journey)
+        const bridgeText = nextStart ? `${visitEnd} → ${nextStart}` : '—'
+        const bridgeDur = durationBetween(bridgeText === '—' ? '' : bridgeText)
+        const nextLabel = nextVenue ? `｜下一點：${nextVenue}` : ''
+        const departToNext = durationBetween(`${visitEnd}→${nextStart}`)
+        line.innerHTML = `<strong>點位銜接：</strong>${visitEnd || '—'}→${nextStart || '—'}（${departToNext}）｜${nextLabel}；本段起訖 ${visitStart || '—'}→${visitEnd || '—'}`
+        return line
+      }
+
+      function createPointBridgeCard(flow, nextFlow) {
+        const card = createElement('p', 'time-bridge')
+        const from = parseWindowEnd(flow.visit)
+        const to = nextFlow ? parseWindowStart(nextFlow.journey) : parseWindowEnd(flow.transfer)
+        if (!from || from === '—' || !to || to === '—') {
+          card.innerHTML = `<strong>行程終點：</strong>${parseWindowEnd(flow.transfer) || '—'}`
+          return card
+        }
+        const toNext = durationBetween(`${from}→${to}`)
+        card.innerHTML = `<strong>點位節點：</strong>${from} → ${to}（${toNext}）`
+        return card
+      }
+
+      function createBackupBlock(item) {
+        const backups = []
+        if (item.rainBackup) {
+          backups.push({ name: '雨備', reason: item.rainBackup })
+        }
+        if (item.backup) {
+          item.backup.forEach((r) => backups.push({ name: r.name, reason: r.reason }))
+        }
+        if (item.fallback) {
+          item.fallback.forEach((r) => backups.push({ name: r.name, reason: r.reason }))
+        }
+
+        if (!backups.length) {
+          return null
+        }
+
+        const details = createElement('details', 'notes')
+        details.innerHTML = `<summary>☂️ 雨備 / 備案</summary>`
+        const ul = createElement('ul')
+        backups.forEach((line) => {
+          const li = createElement('li')
+          li.textContent = `${line.name}（${line.reason}）`
+          ul.appendChild(li)
+        })
+        details.appendChild(ul)
+        return details
+      }
+
+      function createMapLink(url, label, isPrimary = false) {
+        const link = createElement('a', 'action-link')
+        link.href = url
+        link.target = '_blank'
+        link.rel = 'noopener noreferrer'
+        link.textContent = label
+        if (isPrimary) {
+          link.style.fontWeight = '800'
+        }
+        return link
+      }
+
+      function createReasonPanel(item, flow, nextFlow, nextItem) {
+        const pointToNext = nextFlow ? `${parseWindowEnd(flow.visit)} → ${parseWindowStart(nextFlow.journey)}` : null
+        const travelDuration = pointToNext ? durationBetween(pointToNext) : null
+        const points = [
+          `推薦原因：${item.reason || '—'}`,
+          flow.journey ? `交通銜接：${flow.journey}` : null,
+          flow.visit ? `景點遊玩：${flow.visit}` : null,
+          flow.transfer ? `交通離場：${flow.transfer}` : null,
+          pointToNext ? `銜接：${pointToNext}（${travelDuration}）` : null,
+          `下一段類型建議：${nextItem ? nextItem.type : '本日行程終點'}`,
+          parseWindowEnd(flow.visit) && pointToNext
+            ? `本點離場時間：${parseWindowEnd(flow.visit)}，下一點開始時間：${parseWindowStart(nextFlow.journey)}。`
+            : null,
+        ]
+          .filter(Boolean)
+          .map((itemText) => `<li>${itemText}</li>`)
+
+        const panel = createElement('div', 'item-panel reason-panel')
+        panel.innerHTML = `<strong>推薦原因（更詳細）</strong><ul>${points.join('')}</ul>`
+        return panel
+      }
+
+      function renderItinerary() {
+        tripData.days.forEach((day, dayIndex) => {
+          if (activeDay !== -1 && dayIndex !== activeDay) {
+            return
+          }
+
+          const visibleItems = day.items.filter(
+            (item) => activeFilter === 'all' || item.tags.includes(activeFilter),
+          )
+          const timelineItems = activeFilter === 'all' ? day.items : visibleItems
+
+          const dayCard = document.createElement('section')
+          dayCard.className = 'card'
+
+          const titleWrap = document.createElement('div')
+          titleWrap.className = 'day-title'
+          const dayHeader = document.createElement('div')
+          dayHeader.className = 'day-header'
+          const badge = createElement('span', 'day-badge')
+          badge.textContent = `Day ${dayIndex + 1}`
+          const date = createElement('span', 'day-date')
+          date.textContent = day.date
+          const code = createElement('span', 'day-code')
+          code.textContent = `AWAJI-${String(dayIndex + 1).padStart(2, '0')}`
+          dayHeader.appendChild(badge)
+          dayHeader.appendChild(date)
+          dayHeader.appendChild(code)
+
+          const title = document.createElement('h2')
+          title.textContent = '行程總覽'
+          const theme = createElement('div', 'day-theme')
+          theme.textContent = day.theme
+          const dayFlow = day.items.length
+            ? {
+                start: parseWindowStart(getFlowForItem(dayIndex, 0, day.items[0]).journey) || '—',
+                end: parseWindowEnd(getFlowForItem(dayIndex, day.items.length - 1, day.items[day.items.length - 1]).transfer) || '—',
+              }
+            : { start: '—', end: '—' }
+          const daySpan = `${dayFlow.start}→${dayFlow.end}`
+          const dayDuration = durationBetween(daySpan) || '—'
+
+          const summary = createElement('div', 'day-time-summary')
+          summary.innerHTML = `<span class="time-title">時間流</span><span>${daySpan}</span><span class="time-sep">|</span><span>${dayDuration}</span><span class="time-sep">|</span><span>站點 ${timelineItems.length} 筆</span>`
+
+          const routeUrl = buildDayRouteUrl(day)
+          const routeWrap = createElement('a', 'day-route')
+          if (routeUrl) {
+            routeWrap.href = routeUrl
+            routeWrap.target = '_blank'
+            routeWrap.rel = 'noopener noreferrer'
+            routeWrap.textContent = '🗺️ 開啟今日完整導航'
+          }
+
+          titleWrap.appendChild(dayHeader)
+          titleWrap.appendChild(title)
+          titleWrap.appendChild(theme)
+          titleWrap.appendChild(summary)
+          if (routeUrl) {
+            titleWrap.appendChild(routeWrap)
+          }
+          dayCard.appendChild(titleWrap)
+
+          if (day.lodging) {
+            const lodgingWrap = document.createElement('div')
+            lodgingWrap.className = 'lodging-card'
+            lodgingWrap.innerHTML = `<strong>住宿</strong>${day.lodging}`
+            dayCard.appendChild(lodgingWrap)
+          }
+
+          if (day.anchors && day.anchors.length) {
+            const anchors = document.createElement('div')
+            anchors.className = 'anchors'
+            anchors.innerHTML = day.anchors
+              .map((anchor) => `<div class="anchor-item"><strong>行程參考：</strong>${anchor}</div>`)
+              .join('')
+            dayCard.appendChild(anchors)
+          }
+
+          const tagList = document.createElement('div')
+          tagList.className = 'tag-list'
+          visibleItems.forEach((item) => {
+            const chip = document.createElement('span')
+            chip.className = 'tag'
+            chip.textContent = item.type
+            tagList.appendChild(chip)
+          })
+          if (tagList.children.length > 0) {
+            dayCard.appendChild(tagList)
+          }
+
+          const timeline = document.createElement('div')
+          timeline.className = 'timeline'
+
+          if (!timelineItems.length) {
+            const empty = document.createElement('div')
+            empty.className = 'empty'
+            empty.textContent = `目前沒有符合「${labelForFilterId(activeFilter)}」的項目。`
+            timeline.appendChild(empty)
+            dayCard.appendChild(timeline)
+            scheduleEl.appendChild(dayCard)
+            renderRainGuide(day, dayIndex)
+            return
+          }
+
+          timelineItems.forEach((item) => {
+            const itemIndexInDay = day.items.indexOf(item)
+            const flow = getFlowForItem(dayIndex, itemIndexInDay, item)
+            const mapUrl = buildMapUrl(item)
+            const itemOrderIndex = timelineItems.indexOf(item)
+            const prevItem = timelineItems[itemOrderIndex - 1]
+            const nextItem = timelineItems[itemOrderIndex + 1]
+            const nextItemIndexInDay = nextItem ? day.items.indexOf(nextItem) : -1
+            const nextFlow = nextItem ? getFlowForItem(dayIndex, nextItemIndexInDay, nextItem) : null
+            const routeToNext = nextItem ? buildRouteUrl(item, nextItem) : ''
+            const trafficGuide = buildTravelGuide(item, prevItem, nextItem, flow, nextFlow)
+            const itemType = firstTag(item)
+
+            const seg = document.createElement('article')
+            seg.className = 'segment'
+
+            const head = document.createElement('div')
+            head.className = 'seg-head'
+
+            const typeBadge = createElement('span', `seg-type ${itemType}`)
+            typeBadge.textContent = item.type
+            const timeText = createElement('span', 'seg-time')
+            timeText.innerHTML = `本點（${flow.visit}）｜前段交通：${flow.journey}`
+            head.appendChild(typeBadge)
+            head.appendChild(timeText)
+
+            const title = createElement('h3', 'seg-title')
+            title.textContent = item.venue
+
+            const place = createElement('p', 'seg-sub')
+            place.textContent = item.location
+
+            const grid = document.createElement('div')
+            grid.className = 'seg-grid'
+
+            const flowLine = createPointSequenceLine(flow, nextFlow, nextItem?.venue)
+            const flowTitle = createElement('div', 'time-grid-title')
+            flowTitle.textContent = '時間窗（旅途 → 景點 → 轉場）'
+            grid.appendChild(flowTitle)
+            grid.appendChild(createTimeFlowPanel(flow, nextFlow))
+            grid.appendChild(flowLine)
+            grid.appendChild(createPointBridgeCard(flow, nextFlow))
+            grid.appendChild(createPill('建議停留', item.duration || '未指定', 'meta-small'))
+            grid.appendChild(createPill('營業時間', item.hours || '—', 'meta-small'))
+
+            const mustPlay = createPill('推薦必吃／必玩', item.mustPlay || '—')
+            grid.appendChild(mustPlay)
+
+            const parking = createMetaField('停車地點', item.parking || '—')
+            const traffic = createMetaField('交通指引', trafficGuide)
+            const arrival = createMetaField('導航建議', mapUrl ? '點擊下方連結，開啟 Google 導航' : '—')
+            const recommend = createReasonPanel(item, flow, nextFlow, nextItem)
+
+            const metaStack = document.createElement('div')
+            metaStack.className = 'meta-stack'
+            metaStack.appendChild(parking)
+            metaStack.appendChild(traffic)
+            metaStack.appendChild(arrival)
+            grid.appendChild(metaStack)
+            grid.appendChild(recommend)
+
+            const links = document.createElement('div')
+            links.className = 'route-links'
+            links.appendChild(createMapLink(mapUrl, 'Google 導航', true))
+            links.appendChild(createMapLink(buildMapUrl(item), 'Google 搜尋地點', false))
+            if (routeToNext) {
+              const nextLink = createElement('a', 'action-link')
+              nextLink.href = routeToNext
+              nextLink.target = '_blank'
+              nextLink.rel = 'noopener noreferrer'
+              nextLink.textContent = `到下一站：${nextItem.venue}`
+              links.appendChild(nextLink)
+            } else {
+              const terminal = createElement('span', 'tiny-text')
+              terminal.textContent = '本日行程終點'
+              links.appendChild(terminal)
+            }
+            grid.appendChild(links)
+
+            seg.appendChild(head)
+            seg.appendChild(title)
+            seg.appendChild(place)
+            seg.appendChild(grid)
+
+            const backup = createBackupBlock(item)
+            if (backup) {
+              seg.appendChild(backup)
+            }
+
+            timeline.appendChild(seg)
+          })
+
+          dayCard.appendChild(timeline)
+          scheduleEl.appendChild(dayCard)
+          renderRainGuide(day, dayIndex)
+        })
+      }
+
+      function render() {
+        scheduleEl.innerHTML = ''
+        if (activeMode === 'guide') {
+          renderGuide()
+          return
+        }
+        renderItinerary()
+      }
+
+      function onTabClick(event) {
+        const target = event.target.closest('button')
+        if (!target) {
+          return
+        }
+
+        const kind = target.dataset.kind
+        if (kind === 'mode') {
+          activeMode = target.dataset.mode
+          activeDay = -1
+          activeFilter = 'all'
+          createTabs()
+          render()
+          return
+        }
+
+        if (kind === 'day') {
+          activeDay = Number(target.dataset.day)
+        }
+        if (kind === 'type') {
+          activeFilter = target.dataset.type
+        }
+
+        createTabs()
+        render()
+      }
+
+      function init() {
+        createModeTabs()
+        createTabs()
+        modeTabsEl.addEventListener('click', onTabClick)
+        dayTabsEl.addEventListener('click', onTabClick)
+        typeTabsEl.addEventListener('click', onTabClick)
+        render()
+      }
+
+      init()
+    </script>
+  </body>
+</html>

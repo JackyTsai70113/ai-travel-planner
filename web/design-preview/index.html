@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Trip design gallery</title>
+  <style>
+    :root { color-scheme: light; font: 16px/1.55 system-ui, sans-serif; --ink:#17324d; --muted:#52677a; --paper:#fffdf8; --wash:#eef6f5; --accent:#087f8c; --line:#c8d8d8; }
+    * { box-sizing:border-box } body { margin:0; color:var(--ink); background:var(--wash) }
+    header { padding:32px max(20px,calc((100% - 1180px)/2)); background:linear-gradient(120deg,#0b6670,#d2a85b); color:white }
+    main { max-width:1180px; margin:0 auto; padding:24px 20px 56px } h1,h2,h3 { line-height:1.2 } h1 { margin:0 0 8px; font-size:clamp(1.8rem,4vw,3rem) } h2 { margin-top:34px }
+    .toolbar { display:flex; flex-wrap:wrap; gap:8px; margin:20px 0 } button,.tab { min-height:44px; border:1px solid var(--line); border-radius:999px; padding:9px 16px; background:var(--paper); color:var(--ink); cursor:pointer } button:focus-visible,.tab:focus-visible { outline:3px solid #f5c542; outline-offset:2px }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px } .panel { background:var(--paper); border:1px solid var(--line); border-radius:18px; padding:18px; box-shadow:0 5px 18px #17324d12 } .hero { grid-column:1/-1; min-height:170px; background:linear-gradient(135deg,#fffdf8,#dceeed); display:flex; flex-direction:column; justify-content:end }
+    .eyebrow,.badge { font-size:.78rem; letter-spacing:.06em; text-transform:uppercase; font-weight:700 } .badge { display:inline-block; border-radius:8px; padding:4px 8px; background:#d9f1e5; color:#17603b } .badge.warn { background:#fff0c2;color:#755400 } .badge.alert { background:#ffe0df;color:#8b2621 }
+    .muted { color:var(--muted) } .row { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap } .timeline { border-left:3px solid var(--accent); padding-left:16px } .timeline + .timeline { margin-top:14px } .sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0) }
+    @media (prefers-reduced-motion:reduce) { *,*::before,*::after { scroll-behavior:auto!important; transition:none!important; animation:none!important } } @media print { header,.toolbar { display:none } body { background:white } .panel { break-inside:avoid; box-shadow:none } }
+  </style>
+</head>
+<body>
+  <header><div class="eyebrow">Component gallery · deterministic fixture</div><h1>淡路島家庭旅行</h1><div>2026/04/12（日） · 今日的行程與現場狀態</div></header>
+  <main>
+    <div class="toolbar" aria-label="Gallery controls"><button>Setouchi / Awaji</button><button>Generic Japan</button><button>Fallback theme</button><button>390 × 844</button><button aria-pressed="true">Reduced motion</button></div>
+    <section class="grid" aria-labelledby="patterns"><h2 id="patterns" class="sr">Product patterns</h2>
+      <article class="panel hero"><span class="eyebrow">Trip hero · user-confirmed</span><h2>鳴門漩渦與淡路島海岸線</h2><div class="row"><span class="muted">Day 2 · 5 個主要停留點</span><span class="badge">confirmed</span></div></article>
+      <article class="panel"><div class="row"><h3>狀態 vocabulary</h3><span class="badge">official</span></div><p><span class="badge">confirmed</span> <span class="badge warn">estimated</span> <span class="badge alert">stale</span></p><p class="muted">狀態同時以文字、色彩和位置表達。</p></article>
+      <article class="panel"><h3>下一站</h3><div class="timeline"><strong>大鳴門橋</strong><br><span class="muted">09:40–11:10 · 18 分鐘車程</span><br><button>開啟 Google Maps</button></div></article>
+      <article class="panel"><h3>住宿</h3><p>淡路島洲本溫泉旅館</p><p class="muted">兵庫縣洲本市……（長地址不截斷）</p><span class="badge warn">last checked 2h ago</span></article>
+      <article class="panel"><h3>離線狀態</h3><p><span class="badge">offline cached</span></p><p class="muted">核心行程可用；餐廳即時庫存暫不可用。</p><button>重新檢查</button></article>
+      <article class="panel"><h3>空狀態 / error</h3><p class="muted">還沒有加入雨天 Plan B。</p><button>新增備案</button> <button>顯示錯誤詳情</button></article>
+      <article class="panel"><h3>日本語 phrase</h3><p lang="ja">七人で座れる席はありますか？</p><div class="row"><button>播放</button><button>複製</button><span class="badge">long text</span></div></article>
+      <article class="panel"><h3>操作 checklist</h3><label><input type="checkbox" checked> 預約確認</label><br><label><input type="checkbox"> 紙本備份</label><br><label><input type="checkbox"> 119 緊急資訊</label></article>
+    </section>
+    <h2>Review notes</h2><p class="muted">此 gallery 使用 recorded public-safe fixture；時間、random seed、theme、viewport 與 failure states 均固定。請搭配 design-review 文件與 baseline manifest 審查，不以 gallery build 取代人工視覺、可及性與任務檢查。</p>
+  </main>
+</body>
+</html>

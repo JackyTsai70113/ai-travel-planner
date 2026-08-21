@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
-import type { TripCatalogEntry, TripCatalogSections } from '../../contracts/trip-registry'
+import type { TripCatalogEntry, TripRegistrySections } from '../../contracts/trip-registry'
 
 type RouteSetter = (next: { route: 'home' | 'trip'; slug?: string }) => void
 
 interface TripCatalogPageProps {
   catalog: TripCatalogEntry[]
-  sections: TripCatalogSections
+  sections: TripRegistrySections
   setRoute: RouteSetter
   searchPlaceholder: string
 }
@@ -25,7 +25,9 @@ function filterItems(items: TripCatalogEntry[], filters: FilterState): TripCatal
     }
 
     if (filters.year) {
-      if (!(entry.date_range.start_date.startsWith(filters.year) || entry.date_range.end_date.startsWith(filters.year))) return false
+      if (!entry.date_range.start_date.startsWith(filters.year) && !entry.date_range.end_date.startsWith(filters.year)) {
+        return false
+      }
     }
 
     if (!normalizedQuery) return true
@@ -37,23 +39,22 @@ function filterItems(items: TripCatalogEntry[], filters: FilterState): TripCatal
       entry.travelers_summary,
       entry.hero_summary,
       entry.theme_id,
-    ]
-      .join(' ')
-      .toLowerCase()
+    ].join(' ').toLowerCase()
+
     return haystack.includes(normalizedQuery)
   })
 }
 
 function statusText(status: string): string {
-  if (status === 'published') return '已發佈'
+  if (status === 'published') return '已發布'
   if (status === 'preview') return '預覽'
   return '封存'
 }
 
 function readinessText(readiness: string): string {
   if (readiness === 'ready') return '可出發'
-  if (readiness === 'incomplete') return '待補資料'
-  return '關鍵阻斷'
+  if (readiness === 'incomplete') return '待補'
+  return '阻斷'
 }
 
 function statusClass(status: string): string {
@@ -69,13 +70,13 @@ function readinessClass(readiness: string): string {
 }
 
 function renderCard(item: TripCatalogEntry, setRoute: RouteSetter) {
-  const cardMedia =
-    item.cover_media.kind === 'image' && item.cover_media.url
-      ? `linear-gradient(120deg, rgba(12,17,36,0.6), rgba(12,17,36,0.45)), url(${item.cover_media.url}) center/cover no-repeat`
-      : item.cover_media.gradient
+  const fallbackMedia = item.cover_media.gradient || 'linear-gradient(130deg, #0f172a, #3a5a8f)'
+  const hasImage = item.cover_media.kind === 'image' && item.cover_media.url
+  const background = hasImage ? `linear-gradient(120deg, rgba(12,17,36,0.56), rgba(12,17,36,0.42)), url(${item.cover_media.url}) center/cover no-repeat` : fallbackMedia
+
   return (
     <article className="trip-card" key={item.slug}>
-      <div className="trip-card-media" style={{ background: cardMedia }}>
+      <div className="trip-card-media" style={{ background }}>
         <span className={statusClass(item.status)}>{statusText(item.status)}</span>
         <span className={readinessClass(item.readiness)}>{readinessText(item.readiness)}</span>
       </div>
@@ -84,23 +85,35 @@ function renderCard(item: TripCatalogEntry, setRoute: RouteSetter) {
         <h3>{item.title}</h3>
         <p className="muted">{item.destination_regions.join(' / ')}</p>
         <p>{item.travelers_summary} • {item.duration_days} 天</p>
-        <p className="muted">{item.date_range.start_date} ~ {item.date_range.end_date}</p>
+        <p className="muted">日期：{item.date_range.start_date} ~ {item.date_range.end_date}</p>
         <p>{item.hero_summary}</p>
         <div className="chips">
-          {item.tags.map((tag) => <span key={`${item.slug}-${tag}`} className="tag">{tag}</span>)}
+          {item.tags.map((tag) => (
+            <span key={`${item.slug}-${tag}`} className="tag">
+              {tag}
+            </span>
+          ))}
         </div>
         <p className="meta-note">關鍵提醒 {item.critical_alert_count} 則</p>
-        <button type="button" onClick={() => setRoute({ route: 'trip', slug: item.slug })}>查看 trip</button>
+        <button type="button" onClick={() => setRoute({ route: 'trip', slug: item.slug })}>
+          查看 trip
+        </button>
       </div>
     </article>
   )
 }
 
 export default function TripCatalogPage({ catalog, sections, setRoute, searchPlaceholder }: TripCatalogPageProps) {
-  const regions = useMemo(() => Array.from(new Set(catalog.flatMap((item) => item.destination_regions))).sort(), [catalog])
+  const regions = useMemo(() => {
+    return Array.from(new Set(catalog.flatMap((item) => item.destination_regions))).sort()
+  }, [catalog])
+
   const years = useMemo(() => {
-    const all = catalog.flatMap((item) => [item.date_range.start_date.slice(0, 4), item.date_range.end_date.slice(0, 4)])
-    return Array.from(new Set(all)).sort().reverse()
+    const allYears = catalog.flatMap((item) => [
+      item.date_range.start_date.slice(0, 4),
+      item.date_range.end_date.slice(0, 4),
+    ])
+    return Array.from(new Set(allYears)).sort().reverse()
   }, [catalog])
 
   const [filters, setFilters] = useState<FilterState>({ query: '', year: '', region: '' })
@@ -109,10 +122,11 @@ export default function TripCatalogPage({ catalog, sections, setRoute, searchPla
   const filteredUpcoming = filterItems(sections.upcoming, filters)
   const filteredPreview = filterItems(sections.preview, filters)
   const filteredArchived = filterItems(sections.archived, filters)
+  const filteredAll = filterItems(catalog, filters)
 
   return (
     <div className="catalog-shell">
-      <section className="search-shell">
+      <section className="search-shell card">
         <label htmlFor="trip-search">搜尋</label>
         <input
           id="trip-search"
@@ -141,12 +155,14 @@ export default function TripCatalogPage({ catalog, sections, setRoute, searchPla
         </select>
       </section>
 
-      {filteredFeatured.length > 0 && (
+      {filteredAll.length === 0 ? <p className="muted">找不到符合條件的行程</p> : null}
+
+      {filteredFeatured.length > 0 ? (
         <section className="catalog-section">
           <h2>精選 / 當前</h2>
           {filteredFeatured.map((item) => renderCard(item, setRoute))}
         </section>
-      )}
+      ) : null}
       {filteredUpcoming.length > 0 && (
         <section className="catalog-section">
           <h2>即將出發</h2>
@@ -165,7 +181,12 @@ export default function TripCatalogPage({ catalog, sections, setRoute, searchPla
           {filteredArchived.map((item) => renderCard(item, setRoute))}
         </section>
       )}
-      {catalog.length === 0 && <p className="muted">尚未有可展示的行程</p>}
+      {filteredFeatured.length === 0 && filteredUpcoming.length === 0 && filteredPreview.length === 0 && filteredArchived.length === 0 && (
+        <section className="catalog-section">
+          <h2>全部行程</h2>
+          {catalog.map((item) => renderCard(item, setRoute))}
+        </section>
+      )}
     </div>
   )
 }

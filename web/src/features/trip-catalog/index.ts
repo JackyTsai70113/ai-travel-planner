@@ -1,1 +1,3 @@
-export { default } from './TripCatalogPage'
+import TripCatalogPage from './TripCatalogPage'
+
+export default TripCatalogPage

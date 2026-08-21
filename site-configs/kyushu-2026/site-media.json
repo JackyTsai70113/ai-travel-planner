@@ -1,0 +1,7 @@
+{
+  "schema_version": "trip-media-v1",
+  "trip_id": "kyushu-family-2026",
+  "assets": [
+    {"id": "kyushu-cover", "kind": "image", "status": "approved", "source_url": "https://example.com/recorded-kyushu-cover", "alt": "九州行程封面", "license": "fixture-approved"}
+  ]
+}

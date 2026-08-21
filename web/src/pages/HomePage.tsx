@@ -1,11 +1,11 @@
 import TripCatalogPage from '../features/trip-catalog'
-import type { TripCatalogEntry, TripCatalogSections } from '../contracts/trip-registry'
+import type { TripCatalogEntry, TripRegistrySections } from '../contracts/trip-registry'
 
 type RouteSetter = (next: { route: 'home' | 'trip'; slug?: string }) => void
 
 interface HomePageProps {
   catalog: TripCatalogEntry[]
-  sections: TripCatalogSections
+  sections: TripRegistrySections
   setRoute: RouteSetter
   searchPlaceholder: string
 }

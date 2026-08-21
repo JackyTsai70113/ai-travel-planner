@@ -3,23 +3,27 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="refresh" content="0;url=./" />
-    <title>重導向中</title>
+    <title>AI Travel Planner - Redirecting</title>
+    <script>
+      (function redirectToRouteRoot() {
+        const pathname = window.location.pathname || '/'
+        const currentWithoutHash = pathname
+        const route = encodeURIComponent(currentWithoutHash)
+
+        const parts = currentWithoutHash.split('/').filter(Boolean)
+        const hasBase = parts.length > 1 && parts[0] !== 'trips'
+        const basePath = hasBase ? `/${parts[0]}/` : '/'
+        const target = `${basePath}?route=${route}`
+
+        if (!route || route === '%2F' || route === '/') {
+          window.location.replace(basePath)
+          return
+        }
+        window.location.replace(target)
+      })()
+    </script>
   </head>
   <body>
-    <p>頁面不存在，正在返回入口…</p>
-    <a id="fallback-link" href="./">如果沒有自動跳轉，請點此前往。</a>
-    <script>
-      (function () {
-        const path = window.location.pathname || '/';
-        const base = path.includes('/trips/') ? path.slice(0, path.lastIndexOf('/') + 1) : '/';
-        const next = encodeURIComponent(window.location.pathname + (window.location.search || ''));
-        const target = `${base}?route=${next}`;
-        window.history.replaceState({}, '', target);
-        const link = document.getElementById('fallback-link');
-        if (link) link.setAttribute('href', target);
-        window.location.replace(target);
-      })();
-    </script>
+    <p>頁面不存在，正在導向 AI Travel Planner 首頁…</p>
   </body>
 </html>

@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import App from './App'
+import TripApp from './app/TripApp'
 import './styles.css'
 
 type SwStatusPayload = {
@@ -17,7 +17,7 @@ function publishServiceWorkerStatus(status: SwStatusPayload['status'], message =
 
 createRoot(document.getElementById('root') as HTMLElement).render(
   <StrictMode>
-    <App />
+    <TripApp />
   </StrictMode>,
 )
 
