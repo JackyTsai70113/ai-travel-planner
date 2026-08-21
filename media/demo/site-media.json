@@ -1,0 +1,19 @@
+{
+  "version": "1.0.0",
+  "tripId": "awaji-2026",
+  "assets": [
+    {
+      "id": "awaji-route-illustration",
+      "kind": "illustration",
+      "sourcePath": "awaji-route.svg",
+      "alt": "瀨戶內海與淡路島路線的自製抽象插畫",
+      "caption": "自製路線插畫",
+      "attributionId": "self-created-awaji-route",
+      "license": "CC0-1.0",
+      "creator": "AI Travel Planner",
+      "visibility": "public",
+      "fit": "cover",
+      "focalPoint": { "x": 0.5, "y": 0.5 }
+    }
+  ]
+}
