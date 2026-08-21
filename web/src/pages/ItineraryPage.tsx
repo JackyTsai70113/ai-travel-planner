@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Bundle, BundleDayItem, buildMapsLink, findPlaceAddress, findPlaceLabel } from '../contracts/trip'
 import { buildRoutePath, TripRoute } from '../app/route-registry'
 
@@ -75,6 +75,15 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
     unresolved: selectedDay?.items.filter((item) => item.unresolved || !item.start_at || !item.end_at).length ?? 0,
   }), [selectedDay])
   const alternatives = (bundle.alternatives || []).filter((alternative) => (alternative.plan || 'A') === plan && approvedAlternative(alternative.status))
+  useEffect(() => {
+    if (!route.item) return
+    const timer = window.setTimeout(() => {
+      const target = document.getElementById(`item-${route.item}`)
+      target?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      target?.focus()
+    }, 0)
+    return () => window.clearTimeout(timer)
+  }, [route.item, selectedDay.date])
   if (!selectedDay) return <section className="card">沒有可顯示的行程日。</section>
   const copyText = async (label: string, text: string) => { try { await navigator.clipboard.writeText(text); setCopiedId(label); setTimeout(() => setCopiedId(''), 1200) } catch { setCopiedId('error') } }
   const navigateTo = (day: string, item?: string) => {
