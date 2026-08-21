@@ -111,7 +111,10 @@ class AwajiTripFixtureTests(unittest.TestCase):
     def test_selected_facts_have_tracked_evidence(self):
         evidence = json.loads(EVIDENCE_PATH.read_text(encoding="utf-8"))
         required_ids = set(self.trip["selected"]["flight_ids"] + self.trip["selected"]["hotel_place_ids"])
-        evidence_ids = set(entry.get("reference_id") for entry in evidence.get("entries", []))
+        evidence_ids = {
+            entry.get("reference_id", "").split("/", 1)[-1]
+            for entry in evidence.get("entries", [])
+        }
         missing = sorted(required_ids - evidence_ids)
         self.assertEqual(missing, [])
 
