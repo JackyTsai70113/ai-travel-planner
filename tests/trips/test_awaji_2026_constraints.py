@@ -121,6 +121,7 @@ class AwajiTripFixtureTests(unittest.TestCase):
             ),
         }
         evidence_ids = set(entry.get("reference_id") for entry in evidence.get("entries", []))
+        evidence_ids = set(entry.get("reference_id") for entry in evidence.get("entries", []))
         missing = sorted(required_ids - evidence_ids)
         self.assertEqual(missing, [])
 
