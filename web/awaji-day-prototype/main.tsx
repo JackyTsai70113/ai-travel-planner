@@ -7,7 +7,7 @@ type BundlePlace = { id: string; name: string; address?: string; maps_query?: st
 type BundleDay = { date: string; summary: string; items: BundleItem[] }
 type PublicBundle = { days: BundleDay[]; places: BundlePlace[]; reservations?: Array<{ id: string; name: string; unresolved?: boolean }> }
 
-const BUNDLE_URL = '../public/trips/awaji-2026/public-bundle.json'
+const BUNDLE_URL = '/trips/awaji-2026/public-bundle.json'
 const DAY_DATE = '2026-08-28'
 
 const fallbackDay: BundleDay = {
