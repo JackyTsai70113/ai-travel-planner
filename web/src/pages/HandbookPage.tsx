@@ -1,32 +1,13 @@
+import { useMemo, useState } from 'react'
 import { Bundle } from '../contracts/trip'
+import { HANDBOOK_CATEGORIES, HANDBOOK_ENTRIES, HandbookCategory } from '../content/japan-handbook'
 
-interface HandbookPageProps {
-  bundle: Bundle
-}
-
-export function HandbookPage({ bundle }: HandbookPageProps) {
-  const warningCount = bundle.validation.filter((item) => item.severity === 'warning' || item.severity === 'error').length
-
-  return (
-    <section className="card" aria-label="旅行手冊">
-      <h2>旅行手冊與緊急資訊</h2>
-      <p>硬性提醒項目共 {bundle.preferences.hard_constraints.length} 條</p>
-      <ul>
-        {bundle.preferences.hard_constraints.map((item) => (
-          <li key={item.id}>{item.description}</li>
-        ))}
-      </ul>
-      <h3>系統提醒</h3>
-      <p>共 {warningCount} 筆需要關注提醒</p>
-      {bundle.validation.length ? (
-        <ul>
-          {bundle.validation.map((item) => (
-            <li key={item.code}>{item.message}</li>
-          ))}
-        </ul>
-      ) : (
-        <p>目前無未確定提醒。</p>
-      )}
-    </section>
-  )
+export function HandbookPage({ bundle }: { bundle: Bundle }) {
+  const [query, setQuery] = useState('')
+  const [category, setCategory] = useState<HandbookCategory | 'all'>('all')
+  const [favorites, setFavorites] = useState<string[]>(() => { try { const raw = JSON.parse(localStorage.getItem(`trip:${bundle.trip_id}:preferences:v1`) || '{}'); return raw.data?.favorites || raw.favorites || [] } catch { return [] } })
+  const [selected, setSelected] = useState<string | null>(null)
+  const entries = useMemo(() => HANDBOOK_ENTRIES.filter((entry) => { const haystack = `${entry.title} ${entry.summary} ${entry.details.join(' ')}`.toLowerCase(); return (category === 'all' || entry.category === category) && haystack.includes(query.toLowerCase()) }), [category, query])
+  const toggleFavorite = (id: string) => { const next = favorites.includes(id) ? favorites.filter((item) => item !== id) : [...favorites, id]; setFavorites(next); localStorage.setItem(`trip:${bundle.trip_id}:preferences:v1`, JSON.stringify({ schemaVersion: 1, tripId: bundle.trip_id, updatedAt: new Date().toISOString(), data: { favorites: next } })) }
+  return <section className="card" aria-label="旅行手冊"><h2>旅行手冊與緊急資訊</h2><p className="muted">離線可讀的通用提醒；動態事實請依來源與 freshness 重查。</p><div className="toolbar"><input aria-label="搜尋手冊" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜尋停車、幼兒、船班…" /><select aria-label="手冊分類" value={category} onChange={(event) => setCategory(event.target.value as HandbookCategory | 'all')}><option value="all">全部分類</option>{Object.entries(HANDBOOK_CATEGORIES).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></div><div className="handbook-grid">{entries.map((entry) => <article className="subcard" key={entry.id} id={entry.id}><div className="card-heading"><h3>{entry.title}</h3><button type="button" className="secondary-button" aria-label={`${entry.title}收藏`} onClick={() => toggleFavorite(entry.id)}>{favorites.includes(entry.id) ? '★' : '☆'}</button></div><p>{entry.summary}</p><button type="button" onClick={() => setSelected(selected === entry.id ? null : entry.id)}>{selected === entry.id ? '收合詳情' : '查看詳情'}</button>{selected === entry.id ? <><ul>{entry.details.map((detail) => <li key={detail}>{detail}</li>)}</ul><small className="muted">{entry.sourceType === 'official' ? `來源：${entry.source}` : '內容類型：通用旅行建議'}{entry.freshness ? `｜${entry.freshness}` : ''}</small></> : null}</article>)}</div>{!entries.length ? <p>找不到符合條件的內容。</p> : null}<div className="subcard emergency-panel"><h3>緊急資訊</h3><p><strong>110</strong> 警察　<strong>119</strong> 火災／救護車</p><p>需要醫療協助時，說明目前位置並請住宿方或現場人員協助。這裡只提供旅行應變與官方求助導引，不做診斷或處方。</p><p className="muted">官方求助：JNTO Visitor Hotline；服務語言與連結請以出發前查到的日本官方資訊為準。</p></div></section>
 }
