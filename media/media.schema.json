@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Trip media manifest",
+  "type": "object",
+  "required": ["version", "tripId", "assets"],
+  "properties": {
+    "version": { "type": "string", "pattern": "^1\\.0\\.0$" },
+    "tripId": { "type": "string", "minLength": 1 },
+    "assets": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/asset" }
+    }
+  },
+  "$defs": {
+    "asset": {
+      "type": "object",
+      "required": ["id", "kind", "sourcePath", "alt", "attributionId", "license", "visibility"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+        "tripId": { "type": "string" },
+        "kind": { "enum": ["hero", "place", "lodging", "restaurant", "route", "illustration", "icon"] },
+        "sourcePath": { "type": "string", "minLength": 1 },
+        "focalPoint": { "type": "object", "required": ["x", "y"], "properties": { "x": { "type": "number", "minimum": 0, "maximum": 1 }, "y": { "type": "number", "minimum": 0, "maximum": 1 } }, "additionalProperties": false },
+        "alt": { "type": "string", "minLength": 1 },
+        "caption": { "type": "string" },
+        "attributionId": { "type": "string", "minLength": 1 },
+        "license": { "type": "string", "minLength": 1 },
+        "sourceUrl": { "type": "string", "format": "uri" },
+        "creator": { "type": "string" },
+        "fit": { "enum": ["cover", "contain"] },
+        "visibility": { "enum": ["public", "private"] },
+        "variants": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    }
+  }
+}
