@@ -53,7 +53,6 @@ export default function TripShell({
   setDrawerOpen,
   children,
 }: TripShellProps) {
-  const pageRef = useRef<HTMLDivElement>(null)
   const drawerRef = useRef<HTMLDivElement>(null)
   const [currentStatusText, setCurrentStatusText] = useState(statusText[shellStatus])
 
@@ -97,11 +96,11 @@ export default function TripShell({
     }
   }, [isDrawerOpen, setDrawerOpen])
 
-  useEffect(() => {
-    pageRef.current?.focus()
-  }, [children, activeSection])
-
   const visibleState = useMemo(() => shellStatus !== 'normal', [shellStatus])
+  const activeLabel = sections.find((section) => section.id === activeSection)?.label || '旅行總覽'
+  const travelerText = bundle
+    ? `${bundle.traveler_profile.adults} 大 ${bundle.traveler_profile.children_count} 小`
+    : '旅客資料載入中'
 
   return (
     <div className={`app-shell ${visibleState ? 'with-alert' : ''}`}>
@@ -123,8 +122,12 @@ export default function TripShell({
         />
 
         <main className="app-main" id="trip-main">
+          <header className="desktop-topbar">
+            <div><span className="desktop-topbar-section">{activeLabel}</span><span className="desktop-topbar-divider">/</span><span>{subtitle}</span></div>
+            <div><span className="desktop-status"><i />{currentStatusText}</span><span className="desktop-travelers">{travelerText}</span></div>
+          </header>
           <header className="trip-main-header">
-            <div className="main-title" id={pageTitleId} ref={pageRef} tabIndex={-1}>
+            <div className="main-title" id={pageTitleId}>
               {title}
             </div>
             <div className="shell-status-line">

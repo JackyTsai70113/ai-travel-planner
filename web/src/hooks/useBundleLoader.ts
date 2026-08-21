@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Bundle, parseBundle } from '../contracts/trip'
 
 type LoadStatus = 'loading' | 'ready' | 'error' | 'offline-with-cache' | 'offline-without-cache'
@@ -21,6 +21,7 @@ export function resolveBundleUrl(baseUrl: string, canonicalUrl: string): string 
 
 export function useBundleLoader(): BundleLoaderState {
   const [bundle, setBundle] = useState<Bundle | null>(null)
+  const bundleRef = useRef<Bundle | null>(null)
   const [status, setStatus] = useState<LoadStatus>('loading')
   const [error, setError] = useState('')
   const [isOnline, setIsOnline] = useState(true)
@@ -52,7 +53,7 @@ export function useBundleLoader(): BundleLoaderState {
       response = await fetch(resolveBundleUrl(baseUrl, entry.canonical_url))
       if (!response.ok) throw new Error(`bundle HTTP ${response.status}`)
     } catch (error) {
-      const hasCache = !!bundle
+      const hasCache = !!bundleRef.current
       const message = `${hasCache ? '目前為離線快取資料' : '載入不到行程資料'}（${error instanceof Error ? error.message : 'network error'}）`
       setError(message)
       setStatus(hasCache ? 'offline-with-cache' : 'offline-without-cache')
@@ -63,6 +64,7 @@ export function useBundleLoader(): BundleLoaderState {
       const parsed = parseBundle(await response.json())
       if (!parsed.ok) throw new Error(parsed.error)
       const data = parsed.value
+      bundleRef.current = data
       setBundle(data)
       setIsUpdateAvailable(false)
       checkVersion(data)
@@ -71,7 +73,7 @@ export function useBundleLoader(): BundleLoaderState {
       setError(err instanceof Error ? err.message : '資料格式錯誤')
       setStatus('error')
     }
-  }, [baseUrl, bundle, checkVersion])
+  }, [baseUrl, checkVersion])
 
   useEffect(() => {
     setIsOnline(window.navigator.onLine)
