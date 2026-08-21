@@ -40,6 +40,14 @@ export interface BundleDayItem {
   end_at: string | null
   place_id: string
   notes?: string
+  status?: string | null
+  optional?: boolean | null
+  fixed?: boolean | null
+  cancelable?: boolean | null
+  unresolved?: boolean | null
+  expected_stay_minutes?: number | null
+  transfer_minutes?: number | null
+  buffer_minutes?: number | null
 }
 
 export interface BundlePlace {
@@ -48,6 +56,9 @@ export interface BundlePlace {
   address?: string | null
   kind?: string | null
   maps_query?: string | null
+  name_ja?: string | null
+  phone?: string | null
+  official_url?: string | null
 }
 
 export interface BundleDay {
@@ -79,6 +90,17 @@ export interface Bundle {
   }
   operations?: BundlePublicOperations
   days: BundleDay[]
+  alternatives?: Array<{
+    id: string
+    title: string
+    plan?: 'A' | 'B' | 'C' | string | null
+    status?: string | null
+    trigger?: string | null
+    tradeoff?: string | null
+    summary?: string | null
+    decision_gate?: string | null
+  }> | null
+  overview?: { critical_unknown_count?: number | null } | null
   reservations: BundleReservation[]
   preferences: {
     hard_constraints: Constraint[]
