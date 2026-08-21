@@ -8,6 +8,6 @@
   "features": {"itinerary": true, "driving": true, "conditions": false, "local_planner": false},
   "pwa": {"name": "Kyushu 2026", "scope": "/trips/kyushu-2026/"},
   "seo": {"title": "九州五天四夜親子自駕", "description": "Recorded Japan trip fixture preview。"},
-  "output_path": "site/trips/kyushu-2026/",
+  "output_path": "trips/kyushu-2026/",
   "trip_file": "trip.json"
 }

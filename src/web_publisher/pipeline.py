@@ -15,7 +15,6 @@ CONFIG_SCHEMA = "trip-site-v1"
 MEDIA_SCHEMA = "trip-media-v1"
 REGISTRY_SCHEMA = "trip-registry-v1"
 PUBLISHER_VERSION = "trip-site-publisher-v1"
-SENSITIVE_KEYS = {"api_key", "apikey", "authorization", "password", "secret", "token", "booking_reference", "private_notes"}
 
 
 @dataclass(frozen=True)
@@ -45,22 +44,6 @@ def _file_sha(path: Path) -> str:
     return _sha(path.read_bytes())
 
 
-def _strip_private(value: Any, parent_key: str = "") -> Any:
-    if isinstance(value, dict):
-        result = {}
-        for key, child in value.items():
-            normalized = key.lower().replace("-", "_")
-            if normalized in SENSITIVE_KEYS or any(part in normalized for part in ("api_key", "password", "access_token")):
-                continue
-            if key in {"source_path", "absolute_path"}:
-                continue
-            result[key] = _strip_private(child, normalized)
-        return result
-    if isinstance(value, list):
-        return [_strip_private(child, parent_key) for child in value]
-    return value
-
-
 def load_config(config_path: Path) -> dict[str, Any]:
     config = _read(config_path)
     if config.get("schema_version") != CONFIG_SCHEMA:
@@ -77,6 +60,9 @@ def load_config(config_path: Path) -> dict[str, Any]:
         raise ValueError(f"{config_path}: slug must contain only lowercase letters, digits, and hyphens")
     if Path(config["media_manifest"]).is_absolute() or ".." in Path(config["media_manifest"]).parts:
         raise ValueError(f"{config_path}: media_manifest must stay inside its config directory")
+    output_path = Path(config["output_path"])
+    if output_path.is_absolute() or ".." in output_path.parts or output_path.as_posix().rstrip("/") != f"trips/{config['slug']}":
+        raise ValueError(f"{config_path}: output_path must be trips/<slug>/")
     return config
 
 
@@ -107,6 +93,8 @@ def _readiness(trip: dict[str, Any], config: dict[str, Any]) -> tuple[str, list[
                 issues.append(message)
             elif severity in {"warning", "unknown", "unverified", "conflict", "stale"}:
                 uncertainty.append(message)
+            elif severity not in {"pass", "passed", "ok"}:
+                uncertainty.append(f"unrecognized validation severity: {severity}")
     if not trip.get("validation"):
         uncertainty.append("no recorded validation result")
     if config["publication_status"] == "published" and (issues or uncertainty):
@@ -200,10 +188,17 @@ def build_trip(trip_path: Path, config_path: Path, output_root: Path) -> BuildRe
 
     generated_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     bundle = _generic_bundle(trip, config, trip_path, readiness, generated_at)
-    out = output_root / "trips" / config["slug"]
+    resolved_trip = trip_path.resolve()
+    repo_root = Path(__file__).resolve().parents[2]
+    config_root = config_path.parent.resolve()
+    if not (resolved_trip.is_relative_to(repo_root) or resolved_trip.is_relative_to(config_root)):
+        raise ValueError("trip_file must remain within the repository or site config directory")
+    out = output_root / config["output_path"]
     out.mkdir(parents=True, exist_ok=True)
     _write(out / "public-bundle.json", bundle)
-    bundle_hash = _file_sha(out / "public-bundle.json")
+    stable_bundle = json.loads(json.dumps(bundle))
+    stable_bundle["build"].pop("generated_at", None)
+    bundle_hash = _sha(json.dumps(stable_bundle, ensure_ascii=False, indent=2, sort_keys=True).encode())
     _write(out / "site.json", {key: config[key] for key in ("schema_version", "trip_id", "slug", "publication_status", "theme_id", "media_manifest", "features", "pwa", "seo", "output_path") if key in config})
     _write(out / "site-media.json", {"schema_version": media["schema_version"], "trip_id": media.get("trip_id"), "assets": [{key: asset.get(key) for key in ("id", "kind", "status", "source_url", "alt", "license") if asset.get(key) is not None} for asset in media["assets"]]})
     _write_shell(out / "index.html", config)
@@ -234,10 +229,14 @@ def build_all(config_root: Path, output_root: Path) -> list[BuildResult]:
     if trips_output.exists():
         shutil.rmtree(trips_output)
     configs_by_trip_id: dict[str, dict[str, Any]] = {}
+    slugs: set[str] = set()
     for config_path in configs:
         config = load_config(config_path)
+        if config["trip_id"] in configs_by_trip_id or config["slug"] in slugs:
+            raise ValueError(f"duplicate trip_id or slug in {config_path}")
         trip_path = config_path.parent / config.get("trip_file", "trip.json")
         configs_by_trip_id[config["trip_id"]] = config
+        slugs.add(config["slug"])
         results.append(build_trip(trip_path, config_path, output_root))
     generated_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     registry = [_registry_entry(_read(result.output_dir / "public-bundle.json"), configs_by_trip_id[result.trip_id], result.readiness, generated_at, result.bundle_sha256) for result in results]
@@ -249,7 +248,7 @@ def build_all(config_root: Path, output_root: Path) -> list[BuildResult]:
 
 def init_site(trip_id: str, slug: str, theme_id: str, target: Path) -> tuple[Path, Path]:
     target.mkdir(parents=True, exist_ok=True)
-    config = {"schema_version": CONFIG_SCHEMA, "trip_id": trip_id, "slug": slug, "publication_status": "preview", "theme_id": theme_id, "media_manifest": "site-media.json", "features": {"itinerary": True, "driving": False, "conditions": False, "local_planner": False}, "pwa": {"name": trip_id, "scope": f"/trips/{slug}/"}, "seo": {"title": trip_id, "description": "待填寫；不可放入虛構行程資料。"}, "output_path": f"site/trips/{slug}/", "trip_file": "trip.json"}
+    config = {"schema_version": CONFIG_SCHEMA, "trip_id": trip_id, "slug": slug, "publication_status": "preview", "theme_id": theme_id, "media_manifest": "site-media.json", "features": {"itinerary": True, "driving": False, "conditions": False, "local_planner": False}, "pwa": {"name": trip_id, "scope": f"/trips/{slug}/"}, "seo": {"title": trip_id, "description": "待填寫；不可放入虛構行程資料。"}, "output_path": f"trips/{slug}/", "trip_file": "trip.json"}
     media = {"schema_version": MEDIA_SCHEMA, "trip_id": trip_id, "assets": []}
     config_path, media_path = target / "site.json", target / "site-media.json"
     _write(config_path, config)

@@ -79,12 +79,15 @@ class WebPublisherTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "site"
             build_all(ROOT / "site-configs", output)
+            first_hashes = [item["bundle_sha256"] for item in json.loads((output / "registry.json").read_text())["trips"]]
             first = json.loads((output / "trips/kyushu-2026/public-bundle.json").read_text())
             build_all(ROOT / "site-configs", output)
+            second_hashes = [item["bundle_sha256"] for item in json.loads((output / "registry.json").read_text())["trips"]]
             second = json.loads((output / "trips/kyushu-2026/public-bundle.json").read_text())
             first["build"].pop("generated_at", None)
             second["build"].pop("generated_at", None)
             self.assertEqual(first, second)
+            self.assertEqual(first_hashes, second_hashes)
 
 
 if __name__ == "__main__":
