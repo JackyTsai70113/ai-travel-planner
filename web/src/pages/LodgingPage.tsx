@@ -107,7 +107,7 @@ export function LodgingPage({ bundle }: LodgingPageProps) {
         </p>
       )}
 
-      <p className="hub-footer">來源：{bundle.meta?.source_path || 'public-bundle'}，非即時更新。</p>
+      <p className="hub-footer">資料版本：{bundle.meta.generated_at}；來源欄位未在 public bundle 提供。</p>
     </section>
   )
 }
