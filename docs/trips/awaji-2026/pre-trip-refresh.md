@@ -1,22 +1,26 @@
 # 出發前刷新清單
 
-## 7 天前
+## T-7
 
-- 再驗證航班起落與 check-in 要求
-- 重新抓 8/27～8/31 潮汐與停航警示
-- 確認 8/28 固定預約是否已補齊名稱與地點
+1. 命令：`python3 scripts/build_awaji_public_bundle.py --trip-path trips/awaji-naruto-tokushima-kobe-2026/trip.json --output /tmp/awaji-bundle.json`
+2. 更新 `trips/awaji-naruto-tokushima-kobe-2026/evidence.json`
+   - 檢查航班起落、住宿退房/退房時間、交通成本
+   - 更新 `validity` / `freshness` / `retrieved_at`
 
-## 72 小時
+## T-3
 
-- 重新確認住宿退房時間、交通、行李空間
-- 供應商 API/官網再次核對：開放時間、last order、排隊風險
+1. 命令：`python3 scripts/build_awaji_public_bundle.py --trip-path trips/awaji-naruto-tokushima-kobe-2026/trip.json --output /tmp/awaji-bundle.json`
+2. 命令：`python3 -m json.tool trips/awaji-naruto-tokushima-kobe-2026/evidence.json`
+3. 逐條補齊潮汐、降雨、閉園/開園窗口並寫入 `trips/awaji-naruto-tokushima-kobe-2026/conditions.json`
 
-## 24 小時
+## T-1
 
-- 天候與交通風險回放：熱浪、豪雨、颱風、道路中斷
-- 最終比對車行與接駁時段是否有新公告
+1. 命令：`python3 scripts/build_awaji_public_bundle.py --trip-path trips/awaji-naruto-tokushima-kobe-2026/trip.json --output web/public/trips/awaji-2026/public-bundle.json`
+2. 再核：`/conditions` 欄位 `visibility=public` 與 `validity_interval` 是否可被重新查核
+3. 確認每筆固定預約有 unresolved note（名稱/地點/持續時間）並可回到 evidence
 
-## 當日早上
+## 出發當日
 
-- 重核 `Day 5` 返程流程：加油、還車、候機與長者/幼兒接送順序
-- 列印與離線內容更新
+1. 命令：`python3 scripts/build_awaji_public_bundle.py --trip-path trips/awaji-naruto-tokushima-kobe-2026/trip.json --output /tmp/awaji-bundle.json`
+2. 以最新 bundle 的 `refresh_schedule.next_refresh_at` 作為最後重查時間點
+3. 重核 `Day 5` 返程流程：加油、還車、候機與長者/幼兒接送順序

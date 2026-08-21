@@ -463,8 +463,8 @@ function buildDisplayStopFromItem(item: BundleDayItem, places: BundlePlace[], in
     id: item.id || `fallback-item-${index}`,
     label: stopLabel,
     placeId: item.place_id,
-    address: place?.address,
-    mapsQuery: navigationTargets[0]?.mapsQuery || place?.maps_query || place?.name,
+    address: place?.address || undefined,
+    mapsQuery: navigationTargets[0]?.mapsQuery || place?.maps_query || place?.name || undefined,
     phone: place?.phone || undefined,
     mapcode: place?.mapcode || place?.mapcode_jp || place?.mapcode_tw || undefined,
     parking_availability: place?.parking_availability || undefined,
@@ -488,6 +488,7 @@ function buildStopsFromRaw(rawStops: unknown, places: BundlePlace[]): DisplaySto
         id: `raw-stop-${index}`,
         label: `站點 ${index + 1}`,
         kind: 'unknown',
+        navigationTargets: [],
       }
     }
 
@@ -501,7 +502,7 @@ function buildStopsFromRaw(rawStops: unknown, places: BundlePlace[]): DisplaySto
       label,
       placeId,
       address: asString(stop.address) || place?.address || undefined,
-      mapsQuery: asString(stop.maps_query) || asString(stop.query) || place?.maps_query || place?.name || place?.address,
+      mapsQuery: asString(stop.maps_query) || asString(stop.query) || place?.maps_query || place?.name || place?.address || undefined,
       phone: asString(stop.phone) || place?.phone || undefined,
       mapcode: asString(stop.mapcode) || asString(stop.mapcode_jp) || asString(stop.mapcode_tw) || place?.mapcode || place?.mapcode_jp || place?.mapcode_tw || undefined,
       parking_availability: asString(stop.parking_availability),
@@ -520,7 +521,7 @@ function buildStopsFromRaw(rawStops: unknown, places: BundlePlace[]): DisplaySto
 }
 
 function findRouteWorkspace(bundle: Bundle, date: string): BundleRouteWorkspace | undefined {
-  const raw = bundle as AnyObj
+  const raw = bundle as unknown as AnyObj
   const candidates = [
     raw.daily_routes,
     raw.daily_route_workspaces,
@@ -561,7 +562,8 @@ function buildRouteSegments(rawSegments: unknown, fallbackStops: DisplayStop[]):
       const rawDistanceMeters = asNumber(data.estimated_distance_meters)
       const distanceKm = asNumber(data.distance_km)
       const distance = rawDistanceMeters ?? (distanceKm === undefined ? undefined : distanceKm * 1000)
-      const status = asString(data.status) || asString(data.provenance?.status) || 'unknown'
+      const provenance = asRecord(data.provenance)
+      const status = asString(data.status) || asString(provenance?.status) || 'unknown'
       const source = asString(data.source) || '未指定'
       const freshness = asString(data.source_state) || asString(data.freshness) || 'unverified'
       const unknownRoute = asString(data.unknown_route) === 'true' || asBoolean(data.unknown_route) === true
@@ -623,7 +625,7 @@ function buildTransportLegsProjection(bundle: Bundle, dayDate: string): {
   warnings: string[]
   hasData: boolean
 } {
-  const rawLegs = asArray((bundle as AnyObj).transport_legs)
+  const rawLegs = asArray((bundle as unknown as AnyObj).transport_legs)
   const legRows = rawLegs
     .map((entry) => asRecord(entry) || {})
     .filter((leg) => {
@@ -682,10 +684,11 @@ function buildTransportLegsProjection(bundle: Bundle, dayDate: string): {
     const duration = asNumber(leg.estimated_duration_minutes)
     const distanceKm = asNumber(leg.distance_km)
     const distanceMeters = asNumber(leg.estimated_distance_meters) ?? (distanceKm === undefined ? undefined : distanceKm * 1000)
-    const status = asString(leg.status) || asString(leg.provenance?.status) || 'estimated'
+    const provenance = asRecord(leg.provenance)
+    const status = asString(leg.status) || asString(provenance?.status) || 'estimated'
     const isUnknown = asBoolean(leg.unknown) || asBoolean(leg.unknown_route) || asString(leg.status) === 'unknown'
     const canNavigate = segmentCanNavigate(status, asBoolean(leg.no_route) === true, isUnknown)
-    const warningsForSegment = [asString(leg.note), asString(leg.risk), asString(leg.provenance?.note)].filter(
+    const warningsForSegment = [asString(leg.note), asString(leg.risk), asString(provenance?.note)].filter(
       (item): item is string => Boolean(item),
     )
 
@@ -821,7 +824,7 @@ function toRouteStatusClass(status: DailyRouteProjection['status']): string {
   return status === 'error' ? 'status error' : 'status warning'
 }
 
-function formatTimeFromText(timeText: string | null): string {
+function formatTimeFromText(timeText: string | null | undefined): string {
   if (!timeText) return '—'
   const parsed = new Date(timeText)
   if (Number.isNaN(parsed.getTime())) return timeText
@@ -830,10 +833,11 @@ function formatTimeFromText(timeText: string | null): string {
 
 function parseDrivingOperations(bundle: Bundle | null): DrivingOperationsRaw | null {
   if (!bundle) return null
-  const raw = asRecord((bundle as AnyObj).driving_operations) || asRecord((bundle as AnyObj).operations)
+  const rawBundle = bundle as unknown as AnyObj
+  const raw = asRecord(rawBundle.driving_operations) || asRecord(rawBundle.operations)
   if (!raw) return null
 
-  if ((bundle as AnyObj).operations && !(bundle as AnyObj).driving_operations) {
+  if (rawBundle.operations && !rawBundle.driving_operations) {
     return { raw_payload: JSON.stringify(raw, null, 2) }
   }
 

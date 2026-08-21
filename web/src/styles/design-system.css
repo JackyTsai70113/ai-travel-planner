@@ -1,0 +1,87 @@
+:root {
+  --trip-status-confirmed: #e8f5e9;
+  --trip-status-confirmed-text: #1b5e20;
+  --trip-status-estimated: #fff8e1;
+  --trip-status-estimated-text: #7f5b00;
+  --trip-status-user-confirmed: #e3f2fd;
+  --trip-status-user-confirmed-text: #0d47a1;
+  --trip-status-official-confirmed: #ede7f6;
+  --trip-status-official-confirmed-text: #311b92;
+  --trip-status-unverified: #eceff1;
+  --trip-status-unverified-text: #263238;
+  --trip-status-stale: #f3e5f5;
+  --trip-status-stale-text: #4a148c;
+  --trip-status-conflict: #ffebee;
+  --trip-status-conflict-text: #b71c1c;
+  --trip-status-error: #ffebee;
+  --trip-status-error-text: #b71c1c;
+  --trip-status-warning: #fff3e0;
+  --trip-status-warning-text: #e65100;
+  --trip-status-critical: #ffcdd2;
+  --trip-status-critical-text: #c62828;
+  --trip-status-info: #e1f5fe;
+  --trip-status-info-text: #01579b;
+}
+
+.trip-status {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.trip-status.confirmed {
+  background: var(--trip-status-confirmed);
+  color: var(--trip-status-confirmed-text);
+}
+
+.trip-status.estimated {
+  background: var(--trip-status-estimated);
+  color: var(--trip-status-estimated-text);
+}
+
+.trip-status.user-confirmed {
+  background: var(--trip-status-user-confirmed);
+  color: var(--trip-status-user-confirmed-text);
+}
+
+.trip-status.official-confirmed {
+  background: var(--trip-status-official-confirmed);
+  color: var(--trip-status-official-confirmed-text);
+}
+
+.trip-status.unverified {
+  background: var(--trip-status-unverified);
+  color: var(--trip-status-unverified-text);
+}
+
+.trip-status.stale {
+  background: var(--trip-status-stale);
+  color: var(--trip-status-stale-text);
+}
+
+.trip-status.conflict {
+  background: var(--trip-status-conflict);
+  color: var(--trip-status-conflict-text);
+}
+
+.trip-status.error {
+  background: var(--trip-status-error);
+  color: var(--trip-status-error-text);
+}
+
+.trip-status.warning {
+  background: var(--trip-status-warning);
+  color: var(--trip-status-warning-text);
+}
+
+.trip-status.critical {
+  background: var(--trip-status-critical);
+  color: var(--trip-status-critical-text);
+}
+
+.trip-status.info {
+  background: var(--trip-status-info);
+  color: var(--trip-status-info-text);
+}
