@@ -485,6 +485,11 @@ def build_public_bundle(trip: dict, trip_path: Path) -> dict:
     place_index = _bundle_place_index(places)
     source_ledger = _bundle_source_ledger(places, trip)
     budget = trip.get("budget", {})
+    critical_issues = [
+        item.get("message")
+        for item in validation_payload
+        if item.get("severity") == "error" and item.get("message")
+    ]
 
     severities = {item.get("severity") for item in validation_payload}
     trip_status = "ok"
@@ -530,6 +535,11 @@ def build_public_bundle(trip: dict, trip_path: Path) -> dict:
         "critical_alerts": _bundle_critical_alerts(validation_payload),
         "validation": validation_payload,
         "source_ledger": source_ledger,
+        "evidence_gate": {
+            "status": "error" if critical_issues else "ok",
+            "critical_issues": critical_issues,
+            "source_hygiene_failures": [],
+        },
         "meta": {
             "generated_at": _today_iso(),
             "source_path": str(trip_path),
