@@ -23,6 +23,16 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _sha256_bytes(data: bytes) -> str:
+    digest = hashlib.sha256()
+    digest.update(data)
+    return digest.hexdigest()
+
+
+def _format_json(payload: dict) -> str:
+    return json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True)
+
+
 def _today_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
@@ -564,9 +574,14 @@ def main() -> None:
 
     trip = _read_json(args.trip_path)
     bundle = build_public_bundle(trip, args.trip_path)
-    _write_json(args.output, bundle)
+    bundle_payload = _format_json(bundle)
+    bundle["meta"]["bundle_sha256"] = _sha256_bytes(bundle_payload.encode("utf-8"))
+    bundle_payload = _format_json(bundle)
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(bundle_payload, encoding="utf-8")
     if args.web_output is not None:
-        _write_json(args.web_output, bundle)
+        args.web_output.parent.mkdir(parents=True, exist_ok=True)
+        args.web_output.write_text(bundle_payload, encoding="utf-8")
 
 
 if __name__ == "__main__":

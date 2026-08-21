@@ -1,5 +1,4 @@
 import { Bundle } from '../contracts/trip'
-
 interface TidesPageProps {
   bundle: Bundle
 }
@@ -56,4 +55,3 @@ export function TidesPage({ bundle }: TidesPageProps) {
     </section>
   )
 }
-

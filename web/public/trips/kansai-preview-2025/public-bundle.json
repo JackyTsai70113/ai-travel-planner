@@ -1,0 +1,54 @@
+{
+  "trip_id": "kansai-preview-2025",
+  "title": "2025 關西自然體驗預錄行程",
+  "status": "warning",
+  "local_timezone": "Asia/Tokyo",
+  "date_range": { "start_date": "2025-09-21", "end_date": "2025-09-25" },
+  "traveler_profile": { "adults": 2, "children_count": 0, "children_ages": [] },
+  "selected": { "hotel_place_ids": ["kobe-hotel-sample"], "flight_ids": ["TPE-KIX-sample"] },
+  "days": [
+    { "date": "2025-09-21", "summary": "抵達關西，預留接駁與晚餐", "items": [
+      { "id": "d1", "kind": "transport", "start_at": "2025-09-21T10:30", "end_at": "2025-09-21T14:30", "place_id": "kobe-airport", "notes": "航班抵達後前往住宿" }
+    ] },
+    { "date": "2025-09-22", "summary": "城鎮散步與海岸線", "items": [
+      { "id": "d2", "kind": "visit", "start_at": "2025-09-22T09:30", "end_at": "2025-09-22T12:00", "place_id": "kobe-port", "notes": "海港公園與拍照地" }
+    ] }
+  ],
+  "reservations": [
+    {
+      "id": "fixed-1",
+      "day": "2025-09-21",
+      "time": "18:30",
+      "name": "晚餐及夜景預約（待確認）",
+      "place_id": "kansai-dinner",
+      "kind": "fixed",
+      "unresolved": true
+    }
+  ],
+  "preferences": {
+    "hard_constraints": [
+      { "id": "hc-1", "description": "避免行程重疊" }
+    ],
+    "soft_preferences": [
+      { "id": "sc-1", "description": "偏好步行距離 30 分鐘內" }
+    ]
+  },
+  "budget": {
+    "currency": "JPY",
+    "total": { "amount": 156000, "currency": "JPY" },
+    "categories": {
+      "flight": { "amount": 82000, "currency": "JPY" },
+      "hotel": { "amount": 42000, "currency": "JPY" },
+      "food": { "amount": 22000, "currency": "JPY" },
+      "transport": { "amount": 10000, "currency": "JPY" }
+    }
+  },
+  "validation": [
+    { "code": "preview-unverified", "message": "部分固定預約待確認", "severity": "warning" }
+  ],
+  "meta": {
+    "generated_at": "2025-09-01T10:00:00+09:00",
+    "source_path": "fixtures/trips/japan-5-day-trip-v1.json",
+    "next_recheck_at": "2025-10-01T10:00:00+09:00"
+  }
+}

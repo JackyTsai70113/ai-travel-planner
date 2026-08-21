@@ -1,5 +1,4 @@
 # Operational Hubs 前端規格（Issue 69）
-
 ## 1. 目標
 
 建立四個可重複套用的 Hub：
@@ -227,4 +226,3 @@
 - 不做 provider raw payload 解讀
 - 不進行潮汐計算與餐廳 eligibility 判斷
 - 不做研究、訂位 API 呼叫
-

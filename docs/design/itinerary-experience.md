@@ -149,7 +149,7 @@ Issue #67 讀取基礎為 `web/src/App.tsx` 現況：
 5. 新增 `now/next quick mode`
 6. 進行 a11y/print / breakpoints 最後收斂
 
-## 直接交接給 reviewer 的待修項目（issue 67） 
+## 直接交接給 reviewer 的待修項目（issue 67）
 
 ### 1. High 影響（必先修）
 1. Day tab 深連結與鍵盤操作
