@@ -1,3 +1,38 @@
+export type OperationalStatus = 'confirmed' | 'estimated' | 'unverified' | 'stale' | 'conflict' | 'unresolved' | 'unknown'
+
+export interface BundleReservation {
+  id: string
+  day: string
+  time: string | null
+  name: string | null
+  place_id: string
+  kind: string
+  unresolved?: boolean
+  status?: OperationalStatus
+  source?: string
+  confidence?: string
+  freshness?: string
+  last_checked_at?: string
+  next_recheck_at?: string
+  official_url?: string | null
+  phone?: string | null
+  itinerary_item_id?: string | null
+}
+
+export interface OptionalOperationalHubRecord {
+  source?: string
+  status?: OperationalStatus
+  freshness?: string
+  last_checked_at?: string
+  next_recheck_at?: string
+}
+
+export interface BundlePublicOperations {
+  lodgings?: OptionalOperationalHubRecord[]
+  food?: OptionalOperationalHubRecord[]
+  tides?: OptionalOperationalHubRecord[]
+}
+
 export interface BundleDayItem {
   id: string
   kind: string
@@ -42,16 +77,9 @@ export interface Bundle {
     hotel_place_ids: string[]
     flight_ids: string[]
   }
+  operations?: BundlePublicOperations
   days: BundleDay[]
-  reservations: {
-    id: string
-    day: string
-    time: string | null
-    name: string | null
-    place_id: string
-    kind: string
-    unresolved?: boolean
-  }[]
+  reservations: BundleReservation[]
   preferences: {
     hard_constraints: Constraint[]
     soft_preferences: Constraint[]
@@ -125,4 +153,23 @@ export function mapStatusClass(status: Bundle['status']): string {
   if (status === 'ok') return 'status ok'
   if (status === 'warning') return 'status warning'
   return 'status error'
+}
+
+export function operationalStatusLabel(status: OperationalStatus | undefined | null): string {
+  if (status === 'confirmed') return '已確認'
+  if (status === 'estimated') return '估計'
+  if (status === 'unverified') return '未驗證'
+  if (status === 'stale') return '已過時'
+  if (status === 'conflict') return '衝突'
+  if (status === 'unresolved') return '未補齊'
+  return '待補'
+}
+
+export function operationalStatusClass(status: OperationalStatus | undefined | null): string {
+  if (status === 'confirmed') return 'hub-status confirmed'
+  if (status === 'estimated' || status === 'unverified') return 'hub-status estimated'
+  if (status === 'stale') return 'hub-status stale'
+  if (status === 'conflict') return 'hub-status conflict'
+  if (status === 'unresolved') return 'hub-status unresolved'
+  return 'hub-status unknown'
 }

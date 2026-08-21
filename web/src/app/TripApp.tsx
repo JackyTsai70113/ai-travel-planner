@@ -209,13 +209,13 @@ export default function TripApp({ tripMeta = null }: TripAppProps) {
       return <ReservationsPage bundle={bundle} />
     }
     if (selectedSection === 'tides') {
-      return <TidesPage />
+      return <TidesPage bundle={bundle} />
     }
     if (selectedSection === 'food') {
-      return <FoodPage />
+      return <FoodPage bundle={bundle} />
     }
     if (selectedSection === 'lodging') {
-      return <LodgingPage />
+      return <LodgingPage bundle={bundle} />
     }
     if (selectedSection === 'handbook') {
       return <HandbookPage bundle={bundle} />
