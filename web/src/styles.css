@@ -266,6 +266,210 @@ textarea {
   gap: 8px;
 }
 
+.portal-shell {
+  width: min(1120px, calc(100% - 16px));
+  margin: 12px auto 20px;
+  display: grid;
+  gap: 14px;
+}
+
+.portal-hero {
+  border-radius: 18px;
+  border: 1px solid #d1e3ff;
+  background:
+    linear-gradient(110deg, rgba(7, 32, 58, 0.78), rgba(6, 22, 39, 0.64)),
+    radial-gradient(120% 70% at 15% 10%, #1f57a4 0%, #0f2d4f 60%, #0a1f37 100%);
+  color: #eef6ff;
+  padding: 20px;
+}
+
+.portal-eyebrow {
+  margin: 0;
+  color: #9fd0ff;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.8rem;
+}
+
+.portal-hero h1 {
+  margin: 6px 0 8px;
+  font-size: clamp(1.3rem, 2.7vw, 2rem);
+}
+
+.primary-action {
+  margin-top: 12px;
+  border: 1px solid #95c5ff;
+  background: #2e78ca;
+}
+
+.catalog-shell {
+  display: grid;
+  gap: 12px;
+}
+
+.search-shell {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  align-items: end;
+}
+
+.search-shell label {
+  color: #2f4260;
+  font-size: 0.85rem;
+}
+
+.search-shell input,
+.search-shell select {
+  width: 100%;
+}
+
+.catalog-section {
+  display: grid;
+  gap: 10px;
+}
+
+.trip-card {
+  display: grid;
+  grid-template-columns: minmax(220px, 320px) 1fr;
+  background: var(--panel);
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+
+.trip-card-media {
+  min-height: 180px;
+  padding: 12px;
+  color: #fff;
+  display: grid;
+  align-content: end;
+  gap: 6px;
+  background-size: cover;
+  background-position: center;
+}
+
+.trip-card-body {
+  padding: 14px;
+  display: grid;
+  gap: 8px;
+}
+
+.trip-card-eyebrow {
+  margin: 0;
+  color: #315e88;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.76rem;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag {
+  border: 1px solid #cad8ed;
+  color: #2f4f73;
+  background: #eff4ff;
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 0.8rem;
+}
+
+.meta-note {
+  font-size: 0.9rem;
+  color: #2f5e87;
+}
+
+.status-pill {
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  display: inline-flex;
+  width: fit-content;
+}
+
+.status-published { background: #daf5e5; color: #0b623a; border: 1px solid #95d8aa; }
+.status-preview { background: #fff3cf; color: #70500a; border: 1px solid #f0c76a; }
+.status-archived { background: #f1f5fb; color: #4a6078; border: 1px solid #bccde3; }
+.status-ready { background: #e3f8ee; color: #0b653f; border: 1px solid #84d0ad; }
+.status-incomplete { background: #fff2d8; color: #7c5900; border: 1px solid #f3ca77; }
+.status-blocked { background: #ffe3e5; color: #8f202f; border: 1px solid #f5b7be; }
+.status-warning { background: #edf2ff; color: #2f4d79; border: 1px solid #bfdbff; }
+
+.trip-overview-shell {
+  display: grid;
+  gap: 12px;
+}
+
+.trip-overview-hero {
+  color: #f2f8ff;
+  border-radius: 16px;
+  border: 1px solid #d0e2ff;
+  padding: 18px;
+  background-size: cover;
+  background-position: center;
+  display: grid;
+  gap: 8px;
+}
+
+.trip-hero-eyebrow {
+  margin: 0;
+  color: #dcecff;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.hero-summary {
+  margin: 0;
+  max-width: 60ch;
+}
+
+.hero-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hero-actions a {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  padding: 8px 12px;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  color: #edf4ff;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.card-shell {
+  background: var(--panel);
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  padding: 14px;
+}
+
+.daily-theme-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.daily-theme-item {
+  border: 1px solid #d8e2f0;
+  border-radius: 12px;
+  padding: 10px;
+}
+
 .budget-note {
   display: block;
   margin: 12px 0 6px;
@@ -470,6 +674,23 @@ button[disabled] {
 @media (max-width: 640px) {
   .shell {
     padding: 12px 8px 24px;
+  }
+
+  .search-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .trip-card {
+    grid-template-columns: 1fr;
+  }
+
+  .trip-card-media {
+    min-height: 150px;
+  }
+
+  .mobile-topbar,
+  .mobile-bottom-nav {
+    display: block;
   }
 
   .hero,
