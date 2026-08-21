@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "trip-public-bundle-v1",
+  "type": "object",
+  "required": ["schema_version", "trip_id", "site", "build", "days", "validation", "source_ledger"],
+  "properties": {
+    "schema_version": {"const": "trip-public-bundle-v1"},
+    "trip_id": {"type": "string"},
+    "site": {"type": "object", "required": ["slug", "theme_id", "features"]},
+    "build": {"type": "object", "required": ["publisher", "generated_at", "validation_status"]},
+    "days": {"type": "array"},
+    "validation": {"type": "array"},
+    "source_ledger": {"type": "array"},
+    "title": {"type": ["string", "null"]},
+    "local_timezone": {"type": ["string", "null"]},
+    "date_range": {"type": "object"},
+    "overview": {"type": "object"},
+    "traveler_profile": {"type": "object"},
+    "places": {"type": "array"},
+    "transport_legs": {"type": "array"},
+    "selected": {"type": "object"},
+    "reservations": {"type": "array"},
+    "flights": {"type": "array"},
+    "hotels": {"type": "array"},
+    "conditions": {"type": "object"},
+    "alternatives": {"type": "array"},
+    "meals": {"type": "array"},
+    "budget": {"type": "object"}
+  },
+  "additionalProperties": false
+}

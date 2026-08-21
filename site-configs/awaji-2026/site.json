@@ -1,0 +1,13 @@
+{
+  "schema_version": "trip-site-v1",
+  "trip_id": "awaji-naruto-tokushima-kobe-2026",
+  "slug": "awaji-2026",
+  "publication_status": "preview",
+  "theme_id": "setouchi-awaji",
+  "media_manifest": "site-media.json",
+  "features": {"itinerary": true, "driving": true, "conditions": true, "local_planner": true},
+  "pwa": {"name": "Awaji 2026", "scope": "/trips/awaji-2026/"},
+  "seo": {"title": "2026 淡路島・鳴門家庭旅行", "description": "由 Canonical Trip 產生的預覽網站。"},
+  "output_path": "trips/awaji-2026/",
+  "trip_file": "../../trips/awaji-naruto-tokushima-kobe-2026/trip.json"
+}

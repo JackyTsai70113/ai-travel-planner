@@ -1,0 +1,18 @@
+{
+  "schema_version": "trip-v1",
+  "id": "kyushu-family-2026",
+  "title": "九州三天親子自駕預覽",
+  "local_timezone": "Asia/Tokyo",
+  "date_range": {"start_date": "2026-04-10", "end_date": "2026-04-12"},
+  "traveler_profile": {"adults": 2, "children": [{"age": 2}]},
+  "candidate_sets": {"places": [{"id": "fuk", "name": "福岡機場", "kind": "airport"}], "transport_legs": []},
+  "selected": {},
+  "days": [
+    {"date": "2026-04-10", "summary": "抵達福岡", "items": [{"id": "arrival", "kind": "visit", "place_id": "fuk", "start_at": "2026-04-10T11:00:00+09:00", "end_at": "2026-04-10T12:00:00+09:00"}]},
+    {"date": "2026-04-11", "summary": "市區探索", "items": [{"id": "city", "kind": "visit", "place_id": "fuk", "start_at": "2026-04-11T10:00:00+09:00", "end_at": "2026-04-11T12:00:00+09:00"}]},
+    {"date": "2026-04-12", "summary": "返程", "items": [{"id": "return", "kind": "visit", "place_id": "fuk", "start_at": "2026-04-12T10:00:00+09:00", "end_at": "2026-04-12T11:00:00+09:00"}]}
+  ],
+  "budget": {"currency": "JPY", "total": {"amount": 10000, "currency": "JPY"}},
+  "validation": [],
+  "provenance": {"source_type": "recorded_fixture", "provider": "fixture", "retrieved_at": "2026-01-01T00:00:00+09:00", "confidence": 1, "status": "confirmed"}
+}
