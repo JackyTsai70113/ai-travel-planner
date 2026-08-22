@@ -5,163 +5,198 @@ import {
   toFriendlyStatus,
 } from '../contracts/trip'
 import type { TripCatalogEntry } from '../contracts/trip-registry'
+import { buildRoutePath } from '../app/route-registry'
 
 interface OverviewPageProps {
   bundle: Bundle | null
   trip: TripCatalogEntry | null
 }
-
 function resolveStatusBadge(readiness: TripCatalogEntry['readiness']): { className: string; text: string } {
-  if (readiness === 'ready') return { className: 'status-pill status-ready', text: '可安心出發（仍需確認最新條件）' }
-  if (readiness === 'incomplete') return { className: 'status-pill status-incomplete', text: '資料待補，尚未完全確認' }
-  return { className: 'status-pill status-blocked', text: '關鍵阻斷，建議補齊資料後再出發' }
+  if (readiness === 'ready') return { className: 'status-pill status-ready', text: '可出發' }
+  if (readiness === 'incomplete') return { className: 'status-pill status-incomplete', text: '部分待確認' }
+  return { className: 'status-pill status-blocked', text: '有關鍵阻斷' }
 }
 
 function resolvePublicationBadge(status: TripCatalogEntry['status']): { className: string; text: string } {
-  if (status === 'published') return { className: 'status-pill status-published', text: '已發布' }
+  if (status === 'published') return { className: 'status-pill status-published', text: '正式版本' }
   if (status === 'preview') return { className: 'status-pill status-preview', text: '預覽版本' }
   return { className: 'status-pill status-archived', text: '封存版本' }
 }
 
 function resolveHeroImage(trip: TripCatalogEntry | null): string {
-  if (!trip) return 'linear-gradient(130deg, #0f172a, #173c61)'
-  if (trip.cover_media.kind === 'image' && trip.cover_media.url) {
-    return `linear-gradient(120deg, rgba(8, 16, 28, 0.45), rgba(8, 16, 28, 0.2)), url(${trip.cover_media.url}) center/cover no-repeat`
+  if (trip?.cover_media.kind === 'image' && trip.cover_media.url) {
+    return `linear-gradient(115deg, rgba(5, 25, 39, 0.9), rgba(5, 55, 72, 0.54)), url(${trip.cover_media.url}) center/cover no-repeat`
   }
-  return trip.cover_media.gradient || 'linear-gradient(130deg, #0f172a, #173c61)'
+  return trip?.cover_media.gradient || 'linear-gradient(125deg, #0b2638 0%, #0c6574 72%, #3ea69c 140%)'
 }
 
 function resolveCriticalCount(bundle: Bundle | null, trip: TripCatalogEntry | null): number {
-  if (!bundle) return trip ? trip.critical_alert_count : 0
+  if (!bundle) return trip?.critical_alert_count || 0
   const unresolvedReservations = bundle.reservations.filter((item) => item.unresolved).length
   return bundle.validation.filter((item) => item.severity === 'error' || item.severity === 'warning').length + unresolvedReservations
 }
 
-function toDateText(value: string): string {
-  if (!value) return '--'
-  return value
+function formatDay(date: string): string {
+  try {
+    return new Intl.DateTimeFormat('zh-TW', {
+      month: 'numeric',
+      day: 'numeric',
+      weekday: 'short',
+      timeZone: 'Asia/Tokyo',
+    }).format(new Date(`${date}T00:00:00+09:00`))
+  } catch {
+    return date
+  }
+}
+
+function timeLabel(value: string | null): string {
+  return value?.match(/T(\d{2}:\d{2})/)?.[1] || '未提供'
+}
+
+function lodgingForDay(bundle: Bundle, date: string) {
+  const items = bundle.days.flatMap((day) => day.items)
+  const active = bundle.selected.hotel_place_ids
+    .map((placeId) => {
+      const checkIn = items.find((item) => item.kind === 'check_in' && item.place_id === placeId && item.start_at)
+      const checkOut = items.find((item) => item.kind === 'check_out' && item.place_id === placeId && item.start_at)
+      return { placeId, checkInDate: checkIn?.start_at?.slice(0, 10), checkOutDate: checkOut?.start_at?.slice(0, 10) }
+    })
+    .filter((stay) => stay.checkInDate && date >= stay.checkInDate && (!stay.checkOutDate || date < stay.checkOutDate))
+    .sort((a, b) => (b.checkInDate || '').localeCompare(a.checkInDate || ''))[0]
+  return bundle.places?.find((place) => place.id === active?.placeId)
 }
 
 export function OverviewPage({ bundle, trip }: OverviewPageProps) {
   const publication = resolvePublicationBadge(trip?.status || 'preview')
   const readiness = resolveStatusBadge(trip?.readiness || 'incomplete')
   const heroImage = resolveHeroImage(trip)
-  const criticalCount = resolveCriticalCount(bundle, trip || null)
+  const criticalCount = resolveCriticalCount(bundle, trip)
 
-  const fallbackHeroNote = trip ? trip.hero_summary : '行程資料待載入，仍可先閱讀公開摘要。'
-  const destinationText = trip ? trip.destination_regions.join(' / ') : '日本'
+  const title = trip?.title || bundle?.title || '旅行手冊'
+  const destinationText = trip?.destination_regions.join(' / ') || '淡路島・德島・神戶'
   const dateText = trip
-    ? `${trip.date_range.start_date} ~ ${trip.date_range.end_date}（${trip.duration_days} 天）`
-    : '資料載入中'
-  const travelersText = trip ? trip.travelers_summary : '--'
+    ? `${trip.date_range.start_date} — ${trip.date_range.end_date} · ${trip.duration_days} 天`
+    : bundle ? `${bundle.date_range.start_date} — ${bundle.date_range.end_date} · ${bundle.days.length} 天` : '行程資料載入中'
+  const travelersText = trip?.travelers_summary || (bundle ? `${bundle.traveler_profile.adults} 位大人 · ${bundle.traveler_profile.children_count} 位孩童` : '旅客資料載入中')
 
   if (!bundle) {
     return (
       <section className="trip-overview-shell">
         <article className="trip-overview-hero" style={{ background: heroImage }}>
-          <p className="trip-hero-eyebrow">AI Travel Planner</p>
-          <h1>{trip?.title || 'Trip Landing'}</h1>
-          <p className="muted">{destinationText}</p>
-          <p>{dateText}</p>
-          <p>{travelersText}</p>
-          <div className="hero-tags">
-            <span className={publication.className}>{publication.text}</span>
-            <span className={readiness.className}>{readiness.text}</span>
-            <span className="status-pill status-warning">提醒 {criticalCount} 則</span>
-          </div>
-          <p className="hero-summary">{fallbackHeroNote}</p>
-          <div className="hero-actions">
-            <a href="#/today">查看今日行程</a>
-            <a href="#/map">地圖</a>
-            <a href="#/reservation">預約</a>
-            <a href="#/sources">資料來源</a>
-          </div>
+          <p className="trip-hero-eyebrow">SETOUCHI TRAVEL HANDBOOK</p>
+          <h1>{title}</h1>
+          <p className="trip-hero-route">{destinationText}</p>
+          <div className="trip-hero-meta"><span>{dateText}</span><span>{travelersText}</span></div>
+          <p className="hero-summary">{trip?.hero_summary || '正在載入 Canonical Trip；完成後會顯示五日路線與操作資訊。'}</p>
         </article>
-        <section className="card-shell">
-          <h2>資料載入中</h2>
-          <p className="muted">行程資料尚在載入，稍後會顯示每日主題、住宿與預約細節。</p>
-        </section>
       </section>
     )
   }
 
-  const unresolvedReservations = bundle.reservations.filter((item) => item.unresolved).slice(0, 3)
-  const firstDays = bundle.days.slice(0, 3)
+  const lodgingCards = bundle.selected.hotel_place_ids.map((placeId) => {
+    const place = bundle.places?.find((candidate) => candidate.id === placeId)
+    const allItems = bundle.days.flatMap((day) => day.items)
+    const checkIn = allItems.find((item) => item.kind === 'check_in' && item.place_id === placeId)
+    const checkOut = allItems.find((item) => item.kind === 'check_out' && item.place_id === placeId)
+    return { placeId, place, checkIn: checkIn?.start_at?.slice(0, 10), explicitCheckOut: checkOut?.start_at?.slice(0, 10) }
+  }).sort((a, b) => (a.checkIn || '').localeCompare(b.checkIn || '')).map((stay, index, stays) => ({
+    ...stay,
+    checkOut: stay.explicitCheckOut || stays[index + 1]?.checkIn,
+  }))
+  const fixedEntries = bundle.days.flatMap((day) => day.items
+    .filter((item) => item.fixed || item.kind === 'reservation' || item.kind === 'flight' || bundle.reservations.some((reservation) => reservation.id === item.id || reservation.itinerary_item_id === item.id))
+    .map((item) => ({ day: day.date, item, label: findPlaceLabel(bundle.places, item.place_id) })))
+  const validationAlerts = bundle.validation.filter((item) => item.severity === 'error' || item.severity === 'warning')
 
   return (
     <section className="trip-overview-shell">
       <article className="trip-overview-hero" style={{ background: heroImage }}>
-        <p className="trip-hero-eyebrow">AI Travel Planner</p>
-        <h1>{trip?.title || bundle.title}</h1>
-        <p className="muted">{destinationText}</p>
-        <p>{dateText}</p>
-        <p>{travelersText}</p>
-        <div className="hero-tags">
-          <span className={publication.className}>{publication.text}</span>
-          <span className={readiness.className}>{readiness.text}</span>
-          <span className="status-pill status-warning">提醒 {criticalCount} 則</span>
+        <div className="trip-hero-content">
+          <p className="trip-hero-eyebrow">SETOUCHI TRAVEL HANDBOOK</p>
+          <h1>{title}</h1>
+          <p className="trip-hero-route">{destinationText}</p>
+          <div className="trip-hero-meta"><span>{dateText}</span><span>{travelersText}</span></div>
+          <p className="hero-summary">{trip?.hero_summary || '從淡路島到德島、神戶，把每日時間、住宿、導航與行前確認放在同一本手冊。'}</p>
+          <div className="hero-tags">
+            <span className={publication.className}>{publication.text}</span>
+            <span className={readiness.className}>{readiness.text}</span>
+            <span className="status-pill status-warning">{criticalCount} 則提醒</span>
+          </div>
+          <div className="hero-actions">
+            <a className="primary" href={buildRoutePath({ section: 'today', day: bundle.days[0]?.date })}>開始 Day 1</a>
+            <a href="#/map">逐段地圖</a>
+            <a href="#/packing">出發前清單</a>
+          </div>
         </div>
-        <p className="hero-summary">{trip?.hero_summary || fallbackHeroNote}</p>
-        <p className="muted">最後更新：{trip?.last_generated || '--'}｜確認：{trip?.last_verified || '--'}</p>
-        <div className="hero-actions">
-          <a href="#/today">查看今日行程</a>
-          <a href="#/map">地圖</a>
-          <a href="#/reservation">預約</a>
-          <a href="#/sources">資料來源</a>
-        </div>
+        <aside className="hero-brief" aria-label="旅行摘要">
+          <p>TRIP SNAPSHOT</p>
+          <dl>
+            <div><dt>狀態</dt><dd>{toFriendlyStatus(bundle.status)}</dd></div>
+            <div><dt>天數</dt><dd>{bundle.days.length} 日</dd></div>
+            <div><dt>住宿</dt><dd>{lodgingCards.length} 處</dd></div>
+            <div><dt>逐段交通</dt><dd>{bundle.transport_legs?.length || 0} 段</dd></div>
+          </dl>
+          <small>資料快照 {bundle.meta.generated_at}</small>
+        </aside>
       </article>
 
-      <section className="card-shell">
-        <h2>行程摘要</h2>
-        <p>行程狀態：{toFriendlyStatus(bundle.status)} | 資料更新：{bundle.meta.generated_at}</p>
-        <p>航班/轉運：{bundle.selected.flight_ids.join('、') || '待補'}</p>
-        <p>住宿：{bundle.selected.hotel_place_ids.join('、') || '待補'}</p>
-        <p>資料快照總預算：{formatMoney(bundle.budget?.total)}</p>
-      </section>
-
-      <section className="card-shell">
-        <h2>每日主題（預覽）</h2>
-        <div className="daily-theme-grid">
-          {firstDays.map((day) => (
-            <article key={day.date} className="daily-theme-item">
-              <p className="muted">{toDateText(day.date)}</p>
-              <h3>{day.summary}</h3>
-              {day.items.length === 0 ? <p className="muted">尚未設定明細</p> : null}
-              {day.items.slice(0, 3).map((item) => (
-                <p key={`${day.date}-${item.id}`} className="muted">
-                  {item.kind} ｜ {item.kind === 'stay' ? '住宿' : item.kind}
-                </p>
-              ))}
-            </article>
-          ))}
-          {firstDays.length === 0 ? <p className="muted">未提供每日主題</p> : null}
+      <section className="overview-section">
+        <div className="section-heading">
+          <div><p className="eyebrow">FIVE DAY PLAN</p><h2>五日路線一眼掌握</h2></div>
+          <a href="#/today">開啟每日時間軸</a>
+        </div>
+        <div className="overview-day-grid">
+          {bundle.days.map((day, index) => {
+            const first = day.items[0]
+            const last = day.items.at(-1)
+            const lodging = lodgingForDay(bundle, day.date)
+            const fixedCount = fixedEntries.filter((entry) => entry.day === day.date).length
+            return (
+              <a className="overview-day-card" href={buildRoutePath({ section: 'today', day: day.date })} key={day.date}>
+                <div className="overview-day-number"><span>DAY</span><strong>{String(index + 1).padStart(2, '0')}</strong></div>
+                <div className="overview-day-copy">
+                  <p>{formatDay(day.date)} · {day.items.length} 個停靠</p>
+                  <h3>{day.summary}</h3>
+                  <div className="overview-day-route"><span>{first ? findPlaceLabel(bundle.places, first.place_id) : '未提供起點'}</span><i>→</i><span>{last ? findPlaceLabel(bundle.places, last.place_id) : '未提供終點'}</span></div>
+                  <div className="overview-day-foot"><span>住宿：{lodging?.name || '返程／未安排'}</span><span>固定 {fixedCount} 項</span></div>
+                </div>
+              </a>
+            )
+          })}
         </div>
       </section>
 
-      <section className="card-shell">
-        <h2>預約提醒</h2>
-        {unresolvedReservations.length === 0 ? <p className="muted">目前沒有未解決的關鍵預約警示。</p> : null}
-        <ul>
-          {unresolvedReservations.map((item) => (
-            <li key={item.id}>
-              <strong>{item.kind}</strong>：{findPlaceLabel(bundle.places || [], item.place_id)}
-              {' '}
-              <span className="muted">（{item.day} {item.time || '時間待補'}）</span>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <div className="overview-columns">
+        <section className="overview-section">
+          <div className="section-heading"><div><p className="eyebrow">STAYS</p><h2>住宿接力</h2></div><a href="#/lodging">住宿詳情</a></div>
+          <div className="overview-stay-list">
+            {lodgingCards.map(({ placeId, place, checkIn, checkOut }, index) => (
+              <article key={placeId}>
+                <span className="stay-sequence">{index + 1}</span>
+                <div><p>{checkIn || '入住日未提供'} → {checkOut || '退房日未提供'}</p><h3>{place?.name || placeId}</h3><small>{place?.address || '完整地址尚未由 Canonical Trip 提供'}</small></div>
+              </article>
+            ))}
+          </div>
+        </section>
 
-      <section className="card-shell">
-        <h2>關鍵提醒</h2>
-        <ul>
-          {bundle.validation.map((item) => (
-            <li key={item.code}>
-              <strong>{item.severity}</strong>：{item.message}
-            </li>
-          ))}
-        </ul>
-      </section>
+        <section className="overview-section">
+          <div className="section-heading"><div><p className="eyebrow">FIXED & TRUST</p><h2>固定時間與提醒</h2></div><a href="#/reservation">預約詳情</a></div>
+          <div className="overview-alert-list">
+            {fixedEntries.slice(0, 4).map(({ day, item, label }) => (
+              <a href={buildRoutePath({ section: 'today', day, item: item.id })} key={item.id}>
+                <strong>{timeLabel(item.start_at)}</strong><span>{label}</span><small>{formatDay(day)}</small>
+              </a>
+            ))}
+            {fixedEntries.length === 0 ? <p className="honest-inline">目前沒有標記為固定的時間項目。</p> : null}
+            {validationAlerts.slice(0, 3).map((alert) => <div className="overview-warning" key={alert.code}><strong>{alert.severity}</strong><span>{alert.message}</span></div>)}
+          </div>
+        </section>
+      </div>
+
+      <footer className="overview-footer">
+        <span>預算快照：{formatMoney(bundle.budget?.total)}</span>
+        <span>Google Maps 即時交通以開啟導航當下為準</span>
+      </footer>
     </section>
   )
 }

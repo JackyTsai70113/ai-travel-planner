@@ -1,6 +1,6 @@
 {
   "trip_id": "awaji-naruto-tokushima-kobe-2026",
-  "generated_at": "2026-08-16T10:00:00+09:00",
+  "generated_at": "2026-08-23T10:00:00+08:00",
   "entries": [
     {
       "reference_id": "selected-flight/xj-834-outbound",
@@ -53,8 +53,8 @@
       "kind": "lodge",
       "source_type": "user_confirmed",
       "provider": "user",
-      "title": "Awaji Riverside Terrace 住宿確認",
-      "source_url": "https://github.com/JackyTsai70113/ai-travel-planner/issues/52",
+      "title": "Awaji Riverside Terrace in Shizuki 780 住宿與地址確認",
+      "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496",
       "supports": [
         "hotel",
         "check-in-out-window",
@@ -79,8 +79,8 @@
       "kind": "lodge",
       "source_type": "user_confirmed",
       "provider": "user",
-      "title": "徳島別荘ホテル2 住宿確認",
-      "source_url": "https://github.com/JackyTsai70113/ai-travel-planner/issues/52",
+      "title": "1-chōme-3-44-3 Kanazawa 住宿與地址確認",
+      "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496",
       "supports": [
         "hotel",
         "booking_window"
@@ -104,8 +104,8 @@
       "kind": "lodge",
       "source_type": "user_confirmed",
       "provider": "user",
-      "title": "The Royal Park Canvas Kobe Sannomiya 住宿確認",
-      "source_url": "https://github.com/JackyTsai70113/ai-travel-planner/issues/52",
+      "title": "ザ ロイヤルパーク キャンバス 神戸三宮住宿與地址確認",
+      "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496",
       "supports": [
         "hotel",
         "booking_window"
@@ -129,11 +129,13 @@
       "kind": "reservation",
       "source_type": "reservation",
       "provider": "trip maintainer",
-      "title": "鳴門固定預約名稱已確認，細節待補",
-      "source_url": "https://github.com/JackyTsai70113/ai-travel-planner/issues/52",
+      "title": "幸せのパンケーキ 淡路島テラス 17:45 訂位、地點與地址確認",
+      "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496",
       "supports": [
         "name",
-        "time"
+        "time",
+        "address",
+        "resolution"
       ],
       "confidence": 1,
       "retrieved_at": "2026-08-15T09:30:00+09:00",
@@ -144,7 +146,52 @@
       },
       "conflict": null,
       "visibility": "public",
-      "status": "unresolved"
+      "status": "confirmed"
+    },
+    {
+      "reference_id": "sheet/import-2026-08-23",
+      "kind": "itinerary_import",
+      "source_type": "user_confirmed",
+      "provider": "Google Sheet",
+      "title": "行程總覽、8.29-8.31 詳細執行、出發前確認清單匯入",
+      "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit",
+      "supports": ["days/2026-08-27..2026-08-31", "operations/pretrip_checklist", "hotel-addresses", "fixed-reservations"],
+      "confidence": 1,
+      "retrieved_at": "2026-08-23T09:00:00+08:00",
+      "validity": {"valid_from":"2026-08-23T00:00:00+08:00","valid_until":"2026-08-31T23:59:59+09:00","freshness":"manual"},
+      "conflict": null,
+      "visibility": "public",
+      "status": "confirmed"
+    },
+    {
+      "reference_id": "transport/sheet-planning-estimates",
+      "kind": "transport_estimate",
+      "source_type": "derived",
+      "provider": "Google Sheet planning estimate",
+      "title": "逐段車程、導航注意、延誤切點與家庭注意",
+      "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117",
+      "supports": ["candidate_sets.transport_legs", "route-duration", "route-notes"],
+      "confidence": 0.8,
+      "retrieved_at": "2026-08-23T09:00:00+08:00",
+      "validity": {"valid_from":"2026-08-23T00:00:00+08:00","valid_until":"2026-08-27T00:00:00+09:00","freshness":"requires-refresh"},
+      "conflict": {"message":"所有車程均為規劃估計，不代表即時路況；出發當日以 Google Maps 導航為準。","severity":"medium"},
+      "visibility": "public",
+      "status": "estimated"
+    },
+    {
+      "reference_id": "place/awaji-sa-highway-oasis",
+      "kind": "place",
+      "source_type": "official",
+      "provider": "淡路ハイウェイオアシス",
+      "title": "淡路 Highway Oasis 官方地址與交通方式",
+      "source_url": "https://www.awajishimahighwayoasis.com/access/",
+      "supports": ["address", "access", "route-destination"],
+      "confidence": 1,
+      "retrieved_at": "2026-08-23T03:20:00+08:00",
+      "validity": {"valid_from":"2026-08-23T00:00:00+08:00","valid_until":"2026-08-31T23:59:59+09:00","freshness":"live"},
+      "conflict": null,
+      "visibility": "public",
+      "status": "confirmed"
     }
   ]
 }

@@ -1,113 +1,149 @@
-import { useMemo } from 'react'
-import { Bundle, buildMapsLink, findPlaceAddress, findPlaceLabel } from '../contracts/trip'
+import { useMemo, useState } from 'react'
+import {
+  Bundle,
+  BundlePlace,
+  buildMapsLink,
+  operationalStatusClass,
+  operationalStatusLabel,
+} from '../contracts/trip'
 import { buildRoutePath } from '../app/route-registry'
 
 interface LodgingPageProps {
   bundle: Bundle
 }
-
 interface LodgingItem {
   id: string
   placeId: string
-  checkInDate: string
+  place?: BundlePlace
+  checkInDate?: string
+  checkInTime?: string
   checkOutDate?: string
+  checkOutTime?: string
   nights?: number
+  boundaryNote: string
   route: string
+  note?: string
+}
+
+function timeLabel(value: string | null | undefined) {
+  return value?.match(/T(\d{2}:\d{2})/)?.[1] || '未提供'
+}
+
+function dateLabel(value: string | undefined) {
+  if (!value) return '未提供'
+  try {
+    return new Intl.DateTimeFormat('zh-TW', {
+      month: 'numeric',
+      day: 'numeric',
+      weekday: 'short',
+      timeZone: 'Asia/Tokyo',
+    }).format(new Date(`${value}T00:00:00+09:00`))
+  } catch {
+    return value
+  }
+}
+
+function daysBetween(start?: string, end?: string) {
+  if (!start || !end) return undefined
+  const difference = new Date(`${end}T00:00:00+09:00`).getTime() - new Date(`${start}T00:00:00+09:00`).getTime()
+  return Math.max(Math.round(difference / 86_400_000), 1)
 }
 
 export function LodgingPage({ bundle }: LodgingPageProps) {
+  const [copiedId, setCopiedId] = useState('')
   const lodgings = useMemo<LodgingItem[]>(() => {
-    const lodgingsByPlace = bundle.selected.hotel_place_ids.map((placeId) => {
-      const dayWithCheckIn = bundle.days.find((day) => day.items.some((item) => item.kind === 'check_in' && item.place_id === placeId))
-      if (!dayWithCheckIn) return null
+    const allItems = bundle.days.flatMap((day) => day.items)
+    const base = bundle.selected.hotel_place_ids.map((placeId) => {
+      const place = bundle.places?.find((candidate) => candidate.id === placeId)
+      const checkIn = allItems.find((item) => item.kind === 'check_in' && item.place_id === placeId)
+      const checkOut = allItems.find((item) => item.kind === 'check_out' && item.place_id === placeId)
+      return { placeId, place, checkIn, checkOut }
+    }).sort((a, b) => (a.checkIn?.start_at || '').localeCompare(b.checkIn?.start_at || ''))
 
-      const checkInItem = dayWithCheckIn.items.find(
-        (item) => item.kind === 'check_in' && item.place_id === placeId && item.id && item.start_at,
-      )
-      if (!checkInItem) return null
-
-      const checkOutItem = bundle.days
-        .slice(bundle.days.indexOf(dayWithCheckIn))
-        .flatMap((day) => day.items)
-        .find((item) => item.kind === 'check_out' && item.place_id === placeId && item.start_at)
-
-      const checkoutDate = checkOutItem?.start_at ? checkOutItem.start_at.slice(0, 10) : undefined
-      const nights = checkoutDate
-        ? Math.max(
-          Math.round(
-            (new Date(`${checkoutDate}T00:00:00+09:00`).getTime() - new Date(`${checkInItem.start_at?.slice(0, 10)}T00:00:00+09:00`).getTime()) /
-              (1000 * 60 * 60 * 24),
-          ),
-          1,
-        )
-        : undefined
-
+    return base.map((entry, index) => {
+      const checkInDate = entry.checkIn?.start_at?.slice(0, 10)
+      const explicitCheckOut = entry.checkOut?.start_at?.slice(0, 10)
+      const nextCheckIn = base[index + 1]?.checkIn?.start_at?.slice(0, 10)
+      const checkOutDate = explicitCheckOut || nextCheckIn
+      const boundaryNote = explicitCheckOut
+        ? '退房時間已列入行程'
+        : nextCheckIn
+          ? '退房日依下一處入住日呈現；確切退房時間未提供'
+          : '退房日與時間未提供'
       return {
-        id: `${placeId}-${checkInItem.id}`,
-        placeId,
-        checkInDate: checkInItem.start_at?.slice(0, 10) || '',
-        checkOutDate: checkoutDate,
-        nights,
-        route: buildRoutePath({ section: 'today', day: checkInItem.start_at?.slice(0, 10), item: checkInItem.id }),
+        id: entry.placeId,
+        placeId: entry.placeId,
+        place: entry.place,
+        checkInDate,
+        checkInTime: entry.checkIn?.start_at || undefined,
+        checkOutDate,
+        checkOutTime: entry.checkOut?.start_at || undefined,
+        nights: daysBetween(checkInDate, checkOutDate),
+        boundaryNote,
+        route: buildRoutePath({ section: 'today', day: checkInDate, item: entry.checkIn?.id }),
+        note: entry.checkIn?.notes || undefined,
       }
-    }).filter(Boolean) as LodgingItem[]
+    })
+  }, [bundle.days, bundle.places, bundle.selected.hotel_place_ids])
 
-    return lodgingsByPlace.filter((item) => item.checkInDate)
-  }, [bundle.days, bundle.selected.hotel_place_ids])
+  const totalNights = lodgings.reduce((sum, lodging) => sum + (lodging.nights || 0), 0)
+  const copyAddress = async (lodging: LodgingItem) => {
+    if (!lodging.place?.address) return
+    try {
+      await navigator.clipboard.writeText(`${lodging.place.name || lodging.placeId}\n${lodging.place.address}`)
+      setCopiedId(lodging.id)
+      window.setTimeout(() => setCopiedId(''), 1400)
+    } catch {
+      setCopiedId('error')
+    }
+  }
 
   return (
-    <section className="card hub-card-wrapper" aria-label="住宿">
-      <header className="hub-header">
-        <h2>住宿</h2>
-        <p>依據公共 itinerary 片段與目前已提供住宿主鍵，先呈現可核對欄位。</p>
+    <section className="lodging-workspace" aria-label="住宿手冊">
+      <header className="page-intro">
+        <div><p className="eyebrow">STAY GUIDE</p><h1>住宿接力</h1><p>入住日期、地址與當日行程放在一起；未提供的設備與需求不自行推論。</p></div>
+        <div className="page-intro-stats"><span><strong>{lodgings.length}</strong> 處住宿</span><span><strong>{totalNights}</strong> 晚</span></div>
       </header>
 
-      <p className="shell-message">資料版本：{bundle.meta.generated_at}</p>
-
-      <div className="hub-stats">
-        <p>已列出住宿筆數：{lodgings.length}</p>
-        <p>入住資料欄位可補齊程度：{lodgings.length ? '部分可確認' : '未提供完整欄位'}</p>
+      <div className="lodging-route-strip" aria-label="住宿順序">
+        {lodgings.map((lodging, index) => <div key={lodging.id}><span>{index + 1}</span><strong>{lodging.place?.name || lodging.placeId}</strong><small>{dateLabel(lodging.checkInDate)}</small></div>)}
       </div>
 
-      {lodgings.length > 0 ? (
-        <div className="hub-section">
-          {lodgings.map((lodging) => {
-            const placeLabel = findPlaceLabel(bundle.places, lodging.placeId)
-            const placeAddress = findPlaceAddress(bundle.places, lodging.placeId)
-            return (
-              <article className="hub-item" key={lodging.id}>
-                <div className="hub-item-row">
-                  <span className="hub-status confirmed">booked</span>
-                  <h3>{placeLabel}</h3>
+      <div className="lodging-card-list">
+        {lodgings.map((lodging, index) => {
+          const status = lodging.checkInDate && lodging.place?.address ? 'confirmed' : 'unresolved'
+          const mapsHref = lodging.place?.google_maps_url || buildMapsLink(lodging.place?.maps_query || lodging.place?.name || lodging.placeId)
+          return (
+            <article className="lodging-card" key={lodging.id}>
+              <div className="lodging-card-number"><span>STAY</span><strong>{String(index + 1).padStart(2, '0')}</strong></div>
+              <div className="lodging-card-main">
+                <header>
+                  <div><span className={operationalStatusClass(status)}>{operationalStatusLabel(status)}</span><h2>{lodging.place?.name || lodging.placeId}</h2>{lodging.place?.name_ja ? <p>{lodging.place.name_ja}</p> : null}</div>
+                  <span className="night-pill">{lodging.nights ? `${lodging.nights} 晚` : '晚數未確認'}</span>
+                </header>
+                <div className="stay-dates">
+                  <div><small>CHECK IN</small><strong>{dateLabel(lodging.checkInDate)}</strong><span>{timeLabel(lodging.checkInTime)}</span></div>
+                  <i>→</i>
+                  <div><small>CHECK OUT</small><strong>{dateLabel(lodging.checkOutDate)}</strong><span>{timeLabel(lodging.checkOutTime)}</span></div>
                 </div>
-                <p>入住日：{lodging.checkInDate || '待補'}</p>
-                <p>退房日：{lodging.checkOutDate || '待補'}</p>
-                <p>晚數：{lodging.nights ? `${lodging.nights} 晚` : '待補'}</p>
-                {placeAddress ? <p>地址：{placeAddress}</p> : null}
-                <p>已知設施：未提供（未在公共 read model 呈現）</p>
-                <p>特殊需求：parking / luggage unloading / elevator / 廚房：待補</p>
-                <div className="hub-actions">
-                  <a className="hub-inline-button" href={buildMapsLink(placeLabel)} target="_blank" rel="noreferrer">
-                    地圖
-                  </a>
-                  <a className="hub-inline-button" href={lodging.route}>
-                    回行程（入住日）
-                  </a>
-                  <a className="hub-inline-button" href={`https://wa.me/?text=預約住宿：${encodeURIComponent(placeLabel)}`}>
-                    一鍵複製提醒
-                  </a>
+                <div className="stay-address"><span aria-hidden="true">⌖</span><div><small>完整地址</small><p>{lodging.place?.address || 'Canonical Trip 尚未提供完整地址'}</p></div></div>
+                <p className="stay-boundary-note">{lodging.boundaryNote}</p>
+                {lodging.note ? <p className="stay-note"><strong>入住提醒：</strong>{lodging.note}</p> : null}
+                {lodging.place?.accessibility_notes ? <p className="stay-note"><strong>家庭／無障礙：</strong>{lodging.place.accessibility_notes}</p> : null}
+                <div className="stay-actions">
+                  <a className="primary" href={mapsHref} target="_blank" rel="noreferrer">開啟導航</a>
+                  <button type="button" disabled={!lodging.place?.address} onClick={() => copyAddress(lodging)}>{copiedId === lodging.id ? '地址已複製' : '複製住宿地址'}</button>
+                  <a href={lodging.route}>查看入住日</a>
+                  {lodging.place?.official_url ? <a href={lodging.place.official_url} target="_blank" rel="noreferrer">官方網站</a> : null}
                 </div>
-              </article>
-            )
-          })}
-        </div>
-      ) : (
-        <p className="hub-empty">
-          目前公開資料中僅有住宿 placeId 列表，未含入住/退房的完整時間欄位，將以「待補」呈現。
-        </p>
-      )}
+              </div>
+            </article>
+          )
+        })}
+      </div>
 
-      <p className="hub-footer">資料版本：{bundle.meta.generated_at}；來源欄位未在 public bundle 提供。</p>
+      {lodgings.length === 0 ? <div className="honest-empty"><strong>尚無住宿主鍵</strong><p>Canonical Trip 目前未列出住宿，頁面不會自行猜測。</p></div> : null}
+      <footer className="data-footnote">資料快照：{bundle.meta.generated_at}。入住與退房以 Canonical Trip 已知時間為準。</footer>
     </section>
   )
 }

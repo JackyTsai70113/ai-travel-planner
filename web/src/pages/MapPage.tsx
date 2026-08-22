@@ -1,21 +1,204 @@
+import { useEffect, useMemo, useState } from 'react'
 import { TripRoute } from '../app/route-registry'
+import {
+  Bundle,
+  BundleDay,
+  BundleTransportLeg,
+  operationalStatusClass,
+  operationalStatusLabel,
+} from '../contracts/trip'
+import {
+  MapsStop,
+  buildMapsDirectionsLink,
+  buildRouteDirectionChunks,
+} from '../lib/google-maps-links'
 
 interface MapPageProps {
+  bundle: Bundle
   route: TripRoute
   currentDay?: string
 }
 
-export function MapPage({ route, currentDay }: MapPageProps) {
+function formatDay(date: string): string {
+  try {
+    return new Intl.DateTimeFormat('zh-TW', {
+      month: 'numeric',
+      day: 'numeric',
+      weekday: 'short',
+      timeZone: 'Asia/Tokyo',
+    }).format(new Date(`${date}T00:00:00+09:00`))
+  } catch {
+    return date
+  }
+}
+
+function formatTime(value: string | null): string {
+  return value?.match(/T(\d{2}:\d{2})/)?.[1] || '未提供'
+}
+
+function transportModeLabel(mode: string): string {
+  const labels: Record<string, string> = {
+    car: '自駕',
+    drive: '自駕',
+    driving: '自駕',
+    walk: '步行',
+    walking: '步行',
+    ferry: '渡輪',
+    train: '鐵路',
+    bus: '巴士',
+    flight: '航班',
+  }
+  return labels[mode.toLowerCase()] || mode || '交通'
+}
+
+function legTravelMode(mode: string): 'driving' | 'walking' | 'transit' | 'bicycling' {
+  if (mode === 'walk' || mode === 'walking') return 'walking'
+  if (mode === 'bus' || mode === 'train' || mode === 'transit') return 'transit'
+  if (mode === 'bicycle' || mode === 'bicycling') return 'bicycling'
+  return 'driving'
+}
+
+function dayLegs(bundle: Bundle, day: BundleDay): BundleTransportLeg[] {
+  const linkedIds = new Set(day.items.map((item) => item.transport_leg_id).filter(Boolean))
+  const seen = new Set<string>()
+  return (bundle.transport_legs || [])
+    .filter((leg) => linkedIds.has(leg.id) || leg.departure_at?.slice(0, 10) === day.date)
+    .filter((leg) => {
+      if (seen.has(leg.id)) return false
+      seen.add(leg.id)
+      return true
+    })
+    .sort((a, b) => (a.departure_at || '').localeCompare(b.departure_at || ''))
+}
+
+function stopFor(bundle: Bundle, placeId: string, fallbackLabel: string): MapsStop {
+  const place = bundle.places?.find((candidate) => candidate.id === placeId)
+  return {
+    id: placeId,
+    label: place?.name || fallbackLabel || placeId,
+    mapsQuery: place?.maps_query || place?.address || fallbackLabel || placeId,
+  }
+}
+
+function routeStops(bundle: Bundle, legs: BundleTransportLeg[]): MapsStop[] {
+  const stops: MapsStop[] = []
+  legs.forEach((leg) => {
+    const from = stopFor(bundle, leg.from_place, leg.from_label)
+    const to = stopFor(bundle, leg.to_place, leg.to_label)
+    if (stops.at(-1)?.id !== from.id) stops.push(from)
+    if (stops.at(-1)?.id !== to.id) stops.push(to)
+  })
+  return stops
+}
+
+export function MapPage({ bundle, route, currentDay }: MapPageProps) {
+  const initialDay = [route.day, currentDay].find((candidate) => bundle.days.some((day) => day.date === candidate))
+  const [selectedDate, setSelectedDate] = useState(initialDay || bundle.days[0]?.date || '')
+
+  useEffect(() => {
+    const next = [route.day, currentDay].find((candidate) => bundle.days.some((day) => day.date === candidate))
+    if (next) setSelectedDate(next)
+  }, [bundle.days, currentDay, route.day])
+
+  const selectedDay = bundle.days.find((day) => day.date === selectedDate) || bundle.days[0]
+  const legs = useMemo(() => selectedDay ? dayLegs(bundle, selectedDay) : [], [bundle, selectedDay])
+  const fullRouteChunks = useMemo(() => buildRouteDirectionChunks(routeStops(bundle, legs)), [bundle, legs])
+
+  if (!selectedDay) {
+    return <section className="map-workspace card">沒有可顯示的日期。</section>
+  }
+
   return (
-    <section className="card" aria-label="地圖與自駕">
-      <h2>地圖與自駕</h2>
-      <p>建議用「{route.day || currentDay || '今日'}」行程直接開啟對應地圖。</p>
-      <p>
-        行動版可直接呼叫 Google Maps；桌面版建議先開新分頁規劃。
-      </p>
-      <a href="https://maps.google.com" target="_blank" rel="noreferrer">
-        開啟 Google Maps
-      </a>
+    <section className="map-workspace" aria-label="地圖與逐段自駕分析">
+      <header className="page-intro map-intro">
+        <div>
+          <p className="eyebrow">ROUTE DESK</p>
+          <h1>地圖與逐段交通</h1>
+          <p>網站呈現行前規劃估計；按下導航後，由 Google Maps 依當下路況提供即時結果。</p>
+        </div>
+        <div className="map-trust-note"><strong>免 API key</strong><span>只產生 Google Maps directions 連結，不在網站內宣稱即時車程。</span></div>
+      </header>
+
+      <nav className="handbook-day-tabs" aria-label="地圖日期切換">
+        {bundle.days.map((day, index) => (
+          <button
+            key={day.date}
+            type="button"
+            className={day.date === selectedDay.date ? 'is-active' : ''}
+            aria-pressed={day.date === selectedDay.date}
+            onClick={() => setSelectedDate(day.date)}
+          >
+            <strong>Day {index + 1}</strong>
+            <span>{formatDay(day.date)}</span>
+          </button>
+        ))}
+      </nav>
+
+      <section className="map-day-panel" aria-labelledby={`map-day-${selectedDay.date}`}>
+        <header className="map-day-header">
+          <div>
+            <p className="eyebrow">DAY {bundle.days.indexOf(selectedDay) + 1} · {formatDay(selectedDay.date)}</p>
+            <h2 id={`map-day-${selectedDay.date}`}>{selectedDay.summary}</h2>
+            <p>{legs.length ? `共 ${legs.length} 段已建模交通，依出發時間排序。` : '此日尚無已建模的逐段交通資料。'}</p>
+          </div>
+          <div className="daily-route-actions">
+            {fullRouteChunks.map((chunk) => (
+              <a key={chunk.id} href={chunk.href} target="_blank" rel="noreferrer">
+                {fullRouteChunks.length > 1 ? `完整路線 ${chunk.label}` : '開啟今日完整路線'}
+              </a>
+            ))}
+          </div>
+        </header>
+
+        {legs.length ? (
+          <ol className="route-leg-list">
+            {legs.map((leg, index) => {
+              const origin = stopFor(bundle, leg.from_place, leg.from_label)
+              const destination = stopFor(bundle, leg.to_place, leg.to_label)
+              const directionsHref = leg.google_maps_directions_url || buildMapsDirectionsLink([origin, destination], legTravelMode(leg.mode))
+              const item = selectedDay.items.find((candidate) => candidate.transport_leg_id === leg.id)
+              const duration = leg.estimated_duration_minutes == null ? '車程尚未確認' : `預估 ${leg.estimated_duration_minutes} 分鐘`
+              const buffer = item?.buffer_minutes == null ? '未提供' : `${item.buffer_minutes} 分鐘`
+
+              return (
+                <li className="route-leg-card" key={leg.id} data-testid={`transport-leg-${leg.id}`}>
+                  <div className="route-leg-index" aria-hidden="true">{String(index + 1).padStart(2, '0')}</div>
+                  <div className="route-leg-body">
+                    <div className="route-leg-topline">
+                      <span>{transportModeLabel(leg.mode)}</span>
+                      <span className={operationalStatusClass(leg.status)}>{operationalStatusLabel(leg.status)}</span>
+                    </div>
+                    <div className="route-endpoints">
+                      <div><small>起點</small><strong>{leg.from_label || origin.label}</strong></div>
+                      <span aria-hidden="true">→</span>
+                      <div><small>終點</small><strong>{leg.to_label || destination.label}</strong></div>
+                    </div>
+                    <dl className="route-leg-facts">
+                      <div><dt>規劃時段</dt><dd>{formatTime(leg.departure_at)} → {formatTime(leg.arrival_at)}</dd></div>
+                      <div><dt>行前估計</dt><dd>{duration}</dd></div>
+                      <div><dt>預留／停留</dt><dd>{buffer}</dd></div>
+                      <div><dt>資料狀態</dt><dd>{operationalStatusLabel(leg.status)}</dd></div>
+                    </dl>
+                    <div className="route-risk-note">
+                      <strong>導航注意／延誤切點</strong>
+                      <p>{leg.note || '尚未提供專屬切點；出發前請以 Google Maps 即時路況重新確認。'}</p>
+                    </div>
+                    <div className="route-card-actions">
+                      <a data-route-url={directionsHref} href={directionsHref} target="_blank" rel="noreferrer">逐段導航</a>
+                      {leg.source_url ? <a className="secondary-link" href={leg.source_url} target="_blank" rel="noreferrer">查看估計來源</a> : null}
+                    </div>
+                  </div>
+                </li>
+              )
+            })}
+          </ol>
+        ) : (
+          <div className="honest-empty">
+            <strong>尚無逐段資料</strong>
+            <p>不會把未知車程當成 0 分鐘。請先查看每日行程中的已知停靠點。</p>
+          </div>
+        )}
+      </section>
     </section>
   )
 }

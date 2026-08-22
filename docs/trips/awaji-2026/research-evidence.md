@@ -1,36 +1,42 @@
-# Research evidence (awaji-2026 trust ledger)
+# Research evidence（awaji-2026 trust ledger）
 
-## 使用者確認事實（高優先）
+## Issue 97 Sheet 匯入
 
-- 2026-08-27～2026-08-31（五天四夜）
-- 航班：JX834（8/27 抵達 UKB 10:30；出發時間未提供）、JX1835（8/31 12:45 起飛；返台到達時間未提供）
-- 住宿順序與退房日
-  - Awaji Riverside Terrace in Shizuki ×2 夜
-  - 徳島別荘ホテル2 ×1 夜
-  - The Royal Park Canvas Kobe Sannomiya ×1 夜
-- 8/28 17:45 固定預約：名稱已確認為 `しあわせのパンケーキ`，地點與 duration 待補
+- 使用者確認輸入：Google Sheet「淡路島・德島五天四夜行程表」。
+- 2026-08-23 讀取三頁：「行程總覽」「8.29-8.31 詳細執行」「出發前確認清單」。
+- Sheet 僅作匯入依據；`trip.json` 是唯一 runtime source，網站 bundle 不直接讀 Sheet。
+- Day 3–5 依詳細執行頁的時間門轉入 canonical itinerary。
+- Day 1–2 若總覽未提供精確時間，沿用既有 timestamp，並在 item notes 明標「試算表未給精確時間／規劃估計」。
 
-## 已確認來源欄位（可回溯）
+## 使用者確認事實
 
-- 選定景點與住宿欄位使用 `selected_*` evidence mapping
-- 航段、住宿、固定預約、移動每一筆皆有 `reference_id` 對應 `evidence.json`
-- `trip.json` 僅保留可追溯欄位為 confirmed，未明確來源欄位一律改為 unresolved / unverified
+- 旅程：2026-08-27～2026-08-31，6 位成人、1 位幼兒。
+- 航班：JX834 於 8/27 10:30 抵達 UKB；JX1835 於 8/31 12:45 自 UKB 起飛。
+- 8/27、8/28 住宿：Awaji Riverside Terrace in Shizuki 780，兵庫県淡路市志筑780-12。
+- 8/29 住宿：1-chōme-3-44-3 Kanazawa，徳島県徳島市金沢1丁目3-44-3。
+- 8/30 住宿：ザ ロイヤルパーク キャンバス 神戸三宮，兵庫県神戸市中央区下山手通2丁目3番1号。
+- 已訂位：8/27 18:30 Garb Costa Orange。
+- 已訂位：8/28 13:00 浮世離れの鯛ドロボー。
+- 已訂位：8/28 17:45 幸せのパンケーキ 淡路島テラス；地址兵庫県淡路市尾崎42-1，地點 resolved。
+- 已訂位：8/30 12:50 うずしおクルーズ（福良港）。
 
-## 仍需補齊的官方/研究證據
+## 估計值與資料狀態
 
-- 航班是否為 StarLux（XiamenAir 需要明確否認）
-- 淡路島與鳴門潮汐與天候官方窗口（每筆需有 `validity_interval` 與 `freshness`）
-- 住宿與主要景點的停車、兒童友善、取消規則、路線成本、還車備援
-- Google Maps 清單逐筆原始 snapshot hash + 取回時間
+- `candidate_sets.transport_legs` 的 departure／arrival 來自 Sheet 規劃窗口，provenance.status 一律為 `estimated`。
+- public bundle 的 `estimated_duration_minutes` 由 departure／arrival 推導，不在 canonical trip 另存第二份分鐘數。
+- 每段 provenance note 包含導航方式、延誤切點與長輩／幼兒注意。
+- Google Maps directions 是無 API key 的起點／終點連結；即時路況以使用者開啟導航當下為準。
+- Day 1–2 非固定預約的時間尚未由官方或使用者精確確認，不可呈現為 confirmed。
 
-## evidence ledger 策略
+## 出發前必須重查
 
-- 每筆 `evidence.json` entry 必含：
-  - `reference_id`
-  - `source_type` / `provider` / `title` / `source_url`
-  - `supports`、`support`-level `confidence`
-  - `retrieved_at`
-  - `validity.valid_from` / `validity.valid_until` / `freshness`
-  - `visibility`（`public` / `private` / `internal`）
-  - `conflict`（有衝突時填寫，無衝突為 `null`）
-- 未經驗證或未補齊欄位不得輸出為 confirmed；統一以 `unresolved` 或 `estimated` 標記
+- T-72h：8/27–8/31 天氣、雷雨、熱中症警戒與鳴門風浪。
+- T-48h：12:50 觀潮船運航、阿波舞夜公演、眉山纜車、高速與大橋管制。
+- T-48h：Ocean Terrace、S BRICK、うずの丘、Nojima Scuola、淡路 SA 摩天輪臨時營業。
+- T-24h：Alphard 實車尺寸、飯店合作停車、Toyota 還車與 T1→T2 動線。
+- 出發當日：所有逐段車程與事故壅塞用即時導航重算；未知值不得視為零。
+
+## Checklist 保存方式
+
+- trip-v1 schema 沒有 checklist 欄位，因此原始 30 項清單保存在 canonical override path `/operations/pretrip_checklist`。
+- `build_awaji_public_bundle.py` 僅 allowlist 輸出 `id`、`completed`、`timing`、`item`、`action`、`fallback`、`contact`。

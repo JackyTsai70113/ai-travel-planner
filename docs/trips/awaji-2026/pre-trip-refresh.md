@@ -1,5 +1,7 @@
 # 出發前刷新清單
 
+本文件配合 canonical override `/operations/pretrip_checklist`。網站勾選狀態只保存在瀏覽器本機；來源清單仍由 `trip.json` 產生。
+
 ## T-7
 
 1. 命令：`python3 scripts/build_awaji_public_bundle.py --trip-path trips/awaji-naruto-tokushima-kobe-2026/trip.json --output /tmp/awaji-bundle.json`
@@ -17,7 +19,8 @@
 
 1. 命令：`python3 scripts/build_awaji_public_bundle.py --trip-path trips/awaji-naruto-tokushima-kobe-2026/trip.json --output web/public/trips/awaji-2026/public-bundle.json`
 2. 再核：`/conditions` 欄位 `visibility=public` 與 `validity_interval` 是否可被重新查核
-3. 確認每筆固定預約有 unresolved note（名稱/地點/持續時間）並可回到 evidence
+3. 確認四筆固定預約仍為 resolved：Garb 18:30、鯛ドロボー 13:00、幸せのパンケーキ 17:45、うずしおクルーズ 12:50
+4. 逐段車程仍標為 `estimated`，不得把 Google Maps 即時結果回寫成無時間戳的 confirmed 值
 
 ## 出發當日
 

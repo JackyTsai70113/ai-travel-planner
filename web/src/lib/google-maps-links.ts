@@ -1,4 +1,5 @@
 export type MapsWaypointSource = 'coordinate' | 'text'
+export type MapsTravelMode = 'driving' | 'walking' | 'transit' | 'bicycling'
 
 export interface MapsStop {
   id?: string
@@ -55,7 +56,7 @@ export function buildMapsSearchLink(placeLabel: string): string {
   return `${GOOGLE_MAPS_SEARCH_URL}${encodeURIComponent(safeToString(placeLabel) || 'point')}`
 }
 
-function buildDirectionUrl(chunks: MapsStop[]): string {
+export function buildMapsDirectionsLink(chunks: MapsStop[], travelMode: MapsTravelMode = 'driving'): string {
   const start = chunks.at(0)
   const end = chunks.at(-1)
   if (!start || !end || chunks.length < 2) {
@@ -67,7 +68,7 @@ function buildDirectionUrl(chunks: MapsStop[]): string {
     api: '1',
     origin: stopQuery(start),
     destination: stopQuery(end),
-    travelmode: 'driving',
+    travelmode: travelMode,
   })
   if (waypoints.length > 0) {
     params.set('waypoints', waypoints.map(stopQuery).join('|'))
@@ -121,7 +122,7 @@ export function buildRouteDirectionChunks(
     const source = chunk[0]
     const destination = chunk.at(-1) as MapsStop
     const waypoints = chunk.slice(1, -1)
-    const href = buildDirectionUrl(chunk)
+    const href = buildMapsDirectionsLink(chunk)
     const fallbackReason = href.includes('google.com/maps/search') ? 'google_maps_url_too_long' : undefined
     return {
       id: `${index + 1}`,

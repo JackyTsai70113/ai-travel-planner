@@ -2,74 +2,61 @@ import { useMemo, useState } from 'react'
 import {
   Bundle,
   BundleReservation,
-  buildMapsLink,
   operationalStatusClass,
   operationalStatusLabel,
 } from '../contracts/trip'
-import { findPlaceAddress, findPlaceLabel } from '../contracts/trip'
 import { buildRoutePath } from '../app/route-registry'
 
 interface ReservationsPageProps {
   bundle: Bundle
 }
-
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat('zh-TW', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date(value))
+  try {
+    return new Intl.DateTimeFormat('zh-TW', {
+      month: 'numeric',
+      day: 'numeric',
+      weekday: 'long',
+      timeZone: 'Asia/Tokyo',
+    }).format(new Date(`${value}T00:00:00+09:00`))
+  } catch {
+    return value
+  }
 }
 
 function formatTime(value: string | null) {
-  if (!value) return '待補'
-  return new Intl.DateTimeFormat('zh-TW', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).format(new Date(value))
+  return value?.match(/T(\d{2}:\d{2})/)?.[1] || '時間未提供'
 }
 
-function resolveReservationStatus(reservation: BundleReservation, isUnresolved: boolean) {
-  if (isUnresolved || reservation.unresolved) return 'unresolved' as const
+function resolveReservationStatus(reservation: BundleReservation) {
+  if (reservation.unresolved) return 'unresolved' as const
   if (reservation.status) return reservation.status
-  if (reservation.time && reservation.name) return 'confirmed'
-  if (reservation.time || reservation.name) return 'estimated'
-  return 'unverified'
+  if (reservation.time && reservation.name) return 'confirmed' as const
+  if (reservation.time || reservation.name) return 'estimated' as const
+  return 'unverified' as const
 }
 
 function buildDayItemLink(bundle: Bundle, reservation: BundleReservation) {
   const day = bundle.days.find((itemDay) => itemDay.date === reservation.day) ?? bundle.days[0]
   if (!day) return buildRoutePath({ section: 'today' })
-  const direct = day.items.find((item) => item.id === reservation.id)
+  const direct = day.items.find((item) => item.id === reservation.id || item.id === reservation.itinerary_item_id)
   if (direct) return buildRoutePath({ section: 'today', day: day.date, item: direct.id })
-
-  const fallback = day.items.find((item) =>
-    item.place_id === reservation.place_id &&
-    reservation.time &&
-    item.start_at &&
-    item.start_at.slice(0, 16) === reservation.time.slice(0, 16),
-  )
-  if (fallback) return buildRoutePath({ section: 'today', day: day.date, item: fallback.id })
   return buildRoutePath({ section: 'today', day: day.date })
 }
 
 function buildReservationCalendarIcs(reservation: BundleReservation) {
   if (!reservation.time || !reservation.name) return null
-  const parse = (value: string): Date => new Date(value)
-  const startDate = parse(reservation.time)
-  const start = `${startDate.getFullYear()}${String(startDate.getMonth() + 1).padStart(2, '0')}${String(startDate.getDate()).padStart(2, '0')}T${String(startDate.getHours()).padStart(2, '0')}${String(startDate.getMinutes()).padStart(2, '0')}00`
+  const startDate = new Date(reservation.time)
+  if (Number.isNaN(startDate.getTime())) return null
+  const asCalendarValue = (date: Date) => `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}${String(date.getMinutes()).padStart(2, '0')}00`
   const endDate = new Date(startDate.getTime() + 60 * 60 * 1000)
-  const end = `${endDate.getFullYear()}${String(endDate.getMonth() + 1).padStart(2, '0')}${String(endDate.getDate()).padStart(2, '0')}T${String(endDate.getHours()).padStart(2, '0')}${String(endDate.getMinutes()).padStart(2, '0')}00`
-  const title = reservation.name.replace(/\n/g, ' ')
   return `BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//Golden Trip//Operational Hub//EN
+PRODID:-//AI Travel Planner//Reservation//ZH-TW
 BEGIN:VEVENT
 UID:${reservation.id}
-DTSTART:${start}
-DTEND:${end}
-SUMMARY:${title}
+DTSTART:${asCalendarValue(startDate)}
+DTEND:${asCalendarValue(endDate)}
+SUMMARY:${reservation.name.replace(/\n/g, ' ')}
 DESCRIPTION:${reservation.kind}
 END:VEVENT
 END:VCALENDAR`
@@ -77,147 +64,87 @@ END:VCALENDAR`
 
 export function ReservationsPage({ bundle }: ReservationsPageProps) {
   const [copying, setCopying] = useState('')
-  const reservationStatuses = useMemo(() => {
-    return bundle.reservations.map((reservation) => resolveReservationStatus(reservation, reservation.unresolved || false))
-  }, [bundle.reservations])
-
   const grouped = useMemo(() => {
     const byDay = new Map<string, BundleReservation[]>()
-    bundle.days.forEach((day) => {
-      byDay.set(day.date, [])
-    })
-
     bundle.reservations.forEach((reservation) => {
-      const day = byDay.has(reservation.day) ? reservation.day : bundle.days[0]?.date || reservation.day
-      if (!day) return
-      byDay.set(day, [...(byDay.get(day) || []), reservation])
+      const current = byDay.get(reservation.day) || []
+      byDay.set(reservation.day, [...current, reservation])
     })
+    return [...byDay.entries()]
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([day, reservations]) => ({ day, reservations: reservations.sort((a, b) => (a.time || '').localeCompare(b.time || '')) }))
+  }, [bundle.reservations])
 
-    return [...byDay.entries()].map(([day, reservations]) => ({
-      day,
-      reservations: reservations.sort((a, b) => (a.time || '').localeCompare(b.time || '')),
-    }))
-  }, [bundle.days, bundle.reservations])
-
-  const estimatedCount = reservationStatuses.filter((item) => item === 'estimated' || item === 'unverified').length
-  const pendingCount = reservationStatuses.filter((item) => item === 'unresolved').length
-  const confirmedCount = reservationStatuses.filter((item) => item === 'confirmed').length
+  const statuses = bundle.reservations.map(resolveReservationStatus)
+  const confirmedCount = statuses.filter((status) => status === 'confirmed').length
+  const pendingCount = statuses.filter((status) => status !== 'confirmed').length
 
   const copyText = async (key: string, text: string) => {
     try {
       await navigator.clipboard.writeText(text)
       setCopying(key)
-      setTimeout(() => setCopying((current) => (current === key ? '' : current)), 1500)
+      window.setTimeout(() => setCopying(''), 1500)
     } catch {
-      const errKey = `${key}-err`
-      setCopying(errKey)
-      setTimeout(() => setCopying((current) => (current === errKey ? '' : current)), 1200)
+      setCopying('error')
     }
   }
 
   return (
-    <section className="card hub-card-wrapper" aria-label="預約與票券">
-      <header className="hub-header">
-        <h2>預約與票券</h2>
-        <p>基於公共資料的目前可確認欄位，未填欄位不進行推論。</p>
+    <section className="reservation-workspace" aria-label="預約與票券">
+      <header className="page-intro">
+        <div><p className="eyebrow">BOOKING DESK</p><h1>預約與固定時間</h1><p>把日期、時間、地址、聯絡方式與當日行程集中在同一處；未知欄位維持未確認。</p></div>
+        <div className="page-intro-stats"><span><strong>{bundle.reservations.length}</strong> 件</span><span><strong>{confirmedCount}</strong> 已確認</span><span className={pendingCount ? 'has-warning' : ''}><strong>{pendingCount}</strong> 待處理</span></div>
       </header>
 
-      {bundle.reservations.length ? (
-        <>
-          <div className="hub-stats">
-            <p>總件數：{bundle.reservations.length}</p>
-            <p>已確認：{confirmedCount}</p>
-            <p>待驗證/待補：{estimatedCount}</p>
-            <p>未補齊：{pendingCount}</p>
-          </div>
+      {pendingCount ? <div className="reservation-alert"><strong>出發前仍需確認</strong><p>{pendingCount} 件資料含未驗證或未補齊欄位。使用官方連結或電話確認後，再以最新資訊為準。</p></div> : null}
 
-          <div className="shell-message">
-            資料版本：{bundle.meta.generated_at}
-          </div>
+      <div className="reservation-groups">
+        {grouped.map((group) => (
+          <section className="reservation-day" key={group.day}>
+            <header><span>{formatDate(group.day)}</span><strong>{group.reservations.length} 件預約</strong></header>
+            <div className="reservation-list">
+              {group.reservations.map((reservation) => {
+                const status = resolveReservationStatus(reservation)
+                const place = bundle.places?.find((candidate) => candidate.id === reservation.place_id)
+                const placeName = place?.name || reservation.name || reservation.place_id
+                const address = place?.address
+                const mapHref = place?.google_maps_url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place?.maps_query || placeName)}`
+                const route = buildDayItemLink(bundle, reservation)
+                const ics = buildReservationCalendarIcs(reservation)
+                const icsHref = ics ? `data:text/calendar;charset=utf-8,${encodeURIComponent(ics)}` : null
+                const summary = [reservation.name || '名稱未提供', formatDate(reservation.day), formatTime(reservation.time), placeName, address].filter(Boolean).join('｜')
 
-          {pendingCount > 0 ? (
-            <p className="hub-alert">
-              有尚未補齊關鍵欄位（時間、場景、地址、聯絡資訊）的預約，將保留「未補齊」狀態。
-            </p>
-          ) : null}
-
-          {grouped.map((group) => (
-            <section key={group.day} className="hub-section">
-              <h3>{formatDate(group.day)}</h3>
-              {group.reservations.length === 0 ? <p className="hub-empty">此日無預約。</p> : null}
-              <ul className="hub-items">
-                {group.reservations.map((reservation) => {
-                  const status = resolveReservationStatus(reservation, reservation.unresolved || false)
-                  const place = findPlaceLabel(bundle.places, reservation.place_id)
-                  const address = findPlaceAddress(bundle.places, reservation.place_id)
-                  const route = buildDayItemLink(bundle, reservation)
-                  const ics = buildReservationCalendarIcs(reservation)
-                  const icsHref = ics ? `data:text/calendar;charset=utf-8,${encodeURIComponent(ics)}` : null
-                  const source = reservation.source || 'public-bundle'
-                  const freshness = reservation.freshness || '未知'
-
-                  return (
-                    <li key={reservation.id} className="hub-item">
-                      <div className="hub-item-row">
-                        <span className={operationalStatusClass(status)}>{operationalStatusLabel(status)}</span>
-                        <h4>{reservation.name || '未提供名稱'}</h4>
+                return (
+                  <article className="reservation-card" key={reservation.id}>
+                    <div className="reservation-time"><strong>{formatTime(reservation.time)}</strong><span>{formatDate(reservation.day)}</span></div>
+                    <div className="reservation-main">
+                      <div className="reservation-title-row"><div><span className={operationalStatusClass(status)}>{operationalStatusLabel(status)}</span><h2>{reservation.name || '預約名稱未提供'}</h2></div><span className="reservation-kind">{reservation.kind}</span></div>
+                      <dl className="reservation-facts">
+                        <div><dt>地點</dt><dd>{placeName}</dd></div>
+                        <div><dt>地址</dt><dd>{address || '完整地址未提供'}</dd></div>
+                        <div><dt>資料來源</dt><dd>{reservation.source || 'Canonical Trip'}</dd></div>
+                        <div><dt>最後確認</dt><dd>{reservation.last_checked_at || '未提供'}</dd></div>
+                      </dl>
+                      {reservation.unresolved ? <p className="reservation-risk"><strong>待處理：</strong>此預約尚有未補齊欄位，請勿把目前內容視為最終確認。</p> : null}
+                      <div className="reservation-actions">
+                        <button type="button" onClick={() => copyText(reservation.id, summary)}>{copying === reservation.id ? '摘要已複製' : '複製預約摘要'}</button>
+                        <a href={route}>回到當日行程</a>
+                        <a href={mapHref} target="_blank" rel="noreferrer">地圖</a>
+                        {icsHref ? <a href={icsHref} download={`${reservation.id}.ics`}>加入行事曆</a> : null}
+                        {reservation.phone ? <a href={`tel:${reservation.phone}`}>撥打電話</a> : null}
+                        {reservation.official_url ? <a className="primary" href={reservation.official_url} target="_blank" rel="noreferrer">官方連結</a> : null}
                       </div>
-                      <p>時間：{formatTime(reservation.time)} / 場次：{reservation.kind}</p>
-                      <p>地點：{place}</p>
-                      <p>來源：{source} / 更新：{reservation.last_checked_at || '未提供'} / Freshness：{freshness}</p>
-                      {address ? <p>地址：{address}</p> : null}
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+          </section>
+        ))}
+      </div>
 
-                      <div className="hub-actions">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            copyText(`summary-${reservation.id}`, `${reservation.name || '預約'}｜${place}｜${reservation.time || '時間待補'}`)}
-                        >
-                          {copying === `summary-${reservation.id}` ? '已複製' : '複製摘要'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            copyText(
-                              `jp-${reservation.id}`,
-                              `${reservation.name || 'ご予約'}：${reservation.day || ''} ${place}。最終確認お願いします。`,
-                            )
-                          }
-                        >
-                          {copying === `jp-${reservation.id}` ? '已複製' : '複製日文摘要'}
-                        </button>
-                        <a className="hub-inline-button" href={route}>
-                          回行程
-                        </a>
-                        <a className="hub-inline-button" href={buildMapsLink(place)} target="_blank" rel="noreferrer">
-                          導航
-                        </a>
-                        {icsHref ? (
-                          <a className="hub-inline-button" href={icsHref} download={`${reservation.id}.ics`}>
-                            加入行事曆
-                          </a>
-                        ) : null}
-                        {reservation.phone ? <a href={`tel:${reservation.phone}`}>{reservation.phone}</a> : null}
-                        {reservation.official_url ? (
-                          <a href={reservation.official_url} target="_blank" rel="noreferrer">
-                            官方連結
-                          </a>
-                        ) : null}
-                      </div>
-
-                      {reservation.official_url || reservation.phone ? (
-                        <p className="hub-meta">網路行動與電話依使用者環境執行，請留意網路可用性。</p>
-                      ) : null}
-                    </li>
-                  )
-                })}
-              </ul>
-            </section>
-          ))}
-        </>
-      ) : (
-        <p className="hub-empty">目前沒有可展示的預約項目。</p>
-      )}
+      {bundle.reservations.length === 0 ? <div className="honest-empty"><strong>Canonical Trip 尚無預約紀錄</strong><p>頁面不會從一般行程文字自行推定已預約。固定行程仍可在每日時間軸查看。</p><a href="#/today">查看每日行程</a></div> : null}
+      <footer className="data-footnote">資料快照：{bundle.meta.generated_at}。場次與營業狀態請以官方最新通知為準。</footer>
     </section>
   )
 }

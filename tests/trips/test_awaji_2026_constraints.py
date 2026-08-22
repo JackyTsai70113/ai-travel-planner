@@ -1,7 +1,9 @@
 import copy
+from datetime import datetime
 import json
 from pathlib import Path
 import unittest
+from urllib.parse import parse_qs, urlparse
 
 from scripts.build_awaji_public_bundle import build_public_bundle
 from src.schemas import validate_trip
@@ -9,29 +11,95 @@ from src.schemas import validate_trip
 TRIP_PATH = Path("trips/awaji-naruto-tokushima-kobe-2026/trip.json")
 EVIDENCE_PATH = Path("trips/awaji-naruto-tokushima-kobe-2026/evidence.json")
 CONDITIONS_PATH = Path("trips/awaji-naruto-tokushima-kobe-2026/conditions.json")
+TRIP_BUNDLE_PATH = Path("trips/awaji-naruto-tokushima-kobe-2026/public-bundle.json")
+WEB_BUNDLE_PATH = Path("web/public/trips/awaji-2026/public-bundle.json")
 
 
 class AwajiTripFixtureTests(unittest.TestCase):
     def setUp(self):
         self.trip = json.loads(TRIP_PATH.read_text(encoding="utf-8"))
+        self.bundle = build_public_bundle(self.trip, TRIP_PATH)
+        self.places = {
+            place["id"]: place for place in self.trip["candidate_sets"]["places"]
+        }
 
     def test_trip_v1_contract(self):
         validate_trip(self.trip)
 
-    def test_trip_date_range(self):
+    def test_trip_date_range_and_exact_daily_item_counts(self):
         self.assertEqual(self.trip["date_range"]["start_date"], "2026-08-27")
         self.assertEqual(self.trip["date_range"]["end_date"], "2026-08-31")
         self.assertEqual(len(self.trip["days"]), 5)
 
+        counts = [len(day["items"]) for day in self.trip["days"]]
+        self.assertEqual(counts, [4, 5, 19, 16, 9])
+        self.assertEqual(sum(counts), 53)
+        self.assertEqual(
+            [len(day["items"]) for day in self.bundle["days"]],
+            [4, 5, 19, 16, 9],
+        )
+
     def test_hard_booking_facts(self):
         selected = self.trip["selected"]
         self.assertEqual(selected["flight_ids"], ["xj-834-outbound", "xj-1835-return"])
-        self.assertIn("awaji-riverside-hotel", selected["hotel_place_ids"])
-        self.assertIn("tokushima-seshi-besso-hotel-2", selected["hotel_place_ids"])
-        self.assertIn("royal-park-canvas-kobe-sannomiya", selected["hotel_place_ids"])
+        self.assertEqual(
+            selected["hotel_place_ids"],
+            [
+                "awaji-riverside-hotel",
+                "tokushima-seshi-besso-hotel-2",
+                "royal-park-canvas-kobe-sannomiya",
+            ],
+        )
 
-        reservation_place = next(place for place in self.trip["candidate_sets"]["places"] if place["id"] == "naruto-ferry-fixed-activity")
-        self.assertEqual(reservation_place["resolution"]["state"], "clarification_required")
+        reservation_place = self.places["naruto-ferry-fixed-activity"]
+        self.assertEqual(reservation_place["resolution"]["state"], "resolved")
+        self.assertEqual(reservation_place["resolution"]["confidence"], 1)
+
+    def test_happy_pancake_is_resolved_at_official_address(self):
+        pancake = self.places["naruto-ferry-fixed-activity"]
+        self.assertEqual(pancake["name"], "幸せのパンケーキ 淡路島テラス")
+        self.assertEqual(pancake["address"], "兵庫県淡路市尾崎42-1")
+        self.assertEqual(pancake["resolution"]["state"], "resolved")
+
+        reservation = next(
+            item
+            for item in self.bundle["reservations"]
+            if item["id"] == "fixed-2026-08-28-17-45"
+        )
+        self.assertEqual(reservation["name"], "幸せのパンケーキ 淡路島テラス")
+        self.assertFalse(reservation["unresolved"])
+        self.assertEqual(reservation["kind"], "fixed-reservation")
+
+    def test_three_accommodations_have_exact_names_and_addresses(self):
+        expected = {
+            "awaji-riverside-hotel": (
+                "Awaji Riverside Terrace in Shizuki 780",
+                "兵庫県淡路市志筑780-12",
+            ),
+            "tokushima-seshi-besso-hotel-2": (
+                "1-chōme-3-44-3 Kanazawa",
+                "徳島県徳島市金沢1丁目3-44-3",
+            ),
+            "royal-park-canvas-kobe-sannomiya": (
+                "ザ ロイヤルパーク キャンバス 神戸三宮",
+                "兵庫県神戸市中央区下山手通2丁目3番1号",
+            ),
+        }
+        self.assertEqual(set(self.trip["selected"]["hotel_place_ids"]), set(expected))
+
+        hotel_candidates = {
+            hotel["place"]["id"]: hotel["place"]
+            for hotel in self.trip["candidate_sets"]["hotels"]
+        }
+        bundle_places = {place["id"]: place for place in self.bundle["places"]}
+        for place_id, (name, address) in expected.items():
+            with self.subTest(place_id=place_id):
+                self.assertEqual(self.places[place_id]["name"], name)
+                self.assertEqual(self.places[place_id]["address"], address)
+                self.assertEqual(hotel_candidates[place_id]["name"], name)
+                self.assertEqual(hotel_candidates[place_id]["address"], address)
+                self.assertEqual(bundle_places[place_id]["name"], name)
+                self.assertEqual(bundle_places[place_id]["address"], address)
 
     def test_fixed_reservation_constraints(self):
         day_two = next(day for day in self.trip["days"] if day["date"] == "2026-08-28")
@@ -39,25 +107,137 @@ class AwajiTripFixtureTests(unittest.TestCase):
         self.assertEqual(fixed["start_at"], "2026-08-28T17:45:00+09:00")
         self.assertEqual(fixed["kind"], "visit")
         self.assertEqual(fixed["start_at"], fixed["end_at"])
-        self.assertIn("しあわせのパンケーキ", fixed["notes"])
-        self.assertIn("地點與持續時間仍待補", fixed["notes"])
+        self.assertIn("幸せのパンケーキ", fixed["notes"])
+        self.assertIn("兵庫県淡路市尾崎42-1", fixed["notes"])
+        self.assertIn("地點已 resolved", fixed["notes"])
 
     def test_day_five_no_hard_visit(self):
         day_five = next(day for day in self.trip["days"] if day["date"] == "2026-08-31")
         self.assertFalse(any(item.get("kind") == "visit" for item in day_five["items"]))
 
-    def test_scope_visit_uses_awaji_and_naruto_only(self):
-        allowed_visit_place_ids = {
-            "awaji-nakajima-park",
-            "awaji-beach",
-            "naruto-whirlpool-viewpoint",
-            "naruto-ferry-fixed-activity",
-            "awaji-harbor-diner",
+    def test_all_itinerary_place_references_exist(self):
+        place_ids = set(self.places)
+        referenced_place_ids = {
+            item["place_id"]
+            for day in self.trip["days"]
+            for item in day["items"]
+            if item.get("place_id")
         }
-        for day in self.trip["days"]:
-            for item in day["items"]:
-                if item["kind"] == "visit":
-                    self.assertIn(item["place_id"], allowed_visit_place_ids)
+        self.assertEqual(sorted(referenced_place_ids - place_ids), [])
+
+    def test_transport_legs_and_item_references_are_complete(self):
+        legs = self.trip["candidate_sets"]["transport_legs"]
+        self.assertEqual(len(legs), 16)
+        leg_ids = [leg["id"] for leg in legs]
+        self.assertEqual(len(set(leg_ids)), 16)
+
+        item_leg_refs = [
+            item["transport_leg_id"]
+            for day in self.trip["days"]
+            for item in day["items"]
+            if item.get("transport_leg_id")
+        ]
+        self.assertEqual(len(item_leg_refs), 16)
+        self.assertEqual(set(item_leg_refs), set(leg_ids))
+        self.assertEqual(len(item_leg_refs), len(set(item_leg_refs)))
+
+        place_ids = set(self.places)
+        for leg in legs:
+            with self.subTest(leg_id=leg["id"]):
+                self.assertIn(leg["from_place_id"], place_ids)
+                self.assertIn(leg["to_place_id"], place_ids)
+
+    def test_bundle_transport_duration_status_and_note_derive_from_canonical_leg(self):
+        source_legs = {
+            leg["id"]: leg for leg in self.trip["candidate_sets"]["transport_legs"]
+        }
+        bundle_legs = {leg["id"]: leg for leg in self.bundle["transport_legs"]}
+        self.assertEqual(set(bundle_legs), set(source_legs))
+
+        for leg_id, source in source_legs.items():
+            with self.subTest(leg_id=leg_id):
+                output = bundle_legs[leg_id]
+                departure = datetime.fromisoformat(source["departure_at"])
+                arrival = datetime.fromisoformat(source["arrival_at"])
+                expected_minutes = int((arrival - departure).total_seconds() // 60)
+                self.assertGreaterEqual(expected_minutes, 0)
+                self.assertEqual(output["estimated_duration_minutes"], expected_minutes)
+                self.assertEqual(output["status"], source["provenance"]["status"])
+                self.assertEqual(output["note"], source["provenance"]["note"])
+                self.assertEqual(output["source_url"], source["provenance"]["source_url"])
+
+    def test_every_transport_leg_has_valid_google_maps_directions_link(self):
+        source_legs = {
+            leg["id"]: leg for leg in self.trip["candidate_sets"]["transport_legs"]
+        }
+        expected_modes = {"bus": "transit", "train": "transit", "walk": "walking"}
+
+        for output in self.bundle["transport_legs"]:
+            with self.subTest(leg_id=output["id"]):
+                source = source_legs[output["id"]]
+                parsed = urlparse(output["google_maps_directions_url"])
+                query = parse_qs(parsed.query)
+                origin_place = self.places[source["from_place_id"]]
+                destination_place = self.places[source["to_place_id"]]
+                expected_origin = origin_place.get("address") or origin_place.get("name") or source["from_place_id"]
+                expected_destination = destination_place.get("address") or destination_place.get("name") or source["to_place_id"]
+
+                self.assertEqual((parsed.scheme, parsed.netloc, parsed.path), ("https", "www.google.com", "/maps/dir/"))
+                self.assertEqual(query["api"], ["1"])
+                self.assertEqual(query["origin"], [expected_origin])
+                self.assertEqual(query["destination"], [expected_destination])
+                self.assertEqual(
+                    query["travelmode"],
+                    [expected_modes.get(source["mode"], "driving")],
+                )
+
+    def test_pretrip_checklist_has_30_complete_source_rows(self):
+        override = next(
+            item
+            for item in self.trip["overrides"]
+            if item["path"] == "/operations/pretrip_checklist"
+        )
+        source_checklist = override["value"]
+        bundle_checklist = self.bundle["operations"]["pretrip_checklist"]
+
+        self.assertTrue(override["preserve_on_replan"])
+        self.assertEqual(len(source_checklist), 30)
+        self.assertEqual(bundle_checklist, source_checklist)
+        self.assertEqual(len({item["id"] for item in source_checklist}), 30)
+        for item in source_checklist:
+            with self.subTest(item_id=item["id"]):
+                self.assertFalse(item["completed"])
+                for field in ("timing", "item", "action", "fallback", "contact"):
+                    self.assertIsInstance(item[field], str)
+                    self.assertTrue(item[field].strip())
+
+    def test_all_three_google_sheet_tabs_have_provenance(self):
+        source_urls = []
+
+        def collect_source_urls(value):
+            if isinstance(value, dict):
+                source_url = value.get("source_url")
+                if isinstance(source_url, str):
+                    source_urls.append(source_url)
+                for child in value.values():
+                    collect_source_urls(child)
+            elif isinstance(value, list):
+                for child in value:
+                    collect_source_urls(child)
+
+        collect_source_urls(self.trip)
+        expected_gids = {"1150292496", "539581117", "1828502005"}
+        found_gids = {
+            gid
+            for gid in expected_gids
+            if any(f"gid={gid}" in source_url for source_url in source_urls)
+        }
+        self.assertEqual(found_gids, expected_gids)
+
+    def test_checked_in_public_bundles_are_identical(self):
+        trip_bundle = json.loads(TRIP_BUNDLE_PATH.read_text(encoding="utf-8"))
+        web_bundle = json.loads(WEB_BUNDLE_PATH.read_text(encoding="utf-8"))
+        self.assertEqual(web_bundle, trip_bundle)
 
     def test_no_removed_child_elders_constraints(self):
         serialized = self.trip["preferences"]["hard_constraints"] + self.trip["preferences"]["soft_preferences"]
@@ -69,8 +249,10 @@ class AwajiTripFixtureTests(unittest.TestCase):
     def test_trip_title_scope(self):
         self.assertEqual(self.trip["title"], "2026 淡路島・鳴門家庭旅行")
 
-    def test_validation_contains_reservation_warning(self):
-        self.assertTrue(any(item.get("code") == "RESERVATION_UNCONFIRMED" for item in self.trip["validation"]))
+    def test_validation_requires_pretrip_refresh_without_stale_reservation_warning(self):
+        codes = {item.get("code") for item in self.trip["validation"]}
+        self.assertIn("PRETRIP_REFRESH_REQUIRED", codes)
+        self.assertNotIn("RESERVATION_UNCONFIRMED", codes)
 
     def test_rewrite_without_fixed_slot_breaks_validation(self):
         mutated = copy.deepcopy(self.trip)
@@ -93,7 +275,7 @@ class AwajiTripFixtureTests(unittest.TestCase):
         inbound = next(flight for flight in self.trip["candidate_sets"]["flights"] if flight["id"] == "xj-1835-return")
         self.assertEqual(outbound["carrier"], "Starlux")
         self.assertIsNone(outbound["departure"]["at"])
-        self.assertEqual(inbound["arrival"]["at"], None)
+        self.assertIsNone(inbound["arrival"]["at"])
 
     def test_no_invalid_source_domains_in_trip_payload(self):
         payload_text = TRIP_PATH.read_text(encoding="utf-8")
@@ -102,26 +284,17 @@ class AwajiTripFixtureTests(unittest.TestCase):
         self.assertNotIn("github.com/your-org", payload_text)
 
     def test_public_bundle_evidence_gate_tracks_critical_issues(self):
-        trip = json.loads(TRIP_PATH.read_text(encoding="utf-8"))
-        bundle = build_public_bundle(trip, TRIP_PATH)
-        self.assertIn("evidence_gate", bundle)
-        self.assertIn(bundle["evidence_gate"]["status"], {"ok", "error"})
-        self.assertIsInstance(bundle["evidence_gate"]["critical_issues"], list)
+        self.assertIn("evidence_gate", self.bundle)
+        self.assertIn(self.bundle["evidence_gate"]["status"], {"ok", "error"})
+        self.assertIsInstance(self.bundle["evidence_gate"]["critical_issues"], list)
 
     def test_selected_facts_have_tracked_evidence(self):
         evidence = json.loads(EVIDENCE_PATH.read_text(encoding="utf-8"))
         required_ids = {
-            *(
-                f"selected-flight/{flight_id}"
-                for flight_id in self.trip["selected"]["flight_ids"]
-            ),
-            *(
-                f"selected-hotel/{hotel_id}"
-                for hotel_id in self.trip["selected"]["hotel_place_ids"]
-            ),
+            *(f"selected-flight/{flight_id}" for flight_id in self.trip["selected"]["flight_ids"]),
+            *(f"selected-hotel/{hotel_id}" for hotel_id in self.trip["selected"]["hotel_place_ids"]),
         }
-        evidence_ids = set(entry.get("reference_id") for entry in evidence.get("entries", []))
-        evidence_ids = set(entry.get("reference_id") for entry in evidence.get("entries", []))
+        evidence_ids = {entry.get("reference_id") for entry in evidence.get("entries", [])}
         missing = sorted(required_ids - evidence_ids)
         self.assertEqual(missing, [])
 

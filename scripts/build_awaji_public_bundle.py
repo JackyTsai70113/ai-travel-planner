@@ -8,6 +8,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlencode
 
 TRIP_PATH_DEFAULT = Path("trips/awaji-naruto-tokushima-kobe-2026/trip.json")
 OUTPUT_DEFAULT = Path("trips/awaji-naruto-tokushima-kobe-2026/public-bundle.json")
@@ -164,6 +165,8 @@ def _normalize_item(item: dict) -> dict:
         "start_at": _safe_time(item.get("start_at")),
         "end_at": _safe_time(item.get("end_at")),
         "place_id": item.get("place_id"),
+        "transport_leg_id": item.get("transport_leg_id"),
+        "alternative_place_ids": _as_list(item.get("alternative_place_ids")),
         "notes": item.get("notes"),
     }
 
@@ -184,6 +187,25 @@ def _bundle_days(trip: dict) -> list[dict]:
     return days
 
 
+def _official_url(place: dict[str, object]) -> str | None:
+    for identifier in _as_list(place.get("identifiers")):
+        if not isinstance(identifier, dict):
+            continue
+        if identifier.get("type") == "official_url":
+            return _safe_str(identifier.get("value"))
+    return None
+
+
+def _google_maps_url(place: dict[str, object]) -> str | None:
+    explicit = _safe_str(place.get("google_maps_url"))
+    if explicit:
+        return explicit
+    query = _safe_str(place.get("address")) or _safe_str(place.get("name"))
+    if not query:
+        return None
+    return "https://www.google.com/maps/search/?" + urlencode({"api": "1", "query": query})
+
+
 def _bundle_places(places: dict[str, dict[str, object]]) -> list[dict]:
     return sorted(
         [
@@ -192,7 +214,11 @@ def _bundle_places(places: dict[str, dict[str, object]]) -> list[dict]:
                 "name": place.get("name"),
                 "address": place.get("address"),
                 "kind": place.get("kind"),
-                "maps_query": place.get("name"),
+                "maps_query": place.get("address") or place.get("name"),
+                "google_maps_url": _google_maps_url(place),
+                "opening_hours_note": place.get("opening_hours_note"),
+                "accessibility_notes": place.get("accessibility_notes"),
+                "official_url": _official_url(place),
             }
             for place_id, place in places.items()
             if isinstance(place, dict)
@@ -215,6 +241,10 @@ def _bundle_place_index(places: dict[str, dict[str, object]]) -> dict[str, dict]
             "phone": _safe_str(place.get("phone")),
             "mapcode": _safe_str(place.get("mapcode")),
             "maps_query": _safe_str(place.get("maps_query")),
+            "google_maps_url": _google_maps_url(place),
+            "opening_hours_note": _safe_str(place.get("opening_hours_note")),
+            "accessibility_notes": _safe_str(place.get("accessibility_notes")),
+            "official_url": _official_url(place),
             "provenance": {
                 "status": _as_status(provenance.get("status")),
                 "authority": _safe_str(provenance.get("provider"))
@@ -277,21 +307,42 @@ def _bundle_transport_legs(trip: dict, places: dict[str, dict[str, object]]) -> 
         to_id = _safe_str(leg.get("to_place_id"))
         if not from_id or not to_id:
             continue
+        departure_at = _safe_str(leg.get("departure_at"))
+        arrival_at = _safe_str(leg.get("arrival_at"))
+        provenance = _as_dict(leg.get("provenance"))
+        duration_minutes = None
+        if departure_at and arrival_at:
+            try:
+                duration = datetime.fromisoformat(arrival_at) - datetime.fromisoformat(departure_at)
+                if duration.total_seconds() >= 0:
+                    duration_minutes = int(duration.total_seconds() // 60)
+            except ValueError:
+                duration_minutes = None
+        from_place = _as_dict(places.get(from_id))
+        to_place = _as_dict(places.get(to_id))
+        origin = _safe_str(from_place.get("address")) or _safe_str(from_place.get("name")) or from_id
+        destination = _safe_str(to_place.get("address")) or _safe_str(to_place.get("name")) or to_id
+        leg_mode = _safe_str(leg.get("mode")) or "car"
+        maps_mode = "transit" if leg_mode in {"bus", "train"} else "walking" if leg_mode == "walk" else "driving"
+        directions_url = "https://www.google.com/maps/dir/?" + urlencode(
+            {"api": "1", "origin": origin, "destination": destination, "travelmode": maps_mode}
+        )
         output.append(
             {
                 "id": _safe_str(leg.get("id")) or f"{from_id}-{to_id}",
-                "mode": _safe_str(leg.get("mode")) or "car",
-                "status": _as_status(leg.get("status")),
+                "mode": leg_mode,
+                "status": _as_status(provenance.get("status")),
                 "from_place": _safe_str(from_id),
                 "to_place": _safe_str(to_id),
                 "from_label": _safe_str(places.get(from_id, {}).get("name")) or from_id,
                 "to_label": _safe_str(places.get(to_id, {}).get("name")) or to_id,
-                "departure_at": _safe_time(_safe_str(leg.get("departure_at"))),
-                "arrival_at": _safe_time(_safe_str(leg.get("arrival_at"))),
-                "estimated_duration_minutes": _safe_int(leg.get("estimated_duration")),
-                "distance_km": _safe_int(leg.get("distance_km")),
-                "note": _safe_str(leg.get("note")),
-                "source_refs": _as_list(leg.get("source_refs")),
+                "departure_at": _safe_time(departure_at),
+                "arrival_at": _safe_time(arrival_at),
+                "estimated_duration_minutes": duration_minutes,
+                "note": _safe_str(provenance.get("note")),
+                "source_url": _safe_str(provenance.get("source_url")),
+                "google_maps_directions_url": directions_url,
+                "source_refs": [],
             }
         )
     if output:
@@ -389,6 +440,38 @@ def _bundle_alternatives(trip: dict) -> list[dict[str, Any]]:
     return output
 
 
+def _override_value(trip: dict, path: str) -> object:
+    for override in _as_list(trip.get("overrides")):
+        if not isinstance(override, dict):
+            continue
+        if override.get("path") == path and override.get("preserve_on_replan") is True:
+            return override.get("value")
+    return None
+
+
+def _bundle_pretrip_checklist(trip: dict) -> list[dict[str, Any]]:
+    output: list[dict[str, Any]] = []
+    for entry in _as_list(_override_value(trip, "/operations/pretrip_checklist")):
+        if not isinstance(entry, dict):
+            continue
+        item_id = _safe_str(entry.get("id"))
+        item = _safe_str(entry.get("item"))
+        if not item_id or not item:
+            continue
+        output.append(
+            {
+                "id": item_id,
+                "completed": entry.get("completed") is True,
+                "timing": _safe_str(entry.get("timing")),
+                "item": item,
+                "action": _safe_str(entry.get("action")),
+                "fallback": _safe_str(entry.get("fallback")),
+                "contact": _safe_str(entry.get("contact")),
+            }
+        )
+    return output
+
+
 def _bundle_operations(trip: dict) -> dict[str, Any]:
     raw = _as_dict(trip.get("operations"))
     return {
@@ -397,6 +480,7 @@ def _bundle_operations(trip: dict) -> dict[str, Any]:
         "emergency": raw.get("emergency") or [],
         "handbook": raw.get("handbook") or [],
         "returns": raw.get("returns") or [],
+        "pretrip_checklist": _bundle_pretrip_checklist(trip),
     }
 
 
@@ -451,7 +535,7 @@ def _bundle_reservations(days: list[dict], places: dict[str, dict[str, object]])
                         "name": display_name,
                         "place_id": item.get("place_id"),
                         "unresolved": not is_resolved,
-                        "kind": "placeholder-anchored-reservation",
+                        "kind": "fixed-reservation" if is_resolved else "placeholder-anchored-reservation",
                     }
                 )
     return reservations
@@ -566,7 +650,7 @@ def build_public_bundle(trip: dict, trip_path: Path) -> dict:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Build public bundle for issue-52 awaji trip")
+    parser = argparse.ArgumentParser(description="Build the public bundle for the Awaji 2026 handbook")
     parser.add_argument("--trip-path", type=Path, default=TRIP_PATH_DEFAULT)
     parser.add_argument("--output", type=Path, default=OUTPUT_DEFAULT)
     parser.add_argument("--web-output", type=Path, default=None)
