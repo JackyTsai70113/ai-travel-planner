@@ -391,13 +391,16 @@
           "transport_leg_id": "leg-day2-taidrobou-hanasajiki"
         },
         {
-          "alternative_place_ids": [],
+          "alternative_place_ids": [
+            "hello-kitty-smile-awaji",
+            "nojima-scuola"
+          ],
           "buffer_minutes": null,
           "end_at": "2026-08-28T16:15:00+09:00",
           "expected_stay_minutes": 105,
           "id": "day2-hanasajiki",
           "kind": "visit",
-          "notes": "Sheet 指定兵庫縣立淡路花迴廊；時間為規劃估計，高溫或疲累時縮短。",
+          "notes": "Sheet 指定兵庫縣立淡路花迴廊；高溫、雨天或疲累時改 HELLO KITTY SMILE／Nojima Scuola，時間為規劃估計。",
           "place_id": "map-import-awaji-hanasajiki",
           "start_at": "2026-08-28T14:30:00+09:00",
           "transfer_minutes": null,
@@ -502,12 +505,25 @@
       "items": [
         {
           "alternative_place_ids": [],
+          "buffer_minutes": 5,
+          "end_at": "2026-08-29T06:50:00+09:00",
+          "expected_stay_minutes": null,
+          "id": "day3-drive-riverside-komeda",
+          "kind": "transport",
+          "notes": "住宿至 Komeda 的車程與 5 分緩衝皆為規劃估計；06:50 尚未抵達即改便利商店。",
+          "place_id": "komeda-shizuki",
+          "start_at": "2026-08-29T06:35:00+09:00",
+          "transfer_minutes": 10,
+          "transport_leg_id": "leg-day3-riverside-komeda"
+        },
+        {
+          "alternative_place_ids": [],
           "buffer_minutes": null,
           "end_at": "2026-08-29T07:35:00+09:00",
           "expected_stay_minutes": 45,
           "id": "day3-breakfast-komeda",
           "kind": "meal",
-          "notes": "07:15 未入座或出餐慢即改便利商店外帶；07:45 為住宿硬出發時間。",
+          "notes": "07:15 未入座或出餐慢即改便利商店外帶；07:35 離店，最晚 07:45 必須上路。",
           "place_id": "komeda-shizuki",
           "start_at": "2026-08-29T06:50:00+09:00",
           "transfer_minutes": null,
@@ -515,16 +531,16 @@
         },
         {
           "alternative_place_ids": [],
-          "buffer_minutes": 0,
+          "buffer_minutes": 10,
           "end_at": "2026-08-29T08:20:00+09:00",
           "expected_stay_minutes": null,
-          "id": "day3-drive-riverside-sumoto",
+          "id": "day3-drive-komeda-sumoto",
           "kind": "transport",
-          "notes": "大型車不要硬闖最窄停車區；08:25 未停好車直接改往老街／S BRICK。",
+          "notes": "早餐後直接前往洲本；30–35 分車程＋10 分緩衝，大型車不要硬闖最窄停車區；08:25 未停好車直接改往老街／S BRICK。",
           "place_id": "sumoto-castle",
-          "start_at": "2026-08-29T07:45:00+09:00",
+          "start_at": "2026-08-29T07:35:00+09:00",
           "transfer_minutes": 35,
-          "transport_leg_id": "leg-day3-riverside-sumoto"
+          "transport_leg_id": "leg-day3-komeda-sumoto"
         },
         {
           "alternative_place_ids": [],
@@ -1110,16 +1126,16 @@
   },
   "local_timezone": "Asia/Tokyo",
   "meta": {
-    "bundle_sha256": "ad5a95308548d523eab8121c596cd8cdb278a244532462711372307da379d6c3",
-    "generated_at": "2026-08-22T19:45:55+00:00",
+    "bundle_sha256": "a686fe19a7e631055307296f2b8fb5ab90450b509dc6ab98ef8f08a467bd2be0",
+    "generated_at": "2026-08-22T19:59:37+00:00",
     "source_coverage": {
       "days": 5,
-      "places": 51,
+      "places": 52,
       "selected_flights": 2,
       "selected_hotels": 3
     },
     "source_path": "trips/awaji-naruto-tokushima-kobe-2026/trip.json",
-    "source_sha256": "94a66fba3f233b07ae8bbc45a6f5a3628d47f34e6f20688bccf034afe6a94413",
+    "source_sha256": "86e637f20b6f80e7febe53563524f5b9a55f45a671ef4efc6e9f71399c934ce0",
     "trip_schema": "trip-v1"
   },
   "operations": {
@@ -1690,6 +1706,26 @@
         "source_type": "user_input",
         "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117",
         "status": "reported"
+      }
+    },
+    {
+      "accessibility_notes": "Sheet 列為花さじき遇高溫、雨天或疲累時的親子室內備案；改走備案時仍須保留 17:45 訂位車程。",
+      "address": "兵庫県淡路市野島蟇浦985-1",
+      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=HELLO+KITTY+SMILE+Awaji",
+      "id": "hello-kitty-smile-awaji",
+      "kind": "poi",
+      "maps_query": "兵庫県淡路市野島蟇浦985-1",
+      "name": "HELLO KITTY SMILE",
+      "official_url": "https://awaji-resort.com/hellokittysmile/access/",
+      "opening_hours_note": "官方頁目前列平日 11:00–19:00、週末假日 10:00–19:00，最終入場 18:00；出發前重查臨時異動。",
+      "provenance": {
+        "confidence": 1,
+        "note": "名稱與地址由官方 access 頁確認；作為 Day 2 備案的關係來自 Google Sheet 行程總覽。",
+        "provider": "HELLO KITTY SMILE",
+        "retrieved_at": "2026-08-23T12:00:00+08:00",
+        "source_type": "official",
+        "source_url": "https://awaji-resort.com/hellokittysmile/access/",
+        "status": "confirmed"
       }
     },
     {
@@ -2657,6 +2693,16 @@
       "supports": "place:honpukuji-mizumido"
     },
     {
+      "authority": "HELLO KITTY SMILE",
+      "confidence": 1.0,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-23T12:00:00+08:00",
+      "source_url": "https://awaji-resort.com/hellokittysmile/access/",
+      "status": "confirmed",
+      "supports": "place:hello-kitty-smile-awaji"
+    },
+    {
       "authority": "Google Sheet 行程總覽",
       "confidence": 0.7,
       "conflicts": false,
@@ -3228,13 +3274,23 @@
     },
     {
       "authority": "Google Sheet planning estimate",
+      "confidence": 0.5,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-23T12:00:00+08:00",
+      "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117",
+      "status": "estimated",
+      "supports": "transport:leg-day3-riverside-komeda"
+    },
+    {
+      "authority": "Google Sheet planning estimate",
       "confidence": 0.8,
       "conflicts": false,
       "freshness": "unknown",
       "last_checked": "2026-08-23T09:00:00+08:00",
       "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117",
       "status": "estimated",
-      "supports": "transport:leg-day3-riverside-sumoto"
+      "supports": "transport:leg-day3-komeda-sumoto"
     },
     {
       "authority": "Google Sheet planning estimate",
@@ -3884,19 +3940,48 @@
       "transfer_minutes": 5
     },
     {
-      "arrival_at": "2026-08-29T08:20:00+09:00",
-      "buffer_minutes": 0,
-      "departure_at": "2026-08-29T07:45:00+09:00",
-      "estimated_duration_minutes": 35,
+      "arrival_at": "2026-08-29T06:50:00+09:00",
+      "buffer_minutes": 5,
+      "departure_at": "2026-08-29T06:35:00+09:00",
+      "estimated_duration_minutes": 10,
       "from_label": "Awaji Riverside Terrace in Shizuki 780",
       "from_place": "awaji-riverside-hotel",
-      "google_maps_directions_url": "https://www.google.com/maps/dir/?api=1&origin=%E5%85%B5%E5%BA%AB%E7%9C%8C%E6%B7%A1%E8%B7%AF%E5%B8%82%E5%BF%97%E7%AD%91780-12&destination=%E5%85%B5%E5%BA%AB%E7%9C%8C%E6%B4%B2%E6%9C%AC%E5%B8%82%E5%B0%8F%E8%B7%AF%E8%B0%B71272-2&travelmode=driving",
-      "id": "leg-day3-riverside-sumoto",
+      "google_maps_directions_url": "https://www.google.com/maps/dir/?api=1&origin=%E5%85%B5%E5%BA%AB%E7%9C%8C%E6%B7%A1%E8%B7%AF%E5%B8%82%E5%BF%97%E7%AD%91780-12&destination=%E5%85%B5%E5%BA%AB%E7%9C%8C%E6%B7%A1%E8%B7%AF%E5%B8%82%E5%BF%97%E7%AD%911720-1&travelmode=driving",
+      "id": "leg-day3-riverside-komeda",
       "mode": "car",
-      "note": "行車估計：30–35 分；緩衝：0 分。導航：先看洲本即時路況，大型車勿闖最窄停車區；延誤切點：08:25 未停好車改往老街／S BRICK；家庭注意：乘客先在平緩處下車。",
+      "note": "行車估計：10 分；緩衝：5 分。導航：住宿至コメダ淡路志筑店；延誤切點：06:50 尚未抵達即改便利商店外帶；家庭注意：先讓長輩幼兒在入口下車。",
+      "provenance": {
+        "confidence": 0.5,
+        "note": "行車估計：10 分；緩衝：5 分。導航：住宿至コメダ淡路志筑店；延誤切點：06:50 尚未抵達即改便利商店外帶；家庭注意：先讓長輩幼兒在入口下車。",
+        "provider": "Google Sheet planning estimate",
+        "retrieved_at": "2026-08-23T12:00:00+08:00",
+        "source_type": "derived",
+        "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117",
+        "status": "estimated"
+      },
+      "source_refs": [
+        "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117"
+      ],
+      "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117",
+      "status": "estimated",
+      "to_label": "コメダ珈琲店 淡路志筑店",
+      "to_place": "komeda-shizuki",
+      "transfer_minutes": 10
+    },
+    {
+      "arrival_at": "2026-08-29T08:20:00+09:00",
+      "buffer_minutes": 10,
+      "departure_at": "2026-08-29T07:35:00+09:00",
+      "estimated_duration_minutes": 35,
+      "from_label": "コメダ珈琲店 淡路志筑店",
+      "from_place": "komeda-shizuki",
+      "google_maps_directions_url": "https://www.google.com/maps/dir/?api=1&origin=%E5%85%B5%E5%BA%AB%E7%9C%8C%E6%B7%A1%E8%B7%AF%E5%B8%82%E5%BF%97%E7%AD%911720-1&destination=%E5%85%B5%E5%BA%AB%E7%9C%8C%E6%B4%B2%E6%9C%AC%E5%B8%82%E5%B0%8F%E8%B7%AF%E8%B0%B71272-2&travelmode=driving",
+      "id": "leg-day3-komeda-sumoto",
+      "mode": "car",
+      "note": "行車估計：30–35 分；緩衝：10 分。導航：早餐後直接前往洲本並看即時路況，大型車勿闖最窄停車區；延誤切點：07:45 尚未上路或 08:25 未停好車即改往老街／S BRICK；家庭注意：乘客先在平緩處下車。",
       "provenance": {
         "confidence": 0.8,
-        "note": "行車估計：30–35 分；緩衝：0 分。導航：先看洲本即時路況，大型車勿闖最窄停車區；延誤切點：08:25 未停好車改往老街／S BRICK；家庭注意：乘客先在平緩處下車。",
+        "note": "行車估計：30–35 分；緩衝：10 分。導航：早餐後直接前往洲本並看即時路況，大型車勿闖最窄停車區；延誤切點：07:45 尚未上路或 08:25 未停好車即改往老街／S BRICK；家庭注意：乘客先在平緩處下車。",
         "provider": "Google Sheet planning estimate",
         "retrieved_at": "2026-08-23T09:00:00+08:00",
         "source_type": "derived",

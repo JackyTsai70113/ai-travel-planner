@@ -80,6 +80,7 @@ export interface BundleDayItem {
   transfer_minutes?: number | null
   buffer_minutes?: number | null
   transport_leg_id?: string | null
+  alternative_place_ids?: string[]
 }
 
 export interface BundlePlace {

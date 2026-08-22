@@ -162,6 +162,24 @@
       "status": "confirmed"
     },
     {
+      "reference_id": "place/hello-kitty-smile-awaji",
+      "kind": "place",
+      "source_type": "official",
+      "provider": "HELLO KITTY SMILE",
+      "title": "HELLO KITTY SMILE 官方名稱、地址與 access 頁",
+      "source_url": "https://awaji-resort.com/hellokittysmile/access/",
+      "supports": ["name", "address", "official_url", "access"],
+      "confidence": 1,
+      "retrieved_at": "2026-08-23T12:00:00+08:00",
+      "validity": {"valid_from":"2026-08-23T00:00:00+08:00","valid_until":"2026-08-31T23:59:59+09:00","freshness":"live"},
+      "conflict": {
+        "message": "營業時間可能臨時異動；Day 2 備案關係另由 Google Sheet 行程總覽支持。",
+        "severity": "medium"
+      },
+      "visibility": "public",
+      "status": "confirmed"
+    },
+    {
       "reference_id": "sheet/overview-1150292496",
       "kind": "itinerary_import",
       "source_type": "user_confirmed",

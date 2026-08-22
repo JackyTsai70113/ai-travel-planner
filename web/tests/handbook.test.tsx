@@ -60,6 +60,7 @@ const bundle: Bundle = {
       end_at: `${date}T12:15:00+09:00`,
       place_id: placeIds[index + 1],
       expected_stay_minutes: index === 0 ? 90 : null,
+      alternative_place_ids: index === 0 ? ['c', 'd'] : [],
     }],
   })),
   transport_legs: dates.map((date, index) => ({
@@ -180,6 +181,9 @@ describe('Issue 97 travel handbook', () => {
     render(<ItineraryPage bundle={bundle} route={{ section: 'today', day: dates[0], raw: `today/${dates[0]}` }} onNavigate={onNavigate} />)
     expect(screen.getAllByRole('tab')).toHaveLength(5)
     expect(screen.getByRole('heading', { name: /神戶機場 → 淡路住宿/ })).toBeInTheDocument()
+    expect(screen.getByText('主要風險')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '洲本城' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '鳴門公園' })).toBeInTheDocument()
     // Confirmed place identity alone must not confirm dynamic opening or parking fields.
     expect(screen.getByText(/營業時間（待重查）/)).toBeInTheDocument()
     expect(screen.getByText(/停車（待重查）/)).toBeInTheDocument()

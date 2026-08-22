@@ -961,10 +961,11 @@ body,
 
 /* Itinerary additions */
 .day-hero-copy { flex: 1; min-width: 0; }
-.day-answer-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 20px; }
+.day-answer-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 20px; }
 .day-answer-grid > div { display: grid; gap: 3px; min-width: 0; padding: 10px; border: 1px solid #ffffff1f; border-radius: 11px; background: #071d2b35; }
 .day-answer-grid span { color: #8fcfd0; font-size: .59rem; font-weight: 900; letter-spacing: .08em; }.day-answer-grid strong { color: #fff; font-size: .75rem; overflow-wrap: anywhere; }.day-answer-grid small { color: #a9c4ca; font-size: .62rem; overflow-wrap: anywhere; }
 .timeline-risk { display: flex; gap: 8px; align-items: flex-start; margin-top: 10px; padding: 9px; border-radius: 9px; background: #f5f8f9; }.timeline-risk p, .timeline-context { margin: 0; color: #687d87; font-size: .7rem; line-height: 1.55; }.timeline-risk .hub-status { flex-shrink: 0; }.timeline-context { margin-top: 7px; overflow-wrap: anywhere; }.timeline-context.needs-recheck { padding: 7px 9px; border-left: 3px solid #d89a38; border-radius: 0 8px 8px 0; color: #76572d; background: #fff8e9; }
+.timeline-inline-alternatives { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; color: #5d7580; font-size: .7rem; }.timeline-inline-alternatives a { display: inline-flex; align-items: center; min-height: 44px; padding: 7px 10px; border: 1px solid #cfe0e4; border-radius: 9px; color: #247485; background: #f8fcfc; font-weight: 800; text-decoration: none; overflow-wrap: anywhere; }
 
 /* Map */
 .map-intro { align-items: center; }.map-trust-note { display: grid; gap: 4px; max-width: 280px; padding: 12px 14px; border: 1px solid #cfe5e4; border-radius: 12px; color: #4f7277; background: #edf8f6; }.map-trust-note strong { color: #08786e; font-size: .72rem; }.map-trust-note span { font-size: .66rem; line-height: 1.5; }

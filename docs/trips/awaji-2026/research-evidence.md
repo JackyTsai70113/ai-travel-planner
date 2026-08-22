@@ -7,6 +7,8 @@
 - Sheet 僅作匯入依據；`trip.json` 是唯一 runtime source，網站 bundle 不直接讀 Sheet。
 - Day 3–5 依詳細執行頁的時間門轉入 canonical itinerary。
 - Day 1–2 已逐列轉入午餐、忍里、CRAFT CIRCUS、日落散步、夜間採買、RURAL、夢舞台、海之教堂與水御堂；總覽未提供精確時間者，以 `estimated` 規劃窗口呈現，不標成 confirmed。
+- Day 2 花さじき的 Sheet 備案已保留為 `alternative_place_ids`：HELLO KITTY SMILE 與 Nojima Scuola；HELLO KITTY SMILE 地址另由官方 access 頁確認。
+- Day 3 早餐路線已明確建模為住宿 → Komeda → 洲本，兩段皆保留車程估計、緩衝與延誤切點。
 
 ## 使用者確認事實
 

@@ -122,6 +122,12 @@ try {
   const routePage = await routeContext.newPage()
   routePage.setDefaultTimeout(10000)
   for (const date of dates) {
+    await openRoute(routePage, `today/${date}`)
+    const riskCard = routePage.locator('.day-answer-grid > div').filter({ hasText: '主要風險' })
+    await riskCard.waitFor({ state: 'visible' })
+    const riskText = (await riskCard.locator('strong').textContent())?.trim()
+    if (!riskText) throw new Error(`${date} did not render a primary risk summary`)
+
     await openRoute(routePage, `map/${date}`)
     const legCards = routePage.locator('[data-testid^="transport-leg-"]')
     await legCards.first().waitFor({ state: 'visible' })

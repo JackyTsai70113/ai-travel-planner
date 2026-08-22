@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   Bundle,
+  BundleDay,
   BundleDayItem,
   BundlePlace,
   BundleProvenance,
@@ -121,6 +122,21 @@ function legDirectionsLink(bundle: Bundle, leg: BundleTransportLeg): string {
   ], legTravelMode(leg.mode))
 }
 
+export function primaryRiskForDay(bundle: Bundle, day: BundleDay): string {
+  for (const item of day.items) {
+    const leg = transportLegForItem(bundle, item, day.date)
+    for (const note of [leg?.note, item.notes]) {
+      if (!note) continue
+      const delayGate = note.match(/延誤切點[：:]\s*([^；。]+)/)?.[1]?.trim()
+      if (delayGate) return delayGate
+      if (note.includes('延誤') || note.includes('硬離場') || note.includes('必須上路')) {
+        return note.split(/[；。]/)[0].trim()
+      }
+    }
+  }
+  return '出發前重查即時路況與當日營運狀態'
+}
+
 export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps) {
   const [copiedId, setCopiedId] = useState('')
   const [query, setQuery] = useState('')
@@ -169,6 +185,7 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
   const fixedEntries = selectedDay.items
     .filter((item) => item.fixed || item.kind === 'reservation' || item.kind === 'flight' || !!reservationFor(item))
     .map((item) => ({ id: item.id, time: timeLabel(item.start_at), label: findPlaceLabel(bundle.places, item.place_id) }))
+  const primaryRisk = primaryRiskForDay(bundle, selectedDay)
 
   const copyText = async (label: string, text: string) => {
     try {
@@ -203,6 +220,7 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
             <div><span>下一站</span><strong>{nextHeroLeg ? nextHeroLeg.to_label : nextHeroItem ? findPlaceLabel(bundle.places, nextHeroItem.place_id) : '今日無停靠'}</strong><small>{nextHeroItem ? timeLabel(nextHeroItem.start_at) : '—'}</small></div>
             <div><span>今晚住宿</span><strong>{lodging?.name || '返程／尚無當晚住宿'}</strong><small>{lodging?.address || '以當日行程為準'}</small></div>
             <div><span>固定時間</span><strong>{fixedEntries.length ? fixedEntries.map((entry) => entry.time).join('、') : '今日無固定預約'}</strong><small>{fixedEntries.map((entry) => entry.label).join('、') || '保留彈性'}</small></div>
+            <div><span>主要風險</span><strong>{primaryRisk}</strong><small>依規劃估計；出發前以當日狀況重查</small></div>
           </div>
         </div>
         <div className="day-stats" aria-label="今日摘要數量">
@@ -240,6 +258,9 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
             : item.notes || `停留 ${item.expected_stay_minutes == null ? '尚未提供' : `${item.expected_stay_minutes} 分鐘`} · 前段移動 ${item.transfer_minutes == null ? '尚未提供' : `${item.transfer_minutes} 分鐘`}`
           const mapsHref = leg ? legDirectionsLink(bundle, leg) : place?.google_maps_url || buildMapsLink(place?.maps_query || place?.name || item.place_id)
           const copyValue = leg ? `${leg.from_label} → ${leg.to_label}` : `${title} ${findPlaceAddress(bundle.places, item.place_id)}`
+          const itemAlternatives = (item.alternative_place_ids || [])
+            .map((placeId) => bundle.places?.find((candidate) => candidate.id === placeId))
+            .filter((candidate): candidate is BundlePlace => !!candidate)
 
           return <article tabIndex={-1} className={`timeline-entry ${visualKind} ${item.id === route.item ? 'item-highlight' : ''}`} id={`item-${item.id}`} key={item.id}>
             <div className="timeline-time"><strong>{timeLabel(item.start_at)}</strong><span>{item.end_at && item.end_at !== item.start_at ? timeLabel(item.end_at) : visualKind === 'reservation' ? '固定' : ''}</span></div>
@@ -253,6 +274,7 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
               {!leg && place?.opening_hours_note ? <p className={`timeline-context ${fieldNeedsRecheck(place, 'opening_hours_note') ? 'needs-recheck' : ''}`}><strong>營業時間{fieldNeedsRecheck(place, 'opening_hours_note') ? '（待重查）' : '（已確認）'}：</strong>{place.opening_hours_note}</p> : null}
               {!leg && place?.parking ? <p className={`timeline-context ${fieldNeedsRecheck(place, 'parking') ? 'needs-recheck' : ''}`}><strong>停車{fieldNeedsRecheck(place, 'parking') ? '（待重查）' : '（已確認）'}：</strong>{place.parking}</p> : null}
               {place?.accessibility_notes ? <p className="timeline-context"><strong>家庭／無障礙：</strong>{place.accessibility_notes}</p> : null}
+              {!leg && itemAlternatives.length ? <div className="timeline-inline-alternatives"><strong>試算表備案：</strong>{itemAlternatives.map((alternative) => <a key={alternative.id} href={alternative.google_maps_url || buildMapsLink(alternative.maps_query || alternative.address || alternative.name || alternative.id)} target="_blank" rel="noreferrer">{alternative.name || alternative.id}</a>)}</div> : null}
               <div className="timeline-actions">
                 <a href={mapsHref} target="_blank" rel="noreferrer">{leg ? '逐段導航' : '導航地圖'}</a>
                 <button type="button" onClick={() => copyText(`${selectedDay.date}-${item.id}`, copyValue)}>{itemCopied ? '已複製' : '複製地點'}</button>
