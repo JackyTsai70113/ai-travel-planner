@@ -63,7 +63,7 @@
           "end_at": "2026-08-27T10:30:00+09:00",
           "expected_stay_minutes": null,
           "id": "day1-flight-arrival",
-          "kind": "transport",
+          "kind": "flight",
           "notes": "JX834 抵達神戶 10:30 為使用者確認；試算表未給入境、取車與後續精確時間。",
           "place_id": "kobe-airport",
           "start_at": "2026-08-27T10:30:00+09:00",
@@ -1110,7 +1110,7 @@
           "id": "day5-departure-flight",
           "kind": "flight",
           "notes": "JX1835 12:45 自神戶機場第二航廈起飛返台；登機口時間依登機證。",
-          "place_id": "taoyuan-airport",
+          "place_id": "kobe-airport-terminal-2",
           "start_at": "2026-08-31T12:45:00+09:00",
           "transfer_minutes": null,
           "transport_leg_id": null
@@ -1126,8 +1126,8 @@
   },
   "local_timezone": "Asia/Tokyo",
   "meta": {
-    "bundle_sha256": "569965c6525c386daaa3c637da756ed292436eaf8bcbd8b2eda06162e1e103e4",
-    "generated_at": "2026-08-22T20:07:20+00:00",
+    "bundle_sha256": "ff7b1ba5c243b4286a18673be2e897c9de572ddf1c229624b7ce8fdfb916d6a3",
+    "generated_at": "2026-08-22T20:11:18+00:00",
     "source_coverage": {
       "days": 5,
       "places": 52,
@@ -1135,7 +1135,7 @@
       "selected_hotels": 3
     },
     "source_path": "trips/awaji-naruto-tokushima-kobe-2026/trip.json",
-    "source_sha256": "8ff31ff0caed61928069894848ee4b7f2e054858144f4e687a266eb487e8b8aa",
+    "source_sha256": "7c909386af9a0d42a9e3085f264c326f9263b55c393870cc7263fbfbcb924660",
     "trip_schema": "trip-v1"
   },
   "operations": {

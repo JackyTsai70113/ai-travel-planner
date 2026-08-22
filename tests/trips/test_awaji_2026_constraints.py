@@ -151,7 +151,14 @@ class AwajiTripFixtureTests(unittest.TestCase):
         self.assertFalse(any(item.get("kind") == "visit" for item in day_five["items"]))
         departure = next(item for item in day_five["items"] if item["id"] == "day5-departure-flight")
         self.assertEqual(departure["kind"], "flight")
+        self.assertEqual(departure["place_id"], "kobe-airport-terminal-2")
         self.assertEqual(departure["start_at"], "2026-08-31T12:45:00+09:00")
+
+        day_one = next(day for day in self.trip["days"] if day["date"] == "2026-08-27")
+        arrival = next(item for item in day_one["items"] if item["id"] == "day1-flight-arrival")
+        self.assertEqual(arrival["kind"], "flight")
+        self.assertEqual(arrival["place_id"], "kobe-airport")
+        self.assertEqual(arrival["start_at"], "2026-08-27T10:30:00+09:00")
 
     def test_all_itinerary_place_references_exist(self):
         place_ids = set(self.places)

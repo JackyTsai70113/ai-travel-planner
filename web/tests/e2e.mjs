@@ -138,9 +138,18 @@ try {
     await riskCard.waitFor({ state: 'visible' })
     const riskText = (await riskCard.locator('strong').textContent())?.trim()
     if (!riskText) throw new Error(`${date} did not render a primary risk summary`)
+    if (date === '2026-08-27') {
+      const fixedCard = routePage.locator('.day-answer-grid > div').filter({ hasText: '固定時間' })
+      if (!(await fixedCard.textContent())?.includes('10:30')) throw new Error('Day 1 hero did not preserve the JX834 fixed arrival time')
+    }
     if (date === '2026-08-31') {
       const fixedCard = routePage.locator('.day-answer-grid > div').filter({ hasText: '固定時間' })
-      if (!(await fixedCard.textContent())?.includes('12:45')) throw new Error('Day 5 hero did not preserve the JX1835 fixed departure time')
+      const fixedText = await fixedCard.textContent()
+      if (!fixedText?.includes('12:45') || !fixedText.includes('神戶機場 第二航廈')) throw new Error('Day 5 hero did not preserve the JX1835 departure time and origin')
+      const flightMapHref = await routePage.locator('#item-day5-departure-flight').getByRole('link', { name: '導航地圖' }).getAttribute('href')
+      const flightMapQuery = flightMapHref ? new URL(flightMapHref).searchParams.get('query') : null
+      const normalizedFlightMapQuery = flightMapQuery?.toLowerCase() || ''
+      if ((!normalizedFlightMapQuery.includes('kobe') && !flightMapQuery?.includes('神戸空港')) || flightMapQuery?.includes('桃園')) throw new Error(`Day 5 flight navigation target is incorrect: ${flightMapQuery}`)
     }
 
     await openRoute(routePage, `map/${date}`)

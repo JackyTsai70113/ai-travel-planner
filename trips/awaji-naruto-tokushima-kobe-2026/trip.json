@@ -1399,7 +1399,7 @@
       "items": [
         {
           "id": "day1-flight-arrival",
-          "kind": "transport",
+          "kind": "flight",
           "place_id": "kobe-airport",
           "start_at": "2026-08-27T10:30:00+09:00",
           "end_at": "2026-08-27T10:30:00+09:00",
@@ -1720,7 +1720,7 @@
         {
           "id": "day5-departure-flight",
           "kind": "flight",
-          "place_id": "taoyuan-airport",
+          "place_id": "kobe-airport-terminal-2",
           "start_at": "2026-08-31T12:45:00+09:00",
           "end_at": "2026-08-31T12:45:00+09:00",
           "selection_status": "selected",
