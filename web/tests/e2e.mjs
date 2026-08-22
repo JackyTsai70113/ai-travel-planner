@@ -1,9 +1,16 @@
 import { chromium } from 'playwright'
 import { spawn } from 'node:child_process'
+import { copyFileSync } from 'node:fs'
 
-const baseUrl = 'http://127.0.0.1:4173/'
+copyFileSync(
+  new URL('../public/trips/awaji-2026/public-bundle.json', import.meta.url),
+  new URL('../dist/public-bundle.json', import.meta.url),
+)
+
+const deploymentPath = '/ai-travel-planner/trips/awaji-2026/'
+const baseUrl = `http://127.0.0.1:4173${deploymentPath}`
 const dates = ['2026-08-27', '2026-08-28', '2026-08-29', '2026-08-30', '2026-08-31']
-const server = spawn('npm', ['run', 'preview', '--', '--host', '127.0.0.1', '--port', '4173'], { stdio: 'inherit' })
+const server = spawn('npm', ['run', 'preview', '--', '--base', deploymentPath, '--host', '127.0.0.1', '--port', '4173'], { stdio: 'inherit' })
 const stop = () => server.kill('SIGTERM')
 process.on('exit', stop)
 

@@ -13,10 +13,23 @@ interface BundleLoaderState {
 
 const STORAGE_KEYS = { remoteVersion: 'trip:active:bundle-version:v1' }
 
-export function resolveBundleUrl(baseUrl: string, canonicalUrl: string): string {
+function resolveAppBaseUrl(baseUrl: string, pageUrl: string): URL {
   const base = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
+  return new URL(base, pageUrl)
+}
+
+export function resolveRegistryUrl(baseUrl: string, pageUrl = window.location.href): string {
+  return new URL('trip-registry.json', resolveAppBaseUrl(baseUrl, pageUrl)).toString()
+}
+
+export function resolveBundleUrl(baseUrl: string, canonicalUrl: string, pageUrl = window.location.href): string {
   const path = canonicalUrl.replace(/^\/+/, '').replace(/\/+$/, '')
-  return new URL(`${path}/public-bundle.json`, new URL(base, window.location.origin)).toString()
+  const appBase = resolveAppBaseUrl(baseUrl, pageUrl)
+  const appPath = appBase.pathname.replace(/\/+$/, '')
+  if (baseUrl.startsWith('.') && appPath.endsWith(`/${path}`)) {
+    return new URL('public-bundle.json', appBase).toString()
+  }
+  return new URL(`${path}/public-bundle.json`, appBase).toString()
 }
 
 export function useBundleLoader(): BundleLoaderState {
@@ -44,8 +57,7 @@ export function useBundleLoader(): BundleLoaderState {
     setError('')
     let response: Response
     try {
-      const base = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
-      const registryResponse = await fetch(new URL('trip-registry.json', new URL(base, window.location.origin)))
+      const registryResponse = await fetch(resolveRegistryUrl(baseUrl))
       if (!registryResponse.ok) throw new Error(`registry HTTP ${registryResponse.status}`)
       const registry = await registryResponse.json() as unknown
       const entry = Array.isArray(registry) && registry[0] && typeof registry[0] === 'object' ? registry[0] as { canonical_url?: unknown } : null
