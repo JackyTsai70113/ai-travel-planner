@@ -1,32 +1,168 @@
 import { chromium } from 'playwright'
 import { spawn } from 'node:child_process'
+import { copyFileSync } from 'node:fs'
 
-const server = spawn('npm', ['run', 'preview', '--', '--host', '127.0.0.1', '--port', '4173'], { stdio: 'inherit' })
+copyFileSync(
+  new URL('../public/trips/awaji-2026/public-bundle.json', import.meta.url),
+  new URL('../dist/public-bundle.json', import.meta.url),
+)
+
+const deploymentPath = '/ai-travel-planner/trips/awaji-2026/'
+const baseUrl = `http://127.0.0.1:4173${deploymentPath}`
+const dates = ['2026-08-27', '2026-08-28', '2026-08-29', '2026-08-30', '2026-08-31']
+const server = spawn('npm', ['run', 'preview', '--', '--base', deploymentPath, '--host', '127.0.0.1', '--port', '4173'], { stdio: 'inherit' })
 const stop = () => server.kill('SIGTERM')
 process.on('exit', stop)
-try {
+
+async function waitForServer() {
   for (let attempt = 0; attempt < 30; attempt += 1) {
     try {
-      const response = await fetch('http://127.0.0.1:4173/')
-      if (response.ok) break
+      const response = await fetch(baseUrl)
+      if (response.ok) return
     } catch {
-      // preview server is still starting
+      // Preview server is still starting.
     }
     await new Promise((resolve) => setTimeout(resolve, 100))
-    if (attempt === 29) throw new Error('preview server did not start')
   }
-  const browser = await chromium.launch()
-  const page = await browser.newPage({ viewport: { width: 390, height: 844 } })
-  page.setDefaultTimeout(10000)
-  await page.goto('http://127.0.0.1:4173/#/overview', { waitUntil: 'domcontentloaded' })
-  await page.locator('.app-shell').waitFor()
-  await page.locator('#trip-main').waitFor({ state: 'attached' })
-  await page.goto('http://127.0.0.1:4173/#/sources', { waitUntil: 'domcontentloaded' })
-  await page.locator('h1, h2').filter({ hasText: '資料來源' }).waitFor({ state: 'attached' })
-  await page.goto('http://127.0.0.1:4173/#/today', { waitUntil: 'domcontentloaded' })
+  throw new Error('preview server did not start')
+}
+
+async function openRoute(page, route) {
+  await page.goto(`${baseUrl}#/${route}`, { waitUntil: 'domcontentloaded' })
   await page.locator('.app-shell').waitFor({ state: 'attached' })
-  if (!page.url().includes('#/today')) throw new Error(`today route was not preserved: ${page.url()}`)
-  await browser.close()
+  await page.locator('#trip-main').waitFor({ state: 'attached' })
+  const section = route.split('/')[0]
+  const readySelectors = {
+    overview: '.trip-overview-shell',
+    today: '.itinerary-workspace',
+    map: '.map-workspace',
+    lodging: '.lodging-workspace',
+    packing: '.packing-workspace',
+    sources: '[aria-label="資料來源"]',
+  }
+  const readySelector = readySelectors[section]
+  if (readySelector) await page.locator(readySelector).waitFor({ state: 'visible' })
+}
+
+async function assertNoHorizontalOverflow(page, label) {
+  const dimensions = await page.evaluate(() => ({
+    clientWidth: document.documentElement.clientWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+  }))
+  if (dimensions.scrollWidth > dimensions.clientWidth) {
+    throw new Error(`${label} horizontal overflow: ${dimensions.scrollWidth} > ${dimensions.clientWidth}`)
+  }
+}
+
+async function assertTouchTargets(page, selector, label) {
+  const targets = page.locator(selector)
+  const count = await targets.count()
+  if (count === 0) throw new Error(`${label} touch targets were not rendered`)
+  for (let index = 0; index < count; index += 1) {
+    const target = targets.nth(index)
+    if (!(await target.isVisible())) continue
+    const box = await target.boundingBox()
+    if (!box || box.width < 44 || box.height < 44) {
+      throw new Error(`${label} touch target ${index + 1} is ${box?.width ?? 0}×${box?.height ?? 0}px; expected at least 44×44px`)
+    }
+  }
+}
+
+let browser
+try {
+  await waitForServer()
+  browser = await chromium.launch()
+
+  const mobileContext = await browser.newContext({ viewport: { width: 390, height: 844 } })
+  const mobile = await mobileContext.newPage()
+  mobile.setDefaultTimeout(10000)
+
+  await openRoute(mobile, 'sources')
+  await mobile.locator('h1, h2').filter({ hasText: '資料來源' }).waitFor({ state: 'attached' })
+  await openRoute(mobile, 'today')
+  if (!mobile.url().includes('#/today')) throw new Error(`today route was not preserved: ${mobile.url()}`)
+  if (await mobile.locator('.day-tab').count() !== 5) throw new Error('five itinerary days were not rendered')
+
+  for (const route of ['overview', 'today', 'map', 'lodging', 'packing']) {
+    await openRoute(mobile, route)
+    await assertNoHorizontalOverflow(mobile, `390px ${route}`)
+  }
+
+  await openRoute(mobile, 'today/2026-08-29')
+  await assertTouchTargets(mobile, '.day-tab', 'day tab')
+  await assertTouchTargets(mobile, '.print-button', 'print')
+  await assertTouchTargets(mobile, '.quick-mode button', 'quick mode')
+  await assertTouchTargets(mobile, '.plan-tabs button', 'plan')
+  await assertTouchTargets(mobile, '.timeline-actions a, .timeline-actions button', 'timeline action')
+  await mobile.locator('#itinerary-search').fill('淡路')
+  await mobile.locator('.search-results button').first().waitFor()
+  await assertTouchTargets(mobile, '.search-results button', 'search result')
+
+  await openRoute(mobile, 'map/2026-08-27')
+  await assertTouchTargets(mobile, '.handbook-day-tabs button', 'map day tab')
+
+  await openRoute(mobile, 'lodging')
+  const longJapaneseName = mobile.locator('.lodging-card-main h2').filter({ hasText: 'ザ ロイヤルパーク キャンバス 神戸三宮' })
+  await longJapaneseName.waitFor()
+  const wrap = await longJapaneseName.evaluate((element) => ({
+    clientWidth: element.clientWidth,
+    scrollWidth: element.scrollWidth,
+    overflowWrap: getComputedStyle(element).overflowWrap,
+  }))
+  if (wrap.scrollWidth > wrap.clientWidth || wrap.overflowWrap !== 'anywhere') {
+    throw new Error(`long Japanese lodging name did not wrap safely: ${JSON.stringify(wrap)}`)
+  }
+
+  await openRoute(mobile, 'packing')
+  if (await mobile.getByRole('checkbox').count() !== 30) throw new Error('spreadsheet checklist did not render 30 items')
+  await mobile.getByText('預約 Ocean Terrace', { exact: true }).waitFor()
+  await mobileContext.close()
+
+  const desktopContext = await browser.newContext({ viewport: { width: 1440, height: 900 } })
+  const desktop = await desktopContext.newPage()
+  desktop.setDefaultTimeout(10000)
+  for (const route of ['overview', 'today', 'map']) {
+    await openRoute(desktop, route)
+    await desktop.locator('.trip-sidebar').waitFor({ state: 'visible' })
+    await desktop.locator('.app-main').waitFor({ state: 'visible' })
+    await assertNoHorizontalOverflow(desktop, `1440px ${route}`)
+  }
+  await desktopContext.close()
+
+  const routeContext = await browser.newContext({ viewport: { width: 390, height: 844 } })
+  const routePage = await routeContext.newPage()
+  routePage.setDefaultTimeout(10000)
+  for (const date of dates) {
+    await openRoute(routePage, `today/${date}`)
+    const riskCard = routePage.locator('.day-answer-grid > div').filter({ hasText: '主要風險' })
+    await riskCard.waitFor({ state: 'visible' })
+    const riskText = (await riskCard.locator('strong').textContent())?.trim()
+    if (!riskText) throw new Error(`${date} did not render a primary risk summary`)
+    if (date === '2026-08-27') {
+      const fixedCard = routePage.locator('.day-answer-grid > div').filter({ hasText: '固定時間' })
+      if (!(await fixedCard.textContent())?.includes('10:30')) throw new Error('Day 1 hero did not preserve the JX834 fixed arrival time')
+    }
+    if (date === '2026-08-31') {
+      const fixedCard = routePage.locator('.day-answer-grid > div').filter({ hasText: '固定時間' })
+      const fixedText = await fixedCard.textContent()
+      if (!fixedText?.includes('12:45') || !fixedText.includes('神戶機場 第二航廈')) throw new Error('Day 5 hero did not preserve the JX1835 departure time and origin')
+      const flightMapHref = await routePage.locator('#item-day5-departure-flight').getByRole('link', { name: '導航地圖' }).getAttribute('href')
+      const flightMapQuery = flightMapHref ? new URL(flightMapHref).searchParams.get('query') : null
+      const normalizedFlightMapQuery = flightMapQuery?.toLowerCase() || ''
+      if ((!normalizedFlightMapQuery.includes('kobe') && !flightMapQuery?.includes('神戸空港')) || flightMapQuery?.includes('桃園')) throw new Error(`Day 5 flight navigation target is incorrect: ${flightMapQuery}`)
+    }
+
+    await openRoute(routePage, `map/${date}`)
+    const legCards = routePage.locator('[data-testid^="transport-leg-"]')
+    await legCards.first().waitFor({ state: 'visible' })
+    const legCount = await legCards.count()
+    if (legCount < 1) throw new Error(`${date} did not render any transport leg`)
+    if (await routePage.getByText('尚無逐段資料', { exact: true }).count()) {
+      throw new Error(`${date} rendered the empty route state`)
+    }
+  }
+  await routeContext.close()
 } finally {
+  await browser?.close()
   stop()
 }

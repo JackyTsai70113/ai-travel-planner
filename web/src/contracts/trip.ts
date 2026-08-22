@@ -1,4 +1,17 @@
-export type OperationalStatus = 'confirmed' | 'estimated' | 'unverified' | 'stale' | 'conflict' | 'unresolved' | 'unknown'
+export type OperationalStatus = 'confirmed' | 'estimated' | 'reported' | 'user-confirmed' | 'warning' | 'error' | 'critical' | 'info' | 'unverified' | 'stale' | 'conflict' | 'unresolved' | 'unknown'
+
+export interface BundleProvenance {
+  status?: OperationalStatus | null
+  provider?: string | null
+  source_ref?: string | null
+  source_refs?: string[]
+  source_url?: string | null
+  retrieved_at?: string | null
+  confidence?: number | string | null
+  note?: string | null
+}
+
+export type BundleFieldProvenance = Record<string, BundleProvenance | null | undefined>
 
 export interface BundleReservation {
   id: string
@@ -20,6 +33,8 @@ export interface BundleReservation {
 }
 
 export interface OptionalOperationalHubRecord {
+  id?: string
+  place_id?: string
   source?: string
   status?: OperationalStatus
   freshness?: string
@@ -27,10 +42,26 @@ export interface OptionalOperationalHubRecord {
   next_recheck_at?: string
 }
 
+export interface BundlePretripChecklistItem {
+  id: string
+  completed?: boolean
+  timing?: string | null
+  item: string
+  action?: string | null
+  fallback?: string | null
+  contact?: string | null
+}
+
 export interface BundlePublicOperations {
   lodgings?: OptionalOperationalHubRecord[]
   food?: OptionalOperationalHubRecord[]
   tides?: OptionalOperationalHubRecord[]
+  pretrip_checklist?: BundlePretripChecklistItem[]
+  emergency?: unknown[]
+  fuel?: Record<string, unknown>
+  handbook?: unknown[]
+  returns?: unknown[]
+  supplies?: unknown[]
 }
 
 export interface BundleDayItem {
@@ -48,6 +79,8 @@ export interface BundleDayItem {
   expected_stay_minutes?: number | null
   transfer_minutes?: number | null
   buffer_minutes?: number | null
+  transport_leg_id?: string | null
+  alternative_place_ids?: string[]
 }
 
 export interface BundlePlace {
@@ -59,6 +92,35 @@ export interface BundlePlace {
   name_ja?: string | null
   phone?: string | null
   official_url?: string | null
+  google_maps_url?: string | null
+  opening_hours_note?: string | null
+  parking?: string | null
+  accessibility_notes?: string | null
+  status?: OperationalStatus | null
+  source_refs?: string[]
+  provenance?: BundleProvenance | BundleFieldProvenance | null
+  field_provenance?: BundleFieldProvenance | null
+}
+
+export interface BundleTransportLeg {
+  id: string
+  mode: string
+  status: OperationalStatus
+  from_place: string
+  to_place: string
+  from_label: string
+  to_label: string
+  departure_at: string | null
+  arrival_at: string | null
+  estimated_duration_minutes: number | null
+  transfer_minutes?: number | null
+  buffer_minutes?: number | null
+  note?: string | null
+  source_url?: string | null
+  google_maps_directions_url?: string | null
+  distance_km?: number | null
+  source_refs?: string[]
+  provenance?: BundleProvenance | null
 }
 
 export interface BundleDay {
@@ -90,6 +152,7 @@ export interface Bundle {
   }
   operations?: BundlePublicOperations
   days: BundleDay[]
+  transport_legs?: BundleTransportLeg[]
   alternatives?: Array<{
     id: string
     title: string
@@ -210,7 +273,12 @@ export function mapStatusClass(status: Bundle['status']): string {
 
 export function operationalStatusLabel(status: OperationalStatus | undefined | null): string {
   if (status === 'confirmed') return '已確認'
+  if (status === 'user-confirmed') return '使用者已確認'
+  if (status === 'reported') return '來源已報告'
   if (status === 'estimated') return '估計'
+  if (status === 'warning') return '注意'
+  if (status === 'error' || status === 'critical') return '有風險'
+  if (status === 'info') return '資訊'
   if (status === 'unverified') return '未驗證'
   if (status === 'stale') return '已過時'
   if (status === 'conflict') return '衝突'
@@ -219,8 +287,9 @@ export function operationalStatusLabel(status: OperationalStatus | undefined | n
 }
 
 export function operationalStatusClass(status: OperationalStatus | undefined | null): string {
-  if (status === 'confirmed') return 'hub-status confirmed'
-  if (status === 'estimated' || status === 'unverified') return 'hub-status estimated'
+  if (status === 'confirmed' || status === 'user-confirmed') return 'hub-status confirmed'
+  if (status === 'reported' || status === 'estimated' || status === 'unverified' || status === 'info') return 'hub-status estimated'
+  if (status === 'warning' || status === 'error' || status === 'critical') return 'hub-status conflict'
   if (status === 'stale') return 'hub-status stale'
   if (status === 'conflict') return 'hub-status conflict'
   if (status === 'unresolved') return 'hub-status unresolved'

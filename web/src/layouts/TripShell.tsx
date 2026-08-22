@@ -104,6 +104,7 @@ export default function TripShell({
 
   return (
     <div className={`app-shell ${visibleState ? 'with-alert' : ''}`}>
+      <a className="skip-link" href="#trip-main">跳到主要內容</a>
       <MobileHeader
         title={title}
         subtitle={subtitle}
@@ -121,10 +122,13 @@ export default function TripShell({
           subtitle={subtitle}
         />
 
-        <main className="app-main" id="trip-main">
+        <main className="app-main" id="trip-main" aria-labelledby={pageTitleId}>
           <header className="desktop-topbar">
             <div><span className="desktop-topbar-section">{activeLabel}</span><span className="desktop-topbar-divider">/</span><span>{subtitle}</span></div>
-            <div><span className="desktop-status"><i />{currentStatusText}</span><span className="desktop-travelers">{travelerText}</span></div>
+            <div className="desktop-topbar-tools">
+              <div className="desktop-quick-actions"><button type="button" onClick={() => onNavigateSection('today')}>今日行程</button><button type="button" onClick={() => onNavigateSection('map')}>導航</button></div>
+              <span className="desktop-status"><i />{currentStatusText}</span><span className="desktop-travelers">{travelerText}</span>
+            </div>
           </header>
           <header className="trip-main-header">
             <div className="main-title" id={pageTitleId}>

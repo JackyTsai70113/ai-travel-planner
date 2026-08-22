@@ -203,7 +203,7 @@ export default function TripApp({ tripMeta = null }: TripAppProps) {
       )
     }
     if (selectedSection === 'map') {
-      return <MapPage route={effectiveRoute} currentDay={effectiveRoute.day || itineraryDayFromLastNavigation} />
+      return <MapPage bundle={bundle} route={effectiveRoute} currentDay={effectiveRoute.day || itineraryDayFromLastNavigation} />
     }
     if (selectedSection === 'reservation') {
       return <ReservationsPage bundle={bundle} />
