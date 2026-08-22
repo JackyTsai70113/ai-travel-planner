@@ -68,16 +68,30 @@
       },
       {
         "id": "kobe-airport",
-        "name": "神戶(神戶機場)",
+        "name": "神戸空港 第2ターミナル",
         "kind": "airport",
-        "address": "兵庫縣神戶市",
+        "address": "兵庫県神戸市中央区神戸空港1",
         "timezone": "Asia/Tokyo",
+        "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Kobe+Airport+Terminal+2",
+        "identifiers": [
+          {
+            "type": "official_url",
+            "value": "https://www.kairport.co.jp/access/map",
+            "provenance": {
+              "source_type": "official",
+              "provider": "神戸空港",
+              "source_url": "https://www.kairport.co.jp/access/map",
+              "retrieved_at": "2026-08-23T03:30:00+08:00",
+              "status": "reported"
+            }
+          }
+        ],
         "provenance": {
           "source_type": "official",
-          "provider": "Hyogo Prefecture",
-          "source_url": "https://www.kansai-airport.or.jp/",
-          "retrieved_at": "2026-08-15T09:00:00+09:00",
-          "confidence": 0.9,
+          "provider": "神戸空港",
+          "source_url": "https://www.kairport.co.jp/access/map",
+          "retrieved_at": "2026-08-23T03:30:00+08:00",
+          "confidence": 1,
           "status": "confirmed"
         }
       },
@@ -146,6 +160,81 @@
         }
       },
       {
+        "id": "ramen-ichiraku-nijigen",
+        "name": "ラーメン一楽（二次元之森 忍里內）",
+        "kind": "restaurant",
+        "address": "兵庫県淡路市楠本2425-2 兵庫県立淡路島公園内",
+        "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Ramen+Ichiraku+Nijigen+no+Mori",
+        "opening_hours_note": "Sheet 指定為 Day 1 午餐；營業與最後點餐時間須出發前重查。",
+        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程總覽","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496","retrieved_at":"2026-08-23T03:30:00+08:00","confidence":0.8,"status":"unverified","note":"地點與用餐順序來自 Sheet；動態營業資訊待重查。"}
+      },
+      {
+        "id": "nijigen-no-mori-shinobi",
+        "name": "Nijigen no Mori NARUTO & BORUTO 忍里",
+        "kind": "poi",
+        "address": "兵庫県淡路市楠本2425-2 兵庫県立淡路島公園内",
+        "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Nijigen+no+Mori+Shinobi+Village",
+        "identifiers": [{"type":"official_url","value":"https://nijigennomori.com/naruto_shinobizato/","provenance":{"source_type":"official","provider":"ニジゲンノモリ","source_url":"https://nijigennomori.com/naruto_shinobizato/","retrieved_at":"2026-08-23T03:30:00+08:00","status":"reported"}}],
+        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程總覽","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496","retrieved_at":"2026-08-23T03:30:00+08:00","confidence":1,"status":"reported","note":"Sheet 指定景點；票價與營業時間出發前查官方。"}
+      },
+      {
+        "id": "craft-circus-awaji",
+        "name": "CRAFT CIRCUS",
+        "kind": "poi",
+        "address": "兵庫県淡路市野島平林2-2",
+        "google_maps_url": "https://www.google.com/maps/search/?api=1&query=CRAFT+CIRCUS+Awaji",
+        "identifiers": [{"type":"official_url","value":"https://awajicraftcircus.com/","provenance":{"source_type":"official","provider":"CRAFT CIRCUS","source_url":"https://awajicraftcircus.com/","retrieved_at":"2026-08-23T03:30:00+08:00","status":"reported"}}],
+        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程總覽","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496","retrieved_at":"2026-08-23T03:30:00+08:00","confidence":1,"status":"reported","note":"Sheet 指定 Day 1 晚上行程；動態營業資訊待重查。"}
+      },
+      {
+        "id": "awaji-sunset-line",
+        "name": "淡路サンセットライン 日落散步",
+        "kind": "poi",
+        "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Awaji+Sunset+Line",
+        "accessibility_notes": "只做海邊短走；高溫、強風、下雨或長輩幼兒疲累即取消。",
+        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程總覽","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496","retrieved_at":"2026-08-23T03:30:00+08:00","confidence":0.8,"status":"unverified","note":"Sheet 為路線概念，沒有單一精確點；以當日安全地點短走。"}
+      },
+      {
+        "id": "aeon-awaji",
+        "name": "イオン淡路店",
+        "kind": "other",
+        "google_maps_url": "https://www.google.com/maps/search/?api=1&query=AEON+Awaji",
+        "opening_hours_note": "Sheet 的夜間自由備案；出發前重查營業時間。",
+        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程總覽","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496","retrieved_at":"2026-08-23T03:30:00+08:00","confidence":0.7,"status":"unverified"}
+      },
+      {
+        "id": "plant-awaji",
+        "name": "PLANT 淡路店",
+        "kind": "other",
+        "google_maps_url": "https://www.google.com/maps/search/?api=1&query=PLANT+Awaji",
+        "opening_hours_note": "Sheet 的夜間替代選項；出發前重查營業時間。",
+        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程總覽","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496","retrieved_at":"2026-08-23T03:30:00+08:00","confidence":0.7,"status":"unverified"}
+      },
+      {
+        "id": "sea-church-awaji",
+        "name": "海之教堂（海の教会）",
+        "kind": "poi",
+        "address": "兵庫県淡路市夢舞台2",
+        "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Church+of+the+Sea+Awaji",
+        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程總覽","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496","retrieved_at":"2026-08-23T03:30:00+08:00","confidence":0.8,"status":"reported","note":"Sheet 指定獨立停靠；開放狀態出發前重查。"}
+      },
+      {
+        "id": "honpukuji-mizumido",
+        "name": "本福寺 水御堂",
+        "kind": "poi",
+        "address": "兵庫県淡路市浦1310",
+        "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Honpukuji+Mizumido",
+        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程總覽","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496","retrieved_at":"2026-08-23T03:30:00+08:00","confidence":0.8,"status":"reported","note":"Sheet 指定獨立停靠；開放與參拜時間出發前重查。"}
+      },
+      {
+        "id": "cosmos-shizuki",
+        "name": "Cosmos 藥妝超市 志筑店",
+        "kind": "other",
+        "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Cosmos+Drug+Shizuki+Awaji",
+        "opening_hours_note": "Sheet 的夜間自由備案；出發前重查營業時間。",
+        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程總覽","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496","retrieved_at":"2026-08-23T03:30:00+08:00","confidence":0.7,"status":"unverified"}
+      },
+      {
         "id": "awaji-beach",
         "name": "淡路島南岸景觀公園",
         "kind": "poi",
@@ -184,12 +273,26 @@
           "state": "resolved",
           "confidence": 1
         },
+        "identifiers": [
+          {
+            "type": "official_url",
+            "value": "https://magia.tokyo/shop",
+            "provenance": {
+              "source_type": "official",
+              "provider": "幸せのパンケーキ",
+              "source_url": "https://magia.tokyo/shop",
+              "retrieved_at": "2026-08-23T03:30:00+08:00",
+              "status": "reported",
+              "note": "官方店舖頁確認淡路島 Terrace 店名與地址；17:45 訂位另由 Google Sheet 確認。"
+            }
+          }
+        ],
         "provenance": {
-          "source_type": "user_input",
-          "provider": "Issue comment",
-          "source_url": "https://github.com/JackyTsai70113/ai-travel-planner/issues/52",
-          "retrieved_at": "2026-08-15T09:30:00+09:00",
-          "confidence": 0.3,
+          "source_type": "official",
+          "provider": "幸せのパンケーキ",
+          "source_url": "https://magia.tokyo/shop",
+          "retrieved_at": "2026-08-23T03:30:00+08:00",
+          "confidence": 1,
           "status": "confirmed"
         }
       },
@@ -670,7 +773,7 @@
         "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Komeda+Awaji+Shizuki",
         "opening_hours_note": "試算表記載 7:00–22:00；出發前一天電話重查臨時營業。",
         "accessibility_notes": "7 人於 7:00 開門即進；07:15 未入座即改便利商店，07:45 硬出發。",
-        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"confirmed"}
+        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"reported"}
       },
       {
         "id": "sumoto-castle",
@@ -679,7 +782,7 @@
         "address": "兵庫県洲本市小路谷1272-2",
         "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Sumoto+Castle",
         "accessibility_notes": "停車位有限；先讓長輩與幼兒在平緩處下車，只走核心展望點。",
-        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"confirmed"}
+        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"reported"}
       },
       {
         "id": "retro-komichi",
@@ -689,7 +792,7 @@
         "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Retro+Komichi+Sumoto",
         "opening_hours_note": "店家未必早開，當日現場營業為準。",
         "accessibility_notes": "以平地短走與拍照為主，避免讓長輩站著等開門。",
-        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"confirmed"}
+        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"reported"}
       },
       {
         "id": "uzu-no-michi",
@@ -700,7 +803,7 @@
         "opening_hours_note": "夏休最晚入場 18:30；8/29 潮流與運行狀態出發前重查。",
         "accessibility_notes": "停車場至入口需步行；有無障礙路線但較繞，不必走到底。",
         "identifiers": [{"type":"official_url","value":"https://www.uzunomichi.jp/","provenance":{"source_type":"official","provider":"渦之道","source_url":"https://www.uzunomichi.jp/","retrieved_at":"2026-08-23T09:00:00+08:00","status":"reported","note":"試算表引用，出發前重查"}}],
-        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"confirmed"}
+        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"reported"}
       },
       {
         "id": "awaodori-kaikan",
@@ -711,7 +814,7 @@
         "opening_hours_note": "夜公演 20:00–20:50；座位與運行狀態出發前確認。",
         "accessibility_notes": "Alphard 不可使用 155cm 車高停車場；先讓長輩幼兒下車。",
         "identifiers": [{"type":"official_url","value":"https://www.awaodori-kaikan.jp/","provenance":{"source_type":"official","provider":"阿波舞會館","source_url":"https://www.awaodori-kaikan.jp/","retrieved_at":"2026-08-23T09:00:00+08:00","status":"reported","note":"試算表引用，出發前重查"}}],
-        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"confirmed"}
+        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"reported"}
       },
       {
         "id": "bizan-ropeway",
@@ -721,7 +824,7 @@
         "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Bizan+Ropeway",
         "opening_hours_note": "4–10 月 9:00–21:00；雷雨、強風或臨時停駛時取消。",
         "accessibility_notes": "單程約 6 分鐘，山頂短停；疲累即取消並留在會館休息。",
-        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"confirmed"}
+        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"reported"}
       },
       {
         "id": "menoh-tokushima",
@@ -731,7 +834,7 @@
         "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Menoh+Tokushima+Station",
         "opening_hours_note": "試算表記載 10:00–24:00；21:15 未入座即換店。",
         "accessibility_notes": "約 20 席，7 人可能拆桌；幼兒先備餐，長輩不等候。",
-        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"confirmed"}
+        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"reported"}
       },
       {
         "id": "familymart-tokushima-kanazawa",
@@ -742,7 +845,7 @@
         "google_maps_url": "https://www.google.com/maps/search/?api=1&query=FamilyMart+Tokushima+Kanazawa",
         "opening_hours_note": "24 小時；作為 8/30 早餐外帶備案。",
         "accessibility_notes": "不為早餐繞路；前晚能先買好即優先。",
-        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"confirmed"}
+        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"reported"}
       },
       {
         "id": "road-station-fukura-p0",
@@ -751,7 +854,7 @@
         "address": "兵庫県南あわじ市福良甲1528-4",
         "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Michi+no+Eki+Fukura+P0",
         "accessibility_notes": "先讓長輩幼兒在なないろ館前下車，駕駛再依指揮停車。",
-        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"confirmed"}
+        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"reported"}
       },
       {
         "id": "uzushio-cruise-fukura",
@@ -763,7 +866,7 @@
         "accessibility_notes": "11:40 起取票、名簿、廁所與補水；準備帽繩、飲水與暈船用品。",
         "resolution": {"state":"resolved","confidence":1},
         "identifiers": [{"type":"official_url","value":"https://www.uzu-shio.com/timetable","provenance":{"source_type":"official","provider":"うずしおクルーズ","source_url":"https://www.uzu-shio.com/timetable","retrieved_at":"2026-08-23T09:00:00+08:00","status":"reported","note":"試算表引用，出發前重查"}}],
-        "provenance": {"source_type":"user_input","provider":"Google Sheet 已訂位","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"confirmed"}
+        "provenance": {"source_type":"user_input","provider":"Google Sheet 已訂位","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496","retrieved_at":"2026-08-23T03:30:00+08:00","confidence":1,"status":"reported","note":"12:50 訂位由使用者 Sheet 確認；運航、船名與集合方式仍須出發前重查。"}
       },
       {
         "id": "nojima-scuola",
@@ -774,7 +877,7 @@
         "opening_hours_note": "週日市場約 10:00–19:00；咖啡 L.O. 17:30，出發前重查。",
         "accessibility_notes": "以一樓市場／咖啡為主，提供室內降溫、廁所與座位。",
         "identifiers": [{"type":"official_url","value":"https://nojima-scuola.com/","provenance":{"source_type":"official","provider":"Nojima Scuola","source_url":"https://nojima-scuola.com/","retrieved_at":"2026-08-23T09:00:00+08:00","status":"reported","note":"試算表引用，出發前重查"}}],
-        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"confirmed"}
+        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"reported"}
       },
       {
         "id": "iwaya-port",
@@ -783,7 +886,7 @@
         "address": "兵庫県淡路市岩屋",
         "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Iwaya+Port+Terminal+Parking",
         "accessibility_notes": "停車場限高 2.1m、有電梯；適合 Alphard 與長輩上下車。",
-        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"confirmed"}
+        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"reported"}
       },
       {
         "id": "eshima",
@@ -792,7 +895,7 @@
         "address": "兵庫県淡路市岩屋884-4",
         "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Eshima+Awaji",
         "accessibility_notes": "不爬、不久留；酷熱時僅少數成人下車拍照，延誤或下雨直接取消。",
-        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"confirmed"}
+        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"reported"}
       },
       {
         "id": "awaji-sa-highway-oasis",
@@ -813,7 +916,7 @@
         "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Awaji+SA+Ferris+Wheel",
         "opening_hours_note": "9:00–21:00，售票至 20:45；強風或雷雨可能停駛。",
         "accessibility_notes": "每車最多 6 人，7 人須分兩車；車廂有冷氣。",
-        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"confirmed"}
+        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"reported"}
       },
       {
         "id": "toyota-rent-a-car-kobe-airport",
@@ -824,7 +927,7 @@
         "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Toyota+Rent+a+Car+Kobe+Airport",
         "opening_hours_note": "8:00–20:00；還車前依契約加滿油。",
         "accessibility_notes": "Toyota 僅接送第一航廈；再搭免費聯絡巴士或步行至第二航廈。",
-        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"confirmed"}
+        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"reported"}
       },
       {
         "id": "kobe-airport-terminal-2",
@@ -833,7 +936,7 @@
         "address": "兵庫県神戸市中央区神戸空港",
         "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Kobe+Airport+Terminal+2",
         "accessibility_notes": "行李多且有長輩幼兒，第一航廈到第二航廈優先搭免費聯絡巴士。",
-        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"confirmed"}
+        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"reported"}
       }
     ],
     "restaurants": [
@@ -1043,21 +1146,89 @@
     ],
     "transport_legs": [
       {
-        "id": "leg-airport-to-riverside",
-        "mode": "car",
-        "from_place_id": "kobe-airport",
-        "to_place_id": "awaji-riverside-hotel",
-        "departure_at": "2026-08-27T13:45:00+09:00",
-        "arrival_at": "2026-08-27T14:30:00+09:00",
-        "provenance": {
-          "source_type": "derived",
-          "provider": "Google Sheet planning estimate",
-          "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496",
-          "retrieved_at": "2026-08-23T09:00:00+08:00",
-          "confidence": 0.6,
-          "status": "estimated",
-          "note": "導航：出發當下看即時路況；延誤切點：Day 1 試算表未給精確時間，超時縮短中途停留；家庭注意：先讓長輩與幼兒下車。"
-        }
+        "id": "leg-day1-airport-nijigen", "mode": "car", "from_place_id": "kobe-airport", "to_place_id": "ramen-ichiraku-nijigen",
+        "departure_at": "2026-08-27T12:00:00+09:00", "arrival_at": "2026-08-27T12:45:00+09:00",
+        "provenance": {"source_type":"derived","provider":"Issue 97 planning estimate from Sheet order","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496","retrieved_at":"2026-08-23T03:30:00+08:00","confidence":0.5,"status":"estimated","note":"行車估計：45 分；緩衝：0 分。導航：由神戸空港第2航廈前往二次元之森；延誤切點：取車延誤就縮短忍里；家庭注意：先完成午餐。"}
+      },
+      {
+        "id": "leg-day1-shinobi-craft", "mode": "car", "from_place_id": "nijigen-no-mori-shinobi", "to_place_id": "craft-circus-awaji",
+        "departure_at": "2026-08-27T15:30:00+09:00", "arrival_at": "2026-08-27T16:00:00+09:00",
+        "provenance": {"source_type":"derived","provider":"Issue 97 planning estimate from Sheet order","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496","retrieved_at":"2026-08-23T03:30:00+08:00","confidence":0.5,"status":"estimated","note":"行車估計：30 分；緩衝：0 分。導航：西海岸方向；延誤切點：16:30 後抵達縮短停留；家庭注意：車上補水休息。"}
+      },
+      {
+        "id": "leg-day1-craft-sunset", "mode": "walk", "from_place_id": "craft-circus-awaji", "to_place_id": "awaji-sunset-line",
+        "departure_at": "2026-08-27T17:15:00+09:00", "arrival_at": "2026-08-27T17:25:00+09:00",
+        "provenance": {"source_type":"derived","provider":"Issue 97 planning estimate from Sheet order","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496","retrieved_at":"2026-08-23T03:30:00+08:00","confidence":0.4,"status":"estimated","note":"步行估計：10 分；緩衝：0 分。導航：只選安全平坦海邊；延誤切點：雨天或疲累取消；家庭注意：不追日落、不走長距離。"}
+      },
+      {
+        "id": "leg-day1-sunset-garb", "mode": "car", "from_place_id": "awaji-sunset-line", "to_place_id": "map-import-garb-costa-orange",
+        "departure_at": "2026-08-27T18:10:00+09:00", "arrival_at": "2026-08-27T18:30:00+09:00",
+        "provenance": {"source_type":"derived","provider":"Issue 97 planning estimate from Sheet order","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496","retrieved_at":"2026-08-23T03:30:00+08:00","confidence":0.4,"status":"estimated","note":"行車估計：20 分；緩衝：0 分。導航：18:30 已訂位優先；延誤切點：18:10 尚未上車即取消散步；家庭注意：先讓長輩幼兒下車。"}
+      },
+      {
+        "id": "leg-day1-garb-aeon", "mode": "car", "from_place_id": "map-import-garb-costa-orange", "to_place_id": "aeon-awaji",
+        "departure_at": "2026-08-27T19:30:00+09:00", "arrival_at": "2026-08-27T20:00:00+09:00",
+        "provenance": {"source_type":"derived","provider":"Issue 97 planning estimate from Sheet order","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496","retrieved_at":"2026-08-23T03:30:00+08:00","confidence":0.4,"status":"estimated","note":"行車估計：30 分；緩衝：0 分。導航：AEON／PLANT 二選一；延誤切點：晚餐延誤或全員疲累即取消採買；家庭注意：由少數成人採買。"}
+      },
+      {
+        "id": "leg-day1-aeon-riverside", "mode": "car", "from_place_id": "aeon-awaji", "to_place_id": "awaji-riverside-hotel",
+        "departure_at": "2026-08-27T20:40:00+09:00", "arrival_at": "2026-08-27T21:00:00+09:00",
+        "provenance": {"source_type":"derived","provider":"Issue 97 planning estimate from Sheet order","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496","retrieved_at":"2026-08-23T03:30:00+08:00","confidence":0.4,"status":"estimated","note":"行車估計：20 分；緩衝：0 分。導航：回志筑住宿；延誤切點：20:40 硬離場；家庭注意：抵達後先讓長輩幼兒休息。"}
+      },
+      {
+        "id": "leg-day2-riverside-rural", "mode": "car", "from_place_id": "awaji-riverside-hotel", "to_place_id": "map-import-boulangerie-rural",
+        "departure_at": "2026-08-28T07:30:00+09:00", "arrival_at": "2026-08-28T07:45:00+09:00",
+        "provenance": {"source_type":"derived","provider":"Issue 97 planning estimate from Sheet order","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496","retrieved_at":"2026-08-23T03:30:00+08:00","confidence":0.4,"status":"estimated","note":"行車估計：15 分；緩衝：0 分。導航：早餐外帶；延誤切點：未營業改便利商店；家庭注意：不排隊久候。"}
+      },
+      {
+        "id": "leg-day2-rural-yumebutai", "mode": "car", "from_place_id": "map-import-boulangerie-rural", "to_place_id": "map-import-yumebutai",
+        "departure_at": "2026-08-28T08:15:00+09:00", "arrival_at": "2026-08-28T08:45:00+09:00",
+        "provenance": {"source_type":"derived","provider":"Issue 97 planning estimate from Sheet order","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496","retrieved_at":"2026-08-23T03:30:00+08:00","confidence":0.4,"status":"estimated","note":"行車估計：30 分；緩衝：0 分。導航：夢舞台停車區；延誤切點：09:15 後抵達縮短戶外；家庭注意：先走室內與平坦路線。"}
+      },
+      {
+        "id": "leg-day2-yumebutai-sea-church", "mode": "walk", "from_place_id": "map-import-yumebutai", "to_place_id": "sea-church-awaji",
+        "departure_at": "2026-08-28T09:45:00+09:00", "arrival_at": "2026-08-28T09:55:00+09:00",
+        "provenance": {"source_type":"derived","provider":"Issue 97 planning estimate from Sheet order","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496","retrieved_at":"2026-08-23T03:30:00+08:00","confidence":0.4,"status":"estimated","note":"步行估計：10 分；緩衝：0 分。導航：同場域步行；延誤切點：未開放即外觀短停；家庭注意：利用電梯與室內動線。"}
+      },
+      {
+        "id": "leg-day2-sea-church-mizumido", "mode": "car", "from_place_id": "sea-church-awaji", "to_place_id": "honpukuji-mizumido",
+        "departure_at": "2026-08-28T10:25:00+09:00", "arrival_at": "2026-08-28T10:45:00+09:00",
+        "provenance": {"source_type":"derived","provider":"Issue 97 planning estimate from Sheet order","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496","retrieved_at":"2026-08-23T03:30:00+08:00","confidence":0.4,"status":"estimated","note":"行車估計：20 分；緩衝：0 分。導航：本福寺水御堂；延誤切點：11:00 後抵達只做核心參觀；家庭注意：階梯與高溫視體力縮短。"}
+      },
+      {
+        "id": "leg-day2-mizumido-taidrobou", "mode": "car", "from_place_id": "honpukuji-mizumido", "to_place_id": "map-import-taidrobou",
+        "departure_at": "2026-08-28T11:30:00+09:00", "arrival_at": "2026-08-28T13:00:00+09:00",
+        "provenance": {"source_type":"derived","provider":"Issue 97 planning estimate from Sheet order","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496","retrieved_at":"2026-08-23T03:30:00+08:00","confidence":0.4,"status":"estimated","note":"行車估計：50 分；緩衝：40 分。導航：13:00 已訂位；延誤切點：預估 12:50 後抵達先聯絡餐廳；家庭注意：車上休息。"}
+      },
+      {
+        "id": "leg-day2-taidrobou-hanasajiki", "mode": "car", "from_place_id": "map-import-taidrobou", "to_place_id": "map-import-awaji-hanasajiki",
+        "departure_at": "2026-08-28T13:45:00+09:00", "arrival_at": "2026-08-28T14:30:00+09:00",
+        "provenance": {"source_type":"derived","provider":"Issue 97 planning estimate from Sheet order","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496","retrieved_at":"2026-08-23T03:30:00+08:00","confidence":0.4,"status":"estimated","note":"行車估計：45 分；緩衝：0 分。導航：あわじ花さじき；延誤切點：15:00 後抵達縮短戶外；家庭注意：高溫時改備案。"}
+      },
+      {
+        "id": "leg-day2-hanasajiki-pancake", "mode": "car", "from_place_id": "map-import-awaji-hanasajiki", "to_place_id": "naruto-ferry-fixed-activity",
+        "departure_at": "2026-08-28T16:15:00+09:00", "arrival_at": "2026-08-28T17:45:00+09:00",
+        "provenance": {"source_type":"derived","provider":"Issue 97 planning estimate from Sheet order","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496","retrieved_at":"2026-08-23T03:30:00+08:00","confidence":0.4,"status":"estimated","note":"行車估計：60 分；緩衝：30 分。導航：官方地址兵庫県淡路市尾崎42-1；延誤切點：16:15 硬離場；家庭注意：17:45 已訂位優先。"}
+      },
+      {
+        "id": "leg-day2-pancake-riverside", "mode": "car", "from_place_id": "naruto-ferry-fixed-activity", "to_place_id": "awaji-riverside-hotel",
+        "departure_at": "2026-08-28T18:15:00+09:00", "arrival_at": "2026-08-28T19:15:00+09:00",
+        "provenance": {"source_type":"derived","provider":"Issue 97 planning estimate from Sheet order","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496","retrieved_at":"2026-08-23T03:30:00+08:00","confidence":0.4,"status":"estimated","note":"行車估計：60 分；緩衝：0 分。導航：回志筑住宿自炊；延誤切點：晚到直接簡化晚餐；家庭注意：車上休息。"}
+      },
+      {
+        "id": "leg-day2-riverside-cosmos", "mode": "car", "from_place_id": "awaji-riverside-hotel", "to_place_id": "cosmos-shizuki",
+        "departure_at": "2026-08-28T20:30:00+09:00", "arrival_at": "2026-08-28T20:45:00+09:00",
+        "provenance": {"source_type":"derived","provider":"Issue 97 planning estimate from Sheet order","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496","retrieved_at":"2026-08-23T03:30:00+08:00","confidence":0.4,"status":"estimated","note":"行車估計：15 分；緩衝：0 分。導航：Cosmos／超商二選一；延誤切點：疲累即取消；家庭注意：由少數成人採買。"}
+      },
+      {
+        "id": "leg-day2-cosmos-riverside", "mode": "car", "from_place_id": "cosmos-shizuki", "to_place_id": "awaji-riverside-hotel",
+        "departure_at": "2026-08-28T21:15:00+09:00", "arrival_at": "2026-08-28T21:25:00+09:00",
+        "provenance": {"source_type":"derived","provider":"Issue 97 planning estimate from Sheet order","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496","retrieved_at":"2026-08-23T03:30:00+08:00","confidence":0.4,"status":"estimated","note":"行車估計：10 分；緩衝：0 分。導航：返回住宿；延誤切點：21:15 硬離場；家庭注意：其餘旅客留住宿。"}
+      },
+      {
+        "id": "leg-day3-retro-sbrick", "mode": "walk", "from_place_id": "retro-komichi", "to_place_id": "map-import-sbrick-warehouse",
+        "departure_at": "2026-08-29T09:55:00+09:00", "arrival_at": "2026-08-29T10:00:00+09:00",
+        "provenance": {"source_type":"derived","provider":"Google Sheet planning estimate","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T03:30:00+08:00","confidence":0.6,"status":"estimated","note":"步行估計：5 分；緩衝：0 分。導航：老街至 S BRICK 短距離轉場；延誤切點：直接進 S BRICK；家庭注意：平地短走。"}
       },
       {
         "id": "leg-day3-riverside-sumoto",
@@ -1068,7 +1239,7 @@
         "arrival_at": "2026-08-29T08:20:00+09:00",
         "provenance": {
           "source_type": "derived", "provider": "Google Sheet planning estimate", "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117", "retrieved_at": "2026-08-23T09:00:00+08:00", "confidence": 0.8, "status": "estimated",
-          "note": "導航：先看洲本即時路況，大型車勿闖最窄停車區；延誤切點：08:25 未停好車改往老街／S BRICK；家庭注意：乘客先在平緩處下車。"
+          "note": "行車估計：30–35 分；緩衝：0 分。導航：先看洲本即時路況，大型車勿闖最窄停車區；延誤切點：08:25 未停好車改往老街／S BRICK；家庭注意：乘客先在平緩處下車。"
         }
       },
       {
@@ -1076,67 +1247,67 @@
         "mode": "car",
         "from_place_id": "sumoto-castle", "to_place_id": "retro-komichi",
         "departure_at": "2026-08-29T09:10:00+09:00", "arrival_at": "2026-08-29T09:20:00+09:00",
-        "provenance": {"source_type":"derived","provider":"Google Sheet planning estimate","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":0.7,"status":"estimated","note":"導航：洲本市區依即時導航；延誤切點：10:00 直接轉 S BRICK；家庭注意：老街只做平地短走。"}
+        "provenance": {"source_type":"derived","provider":"Google Sheet planning estimate","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":0.7,"status":"estimated","note":"行車估計：10 分；緩衝：0 分。導航：洲本市區依即時導航；延誤切點：10:00 直接轉 S BRICK；家庭注意：老街只做平地短走。"}
       },
       {
         "id": "leg-day3-sbrick-ocean", "mode": "car",
         "from_place_id": "map-import-sbrick-warehouse", "to_place_id": "map-import-ocean-terrace",
         "departure_at": "2026-08-29T10:35:00+09:00", "arrival_at": "2026-08-29T11:30:00+09:00",
-        "provenance": {"source_type":"derived","provider":"Google Sheet planning estimate","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":0.8,"status":"estimated","note":"導航：走北向西海岸並預留週六塞車；延誤切點：預估 11:25 後抵達先電話告知餐廳；家庭注意：車上休息、不再插入景點。"}
+        "provenance": {"source_type":"derived","provider":"Google Sheet planning estimate","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":0.8,"status":"estimated","note":"行車估計：50–55 分；緩衝：0 分。導航：走北向西海岸並預留週六塞車；延誤切點：預估 11:25 後抵達先電話告知餐廳；家庭注意：車上休息、不再插入景點。"}
       },
       {
         "id": "leg-day3-ocean-keino", "mode": "car",
         "from_place_id": "map-import-ocean-terrace", "to_place_id": "map-import-keino-beach",
         "departure_at": "2026-08-29T13:00:00+09:00", "arrival_at": "2026-08-29T14:10:00+09:00",
-        "provenance": {"source_type":"derived","provider":"Google Sheet planning estimate","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":0.7,"status":"estimated","note":"導航：此段南下後再往鳴門，屬明顯折返；延誤切點：13:15 未離店、高溫、雷雨或有人疲累即取消慶野；家庭注意：此站新增價值最低。"}
+        "provenance": {"source_type":"derived","provider":"Google Sheet planning estimate","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":0.7,"status":"estimated","note":"行車估計：60–70 分；緩衝：0 分。導航：此段南下後再往鳴門，屬明顯折返；延誤切點：13:15 未離店、高溫、雷雨或有人疲累即取消慶野；家庭注意：此站新增價值最低。"}
       },
       {
         "id": "leg-day3-keino-naruto", "mode": "car",
         "from_place_id": "map-import-keino-beach", "to_place_id": "uzu-no-michi",
         "departure_at": "2026-08-29T14:35:00+09:00", "arrival_at": "2026-08-29T15:30:00+09:00",
-        "provenance": {"source_type":"derived","provider":"Google Sheet planning estimate","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":0.8,"status":"estimated","note":"導航：設定大鳴門橋架橋記念館 EDDY，不直接設渦之道；延誤切點：16:30 後抵停車場即取消渦之道；家庭注意：停車後仍須步行。"}
+        "provenance": {"source_type":"derived","provider":"Google Sheet planning estimate","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":0.8,"status":"estimated","note":"行車估計：45–55 分；緩衝：0 分。導航：設定大鳴門橋架橋記念館 EDDY，不直接設渦之道；延誤切點：16:30 後抵停車場即取消渦之道；家庭注意：停車後仍須步行。"}
       },
       {
         "id": "leg-day3-naruto-tokushima", "mode": "car",
         "from_place_id": "uzu-no-michi", "to_place_id": "tokushima-seshi-besso-hotel-2",
         "departure_at": "2026-08-29T16:20:00+09:00", "arrival_at": "2026-08-29T17:05:00+09:00",
-        "provenance": {"source_type":"derived","provider":"Google Sheet planning estimate","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":0.8,"status":"estimated","note":"導航：先回金沢住宿放行李；延誤切點：17:30 尚未完成入住取消眉山；家庭注意：全員至少休息 20 分鐘、幼兒先吃點心。"}
+        "provenance": {"source_type":"derived","provider":"Google Sheet planning estimate","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":0.8,"status":"estimated","note":"行車估計：35–45 分；緩衝：0 分。導航：先回金沢住宿放行李；延誤切點：17:30 尚未完成入住取消眉山；家庭注意：全員至少休息 20 分鐘、幼兒先吃點心。"}
       },
       {
         "id": "leg-day3-lodging-awaodori", "mode": "car",
         "from_place_id": "tokushima-seshi-besso-hotel-2", "to_place_id": "awaodori-kaikan",
         "departure_at": "2026-08-29T17:30:00+09:00", "arrival_at": "2026-08-29T18:00:00+09:00",
-        "provenance": {"source_type":"derived","provider":"Google Sheet planning estimate","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":0.7,"status":"estimated","note":"導航：Alphard 不進 155cm 會館車庫，2.0m 地下車場須確認實車高度；延誤切點：18:30 後到取消纜車；家庭注意：門口先下長輩幼兒，駕駛單獨停車。"}
+        "provenance": {"source_type":"derived","provider":"Google Sheet planning estimate","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":0.7,"status":"estimated","note":"行車估計：15–25 分；緩衝：5 分。導航：Alphard 不進 155cm 會館車庫，2.0m 地下車場須確認實車高度；延誤切點：18:30 後到取消纜車；家庭注意：門口先下長輩幼兒，駕駛單獨停車。"}
       },
       {
         "id": "leg-day4-tokushima-uzunooka", "mode": "car",
         "from_place_id": "tokushima-seshi-besso-hotel-2", "to_place_id": "map-import-naruto-bridge-memorial",
         "departure_at": "2026-08-30T07:45:00+09:00", "arrival_at": "2026-08-30T08:45:00+09:00",
-        "provenance": {"source_type":"derived","provider":"Google Sheet planning estimate","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":0.8,"status":"estimated","note":"導航：跨大鳴門橋返回南淡路並預留週日交通；延誤切點：08:55 後抵達縮短紀念館；家庭注意：抵達先上洗手間。"}
+        "provenance": {"source_type":"derived","provider":"Google Sheet planning estimate","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":0.8,"status":"estimated","note":"行車估計：50–60 分；緩衝：0 分。導航：跨大鳴門橋返回南淡路並預留週日交通；延誤切點：08:55 後抵達縮短紀念館；家庭注意：抵達先上洗手間。"}
       },
       {
         "id": "leg-day4-uzunooka-fukura", "mode": "car",
         "from_place_id": "map-import-uzuno-oka", "to_place_id": "road-station-fukura-p0",
         "departure_at": "2026-08-30T11:20:00+09:00", "arrival_at": "2026-08-30T11:40:00+09:00",
-        "provenance": {"source_type":"derived","provider":"Google Sheet planning estimate","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":0.9,"status":"estimated","note":"導航：先到道の駅福良 0 號停車場；延誤切點：11:20 無論是否吃完都離店；家庭注意：乘客先在なないろ館前下車。"}
+        "provenance": {"source_type":"derived","provider":"Google Sheet planning estimate","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":0.9,"status":"estimated","note":"行車估計：15–20 分；緩衝：0 分。導航：先到道の駅福良 0 號停車場；延誤切點：11:20 無論是否吃完都離店；家庭注意：乘客先在なないろ館前下車。"}
       },
       {
         "id": "leg-day4-fukura-nojima", "mode": "car",
         "from_place_id": "uzushio-cruise-fukura", "to_place_id": "nojima-scuola",
         "departure_at": "2026-08-30T14:00:00+09:00", "arrival_at": "2026-08-30T15:15:00+09:00",
-        "provenance": {"source_type":"derived","provider":"Google Sheet planning estimate","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":0.8,"status":"estimated","note":"導航：長距離北上，途中不插入景點；延誤切點：15:30 後抵達縮短 Nojima 並取消絵島；家庭注意：此段作全員午睡與休息。"}
+        "provenance": {"source_type":"derived","provider":"Google Sheet planning estimate","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":0.8,"status":"estimated","note":"行車估計：75 分；緩衝：0 分。導航：長距離北上，途中不插入景點；延誤切點：15:30 後抵達縮短 Nojima 並取消絵島；家庭注意：此段作全員午睡與休息。"}
       },
       {
         "id": "leg-day4-nojima-iwaya", "mode": "car",
         "from_place_id": "nojima-scuola", "to_place_id": "iwaya-port",
         "departure_at": "2026-08-30T16:05:00+09:00", "arrival_at": "2026-08-30T16:25:00+09:00",
-        "provenance": {"source_type":"derived","provider":"Google Sheet planning estimate","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":0.8,"status":"estimated","note":"導航：岩屋 Port Terminal 停車場；延誤切點：16:10 後離開 Nojima 即取消絵島；家庭注意：停車場限高 2.1m 且有電梯。"}
+        "provenance": {"source_type":"derived","provider":"Google Sheet planning estimate","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":0.8,"status":"estimated","note":"行車估計：15–20 分；緩衝：0 分。導航：岩屋 Port Terminal 停車場；延誤切點：16:10 後離開 Nojima 即取消絵島；家庭注意：停車場限高 2.1m 且有電梯。"}
       },
       {
         "id": "leg-day4-iwaya-awajisa", "mode": "car",
         "from_place_id": "iwaya-port", "to_place_id": "awaji-sa-highway-oasis",
         "departure_at": "2026-08-30T16:50:00+09:00", "arrival_at": "2026-08-30T17:15:00+09:00",
-        "provenance": {"source_type":"derived","provider":"Google Sheet planning estimate","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":0.7,"status":"estimated","note":"導航：一般道路不可由淡路 IC 進 SA，使用 ETC 淡路北 Smart IC 或正確高速動線；延誤切點：導航若要求淡路 IC 進入即重設；家庭注意：駕駛出發前先確認路線。"}
+        "provenance": {"source_type":"derived","provider":"Google Sheet planning estimate","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":0.7,"status":"estimated","note":"行車估計：20–25 分；緩衝：0 分。導航：一般道路不可由淡路 IC 進 SA，使用 ETC 淡路北 Smart IC 或正確高速動線；延誤切點：導航若要求淡路 IC 進入即重設；家庭注意：駕駛出發前先確認路線。"}
       },
       {
         "id": "leg-day4-awajisa-kobe", "mode": "car",
@@ -1144,7 +1315,7 @@
         "departure_at": "2026-08-30T19:30:00+09:00", "arrival_at": "2026-08-30T20:20:00+09:00",
         "provenance": {
           "source_type": "derived", "provider": "Google Sheet planning estimate", "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117", "retrieved_at": "2026-08-23T09:00:00+08:00", "confidence": 0.8, "status": "estimated",
-          "note": "導航：跨明石海峽大橋進神戶市區並看週日晚間路況；延誤切點：20:30 後抵達取消夜購；家庭注意：車內休息，入住由 1–2 位成人處理停車。"
+          "note": "行車估計：40–50 分；緩衝：0 分。導航：跨明石海峽大橋進神戶市區並看週日晚間路況；延誤切點：20:30 後抵達取消夜購；家庭注意：車內休息，入住由 1–2 位成人處理停車。"
         }
       },
       {
@@ -1156,14 +1327,14 @@
         "arrival_at": "2026-08-31T09:00:00+09:00",
         "provenance": {
           "source_type": "derived", "provider": "Google Sheet planning estimate", "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117", "retrieved_at": "2026-08-23T09:00:00+08:00", "confidence": 0.8, "status": "estimated",
-          "note": "導航：前晚盡量加滿油，店址神戶空港3-2；延誤切點：最晚 08:30 出發，超時取消機場用餐；家庭注意：長輩幼兒依店員指引留車上。"
+          "note": "行車估計：25–35 分；緩衝：10 分。導航：前晚盡量加滿油，店址神戶空港3-2；延誤切點：最晚 08:30 出發，超時取消機場用餐；家庭注意：長輩幼兒依店員指引留車上。"
         }
       },
       {
         "id": "leg-day5-to-terminal2", "mode": "bus",
         "from_place_id": "toyota-rent-a-car-kobe-airport", "to_place_id": "kobe-airport-terminal-2",
         "departure_at": "2026-08-31T09:20:00+09:00", "arrival_at": "2026-08-31T09:40:00+09:00",
-        "provenance": {"source_type":"derived","provider":"Google Sheet planning estimate","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":0.8,"status":"estimated","note":"導航：Toyota 僅送第一航廈，再搭免費聯絡巴士或步行約 10 分至 T2；延誤切點：09:45 前抵 T2；家庭注意：行李多時優先免費聯絡巴士。"}
+        "provenance": {"source_type":"derived","provider":"Google Sheet planning estimate","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":0.8,"status":"estimated","note":"轉乘估計：20 分；緩衝：0 分。導航：Toyota 僅送第一航廈，再搭免費聯絡巴士或步行約 10 分至 T2；延誤切點：09:45 前抵 T2；家庭注意：行李多時優先免費聯絡巴士。"}
       }
     ]
   },
@@ -1181,7 +1352,7 @@
   "days": [
     {
       "date": "2026-08-27",
-      "summary": "抵達後入住淡路北部，完成第一晚接駁",
+      "summary": "神戶機場抵達、忍里、西海岸夕景、Garb 晚餐與志筑住宿",
       "items": [
         {
           "id": "day1-flight-arrival",
@@ -1192,76 +1363,72 @@
           "selection_status": "selected",
           "notes": "JX834 抵達神戶 10:30 為使用者確認；試算表未給入境、取車與後續精確時間。"
         },
-        {
-          "id": "day1-transfer-to-hotel",
-          "kind": "transport",
-          "place_id": "awaji-riverside-hotel",
-          "start_at": "2026-08-27T13:45:00+09:00",
-          "end_at": "2026-08-27T14:30:00+09:00",
-          "transport_leg_id": "leg-airport-to-riverside",
-          "selection_status": "selected",
-          "notes": "試算表未給精確時間／規劃估計；出發當下依 Google Maps 即時導航。"
-        },
-        {
-          "id": "day1-checkin",
-          "kind": "check_in",
-          "place_id": "awaji-riverside-hotel",
-          "start_at": "2026-08-27T15:00:00+09:00",
-          "end_at": "2026-08-27T15:30:00+09:00",
-          "selection_status": "selected",
-          "notes": "試算表未給精確時間／規劃估計。"
-        },
+        {"id":"day1-drive-airport-nijigen","kind":"transport","place_id":"ramen-ichiraku-nijigen","start_at":"2026-08-27T12:00:00+09:00","end_at":"2026-08-27T12:45:00+09:00","transport_leg_id":"leg-day1-airport-nijigen","selection_status":"selected","notes":"Sheet 只確認順序；12:00–12:45 為規劃估計，取車完成後以 Google Maps 即時導航。"},
+        {"id":"day1-lunch-ichiraku","kind":"meal","place_id":"ramen-ichiraku-nijigen","start_at":"2026-08-27T12:45:00+09:00","end_at":"2026-08-27T13:30:00+09:00","selection_status":"selected","notes":"Sheet 指定ラーメン一楽；時間為規劃估計，營業狀態出發前重查。"},
+        {"id":"day1-shinobi","kind":"visit","place_id":"nijigen-no-mori-shinobi","start_at":"2026-08-27T13:30:00+09:00","end_at":"2026-08-27T15:30:00+09:00","selection_status":"selected","alternative_place_ids":[],"notes":"Sheet 指定忍里；時間為規劃估計。高溫或疲累時縮短，蠟筆小新免費區為現場備案。"},
+        {"id":"day1-drive-shinobi-craft","kind":"transport","place_id":"craft-circus-awaji","start_at":"2026-08-27T15:30:00+09:00","end_at":"2026-08-27T16:00:00+09:00","transport_leg_id":"leg-day1-shinobi-craft","selection_status":"selected"},
+        {"id":"day1-craft-circus","kind":"visit","place_id":"craft-circus-awaji","start_at":"2026-08-27T16:00:00+09:00","end_at":"2026-08-27T17:15:00+09:00","selection_status":"selected","notes":"Sheet 指定 CRAFT CIRCUS；時間為規劃估計，營業狀態出發前重查。"},
+        {"id":"day1-walk-craft-sunset","kind":"transport","place_id":"awaji-sunset-line","start_at":"2026-08-27T17:15:00+09:00","end_at":"2026-08-27T17:25:00+09:00","transport_leg_id":"leg-day1-craft-sunset","selection_status":"selected"},
+        {"id":"day1-sunset-line","kind":"visit","place_id":"awaji-sunset-line","start_at":"2026-08-27T17:25:00+09:00","end_at":"2026-08-27T18:10:00+09:00","selection_status":"selected","notes":"Sheet 指定 Sunset Line 日落漫步；時間與安全停靠點為規劃估計，天候不佳直接取消。"},
+        {"id":"day1-drive-sunset-garb","kind":"transport","place_id":"map-import-garb-costa-orange","start_at":"2026-08-27T18:10:00+09:00","end_at":"2026-08-27T18:30:00+09:00","transport_leg_id":"leg-day1-sunset-garb","selection_status":"selected"},
         {
           "id": "fixed-2026-08-27-18-30-garb",
           "kind": "meal",
           "place_id": "map-import-garb-costa-orange",
           "start_at": "2026-08-27T18:30:00+09:00",
-          "end_at": "2026-08-27T19:00:00+09:00",
+          "end_at": "2026-08-27T19:30:00+09:00",
           "selection_status": "selected",
-          "notes": "18:30 已訂位；開始時間為使用者確認，結束沿用既有晚餐 timestamp，實際用餐時長未確認。"
-        }
+          "notes": "18:30 已訂位；開始時間為使用者確認，19:30 結束為規劃估計，實際用餐時長未確認。"
+        },
+        {"id":"day1-drive-garb-aeon","kind":"transport","place_id":"aeon-awaji","start_at":"2026-08-27T19:30:00+09:00","end_at":"2026-08-27T20:00:00+09:00","transport_leg_id":"leg-day1-garb-aeon","selection_status":"selected"},
+        {"id":"day1-night-shopping","kind":"visit","place_id":"aeon-awaji","start_at":"2026-08-27T20:00:00+09:00","end_at":"2026-08-27T20:40:00+09:00","selection_status":"selected","alternative_place_ids":["plant-awaji"],"notes":"Sheet 指定 AEON 或 PLANT；自由彈性、時間為規劃估計，疲累即取消。"},
+        {"id":"day1-drive-aeon-riverside","kind":"transport","place_id":"awaji-riverside-hotel","start_at":"2026-08-27T20:40:00+09:00","end_at":"2026-08-27T21:00:00+09:00","transport_leg_id":"leg-day1-aeon-riverside","selection_status":"selected"},
+        {"id":"day1-checkin","kind":"check_in","place_id":"awaji-riverside-hotel","start_at":"2026-08-27T21:00:00+09:00","end_at":"2026-08-27T21:20:00+09:00","selection_status":"selected","notes":"住宿與地址為使用者確認；入住時間為規劃估計。"}
       ]
     },
     {
       "date": "2026-08-28",
-      "summary": "淡路北岸與南側移動，預留鳴門固定預約窗",
+      "summary": "RURAL 早餐、夢舞台／海之教堂／水御堂、鯛ドロボー、花さじき與幸せのパンケーキ",
       "items": [
-        {
-          "id": "day2-morning-park",
-          "kind": "visit",
-          "place_id": "awaji-nakajima-park",
-          "start_at": "2026-08-28T09:30:00+09:00",
-          "end_at": "2026-08-28T11:00:00+09:00",
-          "selection_status": "selected",
-          "notes": "試算表未給精確時間／規劃估計；總覽指定夢舞台、水御堂與淡路花迴廊，細部時間待出發前確認。"
-        },
+        {"id":"day2-drive-riverside-rural","kind":"transport","place_id":"map-import-boulangerie-rural","start_at":"2026-08-28T07:30:00+09:00","end_at":"2026-08-28T07:45:00+09:00","transport_leg_id":"leg-day2-riverside-rural","selection_status":"selected"},
+        {"id":"day2-breakfast-rural","kind":"meal","place_id":"map-import-boulangerie-rural","start_at":"2026-08-28T07:45:00+09:00","end_at":"2026-08-28T08:15:00+09:00","selection_status":"selected","notes":"Sheet 指定 Boulangerie RURAL；時間為規劃估計，營業狀態出發前重查。"},
+        {"id":"day2-drive-rural-yumebutai","kind":"transport","place_id":"map-import-yumebutai","start_at":"2026-08-28T08:15:00+09:00","end_at":"2026-08-28T08:45:00+09:00","transport_leg_id":"leg-day2-rural-yumebutai","selection_status":"selected"},
+        {"id":"day2-yumebutai","kind":"visit","place_id":"map-import-yumebutai","start_at":"2026-08-28T08:45:00+09:00","end_at":"2026-08-28T09:45:00+09:00","selection_status":"selected","notes":"Sheet 指定 Awaji Yumebutai；時間為規劃估計。"},
+        {"id":"day2-walk-yumebutai-sea-church","kind":"transport","place_id":"sea-church-awaji","start_at":"2026-08-28T09:45:00+09:00","end_at":"2026-08-28T09:55:00+09:00","transport_leg_id":"leg-day2-yumebutai-sea-church","selection_status":"selected"},
+        {"id":"day2-sea-church","kind":"visit","place_id":"sea-church-awaji","start_at":"2026-08-28T09:55:00+09:00","end_at":"2026-08-28T10:25:00+09:00","selection_status":"selected","notes":"Sheet 將海之教堂列為獨立停靠；時間為規劃估計，開放狀態待重查。"},
+        {"id":"day2-drive-sea-church-mizumido","kind":"transport","place_id":"honpukuji-mizumido","start_at":"2026-08-28T10:25:00+09:00","end_at":"2026-08-28T10:45:00+09:00","transport_leg_id":"leg-day2-sea-church-mizumido","selection_status":"selected"},
+        {"id":"day2-mizumido","kind":"visit","place_id":"honpukuji-mizumido","start_at":"2026-08-28T10:45:00+09:00","end_at":"2026-08-28T11:30:00+09:00","selection_status":"selected","notes":"Sheet 將本福寺水御堂列為獨立停靠；時間為規劃估計。"},
+        {"id":"day2-drive-mizumido-taidrobou","kind":"transport","place_id":"map-import-taidrobou","start_at":"2026-08-28T11:30:00+09:00","end_at":"2026-08-28T13:00:00+09:00","transport_leg_id":"leg-day2-mizumido-taidrobou","selection_status":"selected","notes":"50 分規劃車程＋40 分訂位緩衝，不把 90 分全部當車程。"},
         {
           "id": "fixed-2026-08-28-13-00-taidrobou",
           "kind": "meal",
           "place_id": "map-import-taidrobou",
           "start_at": "2026-08-28T13:00:00+09:00",
-          "end_at": "2026-08-28T13:00:00+09:00",
+          "end_at": "2026-08-28T13:45:00+09:00",
           "selection_status": "selected",
-          "notes": "13:00 已訂位；試算表未給結束時間，未偽裝 confirmed。"
+          "notes": "13:00 已訂位；13:45 結束為規劃估計，實際用餐時長未確認。"
         },
+        {"id":"day2-drive-taidrobou-hanasajiki","kind":"transport","place_id":"map-import-awaji-hanasajiki","start_at":"2026-08-28T13:45:00+09:00","end_at":"2026-08-28T14:30:00+09:00","transport_leg_id":"leg-day2-taidrobou-hanasajiki","selection_status":"selected"},
         {
           "id": "day2-hanasajiki",
           "kind": "visit",
           "place_id": "map-import-awaji-hanasajiki",
           "start_at": "2026-08-28T14:30:00+09:00",
-          "end_at": "2026-08-28T16:30:00+09:00",
+          "end_at": "2026-08-28T16:15:00+09:00",
           "selection_status": "selected",
-          "notes": "試算表未給精確時間／規劃估計；高溫或疲累時縮短。"
+          "notes": "Sheet 指定兵庫縣立淡路花迴廊；時間為規劃估計，高溫或疲累時縮短。"
         },
+        {"id":"day2-drive-hanasajiki-pancake","kind":"transport","place_id":"naruto-ferry-fixed-activity","start_at":"2026-08-28T16:15:00+09:00","end_at":"2026-08-28T17:45:00+09:00","transport_leg_id":"leg-day2-hanasajiki-pancake","selection_status":"selected","notes":"60 分規劃車程＋30 分訂位緩衝。"},
         {
           "id": "fixed-2026-08-28-17-45",
           "kind": "visit",
           "place_id": "naruto-ferry-fixed-activity",
           "start_at": "2026-08-28T17:45:00+09:00",
-          "end_at": "2026-08-28T17:45:00+09:00",
+          "end_at": "2026-08-28T18:15:00+09:00",
           "selection_status": "selected",
-          "notes": "17:45 已訂位；幸せのパンケーキ（しあわせのパンケーキ）淡路島テラス，官方地址兵庫県淡路市尾崎42-1，地點已 resolved；試算表未給結束時間。"
+          "notes": "幸せのパンケーキ 淡路島 Terrace 17:45 已訂位來自 Sheet；官方店舖頁確認地址兵庫県淡路市尾崎42-1；18:15 結束為規劃估計。"
         },
+        {"id":"day2-drive-pancake-riverside","kind":"transport","place_id":"awaji-riverside-hotel","start_at":"2026-08-28T18:15:00+09:00","end_at":"2026-08-28T19:15:00+09:00","transport_leg_id":"leg-day2-pancake-riverside","selection_status":"selected"},
         {
           "id": "day2-dinner",
           "kind": "meal",
@@ -1269,8 +1436,11 @@
           "start_at": "2026-08-28T19:15:00+09:00",
           "end_at": "2026-08-28T20:30:00+09:00",
           "selection_status": "selected",
-          "notes": "試算表總覽指定民宿自炊；未給精確時間／規劃估計。"
-        }
+          "notes": "Sheet 指定民宿自炊；時間為規劃估計。"
+        },
+        {"id":"day2-drive-riverside-cosmos","kind":"transport","place_id":"cosmos-shizuki","start_at":"2026-08-28T20:30:00+09:00","end_at":"2026-08-28T20:45:00+09:00","transport_leg_id":"leg-day2-riverside-cosmos","selection_status":"selected"},
+        {"id":"day2-night-shopping","kind":"visit","place_id":"cosmos-shizuki","start_at":"2026-08-28T20:45:00+09:00","end_at":"2026-08-28T21:15:00+09:00","selection_status":"selected","notes":"Sheet 指定 Cosmos 或超商巡禮；自由彈性、時間為規劃估計，疲累即取消。"},
+        {"id":"day2-drive-cosmos-riverside","kind":"transport","place_id":"awaji-riverside-hotel","start_at":"2026-08-28T21:15:00+09:00","end_at":"2026-08-28T21:25:00+09:00","transport_leg_id":"leg-day2-cosmos-riverside","selection_status":"selected"}
       ]
     },
     {
@@ -1298,8 +1468,13 @@
         },
         {
           "id": "day3-retro-komichi", "kind": "visit", "place_id": "retro-komichi",
-          "start_at": "2026-08-29T09:20:00+09:00", "end_at": "2026-08-29T10:00:00+09:00", "selection_status": "selected",
-          "notes": "平地短走與拍照為主；店家未必早開，10:00 直接轉 S BRICK。"
+          "start_at": "2026-08-29T09:20:00+09:00", "end_at": "2026-08-29T09:55:00+09:00", "selection_status": "selected",
+          "notes": "平地短走與拍照為主；店家未必早開，09:55 轉往 S BRICK。"
+        },
+        {
+          "id": "day3-walk-retro-sbrick", "kind": "transport", "place_id": "map-import-sbrick-warehouse",
+          "start_at": "2026-08-29T09:55:00+09:00", "end_at": "2026-08-29T10:00:00+09:00", "transport_leg_id": "leg-day3-retro-sbrick", "selection_status": "selected",
+          "notes": "同區短距離轉場；步行時間為規劃估計。"
         },
         {
           "id": "day3-sbrick", "kind": "visit", "place_id": "map-import-sbrick-warehouse",

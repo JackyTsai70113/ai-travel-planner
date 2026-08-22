@@ -23,7 +23,9 @@ export interface RouteDirectionChunk {
 
 const GOOGLE_MAPS_DIR_URL = 'https://www.google.com/maps/dir/?'
 const GOOGLE_MAPS_SEARCH_URL = 'https://www.google.com/maps/search/?api=1&query='
-const MAX_WAYPOINTS_PER_ROUTE = 8
+// Google Maps URLs on mobile browsers support at most three waypoints.
+// Five stops means origin + three waypoints + destination.
+const MAX_WAYPOINTS_PER_ROUTE = 3
 const MAX_MAPS_URL_LENGTH = 1900
 
 function safeToString(value: unknown): string {
@@ -113,6 +115,7 @@ export function splitRouteStops(stops: MapsStop[], maxWaypoints = MAX_WAYPOINTS_
 
 export function buildRouteDirectionChunks(
   stops: MapsStop[],
+  travelMode: MapsTravelMode = 'driving',
   maxWaypoints = MAX_WAYPOINTS_PER_ROUTE,
 ): RouteDirectionChunk[] {
   const chunks = splitRouteStops(stops, maxWaypoints)
@@ -122,7 +125,7 @@ export function buildRouteDirectionChunks(
     const source = chunk[0]
     const destination = chunk.at(-1) as MapsStop
     const waypoints = chunk.slice(1, -1)
-    const href = buildMapsDirectionsLink(chunk)
+    const href = buildMapsDirectionsLink(chunk, travelMode)
     const fallbackReason = href.includes('google.com/maps/search') ? 'google_maps_url_too_long' : undefined
     return {
       id: `${index + 1}`,

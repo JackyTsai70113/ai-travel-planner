@@ -9,6 +9,8 @@ import {
 } from '../contracts/trip'
 import {
   MapsStop,
+  MapsTravelMode,
+  RouteDirectionChunk,
   buildMapsDirectionsLink,
   buildRouteDirectionChunks,
 } from '../lib/google-maps-links'
@@ -51,9 +53,9 @@ function transportModeLabel(mode: string): string {
   return labels[mode.toLowerCase()] || mode || '交通'
 }
 
-function legTravelMode(mode: string): 'driving' | 'walking' | 'transit' | 'bicycling' {
+export function legTravelMode(mode: string): MapsTravelMode {
   if (mode === 'walk' || mode === 'walking') return 'walking'
-  if (mode === 'bus' || mode === 'train' || mode === 'transit') return 'transit'
+  if (mode === 'bus' || mode === 'train' || mode === 'transit' || mode === 'ferry') return 'transit'
   if (mode === 'bicycle' || mode === 'bicycling') return 'bicycling'
   return 'driving'
 }
@@ -91,6 +93,55 @@ function routeStops(bundle: Bundle, legs: BundleTransportLeg[]): MapsStop[] {
   return stops
 }
 
+export interface ContiguousLegGroup {
+  id: string
+  travelMode: MapsTravelMode
+  legs: BundleTransportLeg[]
+}
+
+export function groupContiguousLegs(legs: BundleTransportLeg[]): ContiguousLegGroup[] {
+  return legs.reduce<ContiguousLegGroup[]>((groups, leg) => {
+    const travelMode = legTravelMode(leg.mode)
+    const current = groups.at(-1)
+    const previous = current?.legs.at(-1)
+    if (current && previous?.to_place === leg.from_place && current.travelMode === travelMode) {
+      current.legs.push(leg)
+      return groups
+    }
+    groups.push({ id: `group-${groups.length + 1}`, travelMode, legs: [leg] })
+    return groups
+  }, [])
+}
+
+interface DailyRouteChunk extends RouteDirectionChunk {
+  groupId: string
+  travelMode: MapsTravelMode
+}
+
+export function buildDailyRouteChunks(bundle: Bundle, legs: BundleTransportLeg[]): DailyRouteChunk[] {
+  return groupContiguousLegs(legs).flatMap((group) =>
+    buildRouteDirectionChunks(routeStops(bundle, group.legs), group.travelMode).map((chunk) => ({
+      ...chunk,
+      id: `${group.id}-${chunk.id}`,
+      groupId: group.id,
+      travelMode: group.travelMode,
+    })),
+  )
+}
+
+function isTransportItem(kind: string): boolean {
+  return ['transport', 'car', 'move', 'drive', 'bus', 'train', 'walk', 'walking'].includes(kind.toLowerCase())
+}
+
+export function destinationStayMinutes(day: BundleDay, leg: BundleTransportLeg): number | null {
+  const linkedIndex = day.items.findIndex((item) => item.transport_leg_id === leg.id)
+  const laterItems = linkedIndex >= 0 ? day.items.slice(linkedIndex + 1) : day.items
+  const destinationItem = laterItems.find((item) =>
+    item.place_id === leg.to_place && !isTransportItem(item.kind) && item.expected_stay_minutes != null,
+  )
+  return destinationItem?.expected_stay_minutes ?? null
+}
+
 export function MapPage({ bundle, route, currentDay }: MapPageProps) {
   const initialDay = [route.day, currentDay].find((candidate) => bundle.days.some((day) => day.date === candidate))
   const [selectedDate, setSelectedDate] = useState(initialDay || bundle.days[0]?.date || '')
@@ -102,7 +153,7 @@ export function MapPage({ bundle, route, currentDay }: MapPageProps) {
 
   const selectedDay = bundle.days.find((day) => day.date === selectedDate) || bundle.days[0]
   const legs = useMemo(() => selectedDay ? dayLegs(bundle, selectedDay) : [], [bundle, selectedDay])
-  const fullRouteChunks = useMemo(() => buildRouteDirectionChunks(routeStops(bundle, legs)), [bundle, legs])
+  const fullRouteChunks = useMemo(() => buildDailyRouteChunks(bundle, legs), [bundle, legs])
 
   if (!selectedDay) {
     return <section className="map-workspace card">沒有可顯示的日期。</section>
@@ -144,7 +195,7 @@ export function MapPage({ bundle, route, currentDay }: MapPageProps) {
           <div className="daily-route-actions">
             {fullRouteChunks.map((chunk) => (
               <a key={chunk.id} href={chunk.href} target="_blank" rel="noreferrer">
-                {fullRouteChunks.length > 1 ? `完整路線 ${chunk.label}` : '開啟今日完整路線'}
+                {fullRouteChunks.length > 1 ? `${transportModeLabel(chunk.travelMode)}：${chunk.sourceLabel} → ${chunk.destinationLabel}` : '開啟今日完整路線'}
               </a>
             ))}
           </div>
@@ -156,9 +207,11 @@ export function MapPage({ bundle, route, currentDay }: MapPageProps) {
               const origin = stopFor(bundle, leg.from_place, leg.from_label)
               const destination = stopFor(bundle, leg.to_place, leg.to_label)
               const directionsHref = leg.google_maps_directions_url || buildMapsDirectionsLink([origin, destination], legTravelMode(leg.mode))
-              const item = selectedDay.items.find((candidate) => candidate.transport_leg_id === leg.id)
-              const duration = leg.estimated_duration_minutes == null ? '車程尚未確認' : `預估 ${leg.estimated_duration_minutes} 分鐘`
-              const buffer = item?.buffer_minutes == null ? '未提供' : `${item.buffer_minutes} 分鐘`
+              const durationMinutes = leg.transfer_minutes ?? leg.estimated_duration_minutes
+              const duration = durationMinutes == null ? '未知，出發前重查' : `${durationMinutes} 分鐘（規劃估計）`
+              const buffer = leg.buffer_minutes == null ? '未知，未自行補值' : `${leg.buffer_minutes} 分鐘`
+              const stayMinutes = destinationStayMinutes(selectedDay, leg)
+              const stay = stayMinutes == null ? '未知，未自行補值' : `${stayMinutes} 分鐘`
 
               return (
                 <li className="route-leg-card" key={leg.id} data-testid={`transport-leg-${leg.id}`}>
@@ -175,8 +228,9 @@ export function MapPage({ bundle, route, currentDay }: MapPageProps) {
                     </div>
                     <dl className="route-leg-facts">
                       <div><dt>規劃時段</dt><dd>{formatTime(leg.departure_at)} → {formatTime(leg.arrival_at)}</dd></div>
-                      <div><dt>行前估計</dt><dd>{duration}</dd></div>
-                      <div><dt>預留／停留</dt><dd>{buffer}</dd></div>
+                      <div><dt>車程估計</dt><dd>{duration}</dd></div>
+                      <div><dt>緩衝</dt><dd>{buffer}</dd></div>
+                      <div><dt>目的地停留</dt><dd>{stay}</dd></div>
                       <div><dt>資料狀態</dt><dd>{operationalStatusLabel(leg.status)}</dd></div>
                     </dl>
                     <div className="route-risk-note">

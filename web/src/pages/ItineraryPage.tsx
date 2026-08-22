@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   Bundle,
   BundleDayItem,
+  BundlePlace,
+  BundleProvenance,
   BundleTransportLeg,
   buildMapsLink,
   findPlaceAddress,
@@ -16,6 +18,28 @@ interface ItineraryPageProps {
   bundle: Bundle
   route: TripRoute
   onNavigate: (next: Partial<TripRoute>) => void
+}
+
+function fieldProvenance(place: BundlePlace, field: 'opening_hours_note' | 'parking'): BundleProvenance | null {
+  const direct = place.field_provenance?.[field]
+  if (direct) return direct
+  const nested = place.provenance
+    ? (place.provenance as Record<string, BundleProvenance | null | undefined>)[field]
+    : null
+  if (nested) return nested
+  const shared = place.provenance as BundleProvenance | null | undefined
+  if (shared && (shared.status || shared.provider || shared.source_url || shared.source_ref)) return shared
+  return place.status ? { status: place.status } : null
+}
+
+function fieldNeedsRecheck(place: BundlePlace, field: 'opening_hours_note' | 'parking'): boolean {
+  const provenance = fieldProvenance(place, field)
+  const sourceText = [provenance?.provider, provenance?.source_url, provenance?.source_ref, provenance?.note]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+  const sheetSourced = sourceText.includes('sheet') || sourceText.includes('docs.google.com/spreadsheets')
+  return sheetSourced || (provenance?.status !== 'confirmed' && provenance?.status !== 'user-confirmed')
 }
 function parseMinutes(value: string | null): number | null {
   const match = value?.match(/(\d{1,2}):(\d{2})/)
@@ -229,7 +253,8 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
               <p className="timeline-detail">{detail}</p>
               {!leg && findPlaceAddress(bundle.places, item.place_id) && <p className="timeline-address">{findPlaceAddress(bundle.places, item.place_id)}</p>}
               {leg ? <div className="timeline-risk"><span className={operationalStatusClass(leg.status)}>{operationalStatusLabel(leg.status)}</span><p><strong>風險／延誤切點：</strong>{leg.note || '未提供；出發前以 Google Maps 即時路況確認。'}</p></div> : null}
-              {place?.opening_hours_note ? <p className="timeline-context"><strong>營業時間：</strong>{place.opening_hours_note}</p> : null}
+              {!leg && place?.opening_hours_note ? <p className={`timeline-context ${fieldNeedsRecheck(place, 'opening_hours_note') ? 'needs-recheck' : ''}`}><strong>營業時間{fieldNeedsRecheck(place, 'opening_hours_note') ? '（待重查）' : '（已確認）'}：</strong>{place.opening_hours_note}</p> : null}
+              {!leg && place?.parking ? <p className={`timeline-context ${fieldNeedsRecheck(place, 'parking') ? 'needs-recheck' : ''}`}><strong>停車{fieldNeedsRecheck(place, 'parking') ? '（待重查）' : '（已確認）'}：</strong>{place.parking}</p> : null}
               {place?.accessibility_notes ? <p className="timeline-context"><strong>家庭／無障礙：</strong>{place.accessibility_notes}</p> : null}
               <div className="timeline-actions">
                 <a href={mapsHref} target="_blank" rel="noreferrer">{leg ? '逐段導航' : '導航地圖'}</a>

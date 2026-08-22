@@ -26,18 +26,38 @@ class AwajiTripFixtureTests(unittest.TestCase):
     def test_trip_v1_contract(self):
         validate_trip(self.trip)
 
-    def test_trip_date_range_and_exact_daily_item_counts(self):
+    def test_trip_date_range_and_complete_daily_items(self):
         self.assertEqual(self.trip["date_range"]["start_date"], "2026-08-27")
         self.assertEqual(self.trip["date_range"]["end_date"], "2026-08-31")
         self.assertEqual(len(self.trip["days"]), 5)
 
         counts = [len(day["items"]) for day in self.trip["days"]]
-        self.assertEqual(counts, [4, 5, 19, 16, 9])
-        self.assertEqual(sum(counts), 53)
+        self.assertEqual(counts, [14, 19, 20, 16, 9])
+        self.assertGreater(sum(counts), 53)
         self.assertEqual(
             [len(day["items"]) for day in self.bundle["days"]],
-            [4, 5, 19, 16, 9],
+            counts,
         )
+
+    def test_day_one_and_two_preserve_each_sheet_stop(self):
+        expected = {
+            "2026-08-27": {
+                "ramen-ichiraku-nijigen", "nijigen-no-mori-shinobi",
+                "craft-circus-awaji", "awaji-sunset-line",
+                "map-import-garb-costa-orange", "aeon-awaji",
+                "awaji-riverside-hotel",
+            },
+            "2026-08-28": {
+                "map-import-boulangerie-rural", "map-import-yumebutai",
+                "sea-church-awaji", "honpukuji-mizumido",
+                "map-import-taidrobou", "map-import-awaji-hanasajiki",
+                "naruto-ferry-fixed-activity", "awaji-riverside-hotel",
+                "cosmos-shizuki",
+            },
+        }
+        for day in self.trip["days"][:2]:
+            with self.subTest(date=day["date"]):
+                self.assertTrue(expected[day["date"]].issubset({item["place_id"] for item in day["items"]}))
 
     def test_hard_booking_facts(self):
         selected = self.trip["selected"]
@@ -60,6 +80,8 @@ class AwajiTripFixtureTests(unittest.TestCase):
         self.assertEqual(pancake["name"], "幸せのパンケーキ 淡路島テラス")
         self.assertEqual(pancake["address"], "兵庫県淡路市尾崎42-1")
         self.assertEqual(pancake["resolution"]["state"], "resolved")
+        self.assertEqual(pancake["provenance"]["source_url"], "https://magia.tokyo/shop")
+        self.assertTrue(any(item["value"] == "https://magia.tokyo/shop" for item in pancake["identifiers"]))
 
         reservation = next(
             item
@@ -106,10 +128,10 @@ class AwajiTripFixtureTests(unittest.TestCase):
         fixed = next(item for item in day_two["items"] if item["id"] == "fixed-2026-08-28-17-45")
         self.assertEqual(fixed["start_at"], "2026-08-28T17:45:00+09:00")
         self.assertEqual(fixed["kind"], "visit")
-        self.assertEqual(fixed["start_at"], fixed["end_at"])
+        self.assertEqual(fixed["end_at"], "2026-08-28T18:15:00+09:00")
         self.assertIn("幸せのパンケーキ", fixed["notes"])
         self.assertIn("兵庫県淡路市尾崎42-1", fixed["notes"])
-        self.assertIn("地點已 resolved", fixed["notes"])
+        self.assertIn("官方店舖頁確認", fixed["notes"])
 
     def test_day_five_no_hard_visit(self):
         day_five = next(day for day in self.trip["days"] if day["date"] == "2026-08-31")
@@ -127,9 +149,9 @@ class AwajiTripFixtureTests(unittest.TestCase):
 
     def test_transport_legs_and_item_references_are_complete(self):
         legs = self.trip["candidate_sets"]["transport_legs"]
-        self.assertEqual(len(legs), 16)
+        self.assertEqual(len(legs), 32)
         leg_ids = [leg["id"] for leg in legs]
-        self.assertEqual(len(set(leg_ids)), 16)
+        self.assertEqual(len(set(leg_ids)), len(legs))
 
         item_leg_refs = [
             item["transport_leg_id"]
@@ -137,7 +159,7 @@ class AwajiTripFixtureTests(unittest.TestCase):
             for item in day["items"]
             if item.get("transport_leg_id")
         ]
-        self.assertEqual(len(item_leg_refs), 16)
+        self.assertEqual(len(item_leg_refs), len(legs))
         self.assertEqual(set(item_leg_refs), set(leg_ids))
         self.assertEqual(len(item_leg_refs), len(set(item_leg_refs)))
 
@@ -146,6 +168,10 @@ class AwajiTripFixtureTests(unittest.TestCase):
             with self.subTest(leg_id=leg["id"]):
                 self.assertIn(leg["from_place_id"], place_ids)
                 self.assertIn(leg["to_place_id"], place_ids)
+
+        for day in self.trip["days"]:
+            day_refs = [item.get("transport_leg_id") for item in day["items"] if item.get("transport_leg_id")]
+            self.assertGreater(len(day_refs), 0, day["date"])
 
     def test_bundle_transport_duration_status_and_note_derive_from_canonical_leg(self):
         source_legs = {
@@ -159,12 +185,39 @@ class AwajiTripFixtureTests(unittest.TestCase):
                 output = bundle_legs[leg_id]
                 departure = datetime.fromisoformat(source["departure_at"])
                 arrival = datetime.fromisoformat(source["arrival_at"])
-                expected_minutes = int((arrival - departure).total_seconds() // 60)
-                self.assertGreaterEqual(expected_minutes, 0)
-                self.assertEqual(output["estimated_duration_minutes"], expected_minutes)
+                window_minutes = int((arrival - departure).total_seconds() // 60)
+                self.assertGreater(window_minutes, 0)
+                self.assertGreater(output["estimated_duration_minutes"], 0)
+                self.assertGreaterEqual(output["buffer_minutes"], 0)
+                self.assertEqual(output["estimated_duration_minutes"] + output["buffer_minutes"], window_minutes)
                 self.assertEqual(output["status"], source["provenance"]["status"])
                 self.assertEqual(output["note"], source["provenance"]["note"])
                 self.assertEqual(output["source_url"], source["provenance"]["source_url"])
+                self.assertEqual(output["provenance"]["provider"], source["provenance"]["provider"])
+                self.assertTrue(output["source_refs"])
+
+    def test_kobe_airport_and_day_five_buffer_are_semantically_correct(self):
+        airport = self.places["kobe-airport"]
+        self.assertEqual(airport["name"], "神戸空港 第2ターミナル")
+        self.assertEqual(airport["address"], "兵庫県神戸市中央区神戸空港1")
+        self.assertIn("kairport.co.jp", airport["provenance"]["source_url"])
+        first_leg = next(item for item in self.bundle["transport_legs"] if item["id"] == "leg-day1-airport-nijigen")
+        self.assertEqual(first_leg["from_place"], "kobe-airport")
+        self.assertEqual(parse_qs(urlparse(first_leg["google_maps_directions_url"]).query)["origin"], [airport["address"]])
+        return_leg = next(item for item in self.bundle["transport_legs"] if item["id"] == "leg-day5-kobe-toyota")
+        self.assertEqual(return_leg["transfer_minutes"], 35)
+        self.assertEqual(return_leg["buffer_minutes"], 10)
+
+    def test_sheet_operational_notes_are_not_marked_confirmed(self):
+        dynamic_ids = {
+            "komeda-shizuki", "bizan-ropeway", "familymart-tokushima-kanazawa",
+            "iwaya-port", "awaji-sa-ferris-wheel", "uzushio-cruise-fukura",
+        }
+        bundle_places = {place["id"]: place for place in self.bundle["places"]}
+        for place_id in dynamic_ids:
+            with self.subTest(place_id=place_id):
+                self.assertIn(self.places[place_id]["provenance"]["status"], {"reported", "unverified"})
+                self.assertEqual(bundle_places[place_id]["provenance"]["status"], self.places[place_id]["provenance"]["status"])
 
     def test_every_transport_leg_has_valid_google_maps_directions_link(self):
         source_legs = {

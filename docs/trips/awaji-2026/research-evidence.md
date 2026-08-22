@@ -6,7 +6,7 @@
 - 2026-08-23 讀取三頁：「行程總覽」「8.29-8.31 詳細執行」「出發前確認清單」。
 - Sheet 僅作匯入依據；`trip.json` 是唯一 runtime source，網站 bundle 不直接讀 Sheet。
 - Day 3–5 依詳細執行頁的時間門轉入 canonical itinerary。
-- Day 1–2 若總覽未提供精確時間，沿用既有 timestamp，並在 item notes 明標「試算表未給精確時間／規劃估計」。
+- Day 1–2 已逐列轉入午餐、忍里、CRAFT CIRCUS、日落散步、夜間採買、RURAL、夢舞台、海之教堂與水御堂；總覽未提供精確時間者，以 `estimated` 規劃窗口呈現，不標成 confirmed。
 
 ## 使用者確認事實
 
@@ -17,12 +17,13 @@
 - 8/30 住宿：ザ ロイヤルパーク キャンバス 神戸三宮，兵庫県神戸市中央区下山手通2丁目3番1号。
 - 已訂位：8/27 18:30 Garb Costa Orange。
 - 已訂位：8/28 13:00 浮世離れの鯛ドロボー。
-- 已訂位：8/28 17:45 幸せのパンケーキ 淡路島テラス；地址兵庫県淡路市尾崎42-1，地點 resolved。
+- 已訂位：8/28 17:45 幸せのパンケーキ 淡路島テラス。17:45 來自 Sheet；店名、地址兵庫県淡路市尾崎42-1 與 official URL 來自官方店舖頁 `https://magia.tokyo/shop`，來源分層不混用。
 - 已訂位：8/30 12:50 うずしおクルーズ（福良港）。
 
 ## 估計值與資料狀態
 
 - `candidate_sets.transport_legs` 的 departure／arrival 來自 Sheet 規劃窗口，provenance.status 一律為 `estimated`。
+- Day 3–5 的 Sheet 車程範圍採上限作 `transfer_minutes`，時間窗多出的部分另列 `buffer_minutes`；Day 5 飯店至 Toyota 為車程 35 分、緩衝 10 分，不把 45 分全稱為車程。
 - public bundle 的 `estimated_duration_minutes` 由 departure／arrival 推導，不在 canonical trip 另存第二份分鐘數。
 - 每段 provenance note 包含導航方式、延誤切點與長輩／幼兒注意。
 - Google Maps directions 是無 API key 的起點／終點連結；即時路況以使用者開啟導航當下為準。

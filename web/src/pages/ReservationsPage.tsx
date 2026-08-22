@@ -10,6 +10,42 @@ import { buildRoutePath } from '../app/route-registry'
 interface ReservationsPageProps {
   bundle: Bundle
 }
+
+function escapeIcsText(value: string): string {
+  return value
+    .replace(/\\/g, '\\\\')
+    .replace(/\r?\n/g, '\\n')
+    .replace(/,/g, '\\,')
+    .replace(/;/g, '\\;')
+}
+
+function utcCalendarValue(date: Date): string {
+  const year = date.getUTCFullYear()
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(date.getUTCDate()).padStart(2, '0')
+  const hours = String(date.getUTCHours()).padStart(2, '0')
+  const minutes = String(date.getUTCMinutes()).padStart(2, '0')
+  const seconds = String(date.getUTCSeconds()).padStart(2, '0')
+  return `${year}${month}${day}T${hours}${minutes}${seconds}Z`
+}
+
+export function buildReservationCalendarIcs(reservation: BundleReservation): string | null {
+  if (!reservation.time || !reservation.name) return null
+  const startDate = new Date(reservation.time)
+  if (Number.isNaN(startDate.getTime())) return null
+  const endDate = new Date(startDate.getTime() + 60 * 60 * 1000)
+  return `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//AI Travel Planner//Reservation//ZH-TW
+BEGIN:VEVENT
+UID:${escapeIcsText(reservation.id)}
+DTSTART:${utcCalendarValue(startDate)}
+DTEND:${utcCalendarValue(endDate)}
+SUMMARY:${escapeIcsText(reservation.name)}
+DESCRIPTION:${escapeIcsText(reservation.kind)}
+END:VEVENT
+END:VCALENDAR`
+}
 function formatDate(value: string) {
   try {
     return new Intl.DateTimeFormat('zh-TW', {
@@ -41,25 +77,6 @@ function buildDayItemLink(bundle: Bundle, reservation: BundleReservation) {
   const direct = day.items.find((item) => item.id === reservation.id || item.id === reservation.itinerary_item_id)
   if (direct) return buildRoutePath({ section: 'today', day: day.date, item: direct.id })
   return buildRoutePath({ section: 'today', day: day.date })
-}
-
-function buildReservationCalendarIcs(reservation: BundleReservation) {
-  if (!reservation.time || !reservation.name) return null
-  const startDate = new Date(reservation.time)
-  if (Number.isNaN(startDate.getTime())) return null
-  const asCalendarValue = (date: Date) => `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}${String(date.getMinutes()).padStart(2, '0')}00`
-  const endDate = new Date(startDate.getTime() + 60 * 60 * 1000)
-  return `BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//AI Travel Planner//Reservation//ZH-TW
-BEGIN:VEVENT
-UID:${reservation.id}
-DTSTART:${asCalendarValue(startDate)}
-DTEND:${asCalendarValue(endDate)}
-SUMMARY:${reservation.name.replace(/\n/g, ' ')}
-DESCRIPTION:${reservation.kind}
-END:VEVENT
-END:VCALENDAR`
 }
 
 export function ReservationsPage({ bundle }: ReservationsPageProps) {

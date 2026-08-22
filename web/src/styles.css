@@ -964,7 +964,7 @@ body,
 .day-answer-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 20px; }
 .day-answer-grid > div { display: grid; gap: 3px; min-width: 0; padding: 10px; border: 1px solid #ffffff1f; border-radius: 11px; background: #071d2b35; }
 .day-answer-grid span { color: #8fcfd0; font-size: .59rem; font-weight: 900; letter-spacing: .08em; }.day-answer-grid strong { color: #fff; font-size: .75rem; overflow-wrap: anywhere; }.day-answer-grid small { color: #a9c4ca; font-size: .62rem; overflow-wrap: anywhere; }
-.timeline-risk { display: flex; gap: 8px; align-items: flex-start; margin-top: 10px; padding: 9px; border-radius: 9px; background: #f5f8f9; }.timeline-risk p, .timeline-context { margin: 0; color: #687d87; font-size: .7rem; line-height: 1.55; }.timeline-risk .hub-status { flex-shrink: 0; }.timeline-context { margin-top: 7px; }
+.timeline-risk { display: flex; gap: 8px; align-items: flex-start; margin-top: 10px; padding: 9px; border-radius: 9px; background: #f5f8f9; }.timeline-risk p, .timeline-context { margin: 0; color: #687d87; font-size: .7rem; line-height: 1.55; }.timeline-risk .hub-status { flex-shrink: 0; }.timeline-context { margin-top: 7px; overflow-wrap: anywhere; }.timeline-context.needs-recheck { padding: 7px 9px; border-left: 3px solid #d89a38; border-radius: 0 8px 8px 0; color: #76572d; background: #fff8e9; }
 
 /* Map */
 .map-intro { align-items: center; }.map-trust-note { display: grid; gap: 4px; max-width: 280px; padding: 12px 14px; border: 1px solid #cfe5e4; border-radius: 12px; color: #4f7277; background: #edf8f6; }.map-trust-note strong { color: #08786e; font-size: .72rem; }.map-trust-note span { font-size: .66rem; line-height: 1.5; }
@@ -972,7 +972,7 @@ body,
 .handbook-day-tabs button { display: grid; gap: 2px; min-width: 0; padding: 8px; border: 1px solid #dbe6e9; border-radius: 10px; color: #5d7580; background: #fff; }.handbook-day-tabs button strong { font-size: .7rem; }.handbook-day-tabs button span { font-size: .63rem; }.handbook-day-tabs button.is-active { color: #fff; border-color: #087d91; background: #087d91; box-shadow: 0 7px 16px #087d9125; }
 .map-day-panel { margin-top: 12px; padding: 22px; border: 1px solid #e0e9ec; border-radius: 18px; background: #fff; }.map-day-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; padding-bottom: 17px; border-bottom: 1px solid #e6edef; }.map-day-header h2 { margin: 4px 0 6px; color: #203e4c; font-size: 1.15rem; }.map-day-header p:not(.eyebrow) { margin: 0; color: #71858e; font-size: .72rem; }.daily-route-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }.daily-route-actions a, .route-card-actions a { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 12px; border-radius: 9px; color: #fff; background: #087d91; text-decoration: none; font-size: .72rem; font-weight: 800; }
 .route-leg-list { display: grid; gap: 12px; padding: 18px 0 0; list-style: none; }.route-leg-list li { margin: 0; }.route-leg-card { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 15px; padding: 17px; border: 1px solid #e0e8eb; border-radius: 15px; background: #fbfcfc; }.route-leg-index { color: #9aabb2; font: 800 1.15rem/1 ui-monospace, monospace; }.route-leg-body { min-width: 0; }.route-leg-topline { display: flex; align-items: center; justify-content: space-between; gap: 9px; color: #69818b; font-size: .68rem; }.route-endpoints { display: grid; grid-template-columns: minmax(0, 1fr) 24px minmax(0, 1fr); gap: 7px; align-items: center; margin: 12px 0; }.route-endpoints > span { color: #26a291; text-align: center; }.route-endpoints div { display: grid; gap: 3px; min-width: 0; }.route-endpoints small { color: #87999f; font-size: .6rem; }.route-endpoints strong { color: #25434f; font-size: .88rem; overflow-wrap: anywhere; }
-.route-leg-facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; border: 1px solid #e5ecee; border-radius: 10px; background: #fff; }.route-leg-facts div { min-width: 0; padding: 9px; border-right: 1px solid #e5ecee; }.route-leg-facts div:last-child { border: 0; }.route-leg-facts dt { color: #8b9ba2; font-size: .58rem; }.route-leg-facts dd { margin-top: 3px; color: #3f5b67; font-size: .68rem; overflow-wrap: anywhere; }.route-risk-note { margin-top: 10px; padding: 10px 12px; border-left: 3px solid #dea953; border-radius: 0 9px 9px 0; color: #725632; background: #fff9ee; }.route-risk-note strong { font-size: .66rem; }.route-risk-note p { margin: 4px 0 0; font-size: .7rem; line-height: 1.55; }.route-card-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }.route-card-actions a.secondary-link { color: #44717e; border: 1px solid #cfe0e4; background: #fff; }
+.route-leg-facts { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0; border: 1px solid #e5ecee; border-radius: 10px; background: #fff; }.route-leg-facts div { min-width: 0; padding: 9px; border-right: 1px solid #e5ecee; }.route-leg-facts div:last-child { border: 0; }.route-leg-facts dt { color: #8b9ba2; font-size: .58rem; }.route-leg-facts dd { margin-top: 3px; color: #3f5b67; font-size: .68rem; overflow-wrap: anywhere; }.route-risk-note { margin-top: 10px; padding: 10px 12px; border-left: 3px solid #dea953; border-radius: 0 9px 9px 0; color: #725632; background: #fff9ee; }.route-risk-note strong { font-size: .66rem; }.route-risk-note p { margin: 4px 0 0; font-size: .7rem; line-height: 1.55; }.route-card-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }.route-card-actions a.secondary-link { color: #44717e; border: 1px solid #cfe0e4; background: #fff; }
 
 /* Lodging */
 .lodging-route-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 16px; }.lodging-route-strip div { display: grid; grid-template-columns: 28px 1fr; gap: 2px 9px; padding: 11px; border: 1px solid #e0e9eb; border-radius: 12px; background: #fff; }.lodging-route-strip span { grid-row: 1 / 3; display: grid; place-items: center; width: 27px; height: 27px; border-radius: 50%; color: #fff; background: #178c91; font-size: .68rem; }.lodging-route-strip strong { min-width: 0; color: #31505c; font-size: .72rem; overflow-wrap: anywhere; }.lodging-route-strip small { color: #81939a; font-size: .62rem; }
@@ -1025,6 +1025,24 @@ body,
   .lodging-card-main > header { display: grid; }.night-pill { justify-self: start; }.stay-actions > * { flex: 1 1 130px; }
   .reservation-alert { display: grid; }.reservation-card { grid-template-columns: 1fr; padding: 15px; }.reservation-time { display: flex; align-items: baseline; gap: 9px; padding: 0 0 10px; border-right: 0; border-bottom: 1px solid #e6edef; }.reservation-title-row { display: grid; }.reservation-kind { justify-self: start; }.reservation-facts { grid-template-columns: 1fr; }.reservation-actions > * { flex: 1 1 130px; }
   .checklist-progress { width: 100%; height: 64px; display: flex; gap: 10px; }.checklist-groups { grid-template-columns: 1fr; }.packing-toolbar { flex-wrap: wrap; }.packing-toolbar button { margin-left: 0; }.notes-workspace { padding: 15px; }.note-card { grid-template-columns: 1fr; }.note-card .action-row { grid-column: 1; grid-row: auto; }
+}
+
+/* Touch targets: keep primary mobile controls usable after compact theme overrides. */
+.day-tab,
+.print-button,
+.quick-mode button,
+.plan-tabs button,
+.search-results button,
+.timeline-actions a,
+.timeline-actions button,
+.handbook-day-tabs button,
+.desktop-quick-actions button {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.itinerary-search input {
+  min-height: 44px;
 }
 
 @media print {

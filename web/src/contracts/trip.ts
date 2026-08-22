@@ -1,5 +1,18 @@
 export type OperationalStatus = 'confirmed' | 'estimated' | 'reported' | 'user-confirmed' | 'warning' | 'error' | 'critical' | 'info' | 'unverified' | 'stale' | 'conflict' | 'unresolved' | 'unknown'
 
+export interface BundleProvenance {
+  status?: OperationalStatus | null
+  provider?: string | null
+  source_ref?: string | null
+  source_refs?: string[]
+  source_url?: string | null
+  retrieved_at?: string | null
+  confidence?: number | string | null
+  note?: string | null
+}
+
+export type BundleFieldProvenance = Record<string, BundleProvenance | null | undefined>
+
 export interface BundleReservation {
   id: string
   day: string
@@ -80,7 +93,12 @@ export interface BundlePlace {
   official_url?: string | null
   google_maps_url?: string | null
   opening_hours_note?: string | null
+  parking?: string | null
   accessibility_notes?: string | null
+  status?: OperationalStatus | null
+  source_refs?: string[]
+  provenance?: BundleProvenance | BundleFieldProvenance | null
+  field_provenance?: BundleFieldProvenance | null
 }
 
 export interface BundleTransportLeg {
@@ -94,11 +112,14 @@ export interface BundleTransportLeg {
   departure_at: string | null
   arrival_at: string | null
   estimated_duration_minutes: number | null
+  transfer_minutes?: number | null
+  buffer_minutes?: number | null
   note?: string | null
   source_url?: string | null
   google_maps_directions_url?: string | null
   distance_km?: number | null
   source_refs?: string[]
+  provenance?: BundleProvenance | null
 }
 
 export interface BundleDay {
@@ -265,8 +286,8 @@ export function operationalStatusLabel(status: OperationalStatus | undefined | n
 }
 
 export function operationalStatusClass(status: OperationalStatus | undefined | null): string {
-  if (status === 'confirmed' || status === 'user-confirmed' || status === 'reported') return 'hub-status confirmed'
-  if (status === 'estimated' || status === 'unverified' || status === 'info') return 'hub-status estimated'
+  if (status === 'confirmed' || status === 'user-confirmed') return 'hub-status confirmed'
+  if (status === 'reported' || status === 'estimated' || status === 'unverified' || status === 'info') return 'hub-status estimated'
   if (status === 'warning' || status === 'error' || status === 'critical') return 'hub-status conflict'
   if (status === 'stale') return 'hub-status stale'
   if (status === 'conflict') return 'hub-status conflict'
