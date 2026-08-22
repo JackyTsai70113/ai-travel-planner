@@ -149,6 +149,9 @@ class AwajiTripFixtureTests(unittest.TestCase):
     def test_day_five_no_hard_visit(self):
         day_five = next(day for day in self.trip["days"] if day["date"] == "2026-08-31")
         self.assertFalse(any(item.get("kind") == "visit" for item in day_five["items"]))
+        departure = next(item for item in day_five["items"] if item["id"] == "day5-departure-flight")
+        self.assertEqual(departure["kind"], "flight")
+        self.assertEqual(departure["start_at"], "2026-08-31T12:45:00+09:00")
 
     def test_all_itinerary_place_references_exist(self):
         place_ids = set(self.places)

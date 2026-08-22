@@ -31,6 +31,17 @@ async function openRoute(page, route) {
   await page.goto(`${baseUrl}#/${route}`, { waitUntil: 'domcontentloaded' })
   await page.locator('.app-shell').waitFor({ state: 'attached' })
   await page.locator('#trip-main').waitFor({ state: 'attached' })
+  const section = route.split('/')[0]
+  const readySelectors = {
+    overview: '.trip-overview-shell',
+    today: '.itinerary-workspace',
+    map: '.map-workspace',
+    lodging: '.lodging-workspace',
+    packing: '.packing-workspace',
+    sources: '[aria-label="資料來源"]',
+  }
+  const readySelector = readySelectors[section]
+  if (readySelector) await page.locator(readySelector).waitFor({ state: 'visible' })
 }
 
 async function assertNoHorizontalOverflow(page, label) {
@@ -127,6 +138,10 @@ try {
     await riskCard.waitFor({ state: 'visible' })
     const riskText = (await riskCard.locator('strong').textContent())?.trim()
     if (!riskText) throw new Error(`${date} did not render a primary risk summary`)
+    if (date === '2026-08-31') {
+      const fixedCard = routePage.locator('.day-answer-grid > div').filter({ hasText: '固定時間' })
+      if (!(await fixedCard.textContent())?.includes('12:45')) throw new Error('Day 5 hero did not preserve the JX1835 fixed departure time')
+    }
 
     await openRoute(routePage, `map/${date}`)
     const legCards = routePage.locator('[data-testid^="transport-leg-"]')

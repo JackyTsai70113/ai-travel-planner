@@ -1719,7 +1719,7 @@
         },
         {
           "id": "day5-departure-flight",
-          "kind": "transport",
+          "kind": "flight",
           "place_id": "taoyuan-airport",
           "start_at": "2026-08-31T12:45:00+09:00",
           "end_at": "2026-08-31T12:45:00+09:00",

@@ -137,6 +137,14 @@ export function primaryRiskForDay(bundle: Bundle, day: BundleDay): string {
   return '出發前重查即時路況與當日營運狀態'
 }
 
+export function heroNextItem(day: BundleDay, currentMinutes: number | null): BundleDayItem | null {
+  if (currentMinutes == null) return day.items[0] || null
+  return day.items.find((item) => {
+    const start = parseMinutes(item.start_at)
+    return start != null && start >= currentMinutes
+  }) || null
+}
+
 export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps) {
   const [copiedId, setCopiedId] = useState('')
   const [query, setQuery] = useState('')
@@ -179,7 +187,8 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
 
   if (!selectedDay) return <section className="card">沒有可顯示的行程日。</section>
 
-  const nextHeroItem = selectedDay.items[nextIndex >= 0 ? nextIndex : 0]
+  const nextHeroItem = heroNextItem(selectedDay, currentMinutes)
+  const dayFinished = currentMinutes != null && nextHeroItem == null
   const nextHeroLeg = nextHeroItem ? transportLegForItem(bundle, nextHeroItem, selectedDay.date) : undefined
   const lodging = lodgingForDay(bundle, selectedDay.date)
   const fixedEntries = selectedDay.items
@@ -217,7 +226,7 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
           <div className="day-kicker"><span>DAY {selectedDayIndex + 1}</span><span>{selectedDay.date}</span></div>
           <h2>{selectedDay.summary}</h2>
           <div className="day-answer-grid" aria-label="今日快速摘要">
-            <div><span>下一站</span><strong>{nextHeroLeg ? nextHeroLeg.to_label : nextHeroItem ? findPlaceLabel(bundle.places, nextHeroItem.place_id) : '今日無停靠'}</strong><small>{nextHeroItem ? timeLabel(nextHeroItem.start_at) : '—'}</small></div>
+            <div><span>下一站</span><strong>{dayFinished ? '今日行程已結束' : nextHeroLeg ? nextHeroLeg.to_label : nextHeroItem ? findPlaceLabel(bundle.places, nextHeroItem.place_id) : '今日無停靠'}</strong><small>{dayFinished ? '請休息並確認明日安排' : nextHeroItem ? timeLabel(nextHeroItem.start_at) : '—'}</small></div>
             <div><span>今晚住宿</span><strong>{lodging?.name || '返程／尚無當晚住宿'}</strong><small>{lodging?.address || '以當日行程為準'}</small></div>
             <div><span>固定時間</span><strong>{fixedEntries.length ? fixedEntries.map((entry) => entry.time).join('、') : '今日無固定預約'}</strong><small>{fixedEntries.map((entry) => entry.label).join('、') || '保留彈性'}</small></div>
             <div><span>主要風險</span><strong>{primaryRisk}</strong><small>依規劃估計；出發前以當日狀況重查</small></div>

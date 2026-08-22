@@ -3,7 +3,7 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Bundle } from '../src/contracts/trip'
 import { buildMapsDirectionsLink, buildRouteDirectionChunks } from '../src/lib/google-maps-links'
 import { groupContiguousLegs, MapPage } from '../src/pages/MapPage'
-import { ItineraryPage } from '../src/pages/ItineraryPage'
+import { heroNextItem, ItineraryPage } from '../src/pages/ItineraryPage'
 import { PackingPage } from '../src/pages/PackingPage'
 import { buildReservationCalendarIcs } from '../src/pages/ReservationsPage'
 
@@ -189,6 +189,11 @@ describe('Issue 97 travel handbook', () => {
     expect(screen.getByText(/停車（待重查）/)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('tab', { name: /D5/ }))
     expect(onNavigate).toHaveBeenCalledWith({ section: 'today', day: dates[4], item: undefined })
+  })
+
+  it('does not wrap the next-stop hero back to breakfast after the day ends', () => {
+    expect(heroNextItem(bundle.days[0], null)?.id).toBe('move-a-b')
+    expect(heroNextItem(bundle.days[0], 23 * 60 + 59)).toBeNull()
   })
 
   it('uses the bundle checklist and persists each checked item locally', async () => {
