@@ -36,12 +36,10 @@ const bundle: Bundle = {
     ...(id === 'b' ? {
       opening_hours_note: '試算表記載 7:00–22:00；出發前一天重查。',
       parking: '試算表記載停車資訊；抵達前重查。',
-      field_provenance: {
-        opening_hours_note: {
-          status: 'reported' as const,
-          provider: 'Google Sheet',
-          source_url: 'https://docs.google.com/spreadsheets/d/example/edit?gid=1',
-        },
+      provenance: {
+        status: 'confirmed' as const,
+        provider: '住宿官方網站',
+        source_url: 'https://example.com/official-place',
       },
     } : {}),
   })),
@@ -182,6 +180,7 @@ describe('Issue 97 travel handbook', () => {
     render(<ItineraryPage bundle={bundle} route={{ section: 'today', day: dates[0], raw: `today/${dates[0]}` }} onNavigate={onNavigate} />)
     expect(screen.getAllByRole('tab')).toHaveLength(5)
     expect(screen.getByRole('heading', { name: /神戶機場 → 淡路住宿/ })).toBeInTheDocument()
+    // Confirmed place identity alone must not confirm dynamic opening or parking fields.
     expect(screen.getByText(/營業時間（待重查）/)).toBeInTheDocument()
     expect(screen.getByText(/停車（待重查）/)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('tab', { name: /D5/ }))

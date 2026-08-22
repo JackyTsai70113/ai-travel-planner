@@ -26,10 +26,7 @@ function fieldProvenance(place: BundlePlace, field: 'opening_hours_note' | 'park
   const nested = place.provenance
     ? (place.provenance as Record<string, BundleProvenance | null | undefined>)[field]
     : null
-  if (nested) return nested
-  const shared = place.provenance as BundleProvenance | null | undefined
-  if (shared && (shared.status || shared.provider || shared.source_url || shared.source_ref)) return shared
-  return place.status ? { status: place.status } : null
+  return nested || null
 }
 
 function fieldNeedsRecheck(place: BundlePlace, field: 'opening_hours_note' | 'parking'): boolean {
