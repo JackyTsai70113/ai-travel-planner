@@ -19,6 +19,15 @@ function resolveAppBaseUrl(baseUrl: string, pageUrl: string): URL {
 }
 
 export function resolveRegistryUrl(baseUrl: string, pageUrl = window.location.href): string {
+  const page = new URL(pageUrl)
+  const segments = page.pathname.split('/').filter(Boolean)
+  const tripsIndex = segments.indexOf('trips')
+  if (tripsIndex >= 0) {
+    page.pathname = `/${segments.slice(0, tripsIndex).join('/')}${segments.slice(0, tripsIndex).length ? '/' : ''}`
+    page.search = ''
+    page.hash = ''
+    return new URL('trip-registry.json', page).toString()
+  }
   return new URL('trip-registry.json', resolveAppBaseUrl(baseUrl, pageUrl)).toString()
 }
 

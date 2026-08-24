@@ -12,9 +12,20 @@ export interface SiteRoute {
 export function parseSiteRoute(pathname: string): SiteRoute {
   const segments = pathname.split('/').filter(Boolean)
   const tripsIndex = segments.indexOf('trips')
-  if (tripsIndex < 0) return { kind: 'home' }
+  if (tripsIndex < 0) return segments.length <= 1 ? { kind: 'home' } : { kind: 'not-found' }
+  if (segments.length !== tripsIndex + 2) return { kind: 'not-found' }
   const slug = segments[tripsIndex + 1]
   return slug ? { kind: 'trip', slug } : { kind: 'not-found' }
+}
+
+export function siteRootFromPageUrl(pageUrl = window.location.href): URL {
+  const url = new URL(pageUrl)
+  const segments = url.pathname.split('/').filter(Boolean)
+  const tripsIndex = segments.indexOf('trips')
+  if (tripsIndex >= 0) {
+    url.pathname = `/${segments.slice(0, tripsIndex).join('/')}${segments.slice(0, tripsIndex).length ? '/' : ''}`
+  }
+  return url
 }
 
 export function siteRootUrl(currentUrl = window.location.href): URL {
@@ -71,7 +82,7 @@ export default function SiteRouter() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    const registryUrl = new URL('trip-registry.json', window.location.href)
+    const registryUrl = new URL('trip-registry.json', siteRootFromPageUrl())
     fetch(registryUrl)
       .then((response) => {
         if (!response.ok) throw new Error(`registry HTTP ${response.status}`)
@@ -104,6 +115,8 @@ export default function SiteRouter() {
 
   if (error) return <RegistryError message={error} />
   if (!catalog) return <main className="portal-state card"><h1>AI Travel Planner</h1><p>正在載入旅行入口…</p></main>
+
+  if (route.kind === 'not-found') return <RegistryError message="找不到這個旅程頁面，請回到入口重新選擇。" />
 
   if (route.kind === 'trip') {
     const trip = catalog.find((item) => item.slug === route.slug)

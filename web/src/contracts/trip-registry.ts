@@ -34,6 +34,7 @@ export interface TripRegistryEntry {
   hero_summary: string
   key_messages: string[]
   critical_alert_count: number
+  bundle_source_slug?: string
 }
 
 export type TripCatalogEntry = TripRegistryEntry

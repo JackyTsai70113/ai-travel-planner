@@ -43,7 +43,8 @@ jobs:
           registry = json.loads(Path('web/public/trip-registry.json').read_text())
           for entry in registry:
               slug = entry['slug']
-              source = Path('web/public/trips') / slug / 'public-bundle.json'
+              source_slug = entry.get('bundle_source_slug', slug)
+              source = Path('web/public/trips') / source_slug / 'public-bundle.json'
               if not source.is_file():
                   raise SystemExit(f'missing public bundle for {slug}: {source}')
               target_dir = Path('site/trips') / slug
@@ -57,6 +58,12 @@ jobs:
                       shutil.copytree(item, target)
                   else:
                       target.write_bytes(item.read_bytes())
+              html_path = target_dir / 'index.html'
+              html = html_path.read_text()
+              html = html.replace('<title>AI Travel Planner｜日本旅行網站入口</title>', f"<title>{entry['title']}｜AI Travel Planner</title>")
+              html = html.replace('探索由 Canonical Trip 驅動的日本旅行網站', entry['hero_summary'])
+              html = html.replace('</head>', f'<link rel="canonical" href="./" /></head>')
+              html_path.write_text(html)
           PY
       - name: Verify root is the multi-trip portal
         run: |
@@ -64,6 +71,9 @@ jobs:
           ! grep -q 'http-equiv="refresh"' site/index.html
           test -s site/trips/awaji-2026/public-bundle.json
           test -s site/trips/kansai-preview-2025/public-bundle.json
+          test -s site/trips/japan-archive-example/public-bundle.json
+          test -s site/trips/japan-blocked-example/public-bundle.json
+          grep -q '2024 日本海岸線封存範例' site/trips/japan-archive-example/index.html
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
