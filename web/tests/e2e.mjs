@@ -45,7 +45,6 @@ async function openRoute(page, route) {
   const readySelectors = {
     overview: '.trip-overview-shell',
     today: '.itinerary-workspace',
-    map: '.map-workspace',
     lodging: '.lodging-workspace',
     packing: '.packing-workspace',
     sources: '[aria-label="資料來源"]',
@@ -93,7 +92,7 @@ try {
   if (!mobile.url().includes('#/today')) throw new Error(`today route was not preserved: ${mobile.url()}`)
   if (await mobile.locator('.day-tab').count() !== 5) throw new Error('five itinerary days were not rendered')
 
-  for (const route of ['overview', 'today', 'map', 'lodging', 'packing']) {
+  for (const route of ['overview', 'today', 'lodging', 'packing']) {
     await openRoute(mobile, route)
     await assertNoHorizontalOverflow(mobile, `390px ${route}`)
   }
@@ -102,14 +101,12 @@ try {
   await assertTouchTargets(mobile, '.day-tab', 'day tab')
   await assertTouchTargets(mobile, '.print-button', 'print')
   await assertTouchTargets(mobile, '.quick-mode button', 'quick mode')
-  await assertTouchTargets(mobile, '.plan-tabs button', 'plan')
   await assertTouchTargets(mobile, '.timeline-actions a, .timeline-actions button', 'timeline action')
   await mobile.locator('#itinerary-search').fill('淡路')
   await mobile.locator('.search-results button').first().waitFor()
   await assertTouchTargets(mobile, '.search-results button', 'search result')
 
-  await openRoute(mobile, 'map/2026-08-27')
-  await assertTouchTargets(mobile, '.handbook-day-tabs button', 'map day tab')
+  await openRoute(mobile, 'today/2026-08-29')
 
   await openRoute(mobile, 'lodging')
   const longJapaneseName = mobile.locator('.lodging-card-main h2').filter({ hasText: 'ザ ロイヤルパーク キャンバス 神戸三宮' })
@@ -131,7 +128,7 @@ try {
   const desktopContext = await browser.newContext({ viewport: { width: 1440, height: 900 } })
   const desktop = await desktopContext.newPage()
   desktop.setDefaultTimeout(10000)
-  for (const route of ['overview', 'today', 'map']) {
+  for (const route of ['overview', 'today']) {
     await openRoute(desktop, route)
     await desktop.locator('.trip-sidebar').waitFor({ state: 'visible' })
     await desktop.locator('.app-main').waitFor({ state: 'visible' })
@@ -162,8 +159,8 @@ try {
       if ((!normalizedFlightMapQuery.includes('kobe') && !flightMapQuery?.includes('神戸空港')) || flightMapQuery?.includes('桃園')) throw new Error(`Day 5 flight navigation target is incorrect: ${flightMapQuery}`)
     }
 
-    await openRoute(routePage, `map/${date}`)
-    const legCards = routePage.locator('[data-testid^="transport-leg-"]')
+    await openRoute(routePage, `today/${date}`)
+    const legCards = routePage.locator('.timeline-entry').filter({ hasText: '逐段交通' })
     await legCards.first().waitFor({ state: 'visible' })
     const legCount = await legCards.count()
     if (legCount < 1) throw new Error(`${date} did not render any transport leg`)

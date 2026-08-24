@@ -32,7 +32,7 @@ class AwajiTripFixtureTests(unittest.TestCase):
         self.assertEqual(len(self.trip["days"]), 5)
 
         counts = [len(day["items"]) for day in self.trip["days"]]
-        self.assertEqual(counts, [14, 19, 21, 16, 9])
+        self.assertEqual(counts, [12, 19, 22, 17, 9])
         self.assertGreater(sum(counts), 53)
         self.assertEqual(
             [len(day["items"]) for day in self.bundle["days"]],
@@ -43,7 +43,7 @@ class AwajiTripFixtureTests(unittest.TestCase):
         expected = {
             "2026-08-27": {
                 "ramen-ichiraku-nijigen", "nijigen-no-mori-shinobi",
-                "craft-circus-awaji", "awaji-sunset-line",
+                "awaji-sunset-line",
                 "map-import-garb-costa-orange", "aeon-awaji",
                 "awaji-riverside-hotel",
             },
@@ -109,15 +109,15 @@ class AwajiTripFixtureTests(unittest.TestCase):
         expected = {
             "awaji-riverside-hotel": (
                 "Awaji Riverside Terrace in Shizuki 780",
-                "兵庫県淡路市志筑780-12",
+                "兵庫県淡路市志筑字黒田780-12",
             ),
             "tokushima-seshi-besso-hotel-2": (
-                "1-chōme-3-44-3 Kanazawa",
-                "徳島県徳島市金沢1丁目3-44-3",
+                "徳島別荘ホテル2",
+                "徳島県徳島市金沢1丁目3-44-3号 〒770-0871",
             ),
             "royal-park-canvas-kobe-sannomiya": (
                 "ザ ロイヤルパーク キャンバス 神戸三宮",
-                "兵庫県神戸市中央区下山手通2丁目3番1号",
+                "〒650-0011 兵庫県神戸市中央区下山手通2丁目3-1",
             ),
         }
         self.assertEqual(set(self.trip["selected"]["hotel_place_ids"]), set(expected))
@@ -172,7 +172,7 @@ class AwajiTripFixtureTests(unittest.TestCase):
 
     def test_transport_legs_and_item_references_are_complete(self):
         legs = self.trip["candidate_sets"]["transport_legs"]
-        self.assertEqual(len(legs), 33)
+        self.assertEqual(len(legs), 32)
         leg_ids = [leg["id"] for leg in legs]
         self.assertEqual(len(set(leg_ids)), len(legs))
 

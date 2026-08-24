@@ -255,6 +255,9 @@ def _bundle_days(trip: dict) -> list[dict]:
 
 
 def _official_url(place: dict[str, object]) -> str | None:
+    direct = _safe_str(place.get("official_url"))
+    if direct:
+        return direct
     for identifier in _as_list(place.get("identifiers")):
         if not isinstance(identifier, dict):
             continue
@@ -283,6 +286,9 @@ def _bundle_places(places: dict[str, dict[str, object]]) -> list[dict]:
                 "kind": place.get("kind"),
                 "maps_query": place.get("address") or place.get("name"),
                 "google_maps_url": _google_maps_url(place),
+                "image_url": _safe_str(place.get("image_url")),
+                "image_source_url": _safe_str(place.get("image_source_url")),
+                "image_alt": _safe_str(place.get("image_alt")),
                 "opening_hours_note": place.get("opening_hours_note"),
                 "accessibility_notes": place.get("accessibility_notes"),
                 "official_url": _official_url(place),
@@ -310,6 +316,9 @@ def _bundle_place_index(places: dict[str, dict[str, object]]) -> dict[str, dict]
             "mapcode": _safe_str(place.get("mapcode")),
             "maps_query": _safe_str(place.get("maps_query")),
             "google_maps_url": _google_maps_url(place),
+            "image_url": _safe_str(place.get("image_url")),
+            "image_source_url": _safe_str(place.get("image_source_url")),
+            "image_alt": _safe_str(place.get("image_alt")),
             "opening_hours_note": _safe_str(place.get("opening_hours_note")),
             "accessibility_notes": _safe_str(place.get("accessibility_notes")),
             "official_url": _official_url(place),

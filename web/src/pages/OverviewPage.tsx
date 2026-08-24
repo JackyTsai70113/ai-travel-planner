@@ -53,6 +53,11 @@ function timeLabel(value: string | null): string {
   return value?.match(/T(\d{2}:\d{2})/)?.[1] || '未提供'
 }
 
+function fixedLabel(item: { kind: string; notes?: string }, fallback: string): string {
+  if (item.kind === 'flight') return item.notes?.match(/JX\d{3,4}/)?.[0] || '航班'
+  return fallback
+}
+
 function lodgingForDay(bundle: Bundle, date: string) {
   const items = bundle.days.flatMap((day) => day.items)
   const active = bundle.selected.hotel_place_ids
@@ -105,7 +110,7 @@ export function OverviewPage({ bundle, trip }: OverviewPageProps) {
   }))
   const fixedEntries = bundle.days.flatMap((day) => day.items
     .filter((item) => item.fixed || item.kind === 'reservation' || item.kind === 'flight' || bundle.reservations.some((reservation) => reservation.id === item.id || reservation.itinerary_item_id === item.id))
-    .map((item) => ({ day: day.date, item, label: findPlaceLabel(bundle.places, item.place_id) })))
+    .map((item) => ({ day: day.date, item, label: fixedLabel(item, findPlaceLabel(bundle.places, item.place_id)) })))
   const validationAlerts = bundle.validation.filter((item) => item.severity === 'error' || item.severity === 'warning')
 
   return (
@@ -124,7 +129,7 @@ export function OverviewPage({ bundle, trip }: OverviewPageProps) {
           </div>
           <div className="hero-actions">
             <a className="primary" href={buildRoutePath({ section: 'today', day: bundle.days[0]?.date })}>開始 Day 1</a>
-            <a href="#/map">逐段地圖</a>
+            <a href="#/today">每日自駕與導航</a>
             <a href="#/packing">出發前清單</a>
           </div>
         </div>

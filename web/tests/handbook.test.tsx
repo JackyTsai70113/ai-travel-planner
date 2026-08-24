@@ -184,9 +184,10 @@ describe('Issue 97 travel handbook', () => {
     expect(screen.getByText('主要風險')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '洲本城' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '鳴門公園' })).toBeInTheDocument()
-    // Confirmed place identity alone must not confirm dynamic opening or parking fields.
-    expect(screen.getByText(/營業時間（待重查）/)).toBeInTheDocument()
-    expect(screen.getByText(/停車（待重查）/)).toBeInTheDocument()
+    // Dynamic facts remain visibly sourced without an opaque "estimated" badge.
+    expect(screen.getByText(/營業時間：/)).toBeInTheDocument()
+    expect(screen.getByText(/停車：/)).toBeInTheDocument()
+    expect(screen.queryByText(/Plan A \/ B \/ C/)).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('tab', { name: /D5/ }))
     expect(onNavigate).toHaveBeenCalledWith({ section: 'today', day: dates[4], item: undefined })
   })
