@@ -13,7 +13,7 @@ interface OverviewPageProps {
 }
 function resolveStatusBadge(readiness: TripCatalogEntry['readiness']): { className: string; text: string } {
   if (readiness === 'ready') return { className: 'status-pill status-ready', text: '可出發' }
-  if (readiness === 'incomplete') return { className: 'status-pill status-incomplete', text: '部分待確認' }
+  if (readiness === 'incomplete') return { className: 'status-pill status-incomplete', text: '行前需確認' }
   return { className: 'status-pill status-blocked', text: '有關鍵阻斷' }
 }
 
@@ -82,7 +82,9 @@ export function OverviewPage({ bundle, trip }: OverviewPageProps) {
   const dateText = trip
     ? `${trip.date_range.start_date} — ${trip.date_range.end_date} · ${trip.duration_days} 天`
     : bundle ? `${bundle.date_range.start_date} — ${bundle.date_range.end_date} · ${bundle.days.length} 天` : '行程資料載入中'
-  const travelersText = trip?.travelers_summary || (bundle ? `${bundle.traveler_profile.adults} 位大人 · ${bundle.traveler_profile.children_count} 位孩童` : '旅客資料載入中')
+  const travelersText = bundle
+    ? `${bundle.traveler_profile.adults} 大 ${bundle.traveler_profile.children_count} 小`
+    : trip?.travelers_summary || '旅客資料載入中'
 
   if (!bundle) {
     return (
@@ -141,7 +143,6 @@ export function OverviewPage({ bundle, trip }: OverviewPageProps) {
             <div><dt>住宿</dt><dd>{lodgingCards.length} 處</dd></div>
             <div><dt>逐段交通</dt><dd>{bundle.transport_legs?.length || 0} 段</dd></div>
           </dl>
-          <small>資料快照 {bundle.meta.generated_at}</small>
         </aside>
       </article>
 
