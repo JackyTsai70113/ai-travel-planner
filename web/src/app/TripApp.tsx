@@ -234,8 +234,6 @@ export default function TripApp({ tripMeta = null, tripSlug }: TripAppProps) {
 
   const statusLabel = toFriendlyStatus(bundleLoader.bundle?.status || 'warning')
   const renderBundleLoading = !bundleLoader.bundle && shellStatus === 'loading'
-  const tripVersion = bundleLoader.bundle?.meta?.generated_at || '--'
-
   const titleInfo = useMemo(() => `行程狀態：${statusLabel}`, [statusLabel])
 
   if (renderBundleLoading) {
@@ -243,7 +241,6 @@ export default function TripApp({ tripMeta = null, tripSlug }: TripAppProps) {
       <TripShell
         bundle={null}
         shellStatus="loading"
-        tripVersion={tripVersion}
         pageTitleId={pageTitleId}
         sections={SECTION_DEFINITIONS}
         activeSection={selectedSection}
@@ -266,7 +263,6 @@ export default function TripApp({ tripMeta = null, tripSlug }: TripAppProps) {
     <TripShell
       bundle={bundleLoader.bundle}
       shellStatus={shellStatus}
-      tripVersion={tripVersion}
       pageTitleId={pageTitleId}
       sections={SECTION_DEFINITIONS}
       activeSection={selectedSection}

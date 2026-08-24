@@ -161,7 +161,7 @@ export function ReservationsPage({ bundle }: ReservationsPageProps) {
       </div>
 
       {bundle.reservations.length === 0 ? <div className="honest-empty"><strong>Canonical Trip 尚無預約紀錄</strong><p>頁面不會從一般行程文字自行推定已預約。固定行程仍可在每日時間軸查看。</p><a href="#/today">查看每日行程</a></div> : null}
-      <footer className="data-footnote">資料快照：{bundle.meta.generated_at}。場次與營業狀態請以官方最新通知為準。</footer>
+      <footer className="data-footnote">場次與營業狀態請以官方最新通知為準。</footer>
     </section>
   )
 }
