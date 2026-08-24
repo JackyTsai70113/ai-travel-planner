@@ -65,9 +65,23 @@ export default function TripShell({
     : '行程資料載入中'
 
   useEffect(() => {
-    if (!isDrawerOpen && wasDrawerOpen.current) menuButtonRef.current?.focus()
+    if (!isDrawerOpen && wasDrawerOpen.current && window.matchMedia('(max-width: 960px)').matches) {
+      menuButtonRef.current?.focus()
+    }
     wasDrawerOpen.current = isDrawerOpen
   }, [isDrawerOpen])
+
+  useEffect(() => {
+    const desktopViewport = window.matchMedia('(min-width: 961px)')
+    const closeDrawerOnDesktop = (matches: boolean) => {
+      if (matches) setDrawerOpen(false)
+    }
+    const onViewportChange = (event: MediaQueryListEvent) => closeDrawerOnDesktop(event.matches)
+
+    closeDrawerOnDesktop(desktopViewport.matches)
+    desktopViewport.addEventListener('change', onViewportChange)
+    return () => desktopViewport.removeEventListener('change', onViewportChange)
+  }, [setDrawerOpen])
 
   useEffect(() => {
     if (isDrawerOpen) {

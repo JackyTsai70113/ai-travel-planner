@@ -486,7 +486,7 @@ button:focus-visible {
 }
 
 button:focus-visible {
-  outline: 2px solid #9dd3ff;
+  outline: 3px solid #075f91;
   outline-offset: 2px;
 }
 
@@ -1139,7 +1139,18 @@ body,
   color: #9fe3dd;
 }
 
+.trip-nav-item.is-active small {
+  color: #fff;
+}
+
+.mobile-topbar button:focus-visible,
+.mobile-drawer button:focus-visible,
+.trip-sidebar button:focus-visible {
+  outline-color: #9fe3dd;
+}
+
 .page-intro p,
+.page-intro-stats span,
 .data-footnote,
 .honest-inline,
 .day-nav-label,
@@ -1217,6 +1228,11 @@ body,
   color: #006d7c;
 }
 
+.stay-sequence,
+.lodging-route-strip span {
+  background: #006d7c;
+}
+
 .overview-warning,
 .timeline-context.needs-recheck,
 .route-risk-note,
@@ -1241,6 +1257,16 @@ body,
 }
 
 .custom-checkbox {
+  border-color: var(--line-strong);
+}
+
+.checklist-group input:focus-visible + .custom-checkbox {
+  outline: 3px solid var(--brand-deep);
+  outline-offset: 2px;
+}
+
+.note-editor input,
+.note-editor textarea {
   border-color: var(--line-strong);
 }
 

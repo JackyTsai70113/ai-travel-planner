@@ -141,7 +141,7 @@ try {
 
   await openRoute(mobile, 'overview')
   if (await mobile.locator('.mobile-bottom-nav').count()) throw new Error('mobile bottom navigation must not be rendered')
-  const menuButton = mobile.getByRole('button', { name: '展開導覽選單' })
+  const menuButton = mobile.locator('.menu-button')
   await assertTouchTargets(mobile, '.menu-button', 'hamburger menu')
   await assertStyleContrast(mobile, '.menu-button', 'color', '.menu-button', 'backgroundColor', 4.5, 'hamburger icon')
   await assertStyleContrast(mobile, '.menu-button', 'borderTopColor', '.mobile-topbar', 'backgroundColor', 3, 'hamburger boundary')
@@ -150,6 +150,7 @@ try {
   const drawer = mobile.locator('#mobile-navigation-drawer')
   await drawer.waitFor({ state: 'visible' })
   if (await menuButton.getAttribute('aria-expanded') !== 'true') throw new Error('hamburger menu did not expose its expanded state')
+  if (await menuButton.getAttribute('aria-label') !== '導覽選單已展開') throw new Error('hamburger menu did not expose its expanded accessible name')
   if (!(await drawer.locator('[aria-current="page"]').textContent())?.includes('目前')) throw new Error('drawer did not label the current section')
   await assertTouchTargets(mobile, '.drawer-nav-item', 'drawer navigation')
   await mobile.keyboard.press('Escape')
@@ -158,6 +159,14 @@ try {
   if (!(await menuButton.evaluate((element) => element === document.activeElement))) throw new Error('focus did not return to the hamburger menu after closing the drawer')
   await assertTextContrast(mobile, '.overview-day-copy > p', 4.5, 'overview secondary text')
   await assertTextContrast(mobile, '.overview-footer span', 4.5, 'overview footer text')
+  await assertTextContrast(mobile, '.stay-sequence', 4.5, 'overview lodging sequence')
+  await menuButton.click()
+  await drawer.waitFor({ state: 'visible' })
+  await mobile.setViewportSize({ width: 1024, height: 844 })
+  await drawer.waitFor({ state: 'detached' })
+  await mobile.setViewportSize({ width: 390, height: 844 })
+  await menuButton.waitFor({ state: 'visible' })
+  if (await menuButton.getAttribute('aria-expanded') !== 'false') throw new Error('drawer state remained open after crossing the desktop breakpoint')
 
   await openRoute(mobile, 'sources')
   await mobile.locator('h1, h2').filter({ hasText: '資料來源' }).waitFor({ state: 'attached' })
@@ -174,6 +183,8 @@ try {
   await assertTextContrast(mobile, '.timeline-time span', 4.5, 'timeline secondary time')
   await assertTextContrast(mobile, '.timeline-detail', 4.5, 'timeline detail')
   await assertTouchTargets(mobile, '.day-tab', 'day tab')
+  await mobile.locator('.day-tab').first().focus()
+  await assertStyleContrast(mobile, '.day-tab:focus-visible', 'outlineColor', '.itinerary-day-nav', 'backgroundColor', 3, 'light control focus indicator')
   await assertTouchTargets(mobile, '.print-button', 'print')
   await assertTouchTargets(mobile, '.quick-mode button', 'quick mode')
   await assertTouchTargets(mobile, '.timeline-actions a, .timeline-actions button', 'timeline action')
@@ -194,12 +205,17 @@ try {
   if (wrap.scrollWidth > wrap.clientWidth || wrap.overflowWrap !== 'anywhere') {
     throw new Error(`long Japanese lodging name did not wrap safely: ${JSON.stringify(wrap)}`)
   }
+  await assertTextContrast(mobile, '.page-intro-stats span', 4.5, 'lodging summary count')
+  await assertTextContrast(mobile, '.lodging-route-strip span', 4.5, 'lodging route sequence')
   await assertTextContrast(mobile, '.stay-note', 4.5, 'lodging note')
 
   await openRoute(mobile, 'packing')
   if (await mobile.getByRole('checkbox').count() !== 30) throw new Error('spreadsheet checklist did not render 30 items')
   await mobile.getByText('預約 Ocean Terrace', { exact: true }).waitFor()
   await assertTextContrast(mobile, '.checklist-copy p', 4.5, 'packing detail')
+  await assertStyleContrast(mobile, '.note-editor input', 'borderTopColor', '.note-editor input', 'backgroundColor', 3, 'note input boundary')
+  await mobile.getByRole('checkbox').first().focus()
+  await assertStyleContrast(mobile, '.checklist-group input:focus-visible + .custom-checkbox', 'outlineColor', '.custom-checkbox', 'backgroundColor', 3, 'checkbox focus indicator')
   await mobileContext.close()
 
   const desktopContext = await browser.newContext({ viewport: { width: 1440, height: 900 } })
@@ -211,6 +227,7 @@ try {
     await desktop.locator('.app-main').waitFor({ state: 'visible' })
     await assertNoHorizontalOverflow(desktop, `1440px ${route}`)
   }
+  await assertTextContrast(desktop, '.trip-nav-item.is-active small', 4.5, 'active desktop navigation description')
   await desktopContext.close()
 
   const routeContext = await browser.newContext({ viewport: { width: 390, height: 844 } })

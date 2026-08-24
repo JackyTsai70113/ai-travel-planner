@@ -29,7 +29,7 @@ export function MobileHeader({ title, subtitle, onOpenMenu, isMenuOpen, menuButt
         className="menu-button"
         type="button"
         onClick={onOpenMenu}
-        aria-label="展開導覽選單"
+        aria-label={isMenuOpen ? '導覽選單已展開' : '展開導覽選單'}
         aria-expanded={isMenuOpen}
         aria-controls="mobile-navigation-drawer"
         ref={menuButtonRef}
