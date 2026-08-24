@@ -68,9 +68,8 @@ function itemState(item: BundleDayItem, reservationUnresolved: boolean, leg?: Bu
   if (item.fixed || item.kind === 'reservation' || item.kind === 'flight') states.push('固定')
   if (item.optional || item.kind === 'optional' || item.notes?.toLowerCase().includes('optional')) states.push('可選')
   if (item.cancelable || item.notes?.includes('可取消')) states.push('可取消')
-  if (leg) states.push(operationalStatusLabel(leg.status))
+  if (leg && leg.status !== 'estimated') states.push(operationalStatusLabel(leg.status))
   if (item.unresolved || reservationUnresolved || !item.start_at || !item.end_at) states.push('待補')
-  if (!states.length && item.notes?.includes('估計')) states.push('估計')
   return [...new Set(states.length ? states : ['規劃項目'])]
 }
 
@@ -148,7 +147,6 @@ export function heroNextItem(day: BundleDay, currentMinutes: number | null): Bun
 export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps) {
   const [copiedId, setCopiedId] = useState('')
   const [query, setQuery] = useState('')
-  const [plan, setPlan] = useState<'A' | 'B' | 'C'>('A')
   const [quickMode, setQuickMode] = useState<'all' | 'now' | 'next'>('all')
   const [showPrintView, setShowPrintView] = useState(false)
   const selectedDay = bundle.days.find((day) => day.date === route.day) ?? (route.day && Number(route.day) > 0 ? bundle.days[Number(route.day) - 1] : undefined) ?? bundle.days[0]
@@ -177,8 +175,6 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
     fixed: selectedDay?.items.filter((item) => itemVisualKind(item, !!reservationFor(item)) === 'reservation').length ?? 0,
     unresolved: selectedDay?.items.filter((item) => item.unresolved || reservationFor(item)?.unresolved || !item.start_at || !item.end_at).length ?? 0,
   }
-  const alternatives = (bundle.alternatives || []).filter((alternative) => (alternative.plan || 'A') === plan && ['approved', 'ok', 'recommended', 'selected', 'validator-approved'].includes((alternative.status || '').toLowerCase()))
-
   useEffect(() => {
     if (!route.item) return
     const timer = window.setTimeout(() => document.getElementById(`item-${route.item}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0)
@@ -229,7 +225,7 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
             <div><span>下一站</span><strong>{dayFinished ? '今日行程已結束' : nextHeroLeg ? nextHeroLeg.to_label : nextHeroItem ? findPlaceLabel(bundle.places, nextHeroItem.place_id) : '今日無停靠'}</strong><small>{dayFinished ? '請休息並確認明日安排' : nextHeroItem ? timeLabel(nextHeroItem.start_at) : '—'}</small></div>
             <div><span>今晚住宿</span><strong>{lodging?.name || '返程／尚無當晚住宿'}</strong><small>{lodging?.address || '以當日行程為準'}</small></div>
             <div><span>固定時間</span><strong>{fixedEntries.length ? fixedEntries.map((entry) => entry.time).join('、') : '今日無固定預約'}</strong><small>{fixedEntries.map((entry) => entry.label).join('、') || '保留彈性'}</small></div>
-            <div><span>主要風險</span><strong>{primaryRisk}</strong><small>依規劃估計；出發前以當日狀況重查</small></div>
+            <div><span>主要風險</span><strong>{primaryRisk}</strong><small>營業、天候與即時路況於出發前確認</small></div>
           </div>
         </div>
         <div className="day-stats" aria-label="今日摘要數量">
@@ -263,7 +259,7 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
           const itemCopied = copiedId === `${selectedDay.date}-${item.id}`
           const title = leg ? `${leg.from_label} → ${leg.to_label}` : findPlaceLabel(bundle.places, item.place_id)
           const detail = leg
-            ? `${leg.estimated_duration_minutes == null ? '估計車程尚未確認' : `預估 ${leg.estimated_duration_minutes} 分鐘`} · ${leg.note || '尚無專屬導航提醒'}`
+            ? `${leg.estimated_duration_minutes == null ? '車程尚未確認' : `約 ${leg.estimated_duration_minutes} 分鐘`} · ${leg.note || '尚無專屬導航提醒'}`
             : item.notes || `停留 ${item.expected_stay_minutes == null ? '尚未提供' : `${item.expected_stay_minutes} 分鐘`} · 前段移動 ${item.transfer_minutes == null ? '尚未提供' : `${item.transfer_minutes} 分鐘`}`
           const mapsHref = leg ? legDirectionsLink(bundle, leg) : place?.google_maps_url || buildMapsLink(place?.maps_query || place?.name || item.place_id)
           const copyValue = leg ? `${leg.from_label} → ${leg.to_label}` : `${title} ${findPlaceAddress(bundle.places, item.place_id)}`
@@ -280,8 +276,8 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
               <p className="timeline-detail">{detail}</p>
               {!leg && findPlaceAddress(bundle.places, item.place_id) && <p className="timeline-address">{findPlaceAddress(bundle.places, item.place_id)}</p>}
               {leg ? <div className="timeline-risk"><span className={operationalStatusClass(leg.status)}>{operationalStatusLabel(leg.status)}</span><p><strong>風險／延誤切點：</strong>{leg.note || '未提供；出發前以 Google Maps 即時路況確認。'}</p></div> : null}
-              {!leg && place?.opening_hours_note ? <p className={`timeline-context ${fieldNeedsRecheck(place, 'opening_hours_note') ? 'needs-recheck' : ''}`}><strong>營業時間{fieldNeedsRecheck(place, 'opening_hours_note') ? '（待重查）' : '（已確認）'}：</strong>{place.opening_hours_note}</p> : null}
-              {!leg && place?.parking ? <p className={`timeline-context ${fieldNeedsRecheck(place, 'parking') ? 'needs-recheck' : ''}`}><strong>停車{fieldNeedsRecheck(place, 'parking') ? '（待重查）' : '（已確認）'}：</strong>{place.parking}</p> : null}
+              {!leg && place?.opening_hours_note ? <p className={`timeline-context ${fieldNeedsRecheck(place, 'opening_hours_note') ? 'needs-recheck' : ''}`}><strong>營業時間：</strong>{place.opening_hours_note}</p> : null}
+              {!leg && place?.parking ? <p className={`timeline-context ${fieldNeedsRecheck(place, 'parking') ? 'needs-recheck' : ''}`}><strong>停車：</strong>{place.parking}</p> : null}
               {place?.accessibility_notes ? <p className="timeline-context"><strong>家庭／無障礙：</strong>{place.accessibility_notes}</p> : null}
               {!leg && itemAlternatives.length ? <div className="timeline-inline-alternatives"><strong>試算表備案：</strong>{itemAlternatives.map((alternative) => <a key={alternative.id} href={alternative.google_maps_url || buildMapsLink(alternative.maps_query || alternative.address || alternative.name || alternative.id)} target="_blank" rel="noreferrer">{alternative.name || alternative.id}</a>)}</div> : null}
               <div className="timeline-actions">
@@ -295,11 +291,6 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
         {quickMode !== 'all' && visibleItems.length === 0 && <p className="timeline-empty">目前無法依已知時間判斷「{quickMode === 'now' ? '現在' : '下一站'}」。</p>}
       </div>}
 
-      <section className="itinerary-alternatives">
-        <div><p className="section-label">BACKUP PLAN</p><h3>Plan A / B / C</h3></div>
-        <div className="plan-tabs">{(['A', 'B', 'C'] as const).map((value) => <button key={value} type="button" className={plan === value ? 'active-pill' : ''} onClick={() => setPlan(value)} aria-pressed={plan === value}>Plan {value}</button>)}</div>
-        {alternatives.length ? alternatives.map((alternative) => <article key={alternative.id}><strong>{alternative.title}</strong><p>{alternative.summary || '此方案尚無補充摘要。'}</p></article>) : <p className="muted">目前 Canonical Trip 沒有已核准的 Plan {plan}，不自行補造備案。</p>}
-      </section>
     </section>
   )
 }

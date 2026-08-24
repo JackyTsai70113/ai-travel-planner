@@ -1,7 +1,6 @@
 export type SectionId =
   | 'overview'
   | 'today'
-  | 'map'
   | 'reservation'
   | 'tides'
   | 'food'
@@ -23,7 +22,6 @@ export interface SectionDefinition {
 export const SECTION_DEFINITIONS: SectionDefinition[] = [
   { id: 'overview', label: '旅行總覽', description: 'trip overview', quick: true },
   { id: 'today', label: '每日行程', description: '今天應看哪些行程', dayScoped: true, quick: true },
-  { id: 'map', label: '地圖與自駕', description: '地圖與交通狀態', quick: true },
   { id: 'reservation', label: '預約與票券', description: '確認既有預約', quick: true },
   { id: 'tides', label: '潮汐與動態', description: '潮汐與可變條件', dayScoped: true },
   { id: 'food', label: '餐飲與補給', description: '飲食與補給與替代方案' },

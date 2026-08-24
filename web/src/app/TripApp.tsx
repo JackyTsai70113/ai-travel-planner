@@ -19,7 +19,6 @@ import { LodgingPage } from '../pages/LodgingPage'
 import { HandbookPage } from '../pages/HandbookPage'
 import { PackingPage } from '../pages/PackingPage'
 import { BudgetPage } from '../pages/BudgetPage'
-import { MapPage } from '../pages/MapPage'
 import { JapanesePage } from '../pages/JapanesePage'
 import { SourcesPage } from '../pages/SourcesPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
@@ -203,9 +202,6 @@ export default function TripApp({ tripMeta = null, tripSlug }: TripAppProps) {
         />
       )
     }
-    if (selectedSection === 'map') {
-      return <MapPage bundle={bundle} route={effectiveRoute} currentDay={effectiveRoute.day || itineraryDayFromLastNavigation} />
-    }
     if (selectedSection === 'reservation') {
       return <ReservationsPage bundle={bundle} />
     }
@@ -234,7 +230,7 @@ export default function TripApp({ tripMeta = null, tripSlug }: TripAppProps) {
       return <SourcesPage bundle={bundle} />
     }
     return <NotFoundPage path={effectiveRoute.raw || 'n/a'} />
-  }, [bundleLoader.bundle, effectiveRoute, gotoRoute, itineraryDayFromLastNavigation, routeNotFound, selectedSection, tripMeta])
+  }, [bundleLoader.bundle, effectiveRoute, gotoRoute, routeNotFound, selectedSection, tripMeta])
 
   const statusLabel = toFriendlyStatus(bundleLoader.bundle?.status || 'warning')
   const renderBundleLoading = !bundleLoader.bundle && shellStatus === 'loading'

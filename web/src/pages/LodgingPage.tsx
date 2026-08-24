@@ -121,12 +121,14 @@ export function LodgingPage({ bundle }: LodgingPageProps) {
                   <div><span className={operationalStatusClass(status)}>{operationalStatusLabel(status)}</span><h2>{lodging.place?.name || lodging.placeId}</h2>{lodging.place?.name_ja ? <p>{lodging.place.name_ja}</p> : null}</div>
                   <span className="night-pill">{lodging.nights ? `${lodging.nights} 晚` : '晚數未確認'}</span>
                 </header>
+                {lodging.place?.image_url ? <figure className="lodging-photo"><img src={lodging.place.image_url} alt={lodging.place.image_alt || `${lodging.place.name || lodging.placeId} 圖片`} loading="lazy" /><figcaption>{lodging.place.image_source_url ? <a href={lodging.place.image_source_url} target="_blank" rel="noreferrer">圖片來源</a> : '住宿圖片'}</figcaption></figure> : null}
                 <div className="stay-dates">
                   <div><small>CHECK IN</small><strong>{dateLabel(lodging.checkInDate)}</strong><span>{timeLabel(lodging.checkInTime)}</span></div>
                   <i>→</i>
                   <div><small>CHECK OUT</small><strong>{dateLabel(lodging.checkOutDate)}</strong><span>{timeLabel(lodging.checkOutTime)}</span></div>
                 </div>
                 <div className="stay-address"><span aria-hidden="true">⌖</span><div><small>完整地址</small><p>{lodging.place?.address || 'Canonical Trip 尚未提供完整地址'}</p></div></div>
+                {lodging.place?.opening_hours_note ? <p className="stay-note"><strong>入住／退房規則：</strong>{lodging.place.opening_hours_note}</p> : null}
                 <p className="stay-boundary-note">{lodging.boundaryNote}</p>
                 {lodging.note ? <p className="stay-note"><strong>入住提醒：</strong>{lodging.note}</p> : null}
                 {lodging.place?.accessibility_notes ? <p className="stay-note"><strong>家庭／無障礙：</strong>{lodging.place.accessibility_notes}</p> : null}

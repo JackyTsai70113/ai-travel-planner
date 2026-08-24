@@ -92,6 +92,9 @@ export interface BundlePlace {
   name_ja?: string | null
   phone?: string | null
   official_url?: string | null
+  image_url?: string | null
+  image_source_url?: string | null
+  image_alt?: string | null
   google_maps_url?: string | null
   opening_hours_note?: string | null
   parking?: string | null
