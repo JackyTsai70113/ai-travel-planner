@@ -181,11 +181,11 @@ def _validate_repository_contracts() -> None:
         )
     agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
     for phrase in (
-        "latest `origin/main`",
-        "one external Git worktree",
-        "write paths do not overlap",
-        "regular, non-Draft PR",
-        "Do not automatically merge",
+        "最新的 `origin/main`",
+        "一個外部 Git worktree",
+        "寫入路徑不重疊",
+        "regular、非 Draft",
+        "不得自動 merge",
     ):
         _require(phrase in agents, f"AGENTS.md contract missing: {phrase}")
     workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
