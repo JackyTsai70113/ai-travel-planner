@@ -77,6 +77,59 @@ async function assertTouchTargets(page, selector, label) {
   }
 }
 
+function contrastRatio(foreground, background, label) {
+  const parseRgb = (value) => {
+    const channels = value.match(/[\d.]+/g)?.map(Number)
+    if (!channels || channels.length < 3) throw new Error(`${label} has unsupported color: ${value}`)
+    return channels.slice(0, 3)
+  }
+  const luminance = (value) => {
+    const channels = parseRgb(value).map((channel) => {
+      const normalized = channel / 255
+      return normalized <= 0.04045 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4
+    })
+    return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2]
+  }
+  const foregroundLuminance = luminance(foreground)
+  const backgroundLuminance = luminance(background)
+  return (Math.max(foregroundLuminance, backgroundLuminance) + 0.05) / (Math.min(foregroundLuminance, backgroundLuminance) + 0.05)
+}
+
+function assertMinimumContrast(colors, minimum, label) {
+  const ratio = contrastRatio(colors.foreground, colors.background, label)
+  if (ratio < minimum) {
+    throw new Error(`${label} contrast is ${ratio.toFixed(2)}:1 (${colors.foreground} on ${colors.background}); expected at least ${minimum}:1`)
+  }
+}
+
+async function assertStyleContrast(page, foregroundSelector, foregroundProperty, backgroundSelector, backgroundProperty, minimum, label) {
+  const colors = await page.evaluate(({ foregroundSelector, foregroundProperty, backgroundSelector, backgroundProperty }) => {
+    const foreground = document.querySelector(foregroundSelector)
+    const background = document.querySelector(backgroundSelector)
+    if (!foreground || !background) return null
+    return {
+      foreground: getComputedStyle(foreground)[foregroundProperty],
+      background: getComputedStyle(background)[backgroundProperty],
+    }
+  }, { foregroundSelector, foregroundProperty, backgroundSelector, backgroundProperty })
+  if (!colors) throw new Error(`${label} contrast elements were not rendered`)
+  assertMinimumContrast(colors, minimum, label)
+}
+
+async function assertTextContrast(page, selector, minimum, label) {
+  const colors = await page.locator(selector).first().evaluate((element) => {
+    let background = element
+    while (background.parentElement && getComputedStyle(background).backgroundColor === 'rgba(0, 0, 0, 0)') {
+      background = background.parentElement
+    }
+    return {
+      foreground: getComputedStyle(element).color,
+      background: getComputedStyle(background).backgroundColor,
+    }
+  })
+  assertMinimumContrast(colors, minimum, label)
+}
+
 let browser
 try {
   await waitForServer()
@@ -85,6 +138,35 @@ try {
   const mobileContext = await browser.newContext({ viewport: { width: 390, height: 844 } })
   const mobile = await mobileContext.newPage()
   mobile.setDefaultTimeout(10000)
+
+  await openRoute(mobile, 'overview')
+  if (await mobile.locator('.mobile-bottom-nav').count()) throw new Error('mobile bottom navigation must not be rendered')
+  const menuButton = mobile.locator('.menu-button')
+  await assertTouchTargets(mobile, '.menu-button', 'hamburger menu')
+  await assertStyleContrast(mobile, '.menu-button', 'color', '.menu-button', 'backgroundColor', 4.5, 'hamburger icon')
+  await assertStyleContrast(mobile, '.menu-button', 'borderTopColor', '.mobile-topbar', 'backgroundColor', 3, 'hamburger boundary')
+  if (await menuButton.getAttribute('aria-expanded') !== 'false') throw new Error('hamburger menu did not expose its collapsed state')
+  await menuButton.click()
+  const drawer = mobile.locator('#mobile-navigation-drawer')
+  await drawer.waitFor({ state: 'visible' })
+  if (await menuButton.getAttribute('aria-expanded') !== 'true') throw new Error('hamburger menu did not expose its expanded state')
+  if (await menuButton.getAttribute('aria-label') !== '導覽選單已展開') throw new Error('hamburger menu did not expose its expanded accessible name')
+  if (!(await drawer.locator('[aria-current="page"]').textContent())?.includes('目前')) throw new Error('drawer did not label the current section')
+  await assertTouchTargets(mobile, '.drawer-nav-item', 'drawer navigation')
+  await mobile.keyboard.press('Escape')
+  await drawer.waitFor({ state: 'detached' })
+  if (await menuButton.getAttribute('aria-expanded') !== 'false') throw new Error('hamburger menu did not expose its collapsed state after Escape')
+  if (!(await menuButton.evaluate((element) => element === document.activeElement))) throw new Error('focus did not return to the hamburger menu after closing the drawer')
+  await assertTextContrast(mobile, '.overview-day-copy > p', 4.5, 'overview secondary text')
+  await assertTextContrast(mobile, '.overview-footer span', 4.5, 'overview footer text')
+  await assertTextContrast(mobile, '.stay-sequence', 4.5, 'overview lodging sequence')
+  await menuButton.click()
+  await drawer.waitFor({ state: 'visible' })
+  await mobile.setViewportSize({ width: 1024, height: 844 })
+  await drawer.waitFor({ state: 'detached' })
+  await mobile.setViewportSize({ width: 390, height: 844 })
+  await menuButton.waitFor({ state: 'visible' })
+  if (await menuButton.getAttribute('aria-expanded') !== 'false') throw new Error('drawer state remained open after crossing the desktop breakpoint')
 
   await openRoute(mobile, 'sources')
   await mobile.locator('h1, h2').filter({ hasText: '資料來源' }).waitFor({ state: 'attached' })
@@ -98,7 +180,11 @@ try {
   }
 
   await openRoute(mobile, 'today/2026-08-29')
+  await assertTextContrast(mobile, '.timeline-time span', 4.5, 'timeline secondary time')
+  await assertTextContrast(mobile, '.timeline-detail', 4.5, 'timeline detail')
   await assertTouchTargets(mobile, '.day-tab', 'day tab')
+  await mobile.locator('.day-tab').first().focus()
+  await assertStyleContrast(mobile, '.day-tab:focus-visible', 'outlineColor', '.itinerary-day-nav', 'backgroundColor', 3, 'light control focus indicator')
   await assertTouchTargets(mobile, '.print-button', 'print')
   await assertTouchTargets(mobile, '.quick-mode button', 'quick mode')
   await assertTouchTargets(mobile, '.timeline-actions a, .timeline-actions button', 'timeline action')
@@ -119,10 +205,17 @@ try {
   if (wrap.scrollWidth > wrap.clientWidth || wrap.overflowWrap !== 'anywhere') {
     throw new Error(`long Japanese lodging name did not wrap safely: ${JSON.stringify(wrap)}`)
   }
+  await assertTextContrast(mobile, '.page-intro-stats span', 4.5, 'lodging summary count')
+  await assertTextContrast(mobile, '.lodging-route-strip span', 4.5, 'lodging route sequence')
+  await assertTextContrast(mobile, '.stay-note', 4.5, 'lodging note')
 
   await openRoute(mobile, 'packing')
   if (await mobile.getByRole('checkbox').count() !== 30) throw new Error('spreadsheet checklist did not render 30 items')
   await mobile.getByText('預約 Ocean Terrace', { exact: true }).waitFor()
+  await assertTextContrast(mobile, '.checklist-copy p', 4.5, 'packing detail')
+  await assertStyleContrast(mobile, '.note-editor input', 'borderTopColor', '.note-editor input', 'backgroundColor', 3, 'note input boundary')
+  await mobile.getByRole('checkbox').first().focus()
+  await assertStyleContrast(mobile, '.checklist-group input:focus-visible + .custom-checkbox', 'outlineColor', '.custom-checkbox', 'backgroundColor', 3, 'checkbox focus indicator')
   await mobileContext.close()
 
   const desktopContext = await browser.newContext({ viewport: { width: 1440, height: 900 } })
@@ -134,6 +227,7 @@ try {
     await desktop.locator('.app-main').waitFor({ state: 'visible' })
     await assertNoHorizontalOverflow(desktop, `1440px ${route}`)
   }
+  await assertTextContrast(desktop, '.trip-nav-item.is-active small', 4.5, 'active desktop navigation description')
   await desktopContext.close()
 
   const routeContext = await browser.newContext({ viewport: { width: 390, height: 844 } })

@@ -3,7 +3,6 @@ import { Bundle, toFriendlyStatus } from '../contracts/trip'
 import { SectionDefinition } from '../app/route-registry'
 import { DesktopSidebar } from './DesktopSidebar'
 import { MobileHeader } from './MobileHeader'
-import { MobileNavigation } from './MobileNavigation'
 
 export type TripStatusType =
   | 'normal'
@@ -52,6 +51,8 @@ export default function TripShell({
   children,
 }: TripShellProps) {
   const drawerRef = useRef<HTMLDivElement>(null)
+  const menuButtonRef = useRef<HTMLButtonElement>(null)
+  const wasDrawerOpen = useRef(isDrawerOpen)
   const [currentStatusText, setCurrentStatusText] = useState(statusText[shellStatus])
 
   useEffect(() => {
@@ -62,6 +63,25 @@ export default function TripShell({
   const subtitle = bundle?.date_range
     ? `${bundle.date_range.start_date} ~ ${bundle.date_range.end_date}（${toFriendlyStatus(bundle.status)}）`
     : '行程資料載入中'
+
+  useEffect(() => {
+    if (!isDrawerOpen && wasDrawerOpen.current && window.matchMedia('(max-width: 960px)').matches) {
+      menuButtonRef.current?.focus()
+    }
+    wasDrawerOpen.current = isDrawerOpen
+  }, [isDrawerOpen])
+
+  useEffect(() => {
+    const desktopViewport = window.matchMedia('(min-width: 961px)')
+    const closeDrawerOnDesktop = (matches: boolean) => {
+      if (matches) setDrawerOpen(false)
+    }
+    const onViewportChange = (event: MediaQueryListEvent) => closeDrawerOnDesktop(event.matches)
+
+    closeDrawerOnDesktop(desktopViewport.matches)
+    desktopViewport.addEventListener('change', onViewportChange)
+    return () => desktopViewport.removeEventListener('change', onViewportChange)
+  }, [setDrawerOpen])
 
   useEffect(() => {
     if (isDrawerOpen) {
@@ -107,6 +127,8 @@ export default function TripShell({
         title={title}
         subtitle={subtitle}
         onOpenMenu={() => setDrawerOpen(true)}
+        isMenuOpen={isDrawerOpen}
+        menuButtonRef={menuButtonRef}
         statusText={currentStatusText}
         shellStatus={shellStatus}
       />
@@ -158,13 +180,19 @@ export default function TripShell({
         </main>
       </div>
 
-      <MobileNavigation sections={sections} activeSection={activeSection} onNavigate={onNavigateSection} />
-
       {isDrawerOpen ? (
         <div className="drawer-scrim" onClick={() => setDrawerOpen(false)} role="presentation">
-          <aside className="mobile-drawer" role="dialog" aria-label="行程區段導覽" onClick={(event) => event.stopPropagation()} ref={drawerRef}>
+          <aside
+            className="mobile-drawer"
+            id="mobile-navigation-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="mobile-navigation-title"
+            onClick={(event) => event.stopPropagation()}
+            ref={drawerRef}
+          >
             <div className="drawer-header">
-              <h2>導航</h2>
+              <h2 id="mobile-navigation-title">導航</h2>
               <button type="button" onClick={() => setDrawerOpen(false)} aria-label="關閉導覽">
                 關閉
               </button>
@@ -175,12 +203,14 @@ export default function TripShell({
                   key={section.id}
                   type="button"
                   className={`drawer-nav-item ${section.id === activeSection ? 'is-active' : ''}`}
+                  aria-current={section.id === activeSection ? 'page' : undefined}
                   onClick={() => {
                     onNavigateSection(section.id)
                     setDrawerOpen(false)
                   }}
                 >
-                  {section.label}
+                  <span>{section.label}</span>
+                  {section.id === activeSection ? <small>目前</small> : null}
                 </button>
               ))}
             </nav>

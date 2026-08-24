@@ -12,7 +12,6 @@
   --error: #a81f2c;
   --muted-bg: #f3f7fd;
   --focus: #0e5ea8;
-  --mobile-nav-h: 68px;
 }
 
 * { box-sizing: border-box; }
@@ -43,7 +42,7 @@ a {
 .app-frame {
   display: flex;
   flex: 1;
-  min-height: calc(100dvh - 58px - var(--mobile-nav-h));
+  min-height: calc(100dvh - 58px);
 }
 
 .trip-sidebar {
@@ -114,7 +113,7 @@ a {
 .app-main {
   flex: 1;
   overflow: auto;
-  padding: 12px 12px calc(var(--mobile-nav-h) + env(safe-area-inset-bottom) + 16px);
+  padding: 12px 12px 28px;
 }
 
 .trip-main-header {
@@ -487,7 +486,7 @@ button:focus-visible {
 }
 
 button:focus-visible {
-  outline: 2px solid #9dd3ff;
+  outline: 3px solid #075f91;
   outline-offset: 2px;
 }
 
@@ -540,61 +539,55 @@ textarea {
   border-bottom: 1px solid #2b4c70;
   padding: 10px 12px env(safe-area-inset-top) 12px;
   display: grid;
-  grid-template-columns: 64px 1fr auto;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
   align-items: center;
   column-gap: 12px;
 }
 
+.mobile-topbar-title { min-width: 0; }
+.mobile-topbar-title p,
+.mobile-topbar-title small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mobile-topbar-title p { margin: 0; font-weight: 700; font-size: 1rem; }
-.mobile-topbar-title small { color: #c8d4e6; display: block; margin-top: 2px; font-size: 0.75rem; }
+.mobile-topbar-title small { color: #d7e2e8; display: block; margin-top: 2px; font-size: 0.75rem; }
 
 .menu-button {
+  display: grid;
+  place-items: center;
+  width: 44px;
   height: 44px;
-  min-width: 52px;
-  background: #1d4f79;
+  min-width: 44px;
+  padding: 0;
+  border: 1px solid #87a9b8;
+  border-radius: 10px;
+  color: #fff;
+  background: #173e59;
+  cursor: pointer;
+}
+
+.menu-icon {
+  display: grid;
+  gap: 4px;
+}
+
+.menu-icon span {
+  display: block;
+  width: 21px;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
 }
 
 .mobile-status {
   font-size: 0.75rem;
-  color: #bfd7ec;
-  background: rgba(255, 255, 255, 0.12);
+  color: #f0f6f8;
+  background: #294559;
+  border: 1px solid #668594;
   border-radius: 999px;
   padding: 6px 10px;
   white-space: nowrap;
 }
 
-.mobile-status.loading { color: #9fd3ff; }
-
-.mobile-bottom-nav {
-  display: none;
-  position: fixed;
-  inset: auto 0 0 0;
-  z-index: 40;
-  background: rgba(7, 25, 43, 0.98);
-  padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
-  border-top: 1px solid #2b4d73;
-}
-
-.mobile-bottom-track {
-  width: min(1040px, 100%);
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 6px;
-}
-
-.bottom-nav-item {
-  border: none;
-  border-radius: 999px;
-  padding: 9px 6px;
-  background: #0f3458;
-  min-height: 44px;
-  color: #edf2ff;
-}
-
-.bottom-nav-item.is-active {
-  background: #2e78ca;
-}
+.mobile-status.loading { color: #d8ebf8; }
 
 .drawer-scrim {
   position: fixed;
@@ -602,16 +595,17 @@ textarea {
   background: rgba(8, 13, 24, 0.56);
   z-index: 50;
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 
 .mobile-drawer {
-  width: min(84vw, 320px);
-  background: #0a2643;
-  color: #edf3ff;
+  width: min(86vw, 336px);
+  background: #0c2235;
+  color: #f5f9fb;
   height: 100%;
-  padding: 12px;
-  box-shadow: -10px 0 24px rgba(4, 13, 29, 0.5);
+  padding: max(14px, env(safe-area-inset-top)) 14px 20px;
+  overflow-y: auto;
+  box-shadow: 12px 0 30px rgba(4, 13, 29, 0.5);
 }
 
 .drawer-header {
@@ -625,6 +619,14 @@ textarea {
   font-size: 1rem;
 }
 
+.drawer-header button {
+  min-width: 56px;
+  min-height: 44px;
+  border: 1px solid #7895a3;
+  color: #f5f9fb;
+  background: #17384e;
+}
+
 .mobile-drawer-nav {
   display: grid;
   gap: 6px;
@@ -632,9 +634,12 @@ textarea {
 }
 
 .drawer-nav-item {
-  border: 1px solid #27527a;
-  background: #12385d;
-  color: #edf4ff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid #587485;
+  background: #152f43;
+  color: #f4f8fa;
   border-radius: 10px;
   text-align: left;
   padding: 10px 12px;
@@ -642,7 +647,17 @@ textarea {
 }
 
 .drawer-nav-item.is-active {
-  border-color: #5ea2f7;
+  border-color: #8bd4da;
+  background: #006d7c;
+  font-weight: 800;
+}
+
+.drawer-nav-item.is-active small {
+  padding: 2px 6px;
+  border-radius: 999px;
+  color: #0c2235;
+  background: #d8f3f1;
+  font-size: .65rem;
 }
 
 @media (max-width: 960px) {
@@ -651,13 +666,12 @@ textarea {
     display: none;
   }
 
-  .mobile-topbar,
-  .mobile-bottom-nav {
-    display: block;
+  .mobile-topbar {
+    display: grid;
   }
 
   .app-frame {
-    min-height: calc(100dvh - 58px - var(--mobile-nav-h));
+    min-height: calc(100dvh - 58px);
   }
 
   .trip-content {
@@ -669,36 +683,17 @@ textarea {
     padding: 10px;
   }
 
-  .mobile-bottom-track {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding-bottom: 2px;
-    scrollbar-width: none;
-  }
-
-  .mobile-bottom-track::-webkit-scrollbar {
-    display: none;
-  }
-
-  .bottom-nav-item {
-    white-space: nowrap;
-    min-width: 72px;
-    font-size: 0.85rem;
-  }
-
   .day-tabs {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .app-main {
-    padding-bottom: calc(var(--mobile-nav-h) + env(safe-area-inset-bottom) + 16px);
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
   }
 }
 
 @media (min-width: 961px) {
   .mobile-topbar,
-  .mobile-bottom-nav,
   .drawer-scrim {
     display: none;
   }
@@ -714,7 +709,7 @@ textarea {
 
 @media (max-width: 560px) {
   .app-main {
-    padding: 8px 10px 84px;
+    padding: 8px 10px calc(24px + env(safe-area-inset-bottom));
   }
   .grid.two-col {
     grid-template-columns: 1fr;
@@ -727,7 +722,6 @@ textarea {
 
 @media print {
   .app-shell .mobile-topbar,
-  .app-shell .mobile-bottom-nav,
   .app-shell .trip-sidebar,
   .app-shell .drawer-scrim {
     display: none !important;
@@ -797,9 +791,6 @@ button { font-family: inherit; }
 .trip-content { width: min(1120px, 100%); }
 .card, .card-shell { border: 1px solid #e5ecef; border-radius: 16px; padding: 20px; box-shadow: 0 4px 16px rgba(28, 50, 64, .04); }
 .mobile-topbar { background: #0f1e2e; border-bottom: 1px solid #20394d; }
-.mobile-bottom-nav { background: #0f1e2e; border-top: 1px solid #20394d; }
-.bottom-nav-item { background: #182c3d; }
-.bottom-nav-item.is-active { background: #0b6da8; }
 
 .itinerary-workspace { min-width: 0; }
 .itinerary-day-nav { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 14px; padding: 12px 0; margin-bottom: 20px; background: color-mix(in srgb, #f8fafc 92%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid #e4ebee; }
@@ -844,7 +835,7 @@ button { font-family: inherit; }
 
 @media (max-width: 960px) {
   .app-shell .app-main { display: block; }
-  .app-main { padding: 0 12px calc(var(--mobile-nav-h) + env(safe-area-inset-bottom) + 18px); }.desktop-topbar { display: none; }.trip-main-header { margin: 14px 0 8px; }.trip-version { margin-bottom: 11px; }.itinerary-day-nav { top: 58px; margin: 0 -12px 15px; padding: 9px 12px; }.day-nav-label { display: none; }.day-tabs { flex: 1; }.day-stats { align-self: auto; }.timeline-entry { grid-template-columns: 58px 27px minmax(0, 1fr); }.timeline-card { margin-left: 7px; padding-left: 13px; }.timeline-entry.reservation .timeline-card { margin-left: 7px; }.timeline-time { padding-right: 8px; }.timeline-time strong { font-size: .76rem; }.timeline-track > span { width: 22px; height: 22px; border-width: 2px; }.timeline-track i { top: 21px; }.itinerary-alternatives { grid-template-columns: 1fr; }.plan-tabs { justify-content: flex-start; }
+  .app-main { padding: 0 12px calc(24px + env(safe-area-inset-bottom)); }.desktop-topbar { display: none; }.trip-main-header { margin: 14px 0 8px; }.trip-version { margin-bottom: 11px; }.itinerary-day-nav { top: 58px; margin: 0 -12px 15px; padding: 9px 12px; }.day-nav-label { display: none; }.day-tabs { flex: 1; }.day-stats { align-self: auto; }.timeline-entry { grid-template-columns: 58px 27px minmax(0, 1fr); }.timeline-card { margin-left: 7px; padding-left: 13px; }.timeline-entry.reservation .timeline-card { margin-left: 7px; }.timeline-time { padding-right: 8px; }.timeline-time strong { font-size: .76rem; }.timeline-track > span { width: 22px; height: 22px; border-width: 2px; }.timeline-track i { top: 21px; }.itinerary-alternatives { grid-template-columns: 1fr; }.plan-tabs { justify-content: flex-start; }
 }
 @media (max-width: 620px) {
   .main-title { font-size: 1.08rem; }.shell-status-line { font-size: .7rem; }.itinerary-day-nav { gap: 8px; }.day-tab { min-width: 54px; padding: 7px; }.print-button { min-height: 32px; padding: 6px 8px; }.day-hero { display: block; padding: 23px 20px; border-radius: 16px; }.day-hero h2 { font-size: 1.42rem; }.day-stats { margin-top: 18px; }.day-stats span { min-width: 0; flex: 1; }.itinerary-utility { display: grid; align-items: stretch; }.itinerary-search { min-width: 0; }.quick-mode { justify-content: flex-start; }.timeline-card h3 { font-size: .92rem; }.timeline-actions a, .timeline-actions button { min-height: 44px; }.timeline-entry { min-height: 155px; }.timeline-card-topline { align-items: flex-start; }.timeline-category { padding-top: 3px; }.search-results button { grid-template-columns: 34px 1fr; }.search-results button small { grid-column: 2; }.itinerary-alternatives { padding: 15px; }
@@ -1026,6 +1017,297 @@ body,
   .lodging-card-main > header { display: grid; }.night-pill { justify-self: start; }.stay-actions > * { flex: 1 1 130px; }
   .reservation-alert { display: grid; }.reservation-card { grid-template-columns: 1fr; padding: 15px; }.reservation-time { display: flex; align-items: baseline; gap: 9px; padding: 0 0 10px; border-right: 0; border-bottom: 1px solid #e6edef; }.reservation-title-row { display: grid; }.reservation-kind { justify-self: start; }.reservation-facts { grid-template-columns: 1fr; }.reservation-actions > * { flex: 1 1 130px; }
   .checklist-progress { width: 100%; height: 64px; display: flex; gap: 10px; }.checklist-groups { grid-template-columns: 1fr; }.packing-toolbar { flex-wrap: wrap; }.packing-toolbar button { margin-left: 0; }.notes-workspace { padding: 15px; }.note-card { grid-template-columns: 1fr; }.note-card .action-row { grid-column: 1; grid-row: auto; }
+}
+
+/* Issue 106 · stronger visual hierarchy and WCAG AA contrast. */
+:root {
+  --bg: #edf2f5;
+  --panel: #ffffff;
+  --panel-strong: #e5edf1;
+  --text: #142f3d;
+  --text-sub: #455e69;
+  --text-muted: #506773;
+  --line: #afc0c8;
+  --line-strong: #718b97;
+  --brand: #0b6da8;
+  --brand-deep: #075f91;
+  --success: #0b6849;
+  --warn: #80520f;
+  --error: #922431;
+  --muted-bg: #f3f7f8;
+}
+
+body,
+.app-main {
+  background: var(--bg);
+}
+
+.desktop-topbar,
+.itinerary-day-nav,
+.handbook-day-tabs {
+  background-color: rgba(255, 255, 255, .96);
+  border-color: #afc0c8;
+}
+
+.desktop-topbar,
+.desktop-status,
+.desktop-travelers {
+  color: #455e69;
+}
+
+.desktop-status,
+.desktop-travelers,
+.desktop-quick-actions button,
+.day-tab,
+.print-button,
+.quick-mode button,
+.plan-tabs button,
+.timeline-actions a,
+.timeline-actions button,
+.handbook-day-tabs button,
+.stay-actions a,
+.stay-actions button,
+.reservation-actions a,
+.reservation-actions button,
+.secondary-button,
+.danger-button,
+.note-editor input,
+.note-editor textarea {
+  border-color: var(--line-strong);
+}
+
+.desktop-quick-actions button,
+.day-tab,
+.print-button,
+.quick-mode button,
+.plan-tabs button,
+.secondary-button {
+  color: #344f5c;
+  background: #fff;
+}
+
+.day-tab.active,
+.handbook-day-tabs button.is-active,
+.stay-actions .primary,
+.reservation-actions .primary {
+  color: #fff;
+  border-color: var(--brand-deep);
+  background: var(--brand-deep);
+}
+
+.card,
+.card-shell,
+.overview-section,
+.map-day-panel,
+.lodging-card,
+.reservation-card,
+.checklist-group,
+.notes-workspace,
+.itinerary-alternatives,
+.search-results {
+  border-color: var(--line);
+  background: #fff;
+  box-shadow: 0 7px 20px rgba(20, 47, 61, .08);
+}
+
+.overview-day-card,
+.route-leg-card,
+.search-results button,
+.stay-dates,
+.timeline-risk,
+.checklist-group > header,
+.note-editor input,
+.note-editor textarea {
+  border-color: #c3d0d6;
+  background: #f3f7f8;
+}
+
+.trip-brand-subtitle,
+.trip-sidebar-status small,
+.trip-sidebar-footer,
+.trip-sidebar-footer small,
+.trip-nav-label,
+.trip-nav-item:not(.is-active) small {
+  color: #b8c8cf;
+}
+
+.trip-nav-item:not(.is-active) {
+  color: #e4edf1;
+}
+
+.trip-nav-item:not(.is-active) .trip-nav-icon {
+  color: #9fe3dd;
+}
+
+.trip-nav-item.is-active small {
+  color: #fff;
+}
+
+.mobile-topbar button:focus-visible,
+.mobile-drawer button:focus-visible,
+.trip-sidebar button:focus-visible {
+  outline-color: #9fe3dd;
+}
+
+.page-intro p,
+.page-intro-stats span,
+.data-footnote,
+.honest-inline,
+.day-nav-label,
+.itinerary-search,
+.quick-mode,
+.plan-tabs,
+.search-results p,
+.search-results button small,
+.timeline-time span,
+.timeline-category,
+.timeline-card h3 small,
+.timeline-detail,
+.timeline-address,
+.timeline-empty,
+.itinerary-alternatives .section-label,
+.itinerary-alternatives article p,
+.overview-day-number,
+.overview-day-copy > p,
+.overview-day-foot,
+.overview-stay-list p,
+.overview-stay-list small,
+.overview-alert-list small,
+.overview-footer,
+.timeline-risk p,
+.timeline-context,
+.timeline-inline-alternatives,
+.map-day-header p:not(.eyebrow),
+.route-leg-index,
+.route-leg-topline,
+.route-endpoints small,
+.route-leg-facts dt,
+.lodging-route-strip small,
+.lodging-card-number,
+.lodging-card-main header p,
+.lodging-photo figcaption,
+.stay-dates small,
+.stay-dates span,
+.stay-address small,
+.stay-boundary-note,
+.stay-note,
+.reservation-day > header,
+.reservation-time span,
+.reservation-kind,
+.reservation-facts dt,
+.checklist-progress span,
+.checklist-group header small,
+.checklist-copy small,
+.checklist-copy p,
+.reference-note,
+.checklist-group li > a,
+.note-card small,
+.note-card p {
+  color: var(--text-muted);
+}
+
+.eyebrow,
+.overview-day-number strong,
+.section-heading > a,
+.section-heading > span,
+.timeline-actions a,
+.timeline-actions button,
+.timeline-inline-alternatives a,
+.lodging-photo a,
+.stay-actions a,
+.stay-actions button,
+.reservation-actions a,
+.reservation-actions button {
+  color: var(--brand-deep);
+}
+
+.overview-day-route i,
+.stay-dates > i,
+.stay-address > span,
+.route-endpoints > span {
+  color: #006d7c;
+}
+
+.stay-sequence,
+.lodging-route-strip span {
+  background: #006d7c;
+}
+
+.overview-warning,
+.timeline-context.needs-recheck,
+.route-risk-note,
+.reservation-alert,
+.reservation-risk {
+  color: #65430f;
+  border-color: #c58a2e;
+  background: #fff4de;
+}
+
+.warning-text,
+.overview-alert-list > a strong,
+.reservation-time strong,
+.source-chip.fallback,
+.checklist-copy .fallback-note {
+  color: var(--warn);
+}
+
+.timeline-track i,
+.progress-track {
+  background: #aabdc5;
+}
+
+.custom-checkbox {
+  border-color: var(--line-strong);
+}
+
+.checklist-group input:focus-visible + .custom-checkbox {
+  outline: 3px solid var(--brand-deep);
+  outline-offset: 2px;
+}
+
+.note-editor input,
+.note-editor textarea {
+  border-color: var(--line-strong);
+}
+
+.day-answer-grid > div,
+.day-stats span {
+  border-color: #7897a4;
+  background: rgba(5, 23, 34, .78);
+}
+
+.day-answer-grid span,
+.day-kicker,
+.trip-hero-eyebrow {
+  color: #9fe3dd;
+}
+
+.day-answer-grid small,
+.day-stats span,
+.day-hero p,
+.trip-hero-meta,
+.trip-overview-hero .hero-summary {
+  color: #d2e4e3;
+}
+
+.status-pill {
+  background: rgba(4, 23, 34, .72);
+}
+
+.hero-brief {
+  border-color: #7897a4;
+  background: rgba(4, 23, 34, .84);
+}
+
+.hero-brief > p,
+.hero-brief dt,
+.hero-brief small {
+  color: #b8c8cf;
+}
+
+@media (max-width: 960px) {
+  .app-frame { min-height: calc(100dvh - 65px); }
+  .app-main { background: var(--bg); }
 }
 
 /* Touch targets: keep primary mobile controls usable after compact theme overrides. */
