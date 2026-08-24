@@ -63,14 +63,49 @@ function timeLabel(value: string | null): string {
   return value.match(/T(\d{2}:\d{2})/)?.[1] || value
 }
 
+function comparableText(value: string): string {
+  return value.toLowerCase().replace(/[\s「」（）()]+/g, '')
+}
+
+function textClauses(value: string): string[] {
+  return value.split(/[，。；：:、／/·・]+/).map(comparableText).filter(Boolean)
+}
+
+function negationMarkers(value: string): string[] {
+  return ['不可', '不能', '無法', '禁止', '避免', '不宜', '不得', '不要', '沒有', '不適用', '不適合', '不通行', '不建議', '不', '未', '非']
+    .filter((marker) => value.includes(marker))
+}
+
+function isSubsequence(needle: string, haystack: string): boolean {
+  let cursor = 0
+  for (const character of needle) {
+    const foundAt = haystack.indexOf(character, cursor)
+    if (foundAt < 0) return false
+    cursor = foundAt + 1
+  }
+  return true
+}
+
+function accessibilityNoteCovered(itemNotes: string | undefined, accessibilityNotes: string | null | undefined): boolean {
+  if (!itemNotes || !accessibilityNotes) return false
+  const noteClauses = textClauses(itemNotes)
+  const accessibilityClauses = textClauses(accessibilityNotes)
+  return accessibilityClauses.length > 0 && accessibilityClauses.every((clause) =>
+    noteClauses.some((noteClause) => {
+      if (JSON.stringify(negationMarkers(noteClause)) !== JSON.stringify(negationMarkers(clause))) return false
+      return noteClause.includes(clause) || isSubsequence(clause, noteClause)
+    }),
+  )
+}
+
 function itemState(item: BundleDayItem, reservationUnresolved: boolean, leg?: BundleTransportLeg): string[] {
   const states: string[] = []
   if (item.fixed || item.kind === 'reservation' || item.kind === 'flight') states.push('固定')
   if (item.optional || item.kind === 'optional' || item.notes?.toLowerCase().includes('optional')) states.push('可選')
   if (item.cancelable || item.notes?.includes('可取消')) states.push('可取消')
-  if (leg && leg.status !== 'estimated') states.push(operationalStatusLabel(leg.status))
+  if (leg) states.push(operationalStatusLabel(leg.status))
   if (item.unresolved || reservationUnresolved || !item.start_at || !item.end_at) states.push('待補')
-  return [...new Set(states.length ? states : ['規劃項目'])]
+  return [...new Set(states)]
 }
 
 function itemVisualKind(item: BundleDayItem, reservationLinked = false): 'reservation' | 'meal' | 'move' | 'place' {
@@ -259,7 +294,7 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
           const itemCopied = copiedId === `${selectedDay.date}-${item.id}`
           const title = leg ? `${leg.from_label} → ${leg.to_label}` : findPlaceLabel(bundle.places, item.place_id)
           const detail = leg
-            ? `${leg.estimated_duration_minutes == null ? '車程尚未確認' : `約 ${leg.estimated_duration_minutes} 分鐘`} · ${leg.note || '尚無專屬導航提醒'}`
+            ? leg.estimated_duration_minutes == null ? '車程尚未確認' : `約 ${leg.estimated_duration_minutes} 分鐘`
             : item.notes || `停留 ${item.expected_stay_minutes == null ? '尚未提供' : `${item.expected_stay_minutes} 分鐘`} · 前段移動 ${item.transfer_minutes == null ? '尚未提供' : `${item.transfer_minutes} 分鐘`}`
           const mapsHref = leg ? legDirectionsLink(bundle, leg) : place?.google_maps_url || buildMapsLink(place?.maps_query || place?.name || item.place_id)
           const copyValue = leg ? `${leg.from_label} → ${leg.to_label}` : `${title} ${findPlaceAddress(bundle.places, item.place_id)}`
@@ -278,7 +313,7 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
               {leg ? <div className="timeline-risk">{leg.status !== 'estimated' ? <span className={operationalStatusClass(leg.status)}>{operationalStatusLabel(leg.status)}</span> : null}<p><strong>風險／延誤切點：</strong>{leg.note || '未提供；出發前以 Google Maps 即時路況確認。'}</p></div> : null}
               {!leg && place?.opening_hours_note ? <p className={`timeline-context ${fieldNeedsRecheck(place, 'opening_hours_note') ? 'needs-recheck' : ''}`}><strong>營業時間：</strong>{place.opening_hours_note}</p> : null}
               {!leg && place?.parking ? <p className={`timeline-context ${fieldNeedsRecheck(place, 'parking') ? 'needs-recheck' : ''}`}><strong>停車：</strong>{place.parking}</p> : null}
-              {place?.accessibility_notes ? <p className="timeline-context"><strong>家庭／無障礙：</strong>{place.accessibility_notes}</p> : null}
+              {place?.accessibility_notes && !accessibilityNoteCovered(item.notes, place.accessibility_notes) ? <p className="timeline-context"><strong>家庭／無障礙：</strong>{place.accessibility_notes}</p> : null}
               {!leg && itemAlternatives.length ? <div className="timeline-inline-alternatives"><strong>試算表備案：</strong>{itemAlternatives.map((alternative) => <a key={alternative.id} href={alternative.google_maps_url || buildMapsLink(alternative.maps_query || alternative.address || alternative.name || alternative.id)} target="_blank" rel="noreferrer">{alternative.name || alternative.id}</a>)}</div> : null}
               <div className="timeline-actions">
                 <a href={mapsHref} target="_blank" rel="noreferrer">{leg ? '逐段導航' : '導航地圖'}</a>
