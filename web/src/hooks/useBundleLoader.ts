@@ -32,7 +32,7 @@ export function resolveBundleUrl(baseUrl: string, canonicalUrl: string, pageUrl 
   return new URL(`${path}/public-bundle.json`, appBase).toString()
 }
 
-export function useBundleLoader(): BundleLoaderState {
+export function useBundleLoader(tripSlug?: string): BundleLoaderState {
   const [bundle, setBundle] = useState<Bundle | null>(null)
   const bundleRef = useRef<Bundle | null>(null)
   const [status, setStatus] = useState<LoadStatus>('loading')
@@ -60,7 +60,11 @@ export function useBundleLoader(): BundleLoaderState {
       const registryResponse = await fetch(resolveRegistryUrl(baseUrl))
       if (!registryResponse.ok) throw new Error(`registry HTTP ${registryResponse.status}`)
       const registry = await registryResponse.json() as unknown
-      const entry = Array.isArray(registry) && registry[0] && typeof registry[0] === 'object' ? registry[0] as { canonical_url?: unknown } : null
+      const entries = Array.isArray(registry) ? registry : []
+      const entry = entries.find((candidate) => {
+        if (!candidate || typeof candidate !== 'object') return false
+        return !tripSlug || (candidate as { slug?: unknown }).slug === tripSlug
+      }) as { canonical_url?: unknown } | undefined
       if (!entry || typeof entry.canonical_url !== 'string') throw new Error('registry schema 不相容')
       response = await fetch(resolveBundleUrl(baseUrl, entry.canonical_url))
       if (!response.ok) throw new Error(`bundle HTTP ${response.status}`)
@@ -85,7 +89,7 @@ export function useBundleLoader(): BundleLoaderState {
       setError(err instanceof Error ? err.message : '資料格式錯誤')
       setStatus('error')
     }
-  }, [baseUrl, checkVersion])
+  }, [baseUrl, checkVersion, tripSlug])
 
   useEffect(() => {
     setIsOnline(window.navigator.onLine)

@@ -7,11 +7,12 @@ const read = (path: string) => readFileSync(resolve(sourceRoot, path), 'utf8')
 const packageJson = JSON.parse(readFileSync(resolve(process.cwd(), 'package.json'), 'utf8')) as { scripts: Record<string, string> }
 
 describe('production architecture regression gates', () => {
-  it('boots only the canonical TripApp', () => {
+  it('boots the site router and keeps TripApp as the canonical trip runtime', () => {
     const main = read('main.tsx')
-    expect(main).toContain("from './app/TripApp'")
+    expect(main).toContain("from './app/site-router'")
     expect(main).not.toContain("from './App'")
     expect(existsSync(resolve(sourceRoot, 'App.tsx'))).toBe(false)
+    expect(read('app/site-router.tsx')).toContain("from './TripApp'")
   })
 
   it('does not reintroduce legacy trip-specific storage or fallback probing', () => {

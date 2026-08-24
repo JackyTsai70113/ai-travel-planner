@@ -25,65 +25,45 @@ jobs:
       - uses: actions/configure-pages@v5
         with:
           enablement: true
-      - name: Build canonical fixture landing page
-        run: python3 -m src.golden_trip_renderer.build_site fixtures/trips/japan-5-day-trip-v1.json --output site
-      - name: Build Awaji 2026 public bundle and React bundle
+      - name: Build public trip registry and Awaji bundle
         run: |
           python3 scripts/build_awaji_public_bundle.py \
             --trip-path trips/awaji-naruto-tokushima-kobe-2026/trip.json \
-            --web-output site/trips/awaji-2026/public-bundle.json
+            --web-output web/public/trips/awaji-2026/public-bundle.json
           npm --prefix web ci
           npm --prefix web run build
-      - name: Publish Awaji trip page under /trips/awaji-2026/
+      - name: Publish registry-driven root and every recorded trip
         run: |
-          mkdir -p site/trips/awaji-2026
-          cp -R web/dist/. site/trips/awaji-2026/
-      - name: Create root trip selector page
+          mkdir -p site
+          cp -R web/dist/. site/
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          registry = json.loads(Path('web/public/trip-registry.json').read_text())
+          for entry in registry:
+              slug = entry['slug']
+              source = Path('web/public/trips') / slug / 'public-bundle.json'
+              if not source.is_file():
+                  raise SystemExit(f'missing public bundle for {slug}: {source}')
+              target_dir = Path('site/trips') / slug
+              target_dir.mkdir(parents=True, exist_ok=True)
+              (target_dir / 'public-bundle.json').write_bytes(source.read_bytes())
+              for item in Path('web/dist').iterdir():
+                  target = target_dir / item.name
+                  if item.is_dir():
+                      import shutil
+                      if target.exists(): shutil.rmtree(target)
+                      shutil.copytree(item, target)
+                  else:
+                      target.write_bytes(item.read_bytes())
+          PY
+      - name: Verify root is the multi-trip portal
         run: |
-          cat > site/index.html <<'EOF'
-          <!doctype html>
-          <html lang="zh-Hant">
-            <head>
-              <meta charset="UTF-8" />
-              <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-              <meta http-equiv="refresh" content="0;url=./trips/awaji-2026/" />
-              <title>Awaji Trip Dashboard</title>
-              <style>
-                body {
-                  margin: 0;
-                  font-family: Arial, Helvetica, sans-serif;
-                  background: #f3f7fc;
-                  color: #10233a;
-                }
-                .wrap {
-                  max-width: 720px;
-                  margin: 80px auto;
-                  padding: 16px;
-                  background: #fff;
-                  border-radius: 14px;
-                  border: 1px solid #c7d7ea;
-                  box-shadow: 0 8px 22px rgba(0, 8, 30, 0.12);
-                }
-                a {
-                  color: #1667b2;
-                }
-              </style>
-            </head>
-            <body>
-              <div class="wrap">
-                <h1>Awaji 2026 Golden Trip</h1>
-                <p>請點選下列連結開啟旅途中可用頁面：</p>
-                <ul>
-                  <li>
-                    <a href="./trips/awaji-2026/">2026 淡路島・鳴門家庭旅行</a>
-                  </li>
-                </ul>
-                <p><a href="./trips/awaji-2026/public-bundle.json">Trip public bundle JSON</a></p>
-                <noscript>若未自動跳轉，請點擊上方 trip 連結。</noscript>
-              </div>
-            </body>
-          </html>
-          EOF
+          test -s site/index.html
+          ! grep -q 'http-equiv="refresh"' site/index.html
+          test -s site/trips/awaji-2026/public-bundle.json
+          test -s site/trips/kansai-preview-2025/public-bundle.json
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
