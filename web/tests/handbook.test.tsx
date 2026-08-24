@@ -6,6 +6,7 @@ import { groupContiguousLegs, MapPage } from '../src/pages/MapPage'
 import { heroNextItem, ItineraryPage } from '../src/pages/ItineraryPage'
 import { OverviewPage } from '../src/pages/OverviewPage'
 import { PackingPage } from '../src/pages/PackingPage'
+import { TidesPage } from '../src/pages/TidesPage'
 import { buildReservationCalendarIcs } from '../src/pages/ReservationsPage'
 import type { TripCatalogEntry } from '../src/contracts/trip-registry'
 
@@ -221,6 +222,35 @@ describe('Issue 97 travel handbook', () => {
     expect(screen.getByText('行前需確認')).toBeInTheDocument()
     expect(screen.getByText(/道路時間、天候、營運、停車與訂位狀態/)).toBeInTheDocument()
     expect(screen.queryByText(/資料快照/)).not.toBeInTheDocument()
+  })
+
+  it('renders official tide predictions for the selected day without placeholders', () => {
+    render(<TidesPage bundle={{
+      ...bundle,
+      conditions: {
+        tide: {
+          status: 'confirmed',
+          status_label: '官方預測已取得',
+          provider: '日本氣象廳',
+          station: '洲本（SUMOTO）',
+          source_url: 'https://www.data.jma.go.jp/kaiyou/db/tide/suisan/',
+          days: [{
+            date: dates[0],
+            tide_type: '大潮',
+            events: [
+              { kind: 'high', time: '05:25', height_cm: 154 },
+              { kind: 'low', time: '12:16', height_cm: 42 },
+              { kind: 'high', time: '18:57', height_cm: 156 },
+            ],
+          }],
+        },
+      },
+    }} day={dates[0]} />)
+    expect(screen.getByRole('heading', { name: '潮汐與動態條件' })).toBeInTheDocument()
+    expect(screen.getByText('2026-08-27（目前日期）')).toBeInTheDocument()
+    expect(screen.getByText('滿潮 05:25（154 cm）')).toBeInTheDocument()
+    expect(screen.getByText('干潮 12:16（42 cm）')).toBeInTheDocument()
+    expect(screen.queryByText(/待補|未提供|unknown/)).not.toBeInTheDocument()
   })
 
   it('does not repeat an item safety note as a separate accessibility note', () => {
