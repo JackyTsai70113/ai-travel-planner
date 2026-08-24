@@ -61,6 +61,7 @@ jobs:
               html_path = target_dir / 'index.html'
               html = html_path.read_text()
               html = html.replace('<title>AI Travel Planner｜日本旅行網站入口</title>', f"<title>{entry['title']}｜AI Travel Planner</title>")
+              html = html.replace('content="AI Travel Planner｜日本旅行網站入口"', f"content=\"{entry['title']}｜AI Travel Planner\"")
               html = html.replace('探索由 Canonical Trip 驅動的日本旅行網站', entry['hero_summary'])
               html = html.replace('</head>', f'<link rel="canonical" href="./" /></head>')
               html_path.write_text(html)
