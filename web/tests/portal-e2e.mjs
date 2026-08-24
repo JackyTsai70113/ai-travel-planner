@@ -4,9 +4,12 @@ import { chromium } from 'playwright'
 import { spawn } from 'node:child_process'
 import { copyFileSync, cpSync, mkdirSync, readdirSync } from 'node:fs'
 
-  for (const slug of ['awaji-2026', 'kansai-preview-2025', 'japan-archive-example', 'japan-blocked-example']) {
+for (const slug of ['awaji-2026', 'kansai-preview-2025', 'japan-archive-example', 'japan-blocked-example']) {
   mkdirSync(`dist/trips/${slug}`, { recursive: true })
   copyFileSync('dist/index.html', `dist/trips/${slug}/index.html`)
+  if (slug === 'japan-archive-example' || slug === 'japan-blocked-example') {
+    copyFileSync('dist/trips/kansai-preview-2025/public-bundle.json', `dist/trips/${slug}/public-bundle.json`)
+  }
   for (const item of readdirSync('dist')) {
     if (item === 'index.html' || item === 'trips') continue
     cpSync(`dist/${item}`, `dist/trips/${slug}/${item}`, { recursive: true })
@@ -50,9 +53,11 @@ try {
   if ((await page.locator('.status-preview').count()) < 1) throw new Error('preview status was not rendered')
   await page.goto(`${baseUrl}trips/japan-archive-example/`, { waitUntil: 'domcontentloaded' })
   await page.locator('.trip-overview-shell').waitFor({ state: 'visible' })
+  await page.locator('.hero-actions').waitFor({ state: 'visible' })
   if ((await page.locator('.status-archived').count()) < 1) throw new Error('archived status was not rendered')
   await page.goto(`${baseUrl}trips/japan-blocked-example/`, { waitUntil: 'domcontentloaded' })
   await page.locator('.trip-overview-shell').waitFor({ state: 'visible' })
+  await page.locator('.hero-actions').waitFor({ state: 'visible' })
   if ((await page.locator('.status-blocked').count()) < 1) throw new Error('blocked readiness was not rendered')
 } finally {
   await browser.close()
