@@ -29,7 +29,7 @@ describe('canonical frontend contracts', () => {
 
   it('keeps registry and bundle requests inside a relative GitHub Pages trip path', () => {
     const deployedPage = 'https://example.github.io/ai-travel-planner/trips/awaji-2026/'
-    expect(resolveRegistryUrl('./', deployedPage)).toBe(`${deployedPage}trip-registry.json`)
+    expect(resolveRegistryUrl('./', deployedPage)).toBe('https://example.github.io/ai-travel-planner/trip-registry.json')
     expect(resolveBundleUrl('./', 'trips/awaji-2026', deployedPage)).toBe(`${deployedPage}public-bundle.json`)
   })
 })

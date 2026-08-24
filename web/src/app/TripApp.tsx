@@ -37,6 +37,7 @@ type AppStatusType =
 
 interface TripAppProps {
   tripMeta?: TripCatalogEntry | null
+  tripSlug?: string
 }
 
 function deriveDayFromRoute(bundle: Bundle, route: TripRoute): number | null {
@@ -62,8 +63,8 @@ function resolveStatus(
   return 'normal'
 }
 
-export default function TripApp({ tripMeta = null }: TripAppProps) {
-  const bundleLoader = useBundleLoader()
+export default function TripApp({ tripMeta = null, tripSlug }: TripAppProps) {
+  const bundleLoader = useBundleLoader(tripSlug)
   const { current: route, navigate } = useTripNavigation({ defaultSection: 'overview' })
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [routeNotFound, setRouteNotFound] = useState(false)
