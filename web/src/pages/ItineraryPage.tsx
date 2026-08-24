@@ -275,7 +275,7 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
               <h3>{title}{!leg && place?.name_ja ? <small>{place.name_ja}</small> : null}</h3>
               <p className="timeline-detail">{detail}</p>
               {!leg && findPlaceAddress(bundle.places, item.place_id) && <p className="timeline-address">{findPlaceAddress(bundle.places, item.place_id)}</p>}
-              {leg ? <div className="timeline-risk"><span className={operationalStatusClass(leg.status)}>{operationalStatusLabel(leg.status)}</span><p><strong>風險／延誤切點：</strong>{leg.note || '未提供；出發前以 Google Maps 即時路況確認。'}</p></div> : null}
+              {leg ? <div className="timeline-risk">{leg.status !== 'estimated' ? <span className={operationalStatusClass(leg.status)}>{operationalStatusLabel(leg.status)}</span> : null}<p><strong>風險／延誤切點：</strong>{leg.note || '未提供；出發前以 Google Maps 即時路況確認。'}</p></div> : null}
               {!leg && place?.opening_hours_note ? <p className={`timeline-context ${fieldNeedsRecheck(place, 'opening_hours_note') ? 'needs-recheck' : ''}`}><strong>營業時間：</strong>{place.opening_hours_note}</p> : null}
               {!leg && place?.parking ? <p className={`timeline-context ${fieldNeedsRecheck(place, 'parking') ? 'needs-recheck' : ''}`}><strong>停車：</strong>{place.parking}</p> : null}
               {place?.accessibility_notes ? <p className="timeline-context"><strong>家庭／無障礙：</strong>{place.accessibility_notes}</p> : null}
