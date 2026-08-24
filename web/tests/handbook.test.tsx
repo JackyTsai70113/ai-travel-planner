@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Bundle } from '../src/contracts/trip'
 import { buildMapsDirectionsLink, buildRouteDirectionChunks } from '../src/lib/google-maps-links'
@@ -186,9 +186,13 @@ describe('Issue 97 travel handbook', () => {
     expect(screen.getByText('主要風險')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '洲本城' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '鳴門公園' })).toBeInTheDocument()
-    // Dynamic facts remain visibly sourced without an opaque "estimated" badge.
+    // Dynamic facts remain visibly sourced and transport estimates are not repeated in the risk note.
     expect(screen.getByText(/營業時間：/)).toBeInTheDocument()
     expect(screen.getByText(/停車：/)).toBeInTheDocument()
+    const firstTransportCard = screen.getByRole('heading', { name: /神戶機場 → 淡路住宿/ }).closest('.timeline-entry')
+    expect(firstTransportCard).not.toBeNull()
+    expect(within(firstTransportCard as HTMLElement).getAllByText(/若延誤 20 分鐘/)).toHaveLength(1)
+    expect(screen.queryByText('規劃項目', { exact: true })).not.toBeInTheDocument()
     expect(screen.queryByText(/Plan A \/ B \/ C/)).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('tab', { name: /D5/ }))
     expect(onNavigate).toHaveBeenCalledWith({ section: 'today', day: dates[4], item: undefined })
@@ -217,6 +221,75 @@ describe('Issue 97 travel handbook', () => {
     expect(screen.getByText('行前需確認')).toBeInTheDocument()
     expect(screen.getByText(/道路時間、天候、營運、停車與訂位狀態/)).toBeInTheDocument()
     expect(screen.queryByText(/資料快照/)).not.toBeInTheDocument()
+  })
+
+  it('does not repeat an item safety note as a separate accessibility note', () => {
+    const duplicateBundle: Bundle = {
+      ...bundle,
+      days: bundle.days.map((day, dayIndex) => dayIndex === 0
+        ? {
+          ...day,
+          items: day.items.map((item, itemIndex) => itemIndex === 1
+            ? { ...item, notes: '只做安全平坦海邊短走；高溫、強風、下雨或長輩幼兒疲累即取消，保留緩衝。' }
+            : item),
+        }
+        : day),
+      places: bundle.places?.map((place, placeIndex) => placeIndex === 1
+        ? { ...place, accessibility_notes: '只做海邊短走；高溫、強風、下雨或長輩幼兒疲累即取消。' }
+        : place),
+    }
+
+    render(<ItineraryPage bundle={duplicateBundle} route={{ section: 'today', day: dates[0], raw: `today/${dates[0]}` }} onNavigate={vi.fn()} />)
+
+    expect(screen.queryByText(/家庭／無障礙：只做海邊短走/)).not.toBeInTheDocument()
+    expect(screen.getByText(/只做安全平坦海邊短走/)).toBeInTheDocument()
+  })
+
+  it('keeps accessibility notes when item notes contain conflicting guidance', () => {
+    const conflictingBundle: Bundle = {
+      ...bundle,
+      days: bundle.days.map((day, dayIndex) => dayIndex === 0
+        ? {
+          ...day,
+          items: day.items.map((item, itemIndex) => itemIndex === 1
+            ? { ...item, notes: '輪椅不可通行。' }
+            : item),
+        }
+        : day),
+      places: bundle.places?.map((place, placeIndex) => placeIndex === 1
+        ? { ...place, accessibility_notes: '輪椅可通行。' }
+        : place),
+    }
+
+    render(<ItineraryPage bundle={conflictingBundle} route={{ section: 'today', day: dates[0], raw: `today/${dates[0]}` }} onNavigate={vi.fn()} />)
+
+    const conflictingCard = document.getElementById('item-visit-b')
+    expect(conflictingCard).not.toBeNull()
+    expect(within(conflictingCard as HTMLElement).getByText('家庭／無障礙：')).toBeInTheDocument()
+    expect(within(conflictingCard as HTMLElement).getByText('輪椅可通行。')).toBeInTheDocument()
+  })
+
+  it('keeps accessibility notes when item notes use implicit negation', () => {
+    const conflictingBundle: Bundle = {
+      ...bundle,
+      days: bundle.days.map((day, dayIndex) => dayIndex === 0
+        ? {
+          ...day,
+          items: day.items.map((item, itemIndex) => itemIndex === 1
+            ? { ...item, notes: '輪椅不適用。' }
+            : item),
+        }
+        : day),
+      places: bundle.places?.map((place, placeIndex) => placeIndex === 1
+        ? { ...place, accessibility_notes: '輪椅適用。' }
+        : place),
+    }
+
+    render(<ItineraryPage bundle={conflictingBundle} route={{ section: 'today', day: dates[0], raw: `today/${dates[0]}` }} onNavigate={vi.fn()} />)
+
+    const conflictingCard = document.getElementById('item-visit-b')
+    expect(conflictingCard).not.toBeNull()
+    expect(within(conflictingCard as HTMLElement).getByText('輪椅適用。')).toBeInTheDocument()
   })
 
   it('does not wrap the next-stop hero back to breakfast after the day ends', () => {
