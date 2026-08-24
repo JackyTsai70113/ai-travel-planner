@@ -18,7 +18,6 @@ export type TripStatusType =
 interface TripShellProps {
   bundle: Bundle | null
   shellStatus: TripStatusType
-  tripVersion: string
   pageTitleId: string
   sections: SectionDefinition[]
   activeSection: string
@@ -43,7 +42,6 @@ const statusText: Record<TripStatusType, string> = {
 export default function TripShell({
   bundle,
   shellStatus,
-  tripVersion,
   pageTitleId,
   sections,
   activeSection,
@@ -145,7 +143,6 @@ export default function TripShell({
           </header>
 
           <section className="trip-content">
-            <span className="trip-version">資料快照：{tripVersion || '--'}</span>
             {(shellStatus === 'invalid' || shellStatus === 'critical' || shellStatus === 'route-not-found') && (
               <p className="shell-message">
                 {shellStatus === 'invalid'

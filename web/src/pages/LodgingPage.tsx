@@ -145,7 +145,7 @@ export function LodgingPage({ bundle }: LodgingPageProps) {
       </div>
 
       {lodgings.length === 0 ? <div className="honest-empty"><strong>尚無住宿主鍵</strong><p>Canonical Trip 目前未列出住宿，頁面不會自行猜測。</p></div> : null}
-      <footer className="data-footnote">資料快照：{bundle.meta.generated_at}。入住與退房以 Canonical Trip 已知時間為準。</footer>
+      <footer className="data-footnote">入住與退房以 Canonical Trip 已知時間為準。</footer>
     </section>
   )
 }
