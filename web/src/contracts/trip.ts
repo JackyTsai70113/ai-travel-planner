@@ -64,6 +64,30 @@ export interface BundlePublicOperations {
   supplies?: unknown[]
 }
 
+export interface BundleTideEvent {
+  kind: 'high' | 'low'
+  time: string
+  height_cm: number
+}
+
+export interface BundleTideDay {
+  date: string
+  tide_type: string
+  events: BundleTideEvent[]
+}
+
+export interface BundleTideConditions {
+  status?: OperationalStatus | null
+  status_label?: string | null
+  summary?: string | null
+  provider?: string | null
+  source_url?: string | null
+  last_checked?: string | null
+  recheck_at?: string | null
+  station?: string | null
+  days?: BundleTideDay[]
+}
+
 export interface BundleDayItem {
   id: string
   kind: string
@@ -154,6 +178,12 @@ export interface Bundle {
     flight_ids: string[]
   }
   operations?: BundlePublicOperations
+  conditions?: {
+    tide?: BundleTideConditions
+    weather?: Record<string, unknown>
+    closures?: unknown[]
+    freshness?: string
+  }
   days: BundleDay[]
   transport_legs?: BundleTransportLeg[]
   alternatives?: Array<{

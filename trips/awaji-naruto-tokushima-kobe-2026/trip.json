@@ -1393,6 +1393,24 @@
       }
     ]
   },
+  "conditions": {
+    "tide": {
+      "status": "confirmed",
+      "status_label": "官方預測已取得",
+      "summary": "日本氣象廳洲本潮位表：2026/8/27–8/31 預測潮汐。",
+      "provider": "日本氣象廳",
+      "source_url": "https://www.data.jma.go.jp/kaiyou/db/tide/suisan/suisan.php?LV=DL&S_HILO=on&de=04&ds=21&me=09&ms=08&stn=ST&ye=2026&ys=2026",
+      "last_checked": "2026-08-24T19:09:15+09:00",
+      "station": "洲本（SUMOTO）",
+      "days": [
+        {"date":"2026-08-27","tide_type":"大潮","events":[{"kind":"high","time":"05:25","height_cm":154},{"kind":"low","time":"12:16","height_cm":42},{"kind":"high","time":"18:57","height_cm":156}]},
+        {"date":"2026-08-28","tide_type":"大潮","events":[{"kind":"low","time":"00:16","height_cm":93},{"kind":"high","time":"06:07","height_cm":162},{"kind":"high","time":"19:16","height_cm":160},{"kind":"low","time":"12:42","height_cm":41}]},
+        {"date":"2026-08-29","tide_type":"大潮","events":[{"kind":"low","time":"00:48","height_cm":83},{"kind":"high","time":"06:47","height_cm":168},{"kind":"high","time":"19:39","height_cm":164},{"kind":"low","time":"13:09","height_cm":43}]},
+        {"date":"2026-08-30","tide_type":"大潮","events":[{"kind":"low","time":"01:22","height_cm":73},{"kind":"high","time":"07:28","height_cm":169},{"kind":"high","time":"20:03","height_cm":165},{"kind":"low","time":"13:38","height_cm":50}]},
+        {"date":"2026-08-31","tide_type":"大潮","events":[{"kind":"low","time":"02:00","height_cm":67},{"kind":"high","time":"08:10","height_cm":166},{"kind":"high","time":"20:29","height_cm":165},{"kind":"low","time":"14:08","height_cm":62}]}
+      ]
+    }
+  },
   "selected": {
     "hotel_place_ids": [
       "awaji-riverside-hotel",

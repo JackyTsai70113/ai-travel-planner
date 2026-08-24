@@ -478,8 +478,28 @@ def _bundle_conditions(trip: dict) -> dict[str, Any]:
             "status": _as_status(tide.get("status")),
             "status_label": _safe_str(tide.get("status_label")) or _safe_str(tide.get("state")),
             "summary": _safe_str(tide.get("summary")),
+            "provider": _safe_str(tide.get("provider")),
+            "source_url": _safe_str(tide.get("source_url")),
             "last_checked": _safe_str(tide.get("last_checked")),
             "recheck_at": _safe_str(tide.get("recheck_at")),
+            "station": _safe_str(tide.get("station")),
+            "days": [
+                {
+                    "date": _safe_str(day.get("date")),
+                    "tide_type": _safe_str(day.get("tide_type")),
+                    "events": [
+                        {
+                            "kind": _safe_str(event.get("kind")),
+                            "time": _safe_str(event.get("time")),
+                            "height_cm": event.get("height_cm"),
+                        }
+                        for event in _as_list(day.get("events"))
+                        if isinstance(event, dict)
+                    ],
+                }
+                for day in _as_list(tide.get("days"))
+                if isinstance(day, dict)
+            ],
         },
         "closures": [
             {

@@ -206,7 +206,7 @@ export default function TripApp({ tripMeta = null, tripSlug }: TripAppProps) {
       return <ReservationsPage bundle={bundle} />
     }
     if (selectedSection === 'tides') {
-      return <TidesPage bundle={bundle} />
+      return <TidesPage bundle={bundle} day={effectiveRoute.day} />
     }
     if (selectedSection === 'food') {
       return <FoodPage bundle={bundle} />
