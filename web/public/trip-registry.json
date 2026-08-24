@@ -10,7 +10,7 @@
       "end_date": "2026-08-31"
     },
     "duration_days": 5,
-    "travelers_summary": "2 位大人 + 1 位小孩",
+    "travelers_summary": "6 大 1 小",
     "theme_id": "setouchi-awaji",
     "status": "published",
     "readiness": "incomplete",
@@ -22,8 +22,8 @@
       "gradient": "linear-gradient(130deg, #0b4a6f 0%, #2e90dc 55%, #79b8f8 100%)",
       "fallback": "淡路海岸晨霧"
     },
-    "hero_summary": "旅前資料待補，重點已可閱讀首屏。",
-    "key_messages": ["行程主題與路線已穩定。", "固定預約待核對。"],
+    "hero_summary": "行程已建立；出發前請確認道路時間、天候、營運、停車與訂位狀態。",
+    "key_messages": ["行程主題與路線已穩定。", "道路、營運與訂位狀態需於出發前重查。"],
     "critical_alert_count": 2
   },
   {

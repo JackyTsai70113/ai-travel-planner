@@ -4,8 +4,10 @@ import type { Bundle } from '../src/contracts/trip'
 import { buildMapsDirectionsLink, buildRouteDirectionChunks } from '../src/lib/google-maps-links'
 import { groupContiguousLegs, MapPage } from '../src/pages/MapPage'
 import { heroNextItem, ItineraryPage } from '../src/pages/ItineraryPage'
+import { OverviewPage } from '../src/pages/OverviewPage'
 import { PackingPage } from '../src/pages/PackingPage'
 import { buildReservationCalendarIcs } from '../src/pages/ReservationsPage'
+import type { TripCatalogEntry } from '../src/contracts/trip-registry'
 
 const dates = ['2026-08-27', '2026-08-28', '2026-08-29', '2026-08-30', '2026-08-31']
 const storage = new Map<string, string>()
@@ -190,6 +192,31 @@ describe('Issue 97 travel handbook', () => {
     expect(screen.queryByText(/Plan A \/ B \/ C/)).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('tab', { name: /D5/ }))
     expect(onNavigate).toHaveBeenCalledWith({ section: 'today', day: dates[4], item: undefined })
+  })
+
+  it('uses canonical traveler facts and explains pre-trip readiness on overview', () => {
+    const canonicalBundle = {
+      ...bundle,
+      traveler_profile: { ...bundle.traveler_profile, adults: 6 },
+    }
+    const staleRegistryEntry = {
+      title: '淡路五日',
+      destination_regions: ['淡路島'],
+      date_range: { start_date: dates[0], end_date: dates[4] },
+      duration_days: 5,
+      travelers_summary: '2 位大人 + 1 位小孩',
+      status: 'published',
+      readiness: 'incomplete',
+      cover_media: { kind: 'gradient', gradient: 'linear-gradient(#123, #456)' },
+      hero_summary: '行程已建立；出發前請確認道路時間、天候、營運、停車與訂位狀態。',
+    } as TripCatalogEntry
+
+    render(<OverviewPage bundle={canonicalBundle} trip={staleRegistryEntry} />)
+
+    expect(screen.getByText('6 大 1 小')).toBeInTheDocument()
+    expect(screen.getByText('行前需確認')).toBeInTheDocument()
+    expect(screen.getByText(/道路時間、天候、營運、停車與訂位狀態/)).toBeInTheDocument()
+    expect(screen.queryByText(/資料快照/)).not.toBeInTheDocument()
   })
 
   it('does not wrap the next-stop hero back to breakfast after the day ends', () => {
