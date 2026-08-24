@@ -1,11 +1,11 @@
 # Multi-agent GitHub development
 
-This repository uses GitHub Issues and pull requests as the shared control plane, and external Git worktrees as the local isolation boundary. It adopts the portable contracts from `agentic-dev-collaboration` while keeping travel-specific correctness policy in this repository.
+This repository uses GitHub Issues or MR-first pull requests as the shared control plane, and external Git worktrees as the local isolation boundary. It adopts the portable contracts from `agentic-dev-collaboration` while keeping travel-specific correctness policy in this repository.
 
 ## What is supported
 
-1. Multiple implementation agents can work concurrently on different GitHub Issues.
-2. Every Issue has a deterministic branch and external worktree.
+1. Multiple implementation agents can work concurrently on different work items.
+2. Every Issue or MR-first request has a deterministic branch and external worktree.
 3. Writable paths are declared before implementation; overlapping active ownership is rejected.
 4. Risk classification selects implementation and independent review roles.
 5. Handoffs include exact base/head SHAs, changed files, ownership, and test evidence.
@@ -30,9 +30,9 @@ vendor/agentic-dev-collaboration.lock.json
 
 Do not edit the snapshot. Project overrides belong in `agent-collaboration/`.
 
-## Plan parallel Issues
+## Plan work items
 
-Create Issues with `.github/ISSUE_TEMPLATE/agent-task.yml`. Each Issue must state observable acceptance criteria, proposed write ownership, dependencies, risk, and validation.
+Create Issues with `.github/ISSUE_TEMPLATE/agent-task.yml` when an Issue is useful. When no remote Issue exists, start directly from an MR-first request: the MR description must state observable acceptance criteria, proposed write ownership, dependencies, risk, validation, and the reason no Issue is linked. The MR description becomes the authoritative task envelope.
 
 Use routing before delegation:
 
@@ -61,7 +61,7 @@ Issue #29 owns src/reservations/**
 
 The second `prepare` is rejected while the first worktree remains active.
 
-## Prepare each Issue worktree
+## Prepare each worktree
 
 Run from the primary checkout:
 
@@ -78,9 +78,15 @@ python3 -m scripts.agent.collaboration prepare 29 \
   --slug reservation-evidence \
   --write-path 'src/reservations/**' \
   --write-path 'tests/test_reservations.py'
+
+# MR-first mode: no GitHub Issue is required.
+python3 -m scripts.agent.collaboration prepare \
+  --mr-slug request-constraints \
+  --write-path 'src/intent/**' \
+  --write-path 'tests/test_travel_intent.py'
 ```
 
-If `--slug` is omitted, the command reads the Issue title through `gh`. It fetches `origin/main`, resolves its exact base SHA, creates `agent/issue-<number>-<slug>`, and records ownership in Git's shared common directory. The state is local metadata and is never committed to the product branch.
+If `--slug` is omitted, the command reads the Issue title through `gh`. MR-first mode uses the explicit `--mr-slug`, fetches `origin/main`, resolves its exact base SHA, creates `agent/mr-<slug>`, and records ownership in Git's shared common directory. The state is local metadata and is never committed to the product branch.
 
 List prepared workspaces:
 
@@ -96,6 +102,7 @@ Run inside the Issue worktree:
 
 ```sh
 python3 -m scripts.agent.collaboration check 28
+# or: python3 -m scripts.agent.collaboration check mr:request-constraints
 
 python3 -m scripts.agent.collaboration handoff 28 \
   --test-evidence 'python3 -m unittest tests.test_travel_intent=PASS'
@@ -120,7 +127,7 @@ python3 -m scripts.agent.collaboration publish 28 \
   --test-evidence 'python3 -m unittest tests.test_travel_intent=PASS'
 ```
 
-The command reruns ownership checks, rejects dirty or evidence-free worktrees, pushes the Issue branch, and opens a regular non-Draft PR to `main`. It never enables auto-merge. If a PR already exists, it reports the existing PR rather than creating a duplicate.
+The command reruns ownership checks, rejects dirty or evidence-free worktrees, pushes the Issue or MR-first branch, and opens a regular non-Draft PR to `main`. It never enables auto-merge. If a PR already exists, it reports the existing PR rather than creating a duplicate. MR-first publishing requires `--body-file`; the body must contain the complete task envelope, acceptance criteria, write ownership, validation, and evidence. It does not need `Closes #...`.
 
 Use `.github/PULL_REQUEST_TEMPLATE/agentic-checklist.md` to record acceptance coverage and the exact pushed head SHA.
 

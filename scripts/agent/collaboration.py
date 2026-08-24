@@ -24,12 +24,18 @@ def _emit(value: Any) -> None:
     print(json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True))
 
 
-def _workspace_for_issue(issue_number: int):
+def _workspace_for_identifier(identifier: str):
     root = repository_root()
+    if identifier.startswith("mr:"):
+        return root, assert_workspace(root, None, mr_slug=identifier.removeprefix("mr:"))
+    try:
+        issue_number = int(identifier)
+    except ValueError as exc:
+        raise WorkspaceError("work item must be an Issue number or mr:<slug>") from exc
     return root, assert_workspace(root, issue_number)
 
 
-def _default_pr_body(issue_number: int, evidence: dict[str, Any]) -> str:
+def _default_pr_body(evidence: dict[str, Any]) -> str:
     changed = (
         "\n".join(f"  - `{path}`" for path in evidence["changed_files"]) or "  - none"
     )
@@ -38,8 +44,10 @@ def _default_pr_body(issue_number: int, evidence: dict[str, Any]) -> str:
         or "  - read-only"
     )
     tests = "\n".join(f"  - `{item}`" for item in evidence["test_evidence"])
-    return (
-        f"Closes #{issue_number}\n\n"
+    issue_reference = f"Closes #{evidence['issue_number']}\n\n" if evidence.get("issue_number") is not None else "MR-first work item: no GitHub Issue is linked.\n\n"
+    return issue_reference + (
+        "## Task envelope\n\n"
+        "This MR description is authoritative for scope, acceptance criteria, ownership, risk, dependencies, and validation.\n\n"
         "## Agent handoff evidence\n\n"
         f"- Base SHA: `{evidence['base_sha']}`\n"
         f"- Exact head SHA: `{evidence['head_sha']}`\n"
@@ -58,7 +66,15 @@ def _default_pr_body(issue_number: int, evidence: dict[str, Any]) -> str:
 
 
 def _publish(arguments: argparse.Namespace) -> dict[str, Any]:
-    root, workspace = _workspace_for_issue(arguments.issue)
+    root, workspace = _workspace_for_identifier(arguments.work_item)
+    if workspace.issue_number is None and arguments.body_file is None:
+        raise WorkspaceError("MR-first publish requires --body-file with scope and acceptance criteria")
+    if workspace.issue_number is None and arguments.body_file is not None:
+        body = arguments.body_file.read_text(encoding="utf-8")
+        required_sections = ("acceptance criteria", "write ownership", "validation")
+        missing = [section for section in required_sections if section.lower() not in body.lower()]
+        if missing:
+            raise WorkspaceError("MR-first body is missing required sections: " + ", ".join(missing))
     evidence = handoff(workspace, arguments.test_evidence)
     if not evidence["ready_for_push"]:
         raise WorkspaceError("publish requires a clean worktree and test evidence")
@@ -101,7 +117,7 @@ def _publish(arguments: argparse.Namespace) -> dict[str, Any]:
             command.extend(["--body-file", str(arguments.body_file)])
         else:
             command.extend(
-                ["--body", _default_pr_body(workspace.issue_number, evidence)]
+                ["--body", _default_pr_body(evidence)]
             )
         created = subprocess.run(
             command,
@@ -134,8 +150,9 @@ def parser() -> argparse.ArgumentParser:
     prepare = commands.add_parser(
         "prepare", help="Create one canonical Issue worktree."
     )
-    prepare.add_argument("issue", type=int)
+    prepare.add_argument("issue", type=int, nargs="?")
     prepare.add_argument("--slug")
+    prepare.add_argument("--mr-slug")
     prepare.add_argument("--write-path", action="append", default=[])
     prepare.add_argument("--read-only", action="store_true")
     prepare.add_argument("--base-ref", default="origin/main")
@@ -147,21 +164,22 @@ def parser() -> argparse.ArgumentParser:
     check = commands.add_parser(
         "check", help="Verify branch, worktree, and write ownership."
     )
-    check.add_argument("issue", type=int)
+    check.add_argument("work_item")
 
     handoff_parser = commands.add_parser(
         "handoff", help="Emit exact-SHA handoff evidence."
     )
-    handoff_parser.add_argument("issue", type=int)
+    handoff_parser.add_argument("work_item")
     handoff_parser.add_argument("--test-evidence", action="append", default=[])
 
-    status = commands.add_parser("status", help="List prepared Issue workspaces.")
+    status = commands.add_parser("status", help="List prepared Issue or MR-first workspaces.")
     status.add_argument("--issue", type=int)
+    status.add_argument("--work-item")
 
     publish = commands.add_parser(
         "publish", help="Push and open a regular non-Draft PR."
     )
-    publish.add_argument("issue", type=int)
+    publish.add_argument("work_item")
     publish.add_argument("--title", required=True)
     publish.add_argument("--body-file", type=Path)
     publish.add_argument("--test-evidence", action="append", default=[])
@@ -175,6 +193,8 @@ def main(argv: list[str] | None = None) -> int:
         if arguments.command == "route":
             _emit(route_paths(arguments.paths, load_policy(root)))
         elif arguments.command == "prepare":
+            if (arguments.issue is None) == (arguments.mr_slug is None):
+                raise WorkspaceError("prepare requires either an Issue number or --mr-slug")
             workspace = prepare_workspace(
                 repo_root=root,
                 issue_number=arguments.issue,
@@ -183,23 +203,28 @@ def main(argv: list[str] | None = None) -> int:
                 read_only=arguments.read_only,
                 base_ref=arguments.base_ref,
                 fetch=not arguments.no_fetch,
-                verify_issue=not arguments.no_github_check,
+                verify_issue=not arguments.no_github_check and arguments.mr_slug is None,
+                mr_slug=arguments.mr_slug,
             )
             _emit(workspace.__dict__ | {"worktree": str(workspace.worktree)})
         elif arguments.command == "check":
-            _, workspace = _workspace_for_issue(arguments.issue)
+            _, workspace = _workspace_for_identifier(arguments.work_item)
             _emit(check_ownership(workspace))
         elif arguments.command == "handoff":
-            _, workspace = _workspace_for_issue(arguments.issue)
+            _, workspace = _workspace_for_identifier(arguments.work_item)
             _emit(handoff(workspace, arguments.test_evidence))
         elif arguments.command == "status":
             states = all_states(root)
+            if arguments.issue is not None and arguments.work_item is not None:
+                raise WorkspaceError("status accepts either --issue or --work-item")
             if arguments.issue is not None:
                 states = [
                     state
                     for state in states
                     if state.get("issue_number") == arguments.issue
                 ]
+            if arguments.work_item is not None:
+                states = [state for state in states if state.get("work_item") == arguments.work_item]
             _emit({"workspaces": states})
         elif arguments.command == "publish":
             _emit(_publish(arguments))

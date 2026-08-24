@@ -135,7 +135,7 @@ def ownership_patterns_overlap(left: str, right: str) -> bool:
 
 
 def find_ownership_conflicts(
-    requested: Iterable[str], existing: Iterable[tuple[int, Iterable[str]]]
+    requested: Iterable[str], existing: Iterable[tuple[Any, Iterable[str]]]
 ) -> list[dict[str, Any]]:
     conflicts: list[dict[str, Any]] = []
     requested_paths = [normalize_repo_path(path) for path in requested]
@@ -145,7 +145,8 @@ def find_ownership_conflicts(
                 if ownership_patterns_overlap(requested_path, existing_path):
                     conflicts.append(
                         {
-                            "issue_number": issue_number,
+                            "issue_number": issue_number if isinstance(issue_number, int) and issue_number > 0 else None,
+                            "work_item": issue_number,
                             "requested": requested_path,
                             "existing": normalize_repo_path(existing_path),
                         }

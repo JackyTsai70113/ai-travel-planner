@@ -103,6 +103,10 @@ def _validate_policy(policy: dict[str, Any]) -> None:
         "branch pattern rejects canonical branch",
     )
     _require(
+        compiled.fullmatch("agent/mr-request-constraints") is not None,
+        "branch pattern rejects MR-first branch",
+    )
+    _require(
         compiled.fullmatch("agent/example") is None,
         "branch pattern accepts non-Issue branch",
     )
@@ -115,7 +119,7 @@ def _validate_policy(policy: dict[str, Any]) -> None:
     parallelism = policy.get("parallelism")
     _require(isinstance(parallelism, dict), "parallelism policy is missing")
     for gate in (
-        "one_issue_per_worktree",
+        "one_work_item_per_worktree",
         "one_writer_per_path",
         "reviewers_read_only",
         "require_declared_write_paths",
@@ -177,11 +181,11 @@ def _validate_repository_contracts() -> None:
         )
     agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
     for phrase in (
-        "latest `origin/main`",
-        "one external Git worktree",
-        "write paths do not overlap",
-        "regular, non-Draft PR",
-        "Do not automatically merge",
+        "最新的 `origin/main`",
+        "一個外部 Git worktree",
+        "寫入路徑不重疊",
+        "regular、非 Draft",
+        "不得自動 merge",
     ):
         _require(phrase in agents, f"AGENTS.md contract missing: {phrase}")
     workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
@@ -194,7 +198,7 @@ def _validate_repository_contracts() -> None:
     template = (ROOT / ".github/PULL_REQUEST_TEMPLATE/agentic-checklist.md").read_text(
         encoding="utf-8"
     )
-    for phrase in ("Issue", "write ownership", "exact head SHA", "non-Draft"):
+    for phrase in ("Issue", "MR-first", "write ownership", "exact head SHA", "non-Draft"):
         _require(phrase in template, f"PR template evidence field missing: {phrase}")
     overlay = _load_json(ROOT / "agent-collaboration" / "overlay.json")
     _require(
