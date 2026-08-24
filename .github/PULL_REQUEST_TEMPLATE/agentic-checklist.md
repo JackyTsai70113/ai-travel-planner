@@ -3,17 +3,18 @@
 ### 一句話摘要
 
 
-### Issue 與 acceptance criteria
+### Issue / MR-first task 與 acceptance criteria
 
-- Closes #
-- [ ] 已逐項驗證 Issue acceptance criteria
+- Issue：`#`（沒有 Issue 時填 `MR-first`）
+- [ ] 已在本 MR 寫清楚背景、scope、acceptance criteria、write ownership、風險、依賴與 validation
+- [ ] 已逐項驗證 Issue acceptance criteria，或 MR-first acceptance criteria
 
 ### Agent workspace
 
-- Branch：`agent/issue-<number>-<slug>`
-- Worktree：`../.worktrees/ai-travel-planner/issue-<number>-<slug>`
+- Branch：`agent/issue-<number>-<slug>` 或 `agent/mr-<slug>`
+- Worktree：對應的 `../.worktrees/ai-travel-planner/` worktree
 - Declared write ownership：
-- [ ] `python3 -m scripts.agent.collaboration check <issue>` 通過
+- [ ] `python3 -m scripts.agent.collaboration check <issue-or-mr:slug>` 通過
 - [ ] Actual changed files 全部位於 declared write ownership
 
 ### 風險與角色

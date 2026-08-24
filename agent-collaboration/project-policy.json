@@ -10,14 +10,17 @@
   "delivery": {
     "base_branch": "main",
     "remote": "origin",
-    "branch_pattern": "^(agent|codex)/issue-[1-9][0-9]*-[a-z0-9][a-z0-9-]*$",
+    "branch_pattern": "^(agent|codex)/(issue-[1-9][0-9]*-[a-z0-9][a-z0-9-]*|mr-[a-z0-9][a-z0-9-]*)$",
     "canonical_branch_prefix": "agent",
     "worktree_parent": ".worktrees",
     "pull_request_state": "ready",
-    "automatic_merge": false
+    "automatic_merge": false,
+    "work_item_mode": "issue_or_mr",
+    "issue_required": false,
+    "mr_body_required": true
   },
   "parallelism": {
-    "one_issue_per_worktree": true,
+    "one_work_item_per_worktree": true,
     "one_writer_per_path": true,
     "reviewers_read_only": true,
     "require_declared_write_paths": true

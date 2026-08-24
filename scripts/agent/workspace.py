@@ -24,7 +24,8 @@ class WorkspaceError(RuntimeError):
 
 @dataclass(frozen=True)
 class IssueWorkspace:
-    issue_number: int
+    issue_number: int | None
+    work_item: str
     branch: str
     worktree: Path
     base_ref: str
@@ -58,12 +59,10 @@ def repository_root(cwd: Path | None = None) -> Path:
     return Path(git_value(selected, "rev-parse", "--show-toplevel")).resolve()
 
 
-def canonical_branch(issue_number: int, slug: str, prefix: str = "agent") -> str:
-    if issue_number <= 0:
-        raise WorkspaceError("issue number must be positive")
+def canonical_branch(issue_number: int | None, slug: str, prefix: str = "agent") -> str:
     if not re.fullmatch(r"[a-z0-9][a-z0-9-]*", slug):
         raise WorkspaceError("slug must use lowercase letters, digits, and hyphens")
-    return f"{prefix}/issue-{issue_number}-{slug}"
+    return f"{prefix}/issue-{issue_number}-{slug}" if issue_number is not None else f"{prefix}/mr-{slug}"
 
 
 def issue_slug(title: str) -> str:
@@ -99,12 +98,13 @@ def _github_issue(repo_root: Path, issue_number: int) -> dict[str, Any]:
     return issue
 
 
-def canonical_worktree(repo_root: Path, issue_number: int, slug: str) -> Path:
+def canonical_worktree(repo_root: Path, issue_number: int | None, slug: str) -> Path:
+    prefix = f"issue-{issue_number}" if issue_number is not None else "mr"
     return (
         repo_root.resolve().parent
         / ".worktrees"
         / repo_root.name
-        / f"issue-{issue_number}-{slug}"
+        / f"{prefix}-{slug}"
     ).resolve()
 
 
@@ -125,8 +125,8 @@ def _state_root(repo_root: Path) -> Path:
     return common.resolve() / "agent-collaboration" / "issues"
 
 
-def _state_path(repo_root: Path, issue_number: int) -> Path:
-    return _state_root(repo_root) / f"{issue_number}.json"
+def _state_path(repo_root: Path, work_item: str) -> Path:
+    return _state_root(repo_root) / f"{work_item.replace(':', '-')}.json"
 
 
 def _write_json_atomic(path: Path, value: dict[str, Any]) -> None:
@@ -140,18 +140,18 @@ def _write_json_atomic(path: Path, value: dict[str, Any]) -> None:
     temporary.replace(path)
 
 
-def load_state(repo_root: Path, issue_number: int) -> dict[str, Any]:
-    path = _state_path(repo_root, issue_number)
+def load_state(repo_root: Path, work_item: str) -> dict[str, Any]:
+    path = _state_path(repo_root, work_item)
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError as exc:
         raise WorkspaceError(
-            f"Issue #{issue_number} has no prepared workspace"
+            f"Work item {work_item} has no prepared workspace"
         ) from exc
     except json.JSONDecodeError as exc:
-        raise WorkspaceError(f"Issue #{issue_number} state is invalid") from exc
+        raise WorkspaceError(f"Work item {work_item} state is invalid") from exc
     if not isinstance(value, dict):
-        raise WorkspaceError(f"Issue #{issue_number} state must be an object")
+        raise WorkspaceError(f"Work item {work_item} state must be an object")
     return value
 
 
@@ -173,24 +173,32 @@ def all_states(repo_root: Path) -> list[dict[str, Any]]:
 def prepare_workspace(
     *,
     repo_root: Path,
-    issue_number: int,
-    slug: str | None,
+    issue_number: int | None,
+    slug: str | None = None,
     write_paths: Iterable[str],
     read_only: bool = False,
     base_ref: str = "origin/main",
     fetch: bool = True,
     verify_issue: bool = True,
+    mr_slug: str | None = None,
 ) -> IssueWorkspace:
     root = repo_root.resolve()
     if _has_symlink_ancestor(repo_root):
         raise WorkspaceError("repository path must not contain a symlink")
     policy = load_policy(root)
+    if mr_slug is not None and issue_number is not None:
+        raise WorkspaceError("choose either an Issue or MR-first mode, not both")
+    if mr_slug is not None and (verify_issue or not re.fullmatch(r"[a-z0-9][a-z0-9-]*", mr_slug)):
+        raise WorkspaceError("MR-first mode requires a lowercase --mr-slug and skips GitHub Issue verification")
     github_issue = _github_issue(root, issue_number) if verify_issue else None
-    if slug is None and github_issue is None:
+    if mr_slug is not None and slug is not None:
+        raise WorkspaceError("use --mr-slug as the MR-first slug, not --slug")
+    if mr_slug is None and slug is None and github_issue is None:
         raise WorkspaceError(
             "slug is required when GitHub Issue verification is disabled"
         )
-    selected_slug = slug or issue_slug(str(github_issue["title"]))
+    selected_slug = mr_slug or slug or issue_slug(str(github_issue["title"]))
+    work_item = f"mr:{selected_slug}" if mr_slug is not None else f"issue:{issue_number}"
     prefix = policy["delivery"]["canonical_branch_prefix"]
     branch = canonical_branch(issue_number, selected_slug, prefix)
     if not re.fullmatch(policy["delivery"]["branch_pattern"], branch):
@@ -203,26 +211,23 @@ def prepare_workspace(
             "implementation workspace requires at least one --write-path"
         )
 
-    existing_ownership: list[tuple[int, Iterable[str]]] = []
+    existing_ownership: list[tuple[Any, Iterable[str]]] = []
     for state in all_states(root):
         state_issue = state.get("issue_number")
+        state_work_item = state.get("work_item") or (f"issue:{state_issue}" if state_issue is not None else None)
         state_worktree = Path(str(state.get("worktree", "")))
-        if state_issue == issue_number:
+        if state_work_item == work_item:
             raise WorkspaceError(
-                f"Issue #{issue_number} already has a prepared workspace"
+                f"Work item {work_item} already has a prepared workspace"
             )
-        if (
-            isinstance(state_issue, int)
-            and state_worktree.is_dir()
-            and not state.get("read_only")
-        ):
-            existing_ownership.append((state_issue, state.get("write_paths", [])))
+        if state_worktree.is_dir() and not state.get("read_only"):
+            existing_ownership.append((state_issue if state_issue is not None else state_work_item, state.get("write_paths", [])))
     conflicts = find_ownership_conflicts(normalized_paths, existing_ownership)
     if conflicts:
         first = conflicts[0]
+        owner = f"Issue #{first['issue_number']}" if first["issue_number"] is not None else f"MR-first {first['work_item']}"
         raise WorkspaceError(
-            "write ownership overlaps Issue "
-            f"#{first['issue_number']}: {first['requested']} <-> {first['existing']}"
+            f"write ownership overlaps {owner}: {first['requested']} <-> {first['existing']}"
         )
 
     if fetch:
@@ -267,9 +272,11 @@ def prepare_workspace(
         "status": "PREPARED",
         "routing": route_paths(normalized_paths, policy),
     }
-    _write_json_atomic(_state_path(root, issue_number), state)
+    state["work_item"] = work_item
+    _write_json_atomic(_state_path(root, work_item), state)
     return IssueWorkspace(
         issue_number=issue_number,
+        work_item=work_item,
         branch=branch,
         worktree=worktree,
         base_ref=base_ref,
@@ -295,15 +302,16 @@ def _worktree_registry(repo_root: Path) -> dict[Path, str]:
 
 
 def assert_workspace(
-    repo_root: Path, issue_number: int, worktree: Path | None = None
+    repo_root: Path, issue_number: int | None, worktree: Path | None = None, mr_slug: str | None = None
 ) -> IssueWorkspace:
     root = repo_root.resolve()
-    state = load_state(root, issue_number)
+    work_item = f"mr:{mr_slug}" if mr_slug is not None else f"issue:{issue_number}"
+    state = load_state(root, work_item)
     expected = Path(state["worktree"]).resolve()
     selected = (worktree or Path.cwd()).resolve()
     if selected != expected:
         raise WorkspaceError(
-            f"current directory is not Issue #{issue_number} canonical worktree"
+            f"current directory is not work item {work_item} canonical worktree"
         )
     if _has_symlink_ancestor(worktree or Path.cwd()) or not selected.is_dir():
         raise WorkspaceError("Issue worktree is missing or symlinked")
@@ -315,6 +323,7 @@ def assert_workspace(
         raise WorkspaceError("Git worktree registry disagrees with Issue state")
     return IssueWorkspace(
         issue_number=issue_number,
+        work_item=state.get("work_item", work_item),
         branch=branch,
         worktree=expected,
         base_ref=state["base_ref"],
@@ -381,6 +390,7 @@ def check_ownership(workspace: IssueWorkspace) -> dict[str, Any]:
     )
     return {
         "issue_number": workspace.issue_number,
+        "work_item": workspace.work_item,
         "branch": workspace.branch,
         "worktree": str(workspace.worktree),
         "changed_files": files,

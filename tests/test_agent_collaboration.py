@@ -165,6 +165,35 @@ class IssueWorkspaceTests(unittest.TestCase):
         self.assertEqual("agent/issue-103-add-reservation-evidence", workspace.branch)
         self.assertTrue(workspace.worktree.is_dir())
 
+    def test_prepare_supports_mr_first_without_github_issue(self) -> None:
+        workspace = prepare_workspace(
+            repo_root=self.repo,
+            issue_number=None,
+            mr_slug="request-constraints",
+            write_paths=["src/intent/**"],
+            base_ref="main",
+            fetch=False,
+            verify_issue=False,
+        )
+
+        self.assertEqual("mr:request-constraints", workspace.work_item)
+        self.assertEqual("agent/mr-request-constraints", workspace.branch)
+        verified = assert_workspace(self.repo, None, workspace.worktree, mr_slug="request-constraints")
+        self.assertEqual("mr:request-constraints", check_ownership(verified)["work_item"])
+
+    def test_mr_first_ownership_conflict_is_rejected(self) -> None:
+        self._prepare()
+        with self.assertRaisesRegex(WorkspaceError, "overlaps Issue #101"):
+            prepare_workspace(
+                repo_root=self.repo,
+                issue_number=None,
+                mr_slug="parser-overlap",
+                write_paths=["src/intent/parser.py"],
+                base_ref="main",
+                fetch=False,
+                verify_issue=False,
+            )
+
     def test_publish_opens_regular_pr_without_draft_flag(self) -> None:
         workspace = self._prepare()
         target = workspace.worktree / "src" / "intent" / "new_parser.py"

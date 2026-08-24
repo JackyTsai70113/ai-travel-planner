@@ -3,14 +3,14 @@
 ## Source of truth
 
 1. Every implementation starts from the latest `origin/main`.
-2. The GitHub Issue acceptance criteria and this file are authoritative.
+2. The GitHub Issue acceptance criteria, or the MR description when using MR-first mode, and this file are authoritative.
 3. Canonical Trip remains the product source of truth. Agent collaboration may not bypass the existing Research, Planning, Optimization, Validation, and Rendering boundaries.
 
 ## Parallel development boundary
 
-1. One GitHub Issue maps to one branch and one external Git worktree.
-2. Canonical branch: `agent/issue-<number>-<slug>`.
-3. Canonical worktree: `../.worktrees/ai-travel-planner/issue-<number>-<slug>`.
+1. One work item maps to one branch and one external Git worktree. A work item is either an open GitHub Issue or an MR-first request.
+2. Issue branch: `agent/issue-<number>-<slug>`; MR-first branch: `agent/mr-<slug>`.
+3. Canonical worktree: `../.worktrees/ai-travel-planner/issue-<number>-<slug>` or `../.worktrees/ai-travel-planner/mr-<slug>`.
 4. Implementation agents may run in parallel only when their declared write paths do not overlap.
 5. Each writable path has one owner. Other agents are read-only for that path.
 6. Review agents are always read-only and may not fix or approve their own findings.
@@ -48,14 +48,14 @@ Run `python3 -m scripts.agent.collaboration route <changed-path>...` before dele
 
 Unless the user explicitly limits the task to local changes or analysis:
 
-1. Read the Issue and identify acceptance criteria.
+1. Read the Issue and identify acceptance criteria, or write the scope, acceptance criteria, ownership, risk, dependencies, and validation plan in the MR description before starting MR-first work.
 2. Prepare the dedicated Issue worktree from latest `origin/main`.
 3. Declare non-overlapping write ownership before spawning implementation agents.
 4. Implement the smallest complete change.
 5. Run repository validation and relevant tests.
 6. Run the collaboration ownership check.
 7. Commit and push the Issue branch.
-8. Open a regular, non-Draft PR to `main` using the repository PR template.
+8. Open a regular, non-Draft PR to `main` using the repository PR template. In MR-first mode, provide `--body-file`; the MR description is the source of truth and must contain the full acceptance criteria and evidence fields; no Issue reference is required.
 9. Inspect CI; fix repository-caused failures and repeat until green or a verified external blocker exists.
 10. Hand the exact pushed head SHA, changed files, acceptance criteria, and test evidence to an independent reviewer.
 11. Re-review after any material fix because an older verdict does not cover a newer SHA.
@@ -66,7 +66,7 @@ Do not stop after local implementation when push, PR, CI, and review remain in s
 
 A handoff must contain:
 
-1. Issue and PR numbers.
+1. Issue and PR numbers when an Issue exists; otherwise the MR URL/number and the MR-first work-item slug.
 2. Base and head SHAs.
 3. Declared write paths and actual changed files.
 4. Acceptance criteria coverage.
