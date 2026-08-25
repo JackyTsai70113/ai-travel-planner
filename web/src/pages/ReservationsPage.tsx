@@ -3,6 +3,7 @@ import {
   Bundle,
   BundleReservation,
 } from '../contracts/trip'
+import { MapPinIcon } from '../design-system/primitives/MapPinIcon'
 import { buildMapsSearchLink } from '../lib/google-maps-links'
 
 interface ReservationsPageProps {
@@ -95,7 +96,7 @@ export function ReservationsPage({ bundle }: ReservationsPageProps) {
                   <article className="reservation-card" key={reservation.id}>
                     <div className="reservation-time"><strong>{formatTime(reservation.time)}</strong></div>
                     <div className="reservation-main">
-                      <div className="reservation-title-row"><h2>{reservation.name || placeName}<a className="reservation-map-link" href={mapHref} target="_blank" rel="noreferrer" aria-label={`${placeName} 在 Google Maps 開啟`} title="在 Google Maps 開啟"><span aria-hidden="true">🗺️</span></a></h2></div>
+                      <div className="reservation-title-row"><h2>{reservation.name || placeName}<a className="reservation-map-link" href={mapHref} target="_blank" rel="noreferrer" aria-label={`${placeName} 在 Google Maps 開啟`} title="在 Google Maps 開啟"><MapPinIcon /></a></h2></div>
                       {address ? <p className="reservation-address">{address}</p> : null}
                     </div>
                   </article>

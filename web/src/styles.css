@@ -325,6 +325,15 @@ a {
   background: #dceff4;
 }
 
+.map-icon-link svg,
+.hub-map-link svg,
+.timeline-map-link svg,
+.reservation-map-link svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  display: block;
+}
+
 .hub-map-link span,
 .timeline-map-link span,
 .reservation-map-link span {
