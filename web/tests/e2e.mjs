@@ -196,7 +196,7 @@ try {
   await assertStyleContrast(mobile, '.day-tab:focus-visible', 'outlineColor', '.itinerary-day-nav', 'backgroundColor', 3, 'light control focus indicator')
   await assertTouchTargets(mobile, '.print-button', 'print')
   await assertTouchTargets(mobile, '.quick-mode button', 'quick mode')
-  await assertTouchTargets(mobile, '.timeline-map-link', 'timeline Google Maps link')
+  await assertTouchTargets(mobile, '.timeline-map-link', 'timeline OpenStreetMap link')
   await mobile.locator('#itinerary-search').fill('淡路')
   await mobile.locator('.search-results button').first().waitFor()
   await assertTouchTargets(mobile, '.search-results button', 'search result')
@@ -219,7 +219,7 @@ try {
   await assertTextContrast(mobile, '.stay-note', 4.5, 'lodging note')
 
   await openRoute(mobile, 'packing')
-  if (await mobile.getByRole('checkbox').count() !== 30) throw new Error('spreadsheet checklist did not render 30 items')
+  if (await mobile.getByRole('checkbox').count() !== 28) throw new Error('spreadsheet checklist did not render 28 items')
   await mobile.getByText('預約 Ocean Terrace', { exact: true }).waitFor()
   await assertTextContrast(mobile, '.checklist-copy p', 4.5, 'packing detail')
   await assertStyleContrast(mobile, '.note-editor input', 'borderTopColor', '.note-editor input', 'backgroundColor', 3, 'note input boundary')

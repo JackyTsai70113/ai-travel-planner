@@ -3,6 +3,7 @@ import {
   Bundle,
   BundleReservation,
 } from '../contracts/trip'
+import { buildMapsSearchLink } from '../lib/google-maps-links'
 
 interface ReservationsPageProps {
   bundle: Bundle
@@ -88,13 +89,13 @@ export function ReservationsPage({ bundle }: ReservationsPageProps) {
                 const place = bundle.places?.find((candidate) => candidate.id === reservation.place_id)
                 const placeName = place?.name || reservation.name || reservation.place_id
                 const address = place?.address
-                const mapHref = place?.google_maps_url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place?.maps_query || placeName)}`
+                const mapHref = buildMapsSearchLink(place?.maps_query || place?.address || placeName)
 
                 return (
                   <article className="reservation-card" key={reservation.id}>
                     <div className="reservation-time"><strong>{formatTime(reservation.time)}</strong></div>
                     <div className="reservation-main">
-                      <div className="reservation-title-row"><h2>{reservation.name || placeName}<a className="reservation-map-link" href={mapHref} target="_blank" rel="noreferrer" aria-label={`${placeName} Google Maps`}>Google Maps ↗</a></h2></div>
+                      <div className="reservation-title-row"><h2>{reservation.name || placeName}<a className="reservation-map-link" href={mapHref} target="_blank" rel="noreferrer" aria-label={`${placeName} OpenStreetMap`}>OpenStreetMap ↗</a></h2></div>
                       {address ? <p className="reservation-address">{address}</p> : null}
                     </div>
                   </article>
