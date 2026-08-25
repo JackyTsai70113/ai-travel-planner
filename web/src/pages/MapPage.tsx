@@ -63,9 +63,13 @@ export function legTravelMode(mode: string): MapsTravelMode {
 
 function dayLegs(bundle: Bundle, day: BundleDay): BundleTransportLeg[] {
   const linkedIds = new Set(day.items.map((item) => item.transport_leg_id).filter(Boolean))
+  const contingencyIds = new Set(
+    (bundle.alternatives || []).flatMap((plan) => plan.route_leg_ids || []),
+  )
   const seen = new Set<string>()
   return (bundle.transport_legs || [])
-    .filter((leg) => linkedIds.has(leg.id))
+    .filter((leg) => linkedIds.has(leg.id)
+      || (leg.departure_at?.slice(0, 10) === day.date && !contingencyIds.has(leg.id)))
     .filter((leg) => {
       if (seen.has(leg.id)) return false
       seen.add(leg.id)
