@@ -59,7 +59,7 @@ export function buildMapsSearchLink(placeLabel: string): string {
   return `${OPENSTREETMAP_SEARCH_URL}${encodeURIComponent(safeToString(placeLabel) || 'point')}`
 }
 
-export function buildMapsDirectionsLink(chunks: MapsStop[], travelMode: MapsTravelMode = 'driving'): string {
+export function buildMapsDirectionsLink(chunks: MapsStop[], _travelMode: MapsTravelMode = 'driving'): string {
   const start = chunks.at(0)
   const end = chunks.at(-1)
   if (!start || !end || chunks.length < 2) {

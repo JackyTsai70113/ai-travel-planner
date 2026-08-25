@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import { Bundle, findPlaceLabel } from '../contracts/trip'
-import { buildMapsLink } from '../contracts/trip'
 import { buildMapsSearchLink } from '../lib/google-maps-links'
 
 interface FoodPageProps {
