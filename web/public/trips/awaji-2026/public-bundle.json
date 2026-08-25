@@ -1,5 +1,22 @@
 {
-  "alternatives": [],
+  "alternatives": [
+    {
+      "conditions": [
+        "鳴門側未搭成",
+        "福良訂位仍有效",
+        "福良側確認運航"
+      ],
+      "decision_gate": "8/30 08:25 前確認是否改走福良備援；啟用後使用 leg-day4-backup-uzunooka-fukura 與 leg-day4-backup-fukura-nojima。",
+      "id": "day4-fukura-cruise-backup",
+      "reasons": [
+        "尚未取消的既有訂位",
+        "兩側船公司運航狀態須分別確認"
+      ],
+      "status": "unresolved",
+      "summary": "僅在鳴門側 08:00／08:30 未搭成且福良訂位仍有效、照常運航時啟用：11:20 漩渦之丘出發，11:40 抵福良報到，12:50–13:50 搭船，14:00 出發，15:15 抵 Nojima Scuola；之後沿用原行程。",
+      "title": "8/30 福良港 12:50 已訂位備援"
+    }
+  ],
   "budget": {
     "categories": {
       "contingency": {
@@ -965,7 +982,7 @@
           "expected_stay_minutes": 25,
           "id": "day4-kisen-checkin",
           "kind": "free_time",
-          "notes": "現金購票、廁所、暈船準備與收折推車；一般散客無預約，依抵達順序候船，07:55 前依工作人員指示登船。",
+          "notes": "現金購票、廁所、暈船準備並確認推車處理方式；一般散客無預約，依抵達順序候船，07:55 前依工作人員指示登船。",
           "place_id": "uzushio-kisen-naruto",
           "start_at": "2026-08-30T07:35:00+09:00",
           "transfer_minutes": null,
@@ -980,7 +997,7 @@
           "expected_stay_minutes": 20,
           "id": "day4-uzushio-kisen-0800",
           "kind": "visit",
-          "notes": "官方 8/30 潮見表：08:00 期待度大。一般散客無預約；08:00 滿席且已明確排入下一班才搭 08:30（期待度中），08:25 仍無明確席次即停止等候並啟用尚未取消的 12:50 福良備援。小型船有段差，推車收折存放，一位成人抱幼兒、另一位照顧長輩；無法安全登船即不勉強。",
+          "notes": "官方 8/30 潮見表：08:00 期待度大。一般散客無預約；08:00 滿席且已明確排入下一班才搭 08:30（期待度中），08:25 仍無明確席次即停止等候並啟用尚未取消的 12:50 福良備援。小型船有段差，不可預設推車可原樣上船；收折、留車上或現場保管方式須確認。一位成人抱幼兒、另一位照顧長輩；無法安全登船即不勉強。",
           "place_id": "uzushio-kisen-naruto",
           "start_at": "2026-08-30T08:00:00+09:00",
           "transfer_minutes": null,
@@ -1224,8 +1241,8 @@
   },
   "local_timezone": "Asia/Tokyo",
   "meta": {
-    "bundle_sha256": "da786691220e488574be4d21859c06f46182496ccd5d0d75a8f40e604783d192",
-    "generated_at": "2026-08-25T16:59:04+00:00",
+    "bundle_sha256": "2db22e445512e2345f6996190cbfc9402b6dc21ff9ae562b49b121784986d5bb",
+    "generated_at": "2026-08-25T17:10:22+00:00",
     "source_coverage": {
       "days": 5,
       "places": 52,
@@ -1233,7 +1250,7 @@
       "selected_hotels": 3
     },
     "source_path": "trips/awaji-naruto-tokushima-kobe-2026/trip.json",
-    "source_sha256": "609fe9b8621377c2d804fc56af182b52e0e12178cd4da1222f5602db93ce7f07",
+    "source_sha256": "be44433bc886e60498e390a60d805bf27733a7e01b728aea2ad0001d07158518",
     "trip_schema": "trip-v1"
   },
   "operations": {
@@ -2682,7 +2699,7 @@
       }
     },
     {
-      "accessibility_notes": "小型船有段差且移動空間有限，嬰兒車或輪椅保持展開時難以上船；推車依現場指示收折存放，一位成人抱幼兒、另一位照顧長輩，無法安全跨越段差即不登船。",
+      "accessibility_notes": "小型船有段差且移動空間有限，嬰兒車或輪椅保持展開時難以上船；不可預設可原樣上船，收折、留車上或現場保管方式須確認。一位成人抱幼兒、另一位照顧長輩，無法安全跨越段差即不登船。",
       "address": "徳島県鳴門市鳴門町土佐泊浦字福池65-63",
       "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Uzushio+Kisen+Naruto+Kameura+Port",
       "id": "uzushio-kisen-naruto",
@@ -2693,7 +2710,7 @@
       "maps_query": "徳島県鳴門市鳴門町土佐泊浦字福池65-63",
       "name": "高速観潮船 うずしお汽船（鳴門・亀浦漁港）",
       "official_url": "https://www.uzushio-kisen.com/",
-      "opening_hours_note": "8/30 官方潮見表列 08:00 為期待度大；航程約 20 分。成人 ¥2,000、小學生 ¥1,000，幼兒每位成人可帶 1 位免費，只收現金。一般散客不預約，滿席依到達順序改搭 30 分後下一班，運航仍受當日海況影響。",
+      "opening_hours_note": "8/30 官方潮見表列 08:00 為期待度大；航程約 20 分。成人 ¥2,000、小學生 ¥1,000，幼兒每位成人可帶 1 位免費，只收現金。一般散客不預約，滿席依到達順序改搭 30 分後下一班；普通車 50 台分，是否收費須現場確認；運航仍受當日海況影響。",
       "provenance": {
         "confidence": 1,
         "note": "官方確認約 20 分、一般散客依到達順序、滿席改搭下一個 30 分班次，以及嬰兒車／輪椅限制；動態運航須當晨重查。",
@@ -2754,6 +2771,17 @@
       "place_id": "naruto-ferry-fixed-activity",
       "time": "2026-08-28T17:45:00+09:00",
       "unresolved": false
+    },
+    {
+      "day": "2026-08-30",
+      "id": "external-2026-08-30-12-50-cruise",
+      "kind": "external-backup-reservation",
+      "name": "うずしおクルーズ（福良港・尚未取消的外部備援）",
+      "place_id": "uzushio-cruise-fukura",
+      "source": "使用者既有訂位",
+      "status": "unresolved",
+      "time": "2026-08-30T12:50:00+09:00",
+      "unresolved": true
     }
   ],
   "schema": "awaji-public-bundle-v1",
@@ -3601,6 +3629,26 @@
     },
     {
       "authority": "Google Sheet planning estimate",
+      "confidence": 0.9,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-23T09:00:00+08:00",
+      "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117",
+      "status": "estimated",
+      "supports": "transport:leg-day4-backup-uzunooka-fukura"
+    },
+    {
+      "authority": "Google Sheet planning estimate",
+      "confidence": 0.8,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-08-23T09:00:00+08:00",
+      "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117",
+      "status": "estimated",
+      "supports": "transport:leg-day4-backup-fukura-nojima"
+    },
+    {
+      "authority": "Google Sheet planning estimate",
       "confidence": 0.8,
       "conflicts": false,
       "freshness": "unknown",
@@ -4359,10 +4407,10 @@
       "google_maps_directions_url": "https://www.google.com/maps/dir/?api=1&origin=%E5%BE%B3%E5%B3%B6%E7%9C%8C%E5%BE%B3%E5%B3%B6%E5%B8%82%E9%87%91%E6%B2%A21%E4%B8%81%E7%9B%AE3-44-3%E5%8F%B7+%E3%80%92770-0871&destination=%E5%BE%B3%E5%B3%B6%E7%9C%8C%E9%B3%B4%E9%96%80%E5%B8%82%E9%B3%B4%E9%96%80%E7%94%BA%E5%9C%9F%E4%BD%90%E6%B3%8A%E6%B5%A6%E5%AD%97%E7%A6%8F%E6%B1%A065-63&travelmode=driving",
       "id": "leg-day4-tokushima-kisen",
       "mode": "car",
-      "note": "行車估計：35–40 分；緩衝：5 分。導航：設定高速観潮船うずしお汽船（亀浦漁港），不要設福良港；延誤切點：07:35 後抵達即先問 08:00 是否仍可登船；家庭注意：推車留車上，先讓長輩幼兒下車。",
+      "note": "行車估計：35–40 分；緩衝：5 分。導航：設定高速観潮船うずしお汽船（亀浦漁港），不要設福良港；延誤切點：07:35 後抵達即先問 08:00 是否仍可登船；家庭注意：推車處理方式須先確認，先讓長輩幼兒下車。",
       "provenance": {
         "confidence": 0.6,
-        "note": "行車估計：35–40 分；緩衝：5 分。導航：設定高速観潮船うずしお汽船（亀浦漁港），不要設福良港；延誤切點：07:35 後抵達即先問 08:00 是否仍可登船；家庭注意：推車留車上，先讓長輩幼兒下車。",
+        "note": "行車估計：35–40 分；緩衝：5 分。導航：設定高速観潮船うずしお汽船（亀浦漁港），不要設福良港；延誤切點：07:35 後抵達即先問 08:00 是否仍可登船；家庭注意：推車處理方式須先確認，先讓長輩幼兒下車。",
         "provider": "current itinerary planning estimate",
         "retrieved_at": "2026-08-26T00:55:30+08:00",
         "source_type": "derived",
@@ -4435,6 +4483,64 @@
       "to_label": "Nojima Scuola（野島スコーラ）",
       "to_place": "nojima-scuola",
       "transfer_minutes": 90
+    },
+    {
+      "arrival_at": "2026-08-30T11:40:00+09:00",
+      "buffer_minutes": 0,
+      "departure_at": "2026-08-30T11:20:00+09:00",
+      "estimated_duration_minutes": 20,
+      "from_label": "絶景レストラン うずの丘",
+      "from_place": "map-import-uzuno-oka",
+      "google_maps_directions_url": "https://www.google.com/maps/dir/?api=1&origin=Hei-936-3+Fukura%2C+Minamiawaji%2C+Hyogo+656-0503&destination=%E5%85%B5%E5%BA%AB%E7%9C%8C%E5%8D%97%E3%81%82%E3%82%8F%E3%81%98%E5%B8%82%E7%A6%8F%E8%89%AF%E7%94%B21528-4&travelmode=driving",
+      "id": "leg-day4-backup-uzunooka-fukura",
+      "mode": "car",
+      "note": "福良備援專用。行車估計：15–20 分；緩衝：0 分。導航：先到道の駅福良 P0；11:20 無論是否吃完都離店，乘客先在なないろ館前下車。",
+      "provenance": {
+        "confidence": 0.9,
+        "note": "福良備援專用。行車估計：15–20 分；緩衝：0 分。導航：先到道の駅福良 P0；11:20 無論是否吃完都離店，乘客先在なないろ館前下車。",
+        "provider": "Google Sheet planning estimate",
+        "retrieved_at": "2026-08-23T09:00:00+08:00",
+        "source_type": "derived",
+        "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117",
+        "status": "estimated"
+      },
+      "source_refs": [
+        "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117"
+      ],
+      "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117",
+      "status": "estimated",
+      "to_label": "道の駅福良 P0",
+      "to_place": "road-station-fukura-p0",
+      "transfer_minutes": 20
+    },
+    {
+      "arrival_at": "2026-08-30T15:15:00+09:00",
+      "buffer_minutes": 0,
+      "departure_at": "2026-08-30T14:00:00+09:00",
+      "estimated_duration_minutes": 75,
+      "from_label": "うずしおクルーズ（福良港）",
+      "from_place": "uzushio-cruise-fukura",
+      "google_maps_directions_url": "https://www.google.com/maps/dir/?api=1&origin=%E5%85%B5%E5%BA%AB%E7%9C%8C%E5%8D%97%E3%81%82%E3%82%8F%E3%81%98%E5%B8%82%E7%A6%8F%E8%89%AF%E6%B8%AF&destination=%E5%85%B5%E5%BA%AB%E7%9C%8C%E6%B7%A1%E8%B7%AF%E5%B8%82%E9%87%8E%E5%B3%B6%E8%9F%87%E6%B5%A6843&travelmode=driving",
+      "id": "leg-day4-backup-fukura-nojima",
+      "mode": "car",
+      "note": "福良備援專用。行車估計：75 分；緩衝：0 分。導航：長距離北上，途中不插入景點；15:30 後抵達縮短 Nojima 並取消絵島。",
+      "provenance": {
+        "confidence": 0.8,
+        "note": "福良備援專用。行車估計：75 分；緩衝：0 分。導航：長距離北上，途中不插入景點；15:30 後抵達縮短 Nojima 並取消絵島。",
+        "provider": "Google Sheet planning estimate",
+        "retrieved_at": "2026-08-23T09:00:00+08:00",
+        "source_type": "derived",
+        "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117",
+        "status": "estimated"
+      },
+      "source_refs": [
+        "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117"
+      ],
+      "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117",
+      "status": "estimated",
+      "to_label": "Nojima Scuola（野島スコーラ）",
+      "to_place": "nojima-scuola",
+      "transfer_minutes": 75
     },
     {
       "arrival_at": "2026-08-30T16:25:00+09:00",
@@ -4573,14 +4679,14 @@
       "code": "EARLY_CHECKOUT_CONFIRMATION_REQUIRED",
       "message": "8/30 主行程需 06:50 離開，但住宿公開退房時間自 07:00 起；前晚取得提早交鑰匙／自助退房許可前，不可視為已確認。",
       "path": "/days/3/items/1",
-      "reference": "https://yoyaku.raffles-home.jp/",
+      "reference": null,
       "severity": "warning"
     },
     {
       "code": "EXTERNAL_CRUISE_RESERVATION_ACTION_REQUIRED",
       "message": "原 8/30 12:50 福良港觀潮船仍有已訂位且尚未取消的外部紀錄；目前只作鳴門側高速船未能搭乘時的備援，須先確認取消期限與費用。",
       "path": "/operations/pretrip_checklist/1",
-      "reference": "https://www.uzu-shio.com/timetable",
+      "reference": null,
       "severity": "warning"
     }
   ]

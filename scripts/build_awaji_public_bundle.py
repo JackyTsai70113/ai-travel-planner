@@ -110,6 +110,7 @@ def _as_status(value: object) -> str:
         "unverified",
         "stale",
         "conflict",
+        "unresolved",
         "unknown",
     }
     return normalized if normalized in known else "unknown"
@@ -517,9 +518,12 @@ def _bundle_conditions(trip: dict) -> dict[str, Any]:
 
 def _bundle_alternatives(trip: dict) -> list[dict[str, Any]]:
     output: list[dict[str, Any]] = []
-    for item in _as_list(trip.get("plan_alternatives", [])) + _as_list(
-        trip.get("alternatives", [])
-    ):
+    candidates = (
+        _as_list(trip.get("plan_alternatives", []))
+        + _as_list(trip.get("alternatives", []))
+        + _as_list(_override_value(trip, "/operations/contingency_plans"))
+    )
+    for item in candidates:
         if not isinstance(item, dict):
             continue
         output.append(
@@ -613,8 +617,11 @@ def _bundle_source_ledger(places: dict[str, dict[str, object]], trip: dict) -> l
     return collected
 
 
-def _bundle_reservations(days: list[dict], places: dict[str, dict[str, object]]) -> list[dict]:
+def _bundle_reservations(
+    trip: dict, days: list[dict], places: dict[str, dict[str, object]]
+) -> list[dict]:
     reservations: list[dict] = []
+    reservation_ids: set[str] = set()
     for day in days:
         for item in day.get("items", []):
             if item.get("id", "").startswith("fixed-"):
@@ -629,17 +636,42 @@ def _bundle_reservations(days: list[dict], places: dict[str, dict[str, object]])
                 )
                 has_known_name = isinstance(place_name, str) and place_name.strip()
                 display_name = place_name if has_known_name else fallback_name
-                reservations.append(
-                    {
-                        "id": item.get("id"),
-                        "day": day.get("date"),
-                        "time": item.get("start_at"),
-                        "name": display_name,
-                        "place_id": item.get("place_id"),
-                        "unresolved": not is_resolved,
-                        "kind": "fixed-reservation" if is_resolved else "placeholder-anchored-reservation",
-                    }
-                )
+                reservation = {
+                    "id": item.get("id"),
+                    "day": day.get("date"),
+                    "time": item.get("start_at"),
+                    "name": display_name,
+                    "place_id": item.get("place_id"),
+                    "unresolved": not is_resolved,
+                    "kind": "fixed-reservation" if is_resolved else "placeholder-anchored-reservation",
+                }
+                reservations.append(reservation)
+                reservation_ids.add(_safe_str(reservation["id"]))
+
+    for item in _as_list(_override_value(trip, "/operations/external_reservations")):
+        if not isinstance(item, dict):
+            continue
+        reservation_id = _safe_str(item.get("id"))
+        day = _safe_str(item.get("day"))
+        place_id = _safe_str(item.get("place_id"))
+        if not reservation_id or reservation_id in reservation_ids or not day or not place_id:
+            continue
+        place = places.get(place_id, {})
+        place_name = _safe_str(place.get("name")) if isinstance(place, dict) else ""
+        reservations.append(
+            {
+                "id": reservation_id,
+                "day": day,
+                "time": _safe_str(item.get("time")) or None,
+                "name": _safe_str(item.get("name")) or place_name or place_id,
+                "place_id": place_id,
+                "unresolved": item.get("unresolved") is not False,
+                "kind": _safe_str(item.get("kind")) or "external-reservation",
+                "status": _as_status(item.get("status")),
+                "source": _safe_str(item.get("source")),
+            }
+        )
+        reservation_ids.add(reservation_id)
     return reservations
 
 
@@ -671,7 +703,7 @@ def build_public_bundle(trip: dict, trip_path: Path) -> dict:
         if isinstance(place, dict) and _safe_str(place.get("id"))
     }
     days = _bundle_days(trip)
-    reservations = _bundle_reservations(days, places)
+    reservations = _bundle_reservations(trip, days, places)
     validation = _as_list(trip.get("validation", []))
     validation_payload = _bundle_validation(validation)
     conditions = _bundle_conditions(trip)
