@@ -206,7 +206,7 @@ export function MapPage({ bundle, route, currentDay }: MapPageProps) {
             {legs.map((leg, index) => {
               const origin = stopFor(bundle, leg.from_place, leg.from_label)
               const destination = stopFor(bundle, leg.to_place, leg.to_label)
-              const directionsHref = leg.google_maps_directions_url || buildMapsDirectionsLink([origin, destination], legTravelMode(leg.mode))
+              const directionsHref = buildMapsDirectionsLink([origin, destination], legTravelMode(leg.mode))
               const durationMinutes = leg.transfer_minutes ?? leg.estimated_duration_minutes
               const duration = durationMinutes == null ? '未知，出發前重查' : `${durationMinutes} 分鐘（規劃估計）`
               const buffer = leg.buffer_minutes == null ? '未知，未自行補值' : `${leg.buffer_minutes} 分鐘`

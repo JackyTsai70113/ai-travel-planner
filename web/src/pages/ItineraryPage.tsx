@@ -150,7 +150,7 @@ function legTravelMode(mode: string): 'driving' | 'walking' | 'transit' | 'bicyc
 function legDirectionsLink(bundle: Bundle, leg: BundleTransportLeg): string {
   const from = bundle.places?.find((place) => place.id === leg.from_place)
   const to = bundle.places?.find((place) => place.id === leg.to_place)
-  return leg.google_maps_directions_url || buildMapsDirectionsLink([
+  return buildMapsDirectionsLink([
     { id: leg.from_place, label: leg.from_label, mapsQuery: from?.maps_query || from?.address },
     { id: leg.to_place, label: leg.to_label, mapsQuery: to?.maps_query || to?.address },
   ], legTravelMode(leg.mode))
