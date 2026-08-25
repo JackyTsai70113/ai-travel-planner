@@ -924,6 +924,7 @@ textarea {
   .timeline-map-link,
   .hub-map-link {
     min-height: 44px;
+    min-width: 44px;
     font-size: .68rem;
   }
 }
