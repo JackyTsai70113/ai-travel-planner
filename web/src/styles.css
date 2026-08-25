@@ -293,10 +293,13 @@ a {
 .reservation-map-link {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   margin-left: 9px;
   padding: 3px 7px;
   border: 1px solid #9fc4d2;
   border-radius: 7px;
+  min-width: 44px;
+  min-height: 44px;
   color: #075f84;
   background: #edf7fa;
   font-size: 0.72rem;
@@ -325,6 +328,15 @@ a {
   background: #dceff4;
 }
 
+.map-icon-link svg,
+.hub-map-link svg,
+.timeline-map-link svg,
+.reservation-map-link svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  display: block;
+}
+
 .hub-map-link span,
 .timeline-map-link span,
 .reservation-map-link span {
@@ -337,12 +349,6 @@ a {
 .timeline-map-link:hover,
 .reservation-map-link:hover {
   background: #dceff4;
-}
-
-.hub-map-link,
-.timeline-map-link,
-.reservation-map-link {
-  min-height: 34px;
 }
 
 .hub-actions {

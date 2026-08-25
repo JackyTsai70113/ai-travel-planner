@@ -13,6 +13,7 @@ import {
   operationalStatusLabel,
 } from '../contracts/trip'
 import { TripRoute } from '../app/route-registry'
+import { MapPinIcon } from '../design-system/primitives/MapPinIcon'
 import { buildMapsDirectionsLink } from '../lib/google-maps-links'
 
 interface ItineraryPageProps {
@@ -291,7 +292,7 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
             <div className="timeline-track"><span>{visualKind === 'reservation' ? '◆' : visualKind === 'meal' ? '✦' : visualKind === 'move' ? '→' : '●'}</span>{index < visibleItems.length - 1 && <i />}</div>
             <div className="timeline-card">
               <div className="timeline-card-topline"><span className="timeline-category">{visualKind === 'reservation' ? '固定預約' : visualKind === 'meal' ? '餐飲安排' : visualKind === 'move' ? '逐段交通' : '行程停靠'}</span><div className="status-chips">{states.map((state) => <span key={state} className="status-chip">{state}</span>)}</div></div>
-              <h3>{title}{!leg && place?.name_ja ? <small>{place.name_ja}</small> : null}<a className="timeline-map-link" href={mapsHref} target="_blank" rel="noreferrer" aria-label={`${title} 在 Google Maps 開啟`} title="在 Google Maps 開啟"><span aria-hidden="true">🗺️</span></a></h3>
+              <h3>{title}{!leg && place?.name_ja ? <small>{place.name_ja}</small> : null}<a className="timeline-map-link" href={mapsHref} target="_blank" rel="noreferrer" aria-label={`${title} 在 Google Maps 開啟`} title="在 Google Maps 開啟"><MapPinIcon /></a></h3>
               <p className="timeline-detail">{detail}</p>
               {!leg && findPlaceAddress(bundle.places, item.place_id) && <p className="timeline-address">{findPlaceAddress(bundle.places, item.place_id)}</p>}
               {leg ? <div className="timeline-risk">{leg.status !== 'estimated' ? <span className={operationalStatusClass(leg.status)}>{operationalStatusLabel(leg.status)}</span> : null}<p><strong>風險／延誤切點：</strong>{leg.note || '出發前以 Google Maps 確認位置與路線。'}</p></div> : null}

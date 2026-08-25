@@ -6,6 +6,7 @@ import {
   operationalStatusClass,
   operationalStatusLabel,
 } from '../contracts/trip'
+import { MapPinIcon } from '../design-system/primitives/MapPinIcon'
 
 interface LodgingPageProps {
   bundle: Bundle
@@ -118,7 +119,7 @@ export function LodgingPage({ bundle }: LodgingPageProps) {
                 {lodging.note ? <p className="stay-note"><strong>入住提醒：</strong>{lodging.note}</p> : null}
                 {lodging.place?.accessibility_notes ? <p className="stay-note"><strong>家庭／無障礙：</strong>{lodging.place.accessibility_notes}</p> : null}
                 <div className="stay-actions">
-                  <a className="primary map-icon-link" href={mapsHref} target="_blank" rel="noreferrer" aria-label={`${lodging.place?.name || lodging.placeId} 在 Google Maps 開啟`} title="在 Google Maps 開啟"><span aria-hidden="true">🗺️</span></a>
+                  <a className="primary map-icon-link" href={mapsHref} target="_blank" rel="noreferrer" aria-label={`${lodging.place?.name || lodging.placeId} 在 Google Maps 開啟`} title="在 Google Maps 開啟"><MapPinIcon /></a>
                 </div>
               </div>
             </article>

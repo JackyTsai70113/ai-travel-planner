@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { TripRoute } from '../app/route-registry'
+import { MapPinIcon } from '../design-system/primitives/MapPinIcon'
 import {
   Bundle,
   BundleDay,
@@ -205,7 +206,7 @@ export function MapPage({ bundle, route, currentDay }: MapPageProps) {
                   : '在 Google Maps 開啟今日完整路線'}
                 title="在 Google Maps 開啟"
               >
-                <span aria-hidden="true">🗺️</span>
+                <MapPinIcon />
               </a>
             ))}
           </div>
@@ -248,7 +249,7 @@ export function MapPage({ bundle, route, currentDay }: MapPageProps) {
                       <p>{leg.note || '出發前請以 Google Maps 重新確認位置與路線。'}</p>
                     </div>
                     <div className="route-card-actions">
-                      <a className="map-icon-link" data-route-url={directionsHref} href={directionsHref} target="_blank" rel="noreferrer" aria-label="在 Google Maps 開啟逐段路線" title="在 Google Maps 開啟逐段路線"><span aria-hidden="true">🗺️</span></a>
+                      <a className="map-icon-link" data-route-url={directionsHref} href={directionsHref} target="_blank" rel="noreferrer" aria-label="在 Google Maps 開啟逐段路線" title="在 Google Maps 開啟逐段路線"><MapPinIcon /></a>
                     </div>
                   </div>
                 </li>
