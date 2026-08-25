@@ -143,6 +143,53 @@ describe('Issue 97 travel handbook', () => {
     expect(screen.queryByText('尚無逐段資料')).not.toBeInTheDocument()
   })
 
+  it('keeps conditional route legs out of the primary route and labels the backup separately', () => {
+    const primaryLeg = bundle.transport_legs![0]
+    const backupLeg = {
+      ...primaryLeg,
+      id: 'leg-backup-a-c',
+      from_place: 'a',
+      to_place: 'c',
+      from_label: '神戶機場',
+      to_label: '洲本城',
+      departure_at: `${dates[0]}T11:20:00+09:00`,
+      arrival_at: `${dates[0]}T11:40:00+09:00`,
+    }
+    const generatedPrimaryLeg = {
+      ...primaryLeg,
+      id: 'generated-primary-a-d',
+      from_place: 'a',
+      to_place: 'd',
+      from_label: '神戶機場',
+      to_label: '鳴門公園',
+      departure_at: `${dates[0]}T12:00:00+09:00`,
+      arrival_at: `${dates[0]}T12:45:00+09:00`,
+    }
+    render(<MapPage
+      bundle={{
+        ...bundle,
+        transport_legs: [...bundle.transport_legs!, backupLeg, generatedPrimaryLeg],
+        alternatives: [{
+          id: 'day1-backup',
+          title: '條件式備援',
+          day: dates[0],
+          summary: '主方案失敗時才啟用。',
+          decision_gate: '11:00 前決定。',
+          route_leg_ids: [backupLeg.id],
+        }],
+      }}
+      route={{ section: 'map', raw: 'map' }}
+      currentDay={dates[0]}
+    />)
+
+    expect(screen.getByText('共 2 段已建模交通，依出發時間排序。')).toBeInTheDocument()
+    expect(screen.getByTestId('transport-leg-generated-primary-a-d')).toBeInTheDocument()
+    expect(screen.queryByTestId('transport-leg-leg-backup-a-c')).not.toBeInTheDocument()
+    expect(screen.getByRole('region', { name: '備援路線：條件式備援' })).toBeInTheDocument()
+    expect(screen.getByTestId('backup-transport-leg-leg-backup-a-c')).toBeInTheDocument()
+    expect(screen.getByText('CONDITIONAL BACKUP · 不屬於主路線')).toBeInTheDocument()
+  })
+
   it('groups only contiguous legs with the same travel mode', () => {
     const base = bundle.transport_legs || []
     const first = base[0]

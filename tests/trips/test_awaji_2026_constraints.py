@@ -13,6 +13,7 @@ EVIDENCE_PATH = Path("trips/awaji-naruto-tokushima-kobe-2026/evidence.json")
 CONDITIONS_PATH = Path("trips/awaji-naruto-tokushima-kobe-2026/conditions.json")
 TRIP_BUNDLE_PATH = Path("trips/awaji-naruto-tokushima-kobe-2026/public-bundle.json")
 WEB_BUNDLE_PATH = Path("web/public/trips/awaji-2026/public-bundle.json")
+TRIP_SCHEMA_PATH = Path("src/schemas/trip_v1.schema.json")
 
 
 class AwajiTripFixtureTests(unittest.TestCase):
@@ -87,6 +88,102 @@ class AwajiTripFixtureTests(unittest.TestCase):
         reservation_place = self.places["naruto-ferry-fixed-activity"]
         self.assertEqual(reservation_place["resolution"]["state"], "resolved")
         self.assertEqual(reservation_place["resolution"]["confidence"], 1)
+
+    def test_uzushio_kisen_is_sunday_primary_with_fukura_as_unresolved_external_backup(self):
+        day_four = next(day for day in self.trip["days"] if day["date"] == "2026-08-30")
+        item_ids = {item["id"] for item in day_four["items"]}
+        cruise = next(item for item in day_four["items"] if item["id"] == "day4-uzushio-kisen-0800")
+
+        self.assertEqual(cruise["place_id"], "uzushio-kisen-naruto")
+        self.assertEqual(cruise["start_at"], "2026-08-30T08:00:00+09:00")
+        self.assertEqual(cruise["end_at"], "2026-08-30T08:20:00+09:00")
+        self.assertIn("期待度大", cruise["notes"])
+        self.assertIn("一般散客無預約", cruise["notes"])
+        self.assertEqual(cruise["alternative_place_ids"], ["uzushio-cruise-fukura"])
+        self.assertFalse(cruise["id"].startswith("fixed-"))
+        self.assertNotIn("fixed-2026-08-30-12-50-cruise", item_ids)
+        self.assertFalse(any(item["place_id"] == "uzushio-cruise-fukura" for item in day_four["items"]))
+        self.assertFalse(any(item["id"] == cruise["id"] for item in self.bundle["reservations"]))
+
+        backup_reservation = next(
+            item
+            for item in self.bundle["reservations"]
+            if item["id"] == "external-2026-08-30-12-50-cruise"
+        )
+        self.assertEqual(backup_reservation["place_id"], "uzushio-cruise-fukura")
+        self.assertEqual(backup_reservation["time"], "2026-08-30T12:50:00+09:00")
+        self.assertEqual(backup_reservation["kind"], "external-backup-reservation")
+        self.assertTrue(backup_reservation["unresolved"])
+        self.assertIn("尚未取消", backup_reservation["name"])
+
+        place = self.places["uzushio-kisen-naruto"]
+        self.assertEqual(place["provenance"]["source_url"], "https://www.uzushio-kisen.com/kojin.html")
+        self.assertIn("只收現金", place["opening_hours_note"])
+        self.assertNotIn("免費車位", place["opening_hours_note"])
+        self.assertNotIn("收折存放", place["accessibility_notes"])
+        self.assertTrue({"official_url", "parking", "entrance_fee"}.isdisjoint(place))
+        self.assertIn("嬰兒車", place["accessibility_notes"])
+        self.assertIn("08:00 為期待度大", place["opening_hours_note"])
+
+        for previous, current in zip(day_four["items"], day_four["items"][1:]):
+            self.assertLessEqual(
+                datetime.fromisoformat(previous["end_at"]),
+                datetime.fromisoformat(current["start_at"]),
+            )
+
+        legs = {leg["id"]: leg for leg in self.trip["candidate_sets"]["transport_legs"]}
+        expected_legs = {
+            "leg-day4-tokushima-kisen": ("tokushima-seshi-besso-hotel-2", "uzushio-kisen-naruto"),
+            "leg-day4-kisen-uzunooka": ("uzushio-kisen-naruto", "map-import-naruto-bridge-memorial"),
+            "leg-day4-uzunooka-nojima": ("map-import-uzuno-oka", "nojima-scuola"),
+            "leg-day4-backup-uzunooka-fukura": ("map-import-uzuno-oka", "road-station-fukura-p0"),
+            "leg-day4-backup-fukura-nojima": ("uzushio-cruise-fukura", "nojima-scuola"),
+        }
+        for leg_id, endpoints in expected_legs.items():
+            with self.subTest(leg_id=leg_id):
+                self.assertEqual((legs[leg_id]["from_place_id"], legs[leg_id]["to_place_id"]), endpoints)
+                self.assertGreater(
+                    (datetime.fromisoformat(legs[leg_id]["arrival_at"]) - datetime.fromisoformat(legs[leg_id]["departure_at"])).total_seconds(),
+                    0,
+                )
+
+        backup_plan = next(
+            item for item in self.bundle["alternatives"] if item["id"] == "day4-fukura-cruise-backup"
+        )
+        self.assertIn("11:40 抵福良報到", backup_plan["summary"])
+        self.assertIn("12:50–13:50 搭船", backup_plan["summary"])
+        self.assertIn("leg-day4-backup-uzunooka-fukura", backup_plan["decision_gate"])
+        self.assertEqual(backup_plan["day"], "2026-08-30")
+        self.assertEqual(
+            backup_plan["route_leg_ids"],
+            ["leg-day4-backup-uzunooka-fukura", "leg-day4-backup-fukura-nojima"],
+        )
+
+        checklist = next(
+            item["value"]
+            for item in self.trip["overrides"]
+            if item["path"] == "/operations/pretrip_checklist"
+        )
+        backup = next(item for item in checklist if item["id"] == "book-uzushio-cruise")
+        self.assertIn("尚未取消", backup["item"])
+        self.assertIn("外部備援", backup["action"])
+        validation_codes = {item["code"] for item in self.trip["validation"]}
+        self.assertIn("EARLY_CHECKOUT_CONFIRMATION_REQUIRED", validation_codes)
+        self.assertIn("EXTERNAL_CRUISE_RESERVATION_ACTION_REQUIRED", validation_codes)
+
+        evidence = json.loads(EVIDENCE_PATH.read_text(encoding="utf-8"))
+        evidence_ids = {entry["reference_id"] for entry in evidence["entries"]}
+        self.assertIn("schedule/uzushio-kisen-2026-08-30", evidence_ids)
+        self.assertIn("reservation/uzushio-cruise-fukura-2026-08-30-1250", evidence_ids)
+
+    def test_uzushio_changes_use_only_trip_schema_fields(self):
+        schema = json.loads(TRIP_SCHEMA_PATH.read_text(encoding="utf-8"))
+        place_fields = set(schema["$defs"]["place"]["properties"])
+        validation_fields = set(schema["$defs"]["validationViolation"]["properties"])
+
+        self.assertEqual(set(self.places["uzushio-kisen-naruto"]) - place_fields, set())
+        for violation in self.trip["validation"]:
+            self.assertEqual(set(violation) - validation_fields, set())
 
     def test_ichiraku_hours_are_official_and_bundle_outputs_match(self):
         ichiraku = self.places["ramen-ichiraku-nijigen"]
@@ -190,7 +287,7 @@ class AwajiTripFixtureTests(unittest.TestCase):
 
     def test_transport_legs_and_item_references_are_complete(self):
         legs = self.trip["candidate_sets"]["transport_legs"]
-        self.assertEqual(len(legs), 31)
+        self.assertEqual(len(legs), 33)
         leg_ids = [leg["id"] for leg in legs]
         self.assertEqual(len(set(leg_ids)), len(legs))
 
@@ -200,8 +297,12 @@ class AwajiTripFixtureTests(unittest.TestCase):
             for item in day["items"]
             if item.get("transport_leg_id")
         ]
-        self.assertEqual(len(item_leg_refs), len(legs))
-        self.assertEqual(set(item_leg_refs), set(leg_ids))
+        backup_leg_refs = {
+            "leg-day4-backup-uzunooka-fukura",
+            "leg-day4-backup-fukura-nojima",
+        }
+        self.assertEqual(len(item_leg_refs), len(legs) - len(backup_leg_refs))
+        self.assertEqual(set(item_leg_refs) | backup_leg_refs, set(leg_ids))
         self.assertEqual(len(item_leg_refs), len(set(item_leg_refs)))
 
         place_ids = set(self.places)

@@ -189,12 +189,16 @@ export interface Bundle {
   alternatives?: Array<{
     id: string
     title: string
+    day?: string | null
     plan?: 'A' | 'B' | 'C' | string | null
     status?: string | null
     trigger?: string | null
     tradeoff?: string | null
     summary?: string | null
     decision_gate?: string | null
+    reasons?: string[]
+    conditions?: string[]
+    route_leg_ids?: string[]
   }> | null
   overview?: { critical_unknown_count?: number | null } | null
   reservations: BundleReservation[]
