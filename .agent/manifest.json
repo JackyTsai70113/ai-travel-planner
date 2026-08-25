@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "name": "ai-travel-planner-codex-guidance",
+  "language": "zh-TW",
+  "entrypoint": ".agent/README.md",
+  "skills": [
+    "context-recovery",
+    "continuous-collaboration",
+    "investigation",
+    "planning",
+    "platform-impact-analysis"
+  ],
+  "hooks": {
+    "policy": ".agent/hooks/README.md",
+    "repository_validator": "scripts/validate_agent_collaboration.py"
+  },
+  "excluded_machine_state": [
+    "credentials",
+    "sessions",
+    "databases",
+    "runtime_snapshots",
+    "absolute_path_skill_links"
+  ]
+}
