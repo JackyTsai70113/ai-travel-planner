@@ -182,6 +182,14 @@ try {
   await openRoute(mobile, 'today/2026-08-29')
   await assertTextContrast(mobile, '.timeline-time span', 4.5, 'timeline secondary time')
   await assertTextContrast(mobile, '.timeline-detail', 4.5, 'timeline detail')
+  const dayNavSpacing = await mobile.locator('.itinerary-day-nav').evaluate((element) => {
+    const style = getComputedStyle(element)
+    const tabs = element.querySelector('.day-tabs')
+    return { paddingInline: style.paddingInline, gap: tabs ? getComputedStyle(tabs).gap : '' }
+  })
+  if (dayNavSpacing.paddingInline !== '12px' || dayNavSpacing.gap !== '8px') {
+    throw new Error(`day navigation spacing drifted: ${JSON.stringify(dayNavSpacing)}`)
+  }
   await assertTouchTargets(mobile, '.day-tab', 'day tab')
   await mobile.locator('.day-tab').first().focus()
   await assertStyleContrast(mobile, '.day-tab:focus-visible', 'outlineColor', '.itinerary-day-nav', 'backgroundColor', 3, 'light control focus indicator')
