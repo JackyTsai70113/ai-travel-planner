@@ -50,7 +50,7 @@ function formatDay(date: string): string {
 }
 
 function timeLabel(value: string | null): string {
-  return value?.match(/T(\d{2}:\d{2})/)?.[1] || '未提供'
+  return value?.match(/T(\d{2}:\d{2})/)?.[1] || '—'
 }
 
 function fixedLabel(item: { kind: string; notes?: string }, fallback: string): string {
@@ -163,7 +163,7 @@ export function OverviewPage({ bundle, trip }: OverviewPageProps) {
                 <div className="overview-day-copy">
                   <p>{formatDay(day.date)} · {day.items.length} 個停靠</p>
                   <h3>{day.summary}</h3>
-                  <div className="overview-day-route"><span>{first ? findPlaceLabel(bundle.places, first.place_id) : '未提供起點'}</span><i>→</i><span>{last ? findPlaceLabel(bundle.places, last.place_id) : '未提供終點'}</span></div>
+                  <div className="overview-day-route"><span>{first ? findPlaceLabel(bundle.places, first.place_id) : '—'}</span><i>→</i><span>{last ? findPlaceLabel(bundle.places, last.place_id) : '—'}</span></div>
                   <div className="overview-day-foot"><span>住宿：{lodging?.name || '返程／未安排'}</span><span>固定 {fixedCount} 項</span></div>
                 </div>
               </a>
@@ -179,7 +179,7 @@ export function OverviewPage({ bundle, trip }: OverviewPageProps) {
             {lodgingCards.map(({ placeId, place, checkIn, checkOut }, index) => (
               <article key={placeId}>
                 <span className="stay-sequence">{index + 1}</span>
-                <div><p>{checkIn || '入住日未提供'} → {checkOut || '退房日未提供'}</p><h3>{place?.name || placeId}</h3><small>{place?.address || '完整地址尚未由 Canonical Trip 提供'}</small></div>
+                <div><p>{checkIn || '—'} → {checkOut || '—'}</p><h3>{place?.name || placeId}</h3>{place?.address ? <small>{place.address}</small> : null}</div>
               </article>
             ))}
           </div>

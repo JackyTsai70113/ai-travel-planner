@@ -8,10 +8,7 @@ interface BundleLoaderState {
   status: LoadStatus
   error: string
   isOnline: boolean
-  isUpdateAvailable: boolean
 }
-
-const STORAGE_KEYS = { remoteVersion: 'trip:active:bundle-version:v1' }
 
 function resolveAppBaseUrl(baseUrl: string, pageUrl: string): URL {
   const base = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
@@ -47,19 +44,8 @@ export function useBundleLoader(tripSlug?: string): BundleLoaderState {
   const [status, setStatus] = useState<LoadStatus>('loading')
   const [error, setError] = useState('')
   const [isOnline, setIsOnline] = useState(true)
-  const [isUpdateAvailable, setIsUpdateAvailable] = useState(false)
 
   const baseUrl = String(import.meta.env.BASE_URL || '/')
-
-  const checkVersion = useCallback((data: Bundle) => {
-    const remoteGenerated = data.meta?.generated_at
-    if (!remoteGenerated) return
-    const remoteStored = localStorage.getItem(STORAGE_KEYS.remoteVersion)
-    if (remoteStored && remoteStored !== remoteGenerated) {
-      setIsUpdateAvailable(true)
-    }
-    localStorage.setItem(STORAGE_KEYS.remoteVersion, remoteGenerated)
-  }, [])
 
   const load = useCallback(async () => {
     setStatus('loading')
@@ -91,14 +77,12 @@ export function useBundleLoader(tripSlug?: string): BundleLoaderState {
       const data = parsed.value
       bundleRef.current = data
       setBundle(data)
-      setIsUpdateAvailable(false)
-      checkVersion(data)
       setStatus('ready')
     } catch (err) {
       setError(err instanceof Error ? err.message : '資料格式錯誤')
       setStatus('error')
     }
-  }, [baseUrl, checkVersion, tripSlug])
+  }, [baseUrl, tripSlug])
 
   useEffect(() => {
     setIsOnline(window.navigator.onLine)
@@ -124,6 +108,5 @@ export function useBundleLoader(tripSlug?: string): BundleLoaderState {
     status,
     error,
     isOnline,
-    isUpdateAvailable: isOnline ? isUpdateAvailable : false,
   }
 }

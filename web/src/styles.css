@@ -167,15 +167,19 @@ a {
 .hub-card-wrapper {
   display: grid;
   gap: 10px;
+  padding: 22px;
 }
 
 .hub-header h2 {
   margin-bottom: 6px;
+  font-size: 1.35rem;
 }
 
 .hub-header p {
   margin: 0;
   color: var(--text-sub);
+  font-size: 0.95rem;
+  line-height: 1.6;
 }
 
 .hub-stats {
@@ -189,7 +193,9 @@ a {
   background: var(--muted-bg);
   border: 1px solid var(--line);
   border-radius: 10px;
-  padding: 8px 10px;
+  padding: 11px 13px;
+  color: var(--text);
+  font-size: 0.92rem;
 }
 
 .hub-section {
@@ -210,12 +216,13 @@ a {
 }
 
 .hub-item {
-  border: 1px solid #d3dfec;
-  border-radius: 10px;
-  padding: 10px;
-  background: #f8fbff;
+  border: 1px solid #b8cbd6;
+  border-radius: 14px;
+  padding: 15px;
+  background: #ffffff;
   display: grid;
-  gap: 6px;
+  gap: 9px;
+  box-shadow: 0 5px 14px rgba(20, 48, 67, .08);
 }
 
 .hub-item-row {
@@ -232,11 +239,15 @@ a {
 
 .hub-item p {
   margin: 0;
+  color: #274755;
+  font-size: 0.93rem;
+  line-height: 1.6;
 }
 
 .hub-meta {
-  color: var(--text-sub);
-  font-size: 0.85rem;
+  color: #486574;
+  font-size: 0.88rem;
+  line-height: 1.55;
 }
 
 .hub-footer {
@@ -266,6 +277,44 @@ a {
   margin: 0;
   display: grid;
   gap: 6px;
+}
+
+.hub-alert-list li {
+  padding: 9px 11px;
+  border: 1px solid #c4d4dc;
+  border-radius: 9px;
+  color: #284b59;
+  background: #f4f8fa;
+  font-size: 0.92rem;
+}
+
+.hub-map-link,
+.timeline-map-link,
+.reservation-map-link {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 9px;
+  padding: 3px 7px;
+  border: 1px solid #9fc4d2;
+  border-radius: 7px;
+  color: #075f84;
+  background: #edf7fa;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-decoration: none;
+  vertical-align: middle;
+}
+
+.hub-map-link:hover,
+.timeline-map-link:hover,
+.reservation-map-link:hover {
+  background: #dceff4;
+}
+
+.hub-map-link,
+.timeline-map-link,
+.reservation-map-link {
+  min-height: 34px;
 }
 
 .hub-actions {
@@ -740,6 +789,114 @@ textarea {
   .card {
     box-shadow: none;
     break-inside: avoid;
+  }
+}
+
+/* Readability pass for operational hub pages and compact reservation cards. */
+.hub-card-wrapper {
+  padding: 22px;
+}
+
+.hub-card-wrapper .hub-header h2 {
+  font-size: 1.35rem;
+}
+
+.hub-card-wrapper .hub-header p,
+.hub-card-wrapper .hub-item p {
+  font-size: .93rem;
+  line-height: 1.6;
+}
+
+.hub-card-wrapper .hub-item {
+  border-color: #b8cbd6;
+  background: #fff;
+  box-shadow: 0 5px 14px rgba(20, 48, 67, .08);
+}
+
+.hub-card-wrapper .hub-meta {
+  color: #486574;
+  font-size: .88rem;
+}
+
+.hub-card-wrapper .hub-alert-list li {
+  padding: 9px 11px;
+  border: 1px solid #c4d4dc;
+  border-radius: 9px;
+  color: #284b59;
+  background: #f4f8fa;
+  font-size: .92rem;
+}
+
+.hub-map-link,
+.timeline-map-link,
+.reservation-map-link {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 9px;
+  padding: 3px 7px;
+  border: 1px solid #9fc4d2;
+  border-radius: 7px;
+  color: #075f84;
+  background: #edf7fa;
+  font-size: .72rem;
+  font-weight: 700;
+  text-decoration: none;
+  vertical-align: middle;
+}
+
+.hub-map-link:hover,
+.timeline-map-link:hover,
+.reservation-map-link:hover {
+  background: #dceff4;
+}
+
+.reservation-card {
+  border-color: #b8cbd6;
+  box-shadow: 0 6px 16px rgba(20, 48, 67, .08);
+}
+
+.reservation-title-row h2 {
+  margin: 0;
+  color: #203e4b;
+  font-size: 1.08rem;
+  line-height: 1.45;
+}
+
+.reservation-address {
+  margin: 8px 0 0;
+  color: #3f5e6a;
+  font-size: .88rem;
+  line-height: 1.55;
+}
+
+.timeline-card h3 {
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .hub-card-wrapper {
+    padding: 16px;
+  }
+
+  .reservation-card {
+    grid-template-columns: 76px minmax(0, 1fr);
+    gap: 13px;
+    padding: 15px;
+  }
+
+  .reservation-time {
+    padding-right: 11px;
+  }
+
+  .reservation-title-row h2 {
+    font-size: 1rem;
+  }
+
+  .reservation-map-link,
+  .timeline-map-link,
+  .hub-map-link {
+    min-height: 44px;
+    font-size: .68rem;
   }
 }
 

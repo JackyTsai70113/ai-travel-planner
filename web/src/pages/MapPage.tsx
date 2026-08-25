@@ -35,7 +35,7 @@ function formatDay(date: string): string {
 }
 
 function formatTime(value: string | null): string {
-  return value?.match(/T(\d{2}:\d{2})/)?.[1] || '未提供'
+  return value?.match(/T(\d{2}:\d{2})/)?.[1] || '—'
 }
 
 function transportModeLabel(mode: string): string {
@@ -235,7 +235,7 @@ export function MapPage({ bundle, route, currentDay }: MapPageProps) {
                     </dl>
                     <div className="route-risk-note">
                       <strong>導航注意／延誤切點</strong>
-                      <p>{leg.note || '尚未提供專屬切點；出發前請以 Google Maps 即時路況重新確認。'}</p>
+                      <p>{leg.note || '出發前請以 Google Maps 即時路況重新確認。'}</p>
                     </div>
                     <div className="route-card-actions">
                       <a data-route-url={directionsHref} href={directionsHref} target="_blank" rel="noreferrer">逐段導航</a>

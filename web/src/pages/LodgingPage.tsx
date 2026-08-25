@@ -26,11 +26,11 @@ interface LodgingItem {
 }
 
 function timeLabel(value: string | null | undefined) {
-  return value?.match(/T(\d{2}:\d{2})/)?.[1] || '未提供'
+  return value?.match(/T(\d{2}:\d{2})/)?.[1] || '—'
 }
 
 function dateLabel(value: string | undefined) {
-  if (!value) return '未提供'
+  if (!value) return '—'
   try {
     return new Intl.DateTimeFormat('zh-TW', {
       month: 'numeric',
@@ -68,8 +68,8 @@ export function LodgingPage({ bundle }: LodgingPageProps) {
       const boundaryNote = explicitCheckOut
         ? '退房時間已列入行程'
         : nextCheckIn
-          ? '退房日依下一處入住日呈現；確切退房時間未提供'
-          : '退房日與時間未提供'
+          ? '退房日依下一處入住日呈現'
+          : '退房資訊尚未排入行程'
       return {
         id: entry.placeId,
         placeId: entry.placeId,
@@ -101,7 +101,7 @@ export function LodgingPage({ bundle }: LodgingPageProps) {
   return (
     <section className="lodging-workspace" aria-label="住宿手冊">
       <header className="page-intro">
-        <div><p className="eyebrow">STAY GUIDE</p><h1>住宿接力</h1><p>入住日期、地址與當日行程放在一起；未提供的設備與需求不自行推論。</p></div>
+        <div><p className="eyebrow">STAY GUIDE</p><h1>住宿接力</h1><p>入住日期、地址與當日行程放在一起，方便出發前快速查看。</p></div>
         <div className="page-intro-stats"><span><strong>{lodgings.length}</strong> 處住宿</span><span><strong>{totalNights}</strong> 晚</span></div>
       </header>
 
@@ -127,7 +127,7 @@ export function LodgingPage({ bundle }: LodgingPageProps) {
                   <i>→</i>
                   <div><small>CHECK OUT</small><strong>{dateLabel(lodging.checkOutDate)}</strong><span>{timeLabel(lodging.checkOutTime)}</span></div>
                 </div>
-                <div className="stay-address"><span aria-hidden="true">⌖</span><div><small>完整地址</small><p>{lodging.place?.address || 'Canonical Trip 尚未提供完整地址'}</p></div></div>
+                {lodging.place?.address ? <div className="stay-address"><span aria-hidden="true">⌖</span><div><small>完整地址</small><p>{lodging.place.address}</p></div></div> : null}
                 {lodging.place?.opening_hours_note ? <p className="stay-note"><strong>入住／退房規則：</strong>{lodging.place.opening_hours_note}</p> : null}
                 <p className="stay-boundary-note">{lodging.boundaryNote}</p>
                 {lodging.note ? <p className="stay-note"><strong>入住提醒：</strong>{lodging.note}</p> : null}

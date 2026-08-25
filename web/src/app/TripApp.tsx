@@ -90,9 +90,8 @@ export default function TripApp({ tripMeta = null, tripSlug }: TripAppProps) {
     if (base === 'offline-no-cache') return 'offline-no-cache'
     if (base === 'offline-cache') return 'offline-cache'
     if (base === 'critical') return 'critical'
-    if (bundleLoader.isUpdateAvailable) return 'newer-version'
     return 'normal'
-  }, [bundleLoader.bundle, bundleLoader.isOnline, bundleLoader.isUpdateAvailable, bundleLoader.status, routeNotFound])
+  }, [bundleLoader.bundle, bundleLoader.isOnline, bundleLoader.status, routeNotFound])
 
   const normalizeDay = useCallback(
     (candidate: string | undefined) => {
@@ -245,9 +244,6 @@ export default function TripApp({ tripMeta = null, tripSlug }: TripAppProps) {
         sections={SECTION_DEFINITIONS}
         activeSection={selectedSection}
         onNavigateSection={gotoSection}
-        onRetry={() => {
-          window.location.reload()
-        }}
         isDrawerOpen={drawerOpen}
         setDrawerOpen={setDrawerOpen}
       >
@@ -267,9 +263,6 @@ export default function TripApp({ tripMeta = null, tripSlug }: TripAppProps) {
       sections={SECTION_DEFINITIONS}
       activeSection={selectedSection}
       onNavigateSection={gotoSection}
-      onRetry={() => {
-        window.location.reload()
-      }}
       isDrawerOpen={drawerOpen}
       setDrawerOpen={setDrawerOpen}
     >

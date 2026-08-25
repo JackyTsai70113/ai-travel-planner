@@ -17,7 +17,6 @@ const LABEL_BY_STATUS: Record<TripStatusType, string> = {
   critical: '異常提示',
   'offline-cache': '離線快取可用',
   'offline-no-cache': '離線無快取',
-  'newer-version': '有新版可用',
   'route-not-found': '頁面不存在',
   normal: '正常',
 }

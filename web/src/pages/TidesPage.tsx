@@ -21,15 +21,15 @@ export function TidesPage({ bundle, day }: TidesPageProps) {
     <section className="card hub-card-wrapper" aria-label="潮汐與動態條件">
       <header className="hub-header">
         <h2>潮汐與動態條件</h2>
-        <p>{tide?.summary || '潮汐資料載入失敗，請重新整理頁面。'}</p>
+        <p>{tide?.summary || '潮汐資料目前無法顯示。'}</p>
       </header>
 
       <div className="hub-stats">
         <p>提醒：{warnings.length}</p>
-        <p>潮汐資料：{hasTideData ? tide?.status_label || '官方預測' : '資料未載入'}</p>
+        <p>潮汐資料：{hasTideData ? tide?.status_label || '官方預測' : '—'}</p>
       </div>
 
-      <p className="shell-message">資料站：{tide?.station || '洲本（SUMOTO）'}；資料時間：日本時間</p>
+      <p className="shell-message">測站：{tide?.station || '洲本（SUMOTO）'}；時間：日本時間</p>
 
       <section className="hub-section">
         {tideDays.map((item) => (
@@ -64,7 +64,7 @@ export function TidesPage({ bundle, day }: TidesPageProps) {
       ) : null}
 
       <p className="hub-footer">
-        來源：{tide?.source_url ? <a href={tide.source_url} target="_blank" rel="noreferrer">{tide.provider || '官方'}潮位表</a> : '來源資料未載入'}；出發前請再核對最新海象與設施公告。
+        {tide?.source_url ? <a href={tide.source_url} target="_blank" rel="noreferrer">查看官方潮位表</a> : null}
       </p>
     </section>
   )

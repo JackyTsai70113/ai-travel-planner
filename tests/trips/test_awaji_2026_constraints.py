@@ -88,6 +88,24 @@ class AwajiTripFixtureTests(unittest.TestCase):
         self.assertEqual(reservation_place["resolution"]["state"], "resolved")
         self.assertEqual(reservation_place["resolution"]["confidence"], 1)
 
+    def test_ichiraku_hours_are_official_and_bundle_outputs_match(self):
+        ichiraku = self.places["ramen-ichiraku-nijigen"]
+        expected_note = "ラーメン一樂：平日 11:00–15:00（最後點餐 14:30）、16:00–18:00（最後點餐 17:30）；8/27（週四）12:45–13:30 位於午間營業時段內。"
+        self.assertEqual(ichiraku["opening_hours_note"], expected_note)
+        self.assertEqual(ichiraku["provenance"]["source_url"], "https://nijigennomori.com/price/")
+        self.assertIn("季節或活動調整", ichiraku["provenance"]["note"])
+
+        trip_bundle_place = next(place for place in self.bundle["places"] if place["id"] == ichiraku["id"])
+        web_bundle = json.loads(WEB_BUNDLE_PATH.read_text(encoding="utf-8"))
+        web_bundle_place = next(place for place in web_bundle["places"] if place["id"] == ichiraku["id"])
+        for bundle_place in (trip_bundle_place, web_bundle_place):
+            self.assertEqual(bundle_place["opening_hours_note"], expected_note)
+            self.assertEqual(bundle_place["provenance"]["source_url"], "https://nijigennomori.com/price/")
+
+        meal = next(item for day in self.bundle["days"] for item in day["items"] if item["id"] == "day1-lunch-ichiraku")
+        self.assertIn("11:00–15:00", meal["notes"])
+        self.assertIn("16:00–18:00", meal["notes"])
+
     def test_happy_pancake_is_resolved_at_official_address(self):
         pancake = self.places["naruto-ferry-fixed-activity"]
         self.assertEqual(pancake["name"], "幸せのパンケーキ 淡路島テラス")
