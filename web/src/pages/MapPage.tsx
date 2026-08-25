@@ -194,8 +194,18 @@ export function MapPage({ bundle, route, currentDay }: MapPageProps) {
           </div>
           <div className="daily-route-actions">
             {fullRouteChunks.map((chunk) => (
-              <a key={chunk.id} href={chunk.href} target="_blank" rel="noreferrer">
-                {fullRouteChunks.length > 1 ? `${transportModeLabel(chunk.travelMode)}：${chunk.sourceLabel} → ${chunk.destinationLabel}` : '開啟今日完整路線'}
+              <a
+                key={chunk.id}
+                className="map-icon-link"
+                href={chunk.href}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={fullRouteChunks.length > 1
+                  ? `在 Google Maps 開啟${transportModeLabel(chunk.travelMode)}：${chunk.sourceLabel} 到 ${chunk.destinationLabel}`
+                  : '在 Google Maps 開啟今日完整路線'}
+                title="在 Google Maps 開啟"
+              >
+                <span aria-hidden="true">🗺️</span>
               </a>
             ))}
           </div>

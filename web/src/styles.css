@@ -309,8 +309,8 @@ a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 42px;
-  min-height: 42px;
+  min-width: 44px;
+  min-height: 44px;
   padding: 6px 9px;
   border: 1px solid #9fc4d2;
   border-radius: 9px;
