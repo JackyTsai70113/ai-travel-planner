@@ -219,7 +219,7 @@ try {
   await assertTextContrast(mobile, '.stay-note', 4.5, 'lodging note')
 
   await openRoute(mobile, 'packing')
-  if (await mobile.getByRole('checkbox').count() !== 30) throw new Error('spreadsheet checklist did not render 30 items')
+  if (await mobile.getByRole('checkbox').count() !== 28) throw new Error('spreadsheet checklist did not render 28 items')
   await mobile.getByText('預約 Ocean Terrace', { exact: true }).waitFor()
   await assertTextContrast(mobile, '.checklist-copy p', 4.5, 'packing detail')
   await assertStyleContrast(mobile, '.note-editor input', 'borderTopColor', '.note-editor input', 'backgroundColor', 3, 'note input boundary')
