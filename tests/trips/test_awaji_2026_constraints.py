@@ -88,6 +88,65 @@ class AwajiTripFixtureTests(unittest.TestCase):
         self.assertEqual(reservation_place["resolution"]["state"], "resolved")
         self.assertEqual(reservation_place["resolution"]["confidence"], 1)
 
+    def test_uzushio_kisen_is_sunday_primary_with_fukura_as_unresolved_external_backup(self):
+        day_four = next(day for day in self.trip["days"] if day["date"] == "2026-08-30")
+        item_ids = {item["id"] for item in day_four["items"]}
+        cruise = next(item for item in day_four["items"] if item["id"] == "day4-uzushio-kisen-0800")
+
+        self.assertEqual(cruise["place_id"], "uzushio-kisen-naruto")
+        self.assertEqual(cruise["start_at"], "2026-08-30T08:00:00+09:00")
+        self.assertEqual(cruise["end_at"], "2026-08-30T08:20:00+09:00")
+        self.assertIn("期待度大", cruise["notes"])
+        self.assertIn("一般散客無預約", cruise["notes"])
+        self.assertEqual(cruise["alternative_place_ids"], ["uzushio-cruise-fukura"])
+        self.assertFalse(cruise["id"].startswith("fixed-"))
+        self.assertNotIn("fixed-2026-08-30-12-50-cruise", item_ids)
+        self.assertFalse(any(item["place_id"] == "uzushio-cruise-fukura" for item in day_four["items"]))
+        self.assertFalse(any(item["id"] == cruise["id"] for item in self.bundle["reservations"]))
+
+        place = self.places["uzushio-kisen-naruto"]
+        self.assertEqual(place["provenance"]["source_url"], "https://www.uzushio-kisen.com/kojin.html")
+        self.assertIn("只收現金", place["entrance_fee"])
+        self.assertIn("嬰兒車", place["accessibility_notes"])
+        self.assertIn("08:00 為期待度大", place["opening_hours_note"])
+
+        for previous, current in zip(day_four["items"], day_four["items"][1:]):
+            self.assertLessEqual(
+                datetime.fromisoformat(previous["end_at"]),
+                datetime.fromisoformat(current["start_at"]),
+            )
+
+        legs = {leg["id"]: leg for leg in self.trip["candidate_sets"]["transport_legs"]}
+        expected_legs = {
+            "leg-day4-tokushima-kisen": ("tokushima-seshi-besso-hotel-2", "uzushio-kisen-naruto"),
+            "leg-day4-kisen-uzunooka": ("uzushio-kisen-naruto", "map-import-naruto-bridge-memorial"),
+            "leg-day4-uzunooka-nojima": ("map-import-uzuno-oka", "nojima-scuola"),
+        }
+        for leg_id, endpoints in expected_legs.items():
+            with self.subTest(leg_id=leg_id):
+                self.assertEqual((legs[leg_id]["from_place_id"], legs[leg_id]["to_place_id"]), endpoints)
+                self.assertGreater(
+                    (datetime.fromisoformat(legs[leg_id]["arrival_at"]) - datetime.fromisoformat(legs[leg_id]["departure_at"])).total_seconds(),
+                    0,
+                )
+
+        checklist = next(
+            item["value"]
+            for item in self.trip["overrides"]
+            if item["path"] == "/operations/pretrip_checklist"
+        )
+        backup = next(item for item in checklist if item["id"] == "book-uzushio-cruise")
+        self.assertIn("尚未取消", backup["item"])
+        self.assertIn("外部備援", backup["action"])
+        validation_codes = {item["code"] for item in self.trip["validation"]}
+        self.assertIn("EARLY_CHECKOUT_CONFIRMATION_REQUIRED", validation_codes)
+        self.assertIn("EXTERNAL_CRUISE_RESERVATION_ACTION_REQUIRED", validation_codes)
+
+        evidence = json.loads(EVIDENCE_PATH.read_text(encoding="utf-8"))
+        evidence_ids = {entry["reference_id"] for entry in evidence["entries"]}
+        self.assertIn("schedule/uzushio-kisen-2026-08-30", evidence_ids)
+        self.assertIn("reservation/uzushio-cruise-fukura-2026-08-30-1250", evidence_ids)
+
     def test_ichiraku_hours_are_official_and_bundle_outputs_match(self):
         ichiraku = self.places["ramen-ichiraku-nijigen"]
         expected_note = "ラーメン一樂：平日 11:00–15:00（最後點餐 14:30）、16:00–18:00（最後點餐 17:30）；8/27（週四）12:45–13:30 位於午間營業時段內。"
