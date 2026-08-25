@@ -293,10 +293,13 @@ a {
 .reservation-map-link {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   margin-left: 9px;
   padding: 3px 7px;
   border: 1px solid #9fc4d2;
   border-radius: 7px;
+  min-width: 44px;
+  min-height: 44px;
   color: #075f84;
   background: #edf7fa;
   font-size: 0.72rem;
