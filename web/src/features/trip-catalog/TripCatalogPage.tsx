@@ -53,7 +53,7 @@ function statusText(status: string): string {
 
 function readinessText(readiness: string): string {
   if (readiness === 'ready') return '可出發'
-  if (readiness === 'incomplete') return '待補'
+  if (readiness === 'incomplete') return '行前確認'
   return '阻斷'
 }
 

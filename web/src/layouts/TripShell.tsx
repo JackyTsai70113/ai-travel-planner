@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useMemo, useRef, useState } from 'react'
-import { Bundle, toFriendlyStatus } from '../contracts/trip'
+import { Bundle } from '../contracts/trip'
 import { SectionDefinition } from '../app/route-registry'
 import { DesktopSidebar } from './DesktopSidebar'
 import { MobileHeader } from './MobileHeader'
@@ -57,7 +57,7 @@ export default function TripShell({
 
   const title = bundle?.title ?? 'Golden Trip'
   const subtitle = bundle?.date_range
-    ? `${bundle.date_range.start_date} ~ ${bundle.date_range.end_date}（${toFriendlyStatus(bundle.status)}）`
+    ? `${bundle.date_range.start_date} ~ ${bundle.date_range.end_date}`
     : '行程資料載入中'
 
   useEffect(() => {
@@ -141,10 +141,7 @@ export default function TripShell({
         <main className="app-main" id="trip-main" aria-labelledby={pageTitleId}>
           <header className="desktop-topbar">
             <div><span className="desktop-topbar-section">{activeLabel}</span><span className="desktop-topbar-divider">/</span><span>{subtitle}</span></div>
-            <div className="desktop-topbar-tools">
-              <div className="desktop-quick-actions"><button type="button" onClick={() => onNavigateSection('today')}>今日行程</button><button type="button" onClick={() => onNavigateSection('map')}>導航</button></div>
-              <span className="desktop-status"><i />{currentStatusText}</span><span className="desktop-travelers">{travelerText}</span>
-            </div>
+            <div className="desktop-topbar-tools"><span className="desktop-status"><i />{currentStatusText}</span><span className="desktop-travelers"><small>旅客</small>{travelerText}</span></div>
           </header>
           <header className="trip-main-header">
             <div className="main-title" id={pageTitleId}>

@@ -294,7 +294,7 @@ export function findPlaceAddress(places: BundlePlace[] = [], placeId: string): s
 
 export function toFriendlyStatus(status: Bundle['status']): string {
   if (status === 'ok') return '可執行'
-  if (status === 'warning') return '待補資訊'
+  if (status === 'warning') return '有提醒'
   return '嚴重訊息'
 }
 
@@ -312,11 +312,11 @@ export function operationalStatusLabel(status: OperationalStatus | undefined | n
   if (status === 'warning') return '注意'
   if (status === 'error' || status === 'critical') return '有風險'
   if (status === 'info') return '資訊'
-  if (status === 'unverified') return '未驗證'
+  if (status === 'unverified') return '來源資訊'
   if (status === 'stale') return '已過時'
   if (status === 'conflict') return '衝突'
-  if (status === 'unresolved') return '未補齊'
-  return '待補'
+  if (status === 'unresolved') return '需處理'
+  return '需處理'
 }
 
 export function operationalStatusClass(status: OperationalStatus | undefined | null): string {
