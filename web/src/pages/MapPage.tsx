@@ -65,7 +65,7 @@ function dayLegs(bundle: Bundle, day: BundleDay): BundleTransportLeg[] {
   const linkedIds = new Set(day.items.map((item) => item.transport_leg_id).filter(Boolean))
   const seen = new Set<string>()
   return (bundle.transport_legs || [])
-    .filter((leg) => linkedIds.has(leg.id) || leg.departure_at?.slice(0, 10) === day.date)
+    .filter((leg) => linkedIds.has(leg.id))
     .filter((leg) => {
       if (seen.has(leg.id)) return false
       seen.add(leg.id)
@@ -155,6 +155,14 @@ export function MapPage({ bundle, route, currentDay }: MapPageProps) {
   const selectedDay = bundle.days.find((day) => day.date === selectedDate) || bundle.days[0]
   const legs = useMemo(() => selectedDay ? dayLegs(bundle, selectedDay) : [], [bundle, selectedDay])
   const fullRouteChunks = useMemo(() => buildDailyRouteChunks(bundle, legs), [bundle, legs])
+  const contingencyPlans = useMemo(() => (bundle.alternatives || [])
+    .filter((plan) => plan.day === selectedDay?.date && plan.route_leg_ids?.length)
+    .map((plan) => ({
+      ...plan,
+      legs: (plan.route_leg_ids || [])
+        .map((legId) => (bundle.transport_legs || []).find((leg) => leg.id === legId))
+        .filter((leg): leg is BundleTransportLeg => Boolean(leg)),
+    })), [bundle, selectedDay])
 
   if (!selectedDay) {
     return <section className="map-workspace card">沒有可顯示的日期。</section>
@@ -262,6 +270,61 @@ export function MapPage({ bundle, route, currentDay }: MapPageProps) {
             <p>不會把未知車程當成 0 分鐘。請先查看每日行程中的已知停靠點。</p>
           </div>
         )}
+
+        {contingencyPlans.map((plan) => {
+          const routeChunks = buildDailyRouteChunks(bundle, plan.legs)
+          return (
+            <section className="map-day-panel" key={plan.id} aria-label={`備援路線：${plan.title}`}>
+              <header className="map-day-header">
+                <div>
+                  <p className="eyebrow">CONDITIONAL BACKUP · 不屬於主路線</p>
+                  <h3>{plan.title}</h3>
+                  <p>{plan.summary}</p>
+                  {plan.decision_gate ? <p><strong>決策門：</strong>{plan.decision_gate}</p> : null}
+                </div>
+                <div className="daily-route-actions">
+                  {routeChunks.map((chunk) => (
+                    <a
+                      key={chunk.id}
+                      className="map-icon-link"
+                      href={chunk.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={`在 Google Maps 開啟備援路線：${chunk.sourceLabel} 到 ${chunk.destinationLabel}`}
+                      title="在 Google Maps 開啟備援路線"
+                    >
+                      <MapPinIcon />
+                    </a>
+                  ))}
+                </div>
+              </header>
+              <ol className="route-leg-list">
+                {plan.legs.map((leg, index) => {
+                  const origin = stopFor(bundle, leg.from_place, leg.from_label)
+                  const destination = stopFor(bundle, leg.to_place, leg.to_label)
+                  return (
+                    <li className="route-leg-card" key={leg.id} data-testid={`backup-transport-leg-${leg.id}`}>
+                      <div className="route-leg-index" aria-hidden="true">B{index + 1}</div>
+                      <div className="route-leg-body">
+                        <div className="route-leg-topline"><span>條件式備援 · {transportModeLabel(leg.mode)}</span></div>
+                        <div className="route-endpoints">
+                          <div><small>起點</small><strong>{leg.from_label || origin.label}</strong></div>
+                          <span aria-hidden="true">→</span>
+                          <div><small>終點</small><strong>{leg.to_label || destination.label}</strong></div>
+                        </div>
+                        <dl className="route-leg-facts">
+                          <div><dt>備援時段</dt><dd>{formatTime(leg.departure_at)} → {formatTime(leg.arrival_at)}</dd></div>
+                          <div><dt>資料狀態</dt><dd>{operationalStatusLabel(leg.status)}</dd></div>
+                        </dl>
+                        <div className="route-risk-note"><strong>啟用後注意</strong><p>{leg.note || '出發前重新確認路況。'}</p></div>
+                      </div>
+                    </li>
+                  )
+                })}
+              </ol>
+            </section>
+          )
+        })}
       </section>
     </section>
   )

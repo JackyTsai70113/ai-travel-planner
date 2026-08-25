@@ -6,11 +6,16 @@
         "福良訂位仍有效",
         "福良側確認運航"
       ],
+      "day": "2026-08-30",
       "decision_gate": "8/30 08:25 前確認是否改走福良備援；啟用後使用 leg-day4-backup-uzunooka-fukura 與 leg-day4-backup-fukura-nojima。",
       "id": "day4-fukura-cruise-backup",
       "reasons": [
         "尚未取消的既有訂位",
         "兩側船公司運航狀態須分別確認"
+      ],
+      "route_leg_ids": [
+        "leg-day4-backup-uzunooka-fukura",
+        "leg-day4-backup-fukura-nojima"
       ],
       "status": "unresolved",
       "summary": "僅在鳴門側 08:00／08:30 未搭成且福良訂位仍有效、照常運航時啟用：11:20 漩渦之丘出發，11:40 抵福良報到，12:50–13:50 搭船，14:00 出發，15:15 抵 Nojima Scuola；之後沿用原行程。",
@@ -1241,8 +1246,8 @@
   },
   "local_timezone": "Asia/Tokyo",
   "meta": {
-    "bundle_sha256": "2db22e445512e2345f6996190cbfc9402b6dc21ff9ae562b49b121784986d5bb",
-    "generated_at": "2026-08-25T17:10:22+00:00",
+    "bundle_sha256": "ae8a1af2c6e5e380425454ddf4c907fa56940eb7953fe12d919c2cc9baf8652e",
+    "generated_at": "2026-08-25T17:14:52+00:00",
     "source_coverage": {
       "days": 5,
       "places": 52,
@@ -1250,7 +1255,7 @@
       "selected_hotels": 3
     },
     "source_path": "trips/awaji-naruto-tokushima-kobe-2026/trip.json",
-    "source_sha256": "be44433bc886e60498e390a60d805bf27733a7e01b728aea2ad0001d07158518",
+    "source_sha256": "e87179388ad9aa2b03592e159746be2e2e1cbd7ccd6a7b1b346fd404334ee6c7",
     "trip_schema": "trip-v1"
   },
   "operations": {

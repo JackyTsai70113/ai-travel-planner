@@ -531,10 +531,16 @@ def _bundle_alternatives(trip: dict) -> list[dict[str, Any]]:
                 "id": _safe_str(item.get("id")) or "alternative",
                 "title": _safe_str(item.get("title")) or "Plan B/C",
                 "status": _as_status(item.get("status")),
+                "day": _safe_str(item.get("day")) or None,
                 "summary": _safe_str(item.get("summary")) or _safe_str(item.get("notes")) or "待補",
                 "reasons": _as_list(item.get("reasons")),
                 "decision_gate": _safe_str(item.get("decision_gate")),
                 "conditions": _as_list(item.get("conditions")),
+                "route_leg_ids": [
+                    _safe_str(leg_id)
+                    for leg_id in _as_list(item.get("route_leg_ids"))
+                    if _safe_str(leg_id)
+                ],
             }
         )
     return output

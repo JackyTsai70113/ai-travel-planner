@@ -1903,10 +1903,12 @@
           "id": "day4-fukura-cruise-backup",
           "title": "8/30 福良港 12:50 已訂位備援",
           "status": "unresolved",
+          "day": "2026-08-30",
           "summary": "僅在鳴門側 08:00／08:30 未搭成且福良訂位仍有效、照常運航時啟用：11:20 漩渦之丘出發，11:40 抵福良報到，12:50–13:50 搭船，14:00 出發，15:15 抵 Nojima Scuola；之後沿用原行程。",
           "reasons": ["尚未取消的既有訂位", "兩側船公司運航狀態須分別確認"],
           "decision_gate": "8/30 08:25 前確認是否改走福良備援；啟用後使用 leg-day4-backup-uzunooka-fukura 與 leg-day4-backup-fukura-nojima。",
-          "conditions": ["鳴門側未搭成", "福良訂位仍有效", "福良側確認運航"]
+          "conditions": ["鳴門側未搭成", "福良訂位仍有效", "福良側確認運航"],
+          "route_leg_ids": ["leg-day4-backup-uzunooka-fukura", "leg-day4-backup-fukura-nojima"]
         }
       ],
       "preserve_on_replan": true,

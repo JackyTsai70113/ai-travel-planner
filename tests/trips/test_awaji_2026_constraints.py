@@ -153,6 +153,11 @@ class AwajiTripFixtureTests(unittest.TestCase):
         self.assertIn("11:40 抵福良報到", backup_plan["summary"])
         self.assertIn("12:50–13:50 搭船", backup_plan["summary"])
         self.assertIn("leg-day4-backup-uzunooka-fukura", backup_plan["decision_gate"])
+        self.assertEqual(backup_plan["day"], "2026-08-30")
+        self.assertEqual(
+            backup_plan["route_leg_ids"],
+            ["leg-day4-backup-uzunooka-fukura", "leg-day4-backup-fukura-nojima"],
+        )
 
         checklist = next(
             item["value"]
