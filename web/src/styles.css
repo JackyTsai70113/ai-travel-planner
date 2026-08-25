@@ -351,12 +351,6 @@ a {
   background: #dceff4;
 }
 
-.hub-map-link,
-.timeline-map-link,
-.reservation-map-link {
-  min-height: 34px;
-}
-
 .hub-actions {
   display: flex;
   gap: 8px;
