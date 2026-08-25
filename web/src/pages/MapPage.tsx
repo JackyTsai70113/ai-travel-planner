@@ -165,9 +165,9 @@ export function MapPage({ bundle, route, currentDay }: MapPageProps) {
         <div>
           <p className="eyebrow">ROUTE DESK</p>
           <h1>地圖與逐段交通</h1>
-          <p>網站呈現行前規劃估計；按下地圖連結後，以 OpenStreetMap 查找位置與路線。</p>
+          <p>網站呈現行前規劃估計；按下地圖圖示後，以 Google Maps 開啟位置與路線。</p>
         </div>
-        <div className="map-trust-note"><strong>免費開源</strong><span>只產生 OpenStreetMap 查找連結，不在網站內宣稱即時車程。</span></div>
+        <div className="map-trust-note"><strong>Google Maps</strong><span>只產生免 API key 的地圖連結，不在網站內宣稱即時車程。</span></div>
       </header>
 
       <nav className="handbook-day-tabs" aria-label="地圖日期切換">
@@ -235,11 +235,10 @@ export function MapPage({ bundle, route, currentDay }: MapPageProps) {
                     </dl>
                     <div className="route-risk-note">
                       <strong>導航注意／延誤切點</strong>
-                      <p>{leg.note || '出發前請以 OpenStreetMap 重新確認位置與路線。'}</p>
+                      <p>{leg.note || '出發前請以 Google Maps 重新確認位置與路線。'}</p>
                     </div>
                     <div className="route-card-actions">
-                      <a data-route-url={directionsHref} href={directionsHref} target="_blank" rel="noreferrer">開啟 OpenStreetMap</a>
-                      {leg.source_url ? <a className="secondary-link" href={leg.source_url} target="_blank" rel="noreferrer">查看估計來源</a> : null}
+                      <a className="map-icon-link" data-route-url={directionsHref} href={directionsHref} target="_blank" rel="noreferrer" aria-label="在 Google Maps 開啟逐段路線" title="在 Google Maps 開啟逐段路線"><span aria-hidden="true">🗺️</span></a>
                     </div>
                   </div>
                 </li>

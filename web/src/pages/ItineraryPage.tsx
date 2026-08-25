@@ -286,23 +286,18 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
             ? leg.estimated_duration_minutes == null ? '車程：—' : `約 ${leg.estimated_duration_minutes} 分鐘`
             : item.notes || `停留 ${item.expected_stay_minutes == null ? '—' : `${item.expected_stay_minutes} 分鐘`} · 前段移動 ${item.transfer_minutes == null ? '—' : `${item.transfer_minutes} 分鐘`}`
           const mapsHref = leg ? legDirectionsLink(bundle, leg) : buildMapsLink(place?.maps_query || place?.address || place?.name || item.place_id)
-          const itemAlternatives = (item.alternative_place_ids || [])
-            .map((placeId) => bundle.places?.find((candidate) => candidate.id === placeId))
-            .filter((candidate): candidate is BundlePlace => !!candidate)
-
           return <article tabIndex={-1} className={`timeline-entry ${visualKind} ${item.id === route.item ? 'item-highlight' : ''}`} id={`item-${item.id}`} key={item.id}>
             <div className="timeline-time"><strong>{timeLabel(item.start_at)}</strong><span>{item.end_at && item.end_at !== item.start_at ? timeLabel(item.end_at) : visualKind === 'reservation' ? '固定' : ''}</span></div>
             <div className="timeline-track"><span>{visualKind === 'reservation' ? '◆' : visualKind === 'meal' ? '✦' : visualKind === 'move' ? '→' : '●'}</span>{index < visibleItems.length - 1 && <i />}</div>
             <div className="timeline-card">
               <div className="timeline-card-topline"><span className="timeline-category">{visualKind === 'reservation' ? '固定預約' : visualKind === 'meal' ? '餐飲安排' : visualKind === 'move' ? '逐段交通' : '行程停靠'}</span><div className="status-chips">{states.map((state) => <span key={state} className="status-chip">{state}</span>)}</div></div>
-              <h3>{title}{!leg && place?.name_ja ? <small>{place.name_ja}</small> : null}<a className="timeline-map-link" href={mapsHref} target="_blank" rel="noreferrer" aria-label={`${title} OpenStreetMap`}>OpenStreetMap ↗</a></h3>
+              <h3>{title}{!leg && place?.name_ja ? <small>{place.name_ja}</small> : null}<a className="timeline-map-link" href={mapsHref} target="_blank" rel="noreferrer" aria-label={`${title} 在 Google Maps 開啟`} title="在 Google Maps 開啟"><span aria-hidden="true">🗺️</span></a></h3>
               <p className="timeline-detail">{detail}</p>
               {!leg && findPlaceAddress(bundle.places, item.place_id) && <p className="timeline-address">{findPlaceAddress(bundle.places, item.place_id)}</p>}
-              {leg ? <div className="timeline-risk">{leg.status !== 'estimated' ? <span className={operationalStatusClass(leg.status)}>{operationalStatusLabel(leg.status)}</span> : null}<p><strong>風險／延誤切點：</strong>{leg.note || '出發前以 OpenStreetMap 確認位置與路線。'}</p></div> : null}
+              {leg ? <div className="timeline-risk">{leg.status !== 'estimated' ? <span className={operationalStatusClass(leg.status)}>{operationalStatusLabel(leg.status)}</span> : null}<p><strong>風險／延誤切點：</strong>{leg.note || '出發前以 Google Maps 確認位置與路線。'}</p></div> : null}
               {!leg && place?.opening_hours_note ? <p className={`timeline-context ${fieldNeedsRecheck(place, 'opening_hours_note') ? 'needs-recheck' : ''}`}><strong>營業時間：</strong>{place.opening_hours_note}</p> : null}
               {!leg && place?.parking ? <p className={`timeline-context ${fieldNeedsRecheck(place, 'parking') ? 'needs-recheck' : ''}`}><strong>停車：</strong>{place.parking}</p> : null}
               {place?.accessibility_notes && !accessibilityNoteCovered(item.notes, place.accessibility_notes) ? <p className="timeline-context"><strong>家庭／無障礙：</strong>{place.accessibility_notes}</p> : null}
-              {!leg && itemAlternatives.length ? <div className="timeline-inline-alternatives"><strong>試算表備案：</strong>{itemAlternatives.map((alternative) => <a key={alternative.id} href={buildMapsLink(alternative.maps_query || alternative.address || alternative.name || alternative.id)} target="_blank" rel="noreferrer">{alternative.name || alternative.id}</a>)}</div> : null}
             </div>
           </article>
         })}

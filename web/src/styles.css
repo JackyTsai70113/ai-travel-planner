@@ -305,6 +305,34 @@ a {
   vertical-align: middle;
 }
 
+.map-icon-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 42px;
+  min-height: 42px;
+  padding: 6px 9px;
+  border: 1px solid #9fc4d2;
+  border-radius: 9px;
+  background: #edf7fa;
+  color: #075f84;
+  text-decoration: none;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.map-icon-link:hover {
+  background: #dceff4;
+}
+
+.hub-map-link span,
+.timeline-map-link span,
+.reservation-map-link span {
+  display: block;
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
 .hub-map-link:hover,
 .timeline-map-link:hover,
 .reservation-map-link:hover {

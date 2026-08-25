@@ -114,14 +114,17 @@ describe('Issue 97 travel handbook', () => {
     localStorage.clear()
   })
 
-  it('builds an OpenStreetMap route lookup without an API key', () => {
+  it('builds a Google Maps directions URL without an API key', () => {
     const href = buildMapsDirectionsLink([
       { label: '神戶機場', mapsQuery: 'Kobe Airport' },
       { label: '淡路住宿', mapsQuery: 'Awaji Hotel' },
     ])
     const url = new URL(href)
-    expect(url.pathname).toBe('/search')
-    expect(url.searchParams.get('query')).toBe('Kobe Airport → Awaji Hotel')
+    expect(url.pathname).toBe('/maps/dir/')
+    expect(url.searchParams.get('api')).toBe('1')
+    expect(url.searchParams.get('origin')).toBe('Kobe Airport')
+    expect(url.searchParams.get('destination')).toBe('Awaji Hotel')
+    expect(url.searchParams.get('travelmode')).toBe('driving')
   })
 
   it('shows leg analysis and switches across all five days', () => {
@@ -133,8 +136,8 @@ describe('Issue 97 travel handbook', () => {
     expect(screen.getByText('15 分鐘')).toBeInTheDocument()
     expect(screen.getByText('90 分鐘')).toBeInTheDocument()
     expect(screen.getByText(/若延誤 20 分鐘/)).toBeInTheDocument()
-    const routeLink = screen.getByRole('link', { name: '開啟 OpenStreetMap' })
-    expect(routeLink.getAttribute('href')).toContain('openstreetmap.org/search?query=')
+    const routeLink = screen.getByRole('link', { name: '在 Google Maps 開啟逐段路線' })
+    expect(routeLink.getAttribute('href')).toContain('google.com/maps/dir/')
     fireEvent.click(screen.getByRole('button', { name: /Day 5/ }))
     expect(screen.getByRole('heading', { name: '第 5 日摘要' })).toBeInTheDocument()
     expect(screen.queryByText('尚無逐段資料')).not.toBeInTheDocument()
@@ -159,7 +162,7 @@ describe('Issue 97 travel handbook', () => {
     expect(chunks.every((chunk) => chunk.waypoints.length <= 3)).toBe(true)
     expect(chunks.every((chunk) => [chunk.source, ...chunk.waypoints, chunk.destination].length <= 5)).toBe(true)
     expect(chunks[0].destination.id).toBe(chunks[1].source.id)
-    expect(new URL(chunks[0].href).searchParams.get('query')).toContain('站 0')
+    expect(new URL(chunks[0].href).searchParams.get('travelmode')).toBe('transit')
   })
 
   it('exports reservation timestamps as UTC instead of browser-local wall time', () => {
@@ -189,7 +192,7 @@ describe('Issue 97 travel handbook', () => {
       }],
     }} />)
     expect(screen.getByRole('heading', { name: /うずしおクルーズ（福良港）/ })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: '淡路住宿 OpenStreetMap' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '淡路住宿 在 Google Maps 開啟' })).toBeInTheDocument()
     expect(screen.queryByText('資料來源')).not.toBeInTheDocument()
     expect(screen.queryByText('最後確認')).not.toBeInTheDocument()
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
@@ -202,8 +205,9 @@ describe('Issue 97 travel handbook', () => {
     expect(screen.getAllByRole('tab')).toHaveLength(5)
     expect(screen.getByRole('heading', { name: /神戶機場 → 淡路住宿/ })).toBeInTheDocument()
     expect(screen.getByText('主要風險')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: '洲本城' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: '鳴門公園' })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: '洲本城' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: '鳴門公園' })).not.toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: /在 Google Maps 開啟/ }).length).toBeGreaterThan(0)
     // Dynamic facts remain visibly sourced and transport estimates are not repeated in the risk note.
     expect(screen.getByText(/營業時間：/)).toBeInTheDocument()
     expect(screen.getByText(/停車：/)).toBeInTheDocument()

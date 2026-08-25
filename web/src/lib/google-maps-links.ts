@@ -21,10 +21,8 @@ export interface RouteDirectionChunk {
   fallbackReason?: string
 }
 
-const OPENSTREETMAP_SEARCH_URL = 'https://www.openstreetmap.org/search?query='
-// OpenStreetMap is a free, open map lookup. Without coordinates in the trip
-// bundle we deliberately open a searchable route label instead of fabricating
-// turn-by-turn directions.
+const GOOGLE_MAPS_DIR_URL = 'https://www.google.com/maps/dir/?'
+const GOOGLE_MAPS_SEARCH_URL = 'https://www.google.com/maps/search/?api=1&query='
 // Five stops means origin + three waypoints + destination.
 const MAX_WAYPOINTS_PER_ROUTE = 3
 const MAX_MAPS_URL_LENGTH = 1900
@@ -56,10 +54,10 @@ function stopQuery(stop: MapsStop): string {
 }
 
 export function buildMapsSearchLink(placeLabel: string): string {
-  return `${OPENSTREETMAP_SEARCH_URL}${encodeURIComponent(safeToString(placeLabel) || 'point')}`
+  return `${GOOGLE_MAPS_SEARCH_URL}${encodeURIComponent(safeToString(placeLabel) || 'point')}`
 }
 
-export function buildMapsDirectionsLink(chunks: MapsStop[], _travelMode: MapsTravelMode = 'driving'): string {
+export function buildMapsDirectionsLink(chunks: MapsStop[], travelMode: MapsTravelMode = 'driving'): string {
   const start = chunks.at(0)
   const end = chunks.at(-1)
   if (!start || !end || chunks.length < 2) {
@@ -67,8 +65,10 @@ export function buildMapsDirectionsLink(chunks: MapsStop[], _travelMode: MapsTra
   }
 
   const waypoints = chunks.slice(1, -1)
-  const routeLabel = [start, ...waypoints, end].map(stopQuery).join(' → ')
-  return buildMapsSearchLink(routeLabel.slice(0, MAX_MAPS_URL_LENGTH))
+  const params = new URLSearchParams({ api: '1', origin: stopQuery(start), destination: stopQuery(end), travelmode: travelMode })
+  if (waypoints.length > 0) params.set('waypoints', waypoints.map(stopQuery).join('|'))
+  const built = `${GOOGLE_MAPS_DIR_URL}${params.toString()}`
+  return built.length <= MAX_MAPS_URL_LENGTH ? built : buildMapsSearchLink(`${stopQuery(start)} 到 ${stopQuery(end)}`)
 }
 
 function normalizeStops(stops: MapsStop[]): MapsStop[] {
