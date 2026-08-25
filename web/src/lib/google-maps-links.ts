@@ -21,9 +21,10 @@ export interface RouteDirectionChunk {
   fallbackReason?: string
 }
 
-const GOOGLE_MAPS_DIR_URL = 'https://www.google.com/maps/dir/?'
-const GOOGLE_MAPS_SEARCH_URL = 'https://www.google.com/maps/search/?api=1&query='
-// Google Maps URLs on mobile browsers support at most three waypoints.
+const OPENSTREETMAP_SEARCH_URL = 'https://www.openstreetmap.org/search?query='
+// OpenStreetMap is a free, open map lookup. Without coordinates in the trip
+// bundle we deliberately open a searchable route label instead of fabricating
+// turn-by-turn directions.
 // Five stops means origin + three waypoints + destination.
 const MAX_WAYPOINTS_PER_ROUTE = 3
 const MAX_MAPS_URL_LENGTH = 1900
@@ -55,7 +56,7 @@ function stopQuery(stop: MapsStop): string {
 }
 
 export function buildMapsSearchLink(placeLabel: string): string {
-  return `${GOOGLE_MAPS_SEARCH_URL}${encodeURIComponent(safeToString(placeLabel) || 'point')}`
+  return `${OPENSTREETMAP_SEARCH_URL}${encodeURIComponent(safeToString(placeLabel) || 'point')}`
 }
 
 export function buildMapsDirectionsLink(chunks: MapsStop[], travelMode: MapsTravelMode = 'driving'): string {
@@ -66,23 +67,8 @@ export function buildMapsDirectionsLink(chunks: MapsStop[], travelMode: MapsTrav
   }
 
   const waypoints = chunks.slice(1, -1)
-  const params = new URLSearchParams({
-    api: '1',
-    origin: stopQuery(start),
-    destination: stopQuery(end),
-    travelmode: travelMode,
-  })
-  if (waypoints.length > 0) {
-    params.set('waypoints', waypoints.map(stopQuery).join('|'))
-  }
-  const built = `${GOOGLE_MAPS_DIR_URL}${params.toString()}`
-  if (built.length > MAX_MAPS_URL_LENGTH && waypoints.length > 0) {
-    return buildMapsSearchLink(`${stopQuery(start)} 到 ${stopQuery(end)}`)
-  }
-  if (built.length > MAX_MAPS_URL_LENGTH) {
-    return buildMapsSearchLink(`${stopQuery(start)} 到 ${stopQuery(end)}`)
-  }
-  return built
+  const routeLabel = [start, ...waypoints, end].map(stopQuery).join(' → ')
+  return buildMapsSearchLink(routeLabel.slice(0, MAX_MAPS_URL_LENGTH))
 }
 
 function normalizeStops(stops: MapsStop[]): MapsStop[] {
@@ -126,7 +112,7 @@ export function buildRouteDirectionChunks(
     const destination = chunk.at(-1) as MapsStop
     const waypoints = chunk.slice(1, -1)
     const href = buildMapsDirectionsLink(chunk, travelMode)
-    const fallbackReason = href.includes('google.com/maps/search') ? 'google_maps_url_too_long' : undefined
+    const fallbackReason = undefined
     return {
       id: `${index + 1}`,
       label: `路線${String.fromCharCode(65 + index)}`,

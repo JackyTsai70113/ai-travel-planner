@@ -278,7 +278,7 @@ export function formatMoney(value: { amount: number; currency: string } | null):
 
 export function buildMapsLink(placeLabel: string): string {
   const query = encodeURIComponent(placeLabel.trim())
-  return `https://www.google.com/maps/search/?api=1&query=${query}`
+  return `https://www.openstreetmap.org/search?query=${query}`
 }
 
 export function findPlaceLabel(places: BundlePlace[] = [], placeId: string): string {

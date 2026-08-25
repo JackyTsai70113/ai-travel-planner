@@ -967,23 +967,12 @@
         "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"reported"}
       },
       {
-        "id": "toyota-rent-a-car-kobe-airport",
-        "name": "Toyota Rent a Car 神戶機場店",
-        "kind": "other",
-        "address": "兵庫県神戸市中央区神戸空港3-2",
-        "phone": "078-302-0600",
-        "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Toyota+Rent+a+Car+Kobe+Airport",
-        "opening_hours_note": "8:00–20:00；還車前依契約加滿油。",
-        "accessibility_notes": "Toyota 僅接送第一航廈；再搭免費聯絡巴士或步行至第二航廈。",
-        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"reported"}
-      },
-      {
         "id": "kobe-airport-terminal-2",
         "name": "神戶機場 第二航廈",
         "kind": "airport",
         "address": "兵庫県神戸市中央区神戸空港",
         "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Kobe+Airport+Terminal+2",
-        "accessibility_notes": "行李多且有長輩幼兒，第一航廈到第二航廈優先搭免費聯絡巴士。",
+        "accessibility_notes": "行李多且有長輩幼兒，預留下車、報到與安檢緩衝。",
         "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"reported"}
       }
     ],
@@ -1143,7 +1132,7 @@
         "flight_number": "JX834",
         "departure": {
           "place_id": "taoyuan-airport",
-          "at": null
+          "at": "2026-08-27T06:50:00+08:00"
         },
         "arrival": {
           "place_id": "kobe-airport",
@@ -1153,14 +1142,15 @@
           "amount": 52000,
           "currency": "JPY"
         },
-        "notes": "航班抵達 UKB 10:30 已確認；去程起飛時間待補。",
+        "notes": "JX834 桃園 06:50 起飛 → 神戶 10:30 抵達（當地時間；飛行約 2 小時 40 分），抵達神戶機場第二航廈。",
         "provenance": {
-          "source_type": "user_input",
-          "provider": "user-confirmed booking",
-          "source_url": "https://github.com/JackyTsai70113/ai-travel-planner/issues/52",
-          "retrieved_at": "2026-08-15T09:00:00+09:00",
-          "confidence": 0.98,
-          "status": "confirmed"
+          "source_type": "official",
+          "provider": "神戸空港 國際線航班資訊",
+          "source_url": "https://www.kobeairport.jp/intl-flights/",
+          "retrieved_at": "2026-08-25T00:00:00+09:00",
+          "confidence": 0.99,
+          "status": "confirmed",
+          "note": "使用者確認班號；以神戶機場官方時刻表補足航班時間。"
         },
         "provider": "user booking"
       },
@@ -1174,20 +1164,21 @@
         },
         "arrival": {
           "place_id": "taoyuan-airport",
-          "at": null
+          "at": "2026-08-31T14:45:00+08:00"
         },
         "cost": {
           "amount": 52000,
           "currency": "JPY"
         },
-        "notes": "回程抵達台北時間未提供，僅保留 JX1835 與 12:45 起飛。",
+        "notes": "JX1835 神戶 12:45 起飛 → 桃園 14:45 抵達（當地時間；飛行約 3 小時），由神戶機場第二航廈出發。",
         "provenance": {
-          "source_type": "user_input",
-          "provider": "user-confirmed booking",
-          "source_url": "https://github.com/JackyTsai70113/ai-travel-planner/issues/52",
-          "retrieved_at": "2026-08-15T09:00:00+09:00",
-          "confidence": 0.98,
-          "status": "confirmed"
+          "source_type": "official",
+          "provider": "神戸空港 國際線航班資訊",
+          "source_url": "https://www.kobeairport.jp/intl-flights/",
+          "retrieved_at": "2026-08-25T00:00:00+09:00",
+          "confidence": 0.99,
+          "status": "confirmed",
+          "note": "使用者確認班號；以神戶機場官方時刻表補足航班時間。"
         },
         "provider": "user booking"
       }
@@ -1196,7 +1187,7 @@
       {
         "id": "leg-day1-airport-nijigen", "mode": "car", "from_place_id": "kobe-airport", "to_place_id": "ramen-ichiraku-nijigen",
         "departure_at": "2026-08-27T12:00:00+09:00", "arrival_at": "2026-08-27T12:45:00+09:00",
-        "provenance": {"source_type":"derived","provider":"Issue 97 planning estimate from Sheet order","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496","retrieved_at":"2026-08-23T03:30:00+08:00","confidence":0.5,"status":"estimated","note":"行車估計：45 分；緩衝：0 分。導航：由神戸空港第2航廈前往二次元之森；延誤切點：取車延誤就縮短忍里；家庭注意：先完成午餐。"}
+        "provenance": {"source_type":"derived","provider":"Issue 97 planning estimate from Sheet order","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496","retrieved_at":"2026-08-23T03:30:00+08:00","confidence":0.5,"status":"estimated","note":"行車估計：45 分；緩衝：0 分。導航：由神戸空港第2航廈前往二次元之森；延誤時縮短忍里停留；家庭注意：先完成午餐。"}
       },
       {
         "id": "leg-day1-shinobi-sunset", "mode": "car", "from_place_id": "nijigen-no-mori-shinobi", "to_place_id": "awaji-sunset-line",
@@ -1374,22 +1365,10 @@
         }
       },
       {
-        "id": "leg-day5-kobe-toyota",
-        "mode": "car",
-        "from_place_id": "royal-park-canvas-kobe-sannomiya",
-        "to_place_id": "toyota-rent-a-car-kobe-airport",
-        "departure_at": "2026-08-31T08:15:00+09:00",
-        "arrival_at": "2026-08-31T09:00:00+09:00",
-        "provenance": {
-          "source_type": "derived", "provider": "Google Sheet planning estimate", "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117", "retrieved_at": "2026-08-23T09:00:00+08:00", "confidence": 0.8, "status": "estimated",
-          "note": "行車估計：25–35 分；緩衝：10 分。導航：前晚盡量加滿油，店址神戶空港3-2；延誤切點：最晚 08:30 出發，超時取消機場用餐；家庭注意：長輩幼兒依店員指引留車上。"
-        }
-      },
-      {
-        "id": "leg-day5-to-terminal2", "mode": "bus",
-        "from_place_id": "toyota-rent-a-car-kobe-airport", "to_place_id": "kobe-airport-terminal-2",
-        "departure_at": "2026-08-31T09:20:00+09:00", "arrival_at": "2026-08-31T09:40:00+09:00",
-        "provenance": {"source_type":"derived","provider":"Google Sheet planning estimate","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":0.8,"status":"estimated","note":"轉乘估計：20 分；緩衝：0 分。導航：Toyota 僅送第一航廈，再搭免費聯絡巴士或步行約 10 分至 T2；延誤切點：09:45 前抵 T2；家庭注意：行李多時優先免費聯絡巴士。"}
+        "id": "leg-day5-to-terminal2", "mode": "car",
+        "from_place_id": "royal-park-canvas-kobe-sannomiya", "to_place_id": "kobe-airport-terminal-2",
+        "departure_at": "2026-08-31T08:15:00+09:00", "arrival_at": "2026-08-31T09:40:00+09:00",
+        "provenance": {"source_type":"derived","provider":"Google Sheet planning estimate","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":0.8,"status":"estimated","note":"行車估計：50–70 分；出發時間含六大一小的行李與下車緩衝；延誤切點：最晚 08:30 出發，超過後直接進入報到流程。"}
       }
     ]
   },
@@ -1434,9 +1413,9 @@
           "start_at": "2026-08-27T10:30:00+09:00",
           "end_at": "2026-08-27T10:30:00+09:00",
           "selection_status": "selected",
-          "notes": "JX834 抵達神戶 10:30 為使用者確認；試算表未給入境、取車與後續精確時間。"
+          "notes": "JX834 桃園 06:50 起飛，神戶 10:30 抵達（當地時間；飛行約 2 小時 40 分）。"
         },
-        {"id":"day1-drive-airport-nijigen","kind":"transport","place_id":"ramen-ichiraku-nijigen","start_at":"2026-08-27T12:00:00+09:00","end_at":"2026-08-27T12:45:00+09:00","transport_leg_id":"leg-day1-airport-nijigen","selection_status":"selected","notes":"Sheet 只確認順序；12:00–12:45 為規劃估計，取車完成後以 Google Maps 即時導航。"},
+        {"id":"day1-drive-airport-nijigen","kind":"transport","place_id":"ramen-ichiraku-nijigen","start_at":"2026-08-27T12:00:00+09:00","end_at":"2026-08-27T12:45:00+09:00","transport_leg_id":"leg-day1-airport-nijigen","selection_status":"selected","notes":"Sheet 只確認順序；12:00–12:45 為規劃估計，抵達後依 OpenStreetMap 位置連結前往。"},
         {"id":"day1-lunch-ichiraku","kind":"meal","place_id":"ramen-ichiraku-nijigen","start_at":"2026-08-27T12:45:00+09:00","end_at":"2026-08-27T13:30:00+09:00","selection_status":"selected","notes":"官方營業時間：平日 11:00–15:00（最後點餐 14:30）、16:00–18:00（最後點餐 17:30）；本次 12:45 抵達、13:30 離開。"},
         {"id":"day1-shinobi","kind":"visit","place_id":"nijigen-no-mori-shinobi","start_at":"2026-08-27T13:30:00+09:00","end_at":"2026-08-27T15:30:00+09:00","selection_status":"selected","alternative_place_ids":[],"notes":"Sheet 指定忍里；時間為規劃估計。高溫或疲累時縮短，蠟筆小新免費區為現場備案。"},
         {"id":"day1-drive-shinobi-sunset","kind":"transport","place_id":"awaji-sunset-line","start_at":"2026-08-27T15:30:00+09:00","end_at":"2026-08-27T16:10:00+09:00","transport_leg_id":"leg-day1-shinobi-sunset","selection_status":"selected","notes":"CRAFT CIRCUS 2026/8/27（木）公休，取消此站；由忍里直接前往安全平坦的西海岸停靠點。"},
@@ -1714,7 +1693,7 @@
     },
     {
       "date": "2026-08-31",
-      "summary": "06:30 飯店早餐、08:15 退房、09:00 還車、10:15 報到、12:45 返台",
+      "summary": "06:30 飯店早餐、07:40 退房、09:40 抵達神戶機場第二航廈、12:45 JX1835 返台",
       "items": [
         {
           "id": "day5-canvas-breakfast", "kind": "meal", "place_id": "royal-park-canvas-kobe-sannomiya",
@@ -1727,33 +1706,14 @@
           "notes": "退房、裝行李與最後檢查；護照不放托運箱。08:15 建議硬出發，最晚 08:30。"
         },
         {
-          "id": "day5-drive-kobe-toyota", "kind": "transport", "place_id": "toyota-rent-a-car-kobe-airport",
-          "start_at": "2026-08-31T08:15:00+09:00", "end_at": "2026-08-31T09:00:00+09:00", "transport_leg_id": "leg-day5-kobe-toyota", "selection_status": "selected"
+          "id": "day5-transfer-airport", "kind": "transport", "place_id": "kobe-airport-terminal-2",
+          "start_at": "2026-08-31T08:15:00+09:00", "end_at": "2026-08-31T09:40:00+09:00", "transport_leg_id": "leg-day5-to-terminal2", "selection_status": "selected",
+          "notes": "退房後直接前往神戶機場第二航廈；為六大一小保留行李、下車與報到緩衝。"
         },
         {
-          "id": "day5-return-car", "kind": "free_time", "place_id": "toyota-rent-a-car-kobe-airport",
-          "start_at": "2026-08-31T09:00:00+09:00", "end_at": "2026-08-31T09:20:00+09:00", "selection_status": "selected",
-          "notes": "驗車與還車；Toyota 只接送第一航廈，不接送第二航廈。"
-        },
-        {
-          "id": "day5-transfer-terminal2", "kind": "transport", "place_id": "kobe-airport-terminal-2",
-          "start_at": "2026-08-31T09:20:00+09:00", "end_at": "2026-08-31T09:40:00+09:00", "transport_leg_id": "leg-day5-to-terminal2", "selection_status": "selected",
-          "notes": "第一航廈轉第二航廈；行李多且有長輩幼兒時優先免費聯絡巴士。"
-        },
-        {
-          "id": "day5-terminal2-gather", "kind": "free_time", "place_id": "kobe-airport-terminal-2",
-          "start_at": "2026-08-31T09:45:00+09:00", "end_at": "2026-08-31T10:15:00+09:00", "selection_status": "selected",
-          "notes": "第二航廈集合、廁所與整理證件；10:15 全員到星宇櫃檯排隊。"
-        },
-        {
-          "id": "day5-starlux-checkin", "kind": "free_time", "place_id": "kobe-airport-terminal-2",
-          "start_at": "2026-08-31T10:15:00+09:00", "end_at": "2026-08-31T11:45:00+09:00", "selection_status": "selected",
-          "notes": "JX1835 必須到 T2 人工櫃檯；先托運、安檢、出境。11:45 是制度截止，不是建議抵達時間。"
-        },
-        {
-          "id": "day5-airport-food", "kind": "meal", "place_id": "kobe-airport-terminal-2",
-          "start_at": "2026-08-31T11:45:00+09:00", "end_at": "2026-08-31T12:30:00+09:00", "selection_status": "selected",
-          "notes": "完成報到與出境後才決定輕食／採買；不得為第一航廈餐廳反向跨航廈。"
+          "id": "day5-airport-checkin", "kind": "free_time", "place_id": "kobe-airport-terminal-2",
+          "start_at": "2026-08-31T09:40:00+09:00", "end_at": "2026-08-31T12:30:00+09:00", "selection_status": "selected",
+          "notes": "抵達第二航廈後辦理 JX1835 報到、托運、安檢與出境；完成後在航廈內候機。"
         },
         {
           "id": "day5-departure-flight",
@@ -1831,7 +1791,6 @@
         {"id":"book-uzushio-cruise","completed":false,"timing":"現在","item":"確認 8/30 12:50 觀潮船訂位","action":"確認網路預約並先填 7 人旅客名簿；保存 QR Code 與訂單編號。","fallback":"12:50 異動時須重新調整うずの丘午餐時間。","contact":"うずしおクルーズ官方"},
         {"id":"confirm-awaodori-show","completed":false,"timing":"現在","item":"確認阿波舞會館 20:00 夜公演","action":"確認 8/29 7 人是否可預購／當日購票；記錄取消規則與座位方式。","fallback":"無票或全員疲累：取消夜公演，改早晚餐與住宿休息。","contact":"阿波舞會館官方"},
         {"id":"confirm-kobe-parking","completed":false,"timing":"現在","item":"確認神戶三宮飯店停車","action":"告知為 Alphard，確認實車長／寬／高、停車場名稱、入口、限高、夜間進出與費用。","fallback":"飯店無法保證：出發前選定可停大型車的平面停車場。","contact":"ザ ロイヤルパーク キャンバス 神戸三宮 078-391-1110"},
-        {"id":"confirm-rental-car","completed":false,"timing":"現在","item":"確認租車實車尺寸與還車流程","action":"向 Toyota 確認車型、車高、滿油規則、ETC 卡、兒童座椅與還車後送第一航廈流程。","fallback":"車高接近 2.0m：8/29 新町地下停車場改平面停車場。","contact":"Toyota 神戶機場店 078-302-0600"},
         {"id":"confirm-day3-breakfast","completed":false,"timing":"現在","item":"確認 8/29 早餐","action":"前一天電話確認コメダ珈琲店淡路志筑店 8/29 7:00 正常營業。","fallback":"07:15 未入座或休店：便利商店外帶，07:45 硬出發。","contact":"0799-62-1030／淡路市志筑1720-1"},
         {"id":"prepare-day4-breakfast","completed":false,"timing":"現在","item":"準備 8/30 早餐","action":"前一晚買好早餐，或至 24 小時 FamilyMart 徳島金沢店外帶。","fallback":"不再尋找未有精確定位與營業確認的咖啡店。","contact":"088-664-8150／徳島市金沢2丁目1-4"},
         {"id":"recheck-weather-72h","completed":false,"timing":"出發前 72 小時","item":"重查 8/27–8/31 天氣","action":"看氣溫、降雨、雷雨、熱中症警戒、鳴門風浪，特別重查 8/30–8/31。","fallback":"高溫縮短洲本城、慶野、絵島；雷雨取消纜車、摩天輪與海邊。","contact":"日本氣象廳／各設施官方"},
@@ -1841,7 +1800,7 @@
         {"id":"recheck-highways-48h","completed":false,"timing":"出發前 48 小時","item":"確認高速與大橋交通","action":"查看神戶淡路鳴門自動車道事故、施工、風速管制與週末壅塞。","fallback":"異常時優先保船班／航班，取消沿途可選景點。","contact":"JB 本四高速／即時導航"},
         {"id":"pack-health-supplies-24h","completed":false,"timing":"出發前 24 小時","item":"補給與健康用品","action":"準備飲水、電解質飲料、鹽分、帽子、防曬、冰涼巾、暈船用品、幼兒替換衣物、常用藥與過敏資訊。","fallback":"車內至少保留一天份飲水與不易壞點心。","contact":"共同物資清單"},
         {"id":"secure-luggage-24h","completed":false,"timing":"出發前 24 小時","item":"整理行李與貴重物品","action":"8/29、8/30 白天行李在車內；行李遮蔽、護照與貴重品隨身；另做每晚過夜小袋。","fallback":"後車廂無法遮蔽時先到住宿寄放或減少暴露時間。","contact":"車輛安全規則"},
-        {"id":"prepare-navigation-24h","completed":false,"timing":"出發前 24 小時","item":"準備導航清單","action":"預存住宿、停車場、餐廳、船碼頭、Toyota、T2；渦之道設大鳴門橋架橋記念館 EDDY。","fallback":"離線地圖與日文地址截圖各存一份。","contact":"Google Maps／官方地址"},
+        {"id":"prepare-navigation-24h","completed":false,"timing":"出發前 24 小時","item":"準備導航清單","action":"預存住宿、停車場、餐廳、船碼頭與神戶機場第二航廈；渦之道設大鳴門橋架橋記念館 EDDY。","fallback":"離線地圖與日文地址截圖各存一份。","contact":"OpenStreetMap／官方地址"},
         {"id":"gate-day3-depart-0745","completed":false,"timing":"8/29 07:45","item":"準時離開志筑住宿","action":"不因早餐、整理行李或採買延後。","fallback":"每延誤 15 分，優先縮短洲本城／老街。","contact":"Day 3 時間門"},
         {"id":"gate-day3-sbrick-1035","completed":false,"timing":"8/29 10:35","item":"離開 S BRICK","action":"直接前往 Ocean Terrace，不再插入商店。","fallback":"會晚於訂位時間時先電話通知。","contact":"Day 3 時間門"},
         {"id":"gate-day3-keino-1315","completed":false,"timing":"8/29 13:15","item":"決定是否取消慶野松原","action":"未離開 Ocean Terrace、高溫、雷雨或有人疲累，任一成立即取消。","fallback":"直接 Ocean Terrace → 鳴門公園，增加休息緩衝。","contact":"Day 3 取消順序第 1"},
@@ -1853,9 +1812,8 @@
         {"id":"gate-day4-cruise-1200","completed":false,"timing":"8/30 12:00","item":"完成船班報到準備","action":"全員抵達、取票、名簿、廁所與補水；開航前 15 分前完成名簿。","fallback":"資料缺漏由一位成人專責處理，其餘人不分散。","contact":"うずしおクルーズ"},
         {"id":"gate-day4-nojima-1610","completed":false,"timing":"8/30 16:10","item":"離開 Nojima Scuola","action":"超時直接取消絵島，前往淡路 SA。","fallback":"保住夕陽、晚餐與神戶入住時間。","contact":"Day 4 取消順序第 1"},
         {"id":"gate-day4-fuel-hotel","completed":false,"timing":"8/30 晚間","item":"加油與飯店入住","action":"能在淡路島／神戶進城前加滿油就完成；入住後由 1–2 位成人採買。","fallback":"20:30 後抵飯店取消夜購。","contact":"Day 4 收尾"},
-        {"id":"gate-day5-depart-0815","completed":false,"timing":"8/31 08:15","item":"飯店硬出發","action":"退房、行李、加油完成，前往 Toyota。","fallback":"最晚 08:30；超過後取消機場用餐，只處理報到。","contact":"Day 5 硬截止"},
-        {"id":"gate-day5-terminal2-0945","completed":false,"timing":"8/31 09:45","item":"抵達第二航廈","action":"Toyota 只送第一航廈；從 T1 搭免費聯絡巴士或步行至 T2。","fallback":"行李多時優先聯絡巴士；不在 T1 停留吃飯。","contact":"Toyota／神戶機場"},
-        {"id":"gate-day5-checkin-1015","completed":false,"timing":"8/31 10:15","item":"星宇櫃檯開辦即報到","action":"JX1835 必須到 T2 人工櫃檯；先托運、安檢、出境，之後才吃飯採買。","fallback":"11:45 是關櫃硬截止，不是抵達目標。","contact":"星宇神戶機場資訊"},
+        {"id":"gate-day5-depart-0815","completed":false,"timing":"8/31 08:15","item":"飯店準時出發","action":"退房、行李整理完成，直接前往神戶機場第二航廈。","fallback":"最晚 08:30；超過後直接進入報到流程。","contact":"Day 5 硬截止"},
+        {"id":"gate-day5-checkin-0940","completed":false,"timing":"8/31 09:40","item":"第二航廈辦理報到","action":"JX1835 先完成報到、托運、安檢與出境，再於航廈內候機。","fallback":"若排隊拉長，優先完成報到與安檢。","contact":"星宇神戶機場資訊"},
         {"id":"daily-rest-cycle","completed":false,"timing":"每日","item":"每 60–90 分鐘休息","action":"補水、上廁所、確認長輩與幼兒狀態；11:00–15:30 優先室內／車內。","fallback":"有人疲累、排隊或延誤超過 30 分，即依取消順序刪景點。","contact":"全程共同規則"}
       ],
       "preserve_on_replan": true,

@@ -32,7 +32,7 @@ class AwajiTripFixtureTests(unittest.TestCase):
         self.assertEqual(len(self.trip["days"]), 5)
 
         counts = [len(day["items"]) for day in self.trip["days"]]
-        self.assertEqual(counts, [12, 19, 22, 17, 9])
+        self.assertEqual(counts, [12, 19, 22, 17, 5])
         self.assertGreater(sum(counts), 53)
         self.assertEqual(
             [len(day["items"]) for day in self.bundle["days"]],
@@ -190,7 +190,7 @@ class AwajiTripFixtureTests(unittest.TestCase):
 
     def test_transport_legs_and_item_references_are_complete(self):
         legs = self.trip["candidate_sets"]["transport_legs"]
-        self.assertEqual(len(legs), 32)
+        self.assertEqual(len(legs), 31)
         leg_ids = [leg["id"] for leg in legs]
         self.assertEqual(len(set(leg_ids)), len(legs))
 
@@ -260,9 +260,9 @@ class AwajiTripFixtureTests(unittest.TestCase):
         first_leg = next(item for item in self.bundle["transport_legs"] if item["id"] == "leg-day1-airport-nijigen")
         self.assertEqual(first_leg["from_place"], "kobe-airport")
         self.assertEqual(parse_qs(urlparse(first_leg["google_maps_directions_url"]).query)["origin"], [airport["address"]])
-        return_leg = next(item for item in self.bundle["transport_legs"] if item["id"] == "leg-day5-kobe-toyota")
-        self.assertEqual(return_leg["transfer_minutes"], 35)
-        self.assertEqual(return_leg["buffer_minutes"], 10)
+        return_leg = next(item for item in self.bundle["transport_legs"] if item["id"] == "leg-day5-to-terminal2")
+        self.assertEqual(return_leg["transfer_minutes"], 70)
+        self.assertEqual(return_leg["buffer_minutes"], 15)
 
     def test_sheet_operational_notes_are_not_marked_confirmed(self):
         dynamic_ids = {
@@ -310,9 +310,9 @@ class AwajiTripFixtureTests(unittest.TestCase):
         bundle_checklist = self.bundle["operations"]["pretrip_checklist"]
 
         self.assertTrue(override["preserve_on_replan"])
-        self.assertEqual(len(source_checklist), 30)
+        self.assertEqual(len(source_checklist), 28)
         self.assertEqual(bundle_checklist, source_checklist)
-        self.assertEqual(len({item["id"] for item in source_checklist}), 30)
+        self.assertEqual(len({item["id"] for item in source_checklist}), 28)
         for item in source_checklist:
             with self.subTest(item_id=item["id"]):
                 self.assertFalse(item["completed"])
@@ -383,8 +383,8 @@ class AwajiTripFixtureTests(unittest.TestCase):
         outbound = next(flight for flight in self.trip["candidate_sets"]["flights"] if flight["id"] == "xj-834-outbound")
         inbound = next(flight for flight in self.trip["candidate_sets"]["flights"] if flight["id"] == "xj-1835-return")
         self.assertEqual(outbound["carrier"], "Starlux")
-        self.assertIsNone(outbound["departure"]["at"])
-        self.assertIsNone(inbound["arrival"]["at"])
+        self.assertEqual(outbound["departure"]["at"], "2026-08-27T06:50:00+08:00")
+        self.assertEqual(inbound["arrival"]["at"], "2026-08-31T14:45:00+08:00")
 
     def test_no_invalid_source_domains_in_trip_payload(self):
         payload_text = TRIP_PATH.read_text(encoding="utf-8")

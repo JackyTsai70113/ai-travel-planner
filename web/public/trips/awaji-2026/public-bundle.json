@@ -200,7 +200,7 @@
           "expected_stay_minutes": null,
           "id": "day1-flight-arrival",
           "kind": "flight",
-          "notes": "JX834 抵達神戶 10:30 為使用者確認；試算表未給入境、取車與後續精確時間。",
+          "notes": "JX834 桃園 06:50 起飛，神戶 10:30 抵達（當地時間；飛行約 2 小時 40 分）。",
           "place_id": "kobe-airport",
           "start_at": "2026-08-27T10:30:00+09:00",
           "transfer_minutes": null,
@@ -213,7 +213,7 @@
           "expected_stay_minutes": null,
           "id": "day1-drive-airport-nijigen",
           "kind": "transport",
-          "notes": "Sheet 只確認順序；12:00–12:45 為規劃估計，取車完成後以 Google Maps 即時導航。",
+          "notes": "Sheet 只確認順序；12:00–12:45 為規劃估計，抵達後依 OpenStreetMap 位置連結前往。",
           "place_id": "ramen-ichiraku-nijigen",
           "start_at": "2026-08-27T12:00:00+09:00",
           "transfer_minutes": 45,
@@ -1162,79 +1162,27 @@
         },
         {
           "alternative_place_ids": [],
-          "buffer_minutes": 10,
-          "end_at": "2026-08-31T09:00:00+09:00",
-          "expected_stay_minutes": null,
-          "id": "day5-drive-kobe-toyota",
-          "kind": "transport",
-          "notes": null,
-          "place_id": "toyota-rent-a-car-kobe-airport",
-          "start_at": "2026-08-31T08:15:00+09:00",
-          "transfer_minutes": 35,
-          "transport_leg_id": "leg-day5-kobe-toyota"
-        },
-        {
-          "alternative_place_ids": [],
-          "buffer_minutes": null,
-          "end_at": "2026-08-31T09:20:00+09:00",
-          "expected_stay_minutes": 20,
-          "id": "day5-return-car",
-          "kind": "free_time",
-          "notes": "驗車與還車；Toyota 只接送第一航廈，不接送第二航廈。",
-          "place_id": "toyota-rent-a-car-kobe-airport",
-          "start_at": "2026-08-31T09:00:00+09:00",
-          "transfer_minutes": null,
-          "transport_leg_id": null
-        },
-        {
-          "alternative_place_ids": [],
-          "buffer_minutes": 0,
+          "buffer_minutes": 15,
           "end_at": "2026-08-31T09:40:00+09:00",
           "expected_stay_minutes": null,
-          "id": "day5-transfer-terminal2",
+          "id": "day5-transfer-airport",
           "kind": "transport",
-          "notes": "第一航廈轉第二航廈；行李多且有長輩幼兒時優先免費聯絡巴士。",
+          "notes": "退房後直接前往神戶機場第二航廈；為六大一小保留行李、下車與報到緩衝。",
           "place_id": "kobe-airport-terminal-2",
-          "start_at": "2026-08-31T09:20:00+09:00",
-          "transfer_minutes": 20,
+          "start_at": "2026-08-31T08:15:00+09:00",
+          "transfer_minutes": 70,
           "transport_leg_id": "leg-day5-to-terminal2"
         },
         {
           "alternative_place_ids": [],
           "buffer_minutes": null,
-          "end_at": "2026-08-31T10:15:00+09:00",
-          "expected_stay_minutes": 30,
-          "id": "day5-terminal2-gather",
-          "kind": "free_time",
-          "notes": "第二航廈集合、廁所與整理證件；10:15 全員到星宇櫃檯排隊。",
-          "place_id": "kobe-airport-terminal-2",
-          "start_at": "2026-08-31T09:45:00+09:00",
-          "transfer_minutes": null,
-          "transport_leg_id": null
-        },
-        {
-          "alternative_place_ids": [],
-          "buffer_minutes": null,
-          "end_at": "2026-08-31T11:45:00+09:00",
-          "expected_stay_minutes": 90,
-          "id": "day5-starlux-checkin",
-          "kind": "free_time",
-          "notes": "JX1835 必須到 T2 人工櫃檯；先托運、安檢、出境。11:45 是制度截止，不是建議抵達時間。",
-          "place_id": "kobe-airport-terminal-2",
-          "start_at": "2026-08-31T10:15:00+09:00",
-          "transfer_minutes": null,
-          "transport_leg_id": null
-        },
-        {
-          "alternative_place_ids": [],
-          "buffer_minutes": null,
           "end_at": "2026-08-31T12:30:00+09:00",
-          "expected_stay_minutes": 45,
-          "id": "day5-airport-food",
-          "kind": "meal",
-          "notes": "完成報到與出境後才決定輕食／採買；不得為第一航廈餐廳反向跨航廈。",
+          "expected_stay_minutes": 170,
+          "id": "day5-airport-checkin",
+          "kind": "free_time",
+          "notes": "抵達第二航廈後辦理 JX1835 報到、托運、安檢與出境；完成後在航廈內候機。",
           "place_id": "kobe-airport-terminal-2",
-          "start_at": "2026-08-31T11:45:00+09:00",
+          "start_at": "2026-08-31T09:40:00+09:00",
           "transfer_minutes": null,
           "transport_leg_id": null
         },
@@ -1252,7 +1200,7 @@
           "transport_leg_id": null
         }
       ],
-      "summary": "06:30 飯店早餐、08:15 退房、09:00 還車、10:15 報到、12:45 返台"
+      "summary": "06:30 飯店早餐、07:40 退房、09:40 抵達神戶機場第二航廈、12:45 JX1835 返台"
     }
   ],
   "evidence_gate": {
@@ -1262,16 +1210,16 @@
   },
   "local_timezone": "Asia/Tokyo",
   "meta": {
-    "bundle_sha256": "839c58c9843c7067b4cf320a6b3f728c499bdbff016f13df6160d5809b34c5d4",
-    "generated_at": "2026-08-25T06:56:45+00:00",
+    "bundle_sha256": "cea80a0f0a5e70e523c560dc9185d43b2c67c1aed3285cb3ba92b056840c18f7",
+    "generated_at": "2026-08-25T07:47:47+00:00",
     "source_coverage": {
       "days": 5,
-      "places": 52,
+      "places": 51,
       "selected_flights": 2,
       "selected_hotels": 3
     },
     "source_path": "trips/awaji-naruto-tokushima-kobe-2026/trip.json",
-    "source_sha256": "875f2e25987402fc715ebd3e4809afed2ff29bc6568d455f90d9b6096a6ee673",
+    "source_sha256": "428a3b40bb327c2a6a8053e40362e5a8f0f3df13410b8da15ed31023062c6971",
     "trip_schema": "trip-v1"
   },
   "operations": {
@@ -1313,15 +1261,6 @@
         "fallback": "飯店無法保證：出發前選定可停大型車的平面停車場。",
         "id": "confirm-kobe-parking",
         "item": "確認神戶三宮飯店停車",
-        "timing": "現在"
-      },
-      {
-        "action": "向 Toyota 確認車型、車高、滿油規則、ETC 卡、兒童座椅與還車後送第一航廈流程。",
-        "completed": false,
-        "contact": "Toyota 神戶機場店 078-302-0600",
-        "fallback": "車高接近 2.0m：8/29 新町地下停車場改平面停車場。",
-        "id": "confirm-rental-car",
-        "item": "確認租車實車尺寸與還車流程",
         "timing": "現在"
       },
       {
@@ -1406,9 +1345,9 @@
         "timing": "出發前 24 小時"
       },
       {
-        "action": "預存住宿、停車場、餐廳、船碼頭、Toyota、T2；渦之道設大鳴門橋架橋記念館 EDDY。",
+        "action": "預存住宿、停車場、餐廳、船碼頭與神戶機場第二航廈；渦之道設大鳴門橋架橋記念館 EDDY。",
         "completed": false,
-        "contact": "Google Maps／官方地址",
+        "contact": "OpenStreetMap／官方地址",
         "fallback": "離線地圖與日文地址截圖各存一份。",
         "id": "prepare-navigation-24h",
         "item": "準備導航清單",
@@ -1514,31 +1453,22 @@
         "timing": "8/30 晚間"
       },
       {
-        "action": "退房、行李、加油完成，前往 Toyota。",
+        "action": "退房、行李整理完成，直接前往神戶機場第二航廈。",
         "completed": false,
         "contact": "Day 5 硬截止",
-        "fallback": "最晚 08:30；超過後取消機場用餐，只處理報到。",
+        "fallback": "最晚 08:30；超過後直接進入報到流程。",
         "id": "gate-day5-depart-0815",
-        "item": "飯店硬出發",
+        "item": "飯店準時出發",
         "timing": "8/31 08:15"
       },
       {
-        "action": "Toyota 只送第一航廈；從 T1 搭免費聯絡巴士或步行至 T2。",
-        "completed": false,
-        "contact": "Toyota／神戶機場",
-        "fallback": "行李多時優先聯絡巴士；不在 T1 停留吃飯。",
-        "id": "gate-day5-terminal2-0945",
-        "item": "抵達第二航廈",
-        "timing": "8/31 09:45"
-      },
-      {
-        "action": "JX1835 必須到 T2 人工櫃檯；先托運、安檢、出境，之後才吃飯採買。",
+        "action": "JX1835 先完成報到、托運、安檢與出境，再於航廈內候機。",
         "completed": false,
         "contact": "星宇神戶機場資訊",
-        "fallback": "11:45 是關櫃硬截止，不是抵達目標。",
-        "id": "gate-day5-checkin-1015",
-        "item": "星宇櫃檯開辦即報到",
-        "timing": "8/31 10:15"
+        "fallback": "若排隊拉長，優先完成報到與安檢。",
+        "id": "gate-day5-checkin-0940",
+        "item": "第二航廈辦理報到",
+        "timing": "8/31 09:40"
       },
       {
         "action": "補水、上廁所、確認長輩與幼兒狀態；11:00–15:30 優先室內／車內。",
@@ -1979,7 +1909,7 @@
       }
     },
     {
-      "accessibility_notes": "行李多且有長輩幼兒，第一航廈到第二航廈優先搭免費聯絡巴士。",
+      "accessibility_notes": "行李多且有長輩幼兒，預留下車、報到與安檢緩衝。",
       "address": "兵庫県神戸市中央区神戸空港",
       "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Kobe+Airport+Terminal+2",
       "id": "kobe-airport-terminal-2",
@@ -2692,29 +2622,6 @@
       }
     },
     {
-      "accessibility_notes": "Toyota 僅接送第一航廈；再搭免費聯絡巴士或步行至第二航廈。",
-      "address": "兵庫県神戸市中央区神戸空港3-2",
-      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Toyota+Rent+a+Car+Kobe+Airport",
-      "id": "toyota-rent-a-car-kobe-airport",
-      "image_alt": null,
-      "image_source_url": null,
-      "image_url": null,
-      "kind": "other",
-      "maps_query": "兵庫県神戸市中央区神戸空港3-2",
-      "name": "Toyota Rent a Car 神戶機場店",
-      "official_url": null,
-      "opening_hours_note": "8:00–20:00；還車前依契約加滿油。",
-      "provenance": {
-        "confidence": 1,
-        "note": null,
-        "provider": "Google Sheet 行程表",
-        "retrieved_at": "2026-08-23T09:00:00+08:00",
-        "source_type": "user_input",
-        "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117",
-        "status": "reported"
-      }
-    },
-    {
       "accessibility_notes": "停車場至入口需步行；有無障礙路線但較繞，不必走到底。",
       "address": "徳島県鳴門市鳴門町土佐泊浦字福池65",
       "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Uzu+no+Michi+Naruto",
@@ -3352,25 +3259,15 @@
       "last_checked": "2026-08-23T09:00:00+08:00",
       "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117",
       "status": "reported",
-      "supports": "place:toyota-rent-a-car-kobe-airport"
-    },
-    {
-      "authority": "Google Sheet 行程表",
-      "confidence": 1.0,
-      "conflicts": false,
-      "freshness": "unknown",
-      "last_checked": "2026-08-23T09:00:00+08:00",
-      "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117",
-      "status": "reported",
       "supports": "place:kobe-airport-terminal-2"
     },
     {
-      "authority": "user-confirmed booking",
-      "confidence": 0.98,
+      "authority": "神戸空港 國際線航班資訊",
+      "confidence": 0.99,
       "conflicts": false,
       "freshness": "unknown",
-      "last_checked": "2026-08-15T09:00:00+09:00",
-      "source_url": "https://github.com/JackyTsai70113/ai-travel-planner/issues/52",
+      "last_checked": "2026-08-25T00:00:00+09:00",
+      "source_url": "https://www.kobeairport.jp/intl-flights/",
       "status": "confirmed",
       "supports": "flight"
     },
@@ -3702,16 +3599,6 @@
       "last_checked": "2026-08-23T09:00:00+08:00",
       "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117",
       "status": "estimated",
-      "supports": "transport:leg-day5-kobe-toyota"
-    },
-    {
-      "authority": "Google Sheet planning estimate",
-      "confidence": 0.8,
-      "conflicts": false,
-      "freshness": "unknown",
-      "last_checked": "2026-08-23T09:00:00+08:00",
-      "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117",
-      "status": "estimated",
       "supports": "transport:leg-day5-to-terminal2"
     },
     {
@@ -3738,10 +3625,10 @@
       "google_maps_directions_url": "https://www.google.com/maps/dir/?api=1&origin=%E5%85%B5%E5%BA%AB%E7%9C%8C%E7%A5%9E%E6%88%B8%E5%B8%82%E4%B8%AD%E5%A4%AE%E5%8C%BA%E7%A5%9E%E6%88%B8%E7%A9%BA%E6%B8%AF1&destination=%E5%85%B5%E5%BA%AB%E7%9C%8C%E6%B7%A1%E8%B7%AF%E5%B8%82%E6%A5%A0%E6%9C%AC2425-2+%E5%85%B5%E5%BA%AB%E7%9C%8C%E7%AB%8B%E6%B7%A1%E8%B7%AF%E5%B3%B6%E5%85%AC%E5%9C%92%E5%86%85&travelmode=driving",
       "id": "leg-day1-airport-nijigen",
       "mode": "car",
-      "note": "行車估計：45 分；緩衝：0 分。導航：由神戸空港第2航廈前往二次元之森；延誤切點：取車延誤就縮短忍里；家庭注意：先完成午餐。",
+      "note": "行車估計：45 分；緩衝：0 分。導航：由神戸空港第2航廈前往二次元之森；延誤時縮短忍里停留；家庭注意：先完成午餐。",
       "provenance": {
         "confidence": 0.5,
-        "note": "行車估計：45 分；緩衝：0 分。導航：由神戸空港第2航廈前往二次元之森；延誤切點：取車延誤就縮短忍里；家庭注意：先完成午餐。",
+        "note": "行車估計：45 分；緩衝：0 分。導航：由神戸空港第2航廈前往二次元之森；延誤時縮短忍里停留；家庭注意：先完成午餐。",
         "provider": "Issue 97 planning estimate from Sheet order",
         "retrieved_at": "2026-08-23T03:30:00+08:00",
         "source_type": "derived",
@@ -4599,48 +4486,19 @@
       "transfer_minutes": 50
     },
     {
-      "arrival_at": "2026-08-31T09:00:00+09:00",
-      "buffer_minutes": 10,
+      "arrival_at": "2026-08-31T09:40:00+09:00",
+      "buffer_minutes": 15,
       "departure_at": "2026-08-31T08:15:00+09:00",
-      "estimated_duration_minutes": 35,
+      "estimated_duration_minutes": 70,
       "from_label": "ザ ロイヤルパーク キャンバス 神戸三宮",
       "from_place": "royal-park-canvas-kobe-sannomiya",
-      "google_maps_directions_url": "https://www.google.com/maps/dir/?api=1&origin=%E3%80%92650-0011+%E5%85%B5%E5%BA%AB%E7%9C%8C%E7%A5%9E%E6%88%B8%E5%B8%82%E4%B8%AD%E5%A4%AE%E5%8C%BA%E4%B8%8B%E5%B1%B1%E6%89%8B%E9%80%9A2%E4%B8%81%E7%9B%AE3-1&destination=%E5%85%B5%E5%BA%AB%E7%9C%8C%E7%A5%9E%E6%88%B8%E5%B8%82%E4%B8%AD%E5%A4%AE%E5%8C%BA%E7%A5%9E%E6%88%B8%E7%A9%BA%E6%B8%AF3-2&travelmode=driving",
-      "id": "leg-day5-kobe-toyota",
-      "mode": "car",
-      "note": "行車估計：25–35 分；緩衝：10 分。導航：前晚盡量加滿油，店址神戶空港3-2；延誤切點：最晚 08:30 出發，超時取消機場用餐；家庭注意：長輩幼兒依店員指引留車上。",
-      "provenance": {
-        "confidence": 0.8,
-        "note": "行車估計：25–35 分；緩衝：10 分。導航：前晚盡量加滿油，店址神戶空港3-2；延誤切點：最晚 08:30 出發，超時取消機場用餐；家庭注意：長輩幼兒依店員指引留車上。",
-        "provider": "Google Sheet planning estimate",
-        "retrieved_at": "2026-08-23T09:00:00+08:00",
-        "source_type": "derived",
-        "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117",
-        "status": "estimated"
-      },
-      "source_refs": [
-        "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117"
-      ],
-      "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117",
-      "status": "estimated",
-      "to_label": "Toyota Rent a Car 神戶機場店",
-      "to_place": "toyota-rent-a-car-kobe-airport",
-      "transfer_minutes": 35
-    },
-    {
-      "arrival_at": "2026-08-31T09:40:00+09:00",
-      "buffer_minutes": 0,
-      "departure_at": "2026-08-31T09:20:00+09:00",
-      "estimated_duration_minutes": 20,
-      "from_label": "Toyota Rent a Car 神戶機場店",
-      "from_place": "toyota-rent-a-car-kobe-airport",
-      "google_maps_directions_url": "https://www.google.com/maps/dir/?api=1&origin=%E5%85%B5%E5%BA%AB%E7%9C%8C%E7%A5%9E%E6%88%B8%E5%B8%82%E4%B8%AD%E5%A4%AE%E5%8C%BA%E7%A5%9E%E6%88%B8%E7%A9%BA%E6%B8%AF3-2&destination=%E5%85%B5%E5%BA%AB%E7%9C%8C%E7%A5%9E%E6%88%B8%E5%B8%82%E4%B8%AD%E5%A4%AE%E5%8C%BA%E7%A5%9E%E6%88%B8%E7%A9%BA%E6%B8%AF&travelmode=transit",
+      "google_maps_directions_url": "https://www.google.com/maps/dir/?api=1&origin=%E3%80%92650-0011+%E5%85%B5%E5%BA%AB%E7%9C%8C%E7%A5%9E%E6%88%B8%E5%B8%82%E4%B8%AD%E5%A4%AE%E5%8C%BA%E4%B8%8B%E5%B1%B1%E6%89%8B%E9%80%9A2%E4%B8%81%E7%9B%AE3-1&destination=%E5%85%B5%E5%BA%AB%E7%9C%8C%E7%A5%9E%E6%88%B8%E5%B8%82%E4%B8%AD%E5%A4%AE%E5%8C%BA%E7%A5%9E%E6%88%B8%E7%A9%BA%E6%B8%AF&travelmode=driving",
       "id": "leg-day5-to-terminal2",
-      "mode": "bus",
-      "note": "轉乘估計：20 分；緩衝：0 分。導航：Toyota 僅送第一航廈，再搭免費聯絡巴士或步行約 10 分至 T2；延誤切點：09:45 前抵 T2；家庭注意：行李多時優先免費聯絡巴士。",
+      "mode": "car",
+      "note": "行車估計：50–70 分；出發時間含六大一小的行李與下車緩衝；延誤切點：最晚 08:30 出發，超過後直接進入報到流程。",
       "provenance": {
         "confidence": 0.8,
-        "note": "轉乘估計：20 分；緩衝：0 分。導航：Toyota 僅送第一航廈，再搭免費聯絡巴士或步行約 10 分至 T2；延誤切點：09:45 前抵 T2；家庭注意：行李多時優先免費聯絡巴士。",
+        "note": "行車估計：50–70 分；出發時間含六大一小的行李與下車緩衝；延誤切點：最晚 08:30 出發，超過後直接進入報到流程。",
         "provider": "Google Sheet planning estimate",
         "retrieved_at": "2026-08-23T09:00:00+08:00",
         "source_type": "derived",
@@ -4654,7 +4512,7 @@
       "status": "estimated",
       "to_label": "神戶機場 第二航廈",
       "to_place": "kobe-airport-terminal-2",
-      "transfer_minutes": 20
+      "transfer_minutes": 70
     }
   ],
   "traveler_profile": {

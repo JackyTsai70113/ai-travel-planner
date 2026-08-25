@@ -196,7 +196,7 @@ try {
   await assertStyleContrast(mobile, '.day-tab:focus-visible', 'outlineColor', '.itinerary-day-nav', 'backgroundColor', 3, 'light control focus indicator')
   await assertTouchTargets(mobile, '.print-button', 'print')
   await assertTouchTargets(mobile, '.quick-mode button', 'quick mode')
-  await assertTouchTargets(mobile, '.timeline-map-link', 'timeline Google Maps link')
+  await assertTouchTargets(mobile, '.timeline-map-link', 'timeline OpenStreetMap link')
   await mobile.locator('#itinerary-search').fill('淡路')
   await mobile.locator('.search-results button').first().waitFor()
   await assertTouchTargets(mobile, '.search-results button', 'search result')

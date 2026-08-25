@@ -201,7 +201,7 @@ export function OverviewPage({ bundle, trip }: OverviewPageProps) {
 
       <footer className="overview-footer">
         <span>預算快照：{formatMoney(bundle.budget?.total)}</span>
-        <span>Google Maps 即時交通以開啟導航當下為準</span>
+        <span>OpenStreetMap 位置與路線連結</span>
       </footer>
     </section>
   )

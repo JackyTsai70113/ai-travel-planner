@@ -112,7 +112,7 @@ export function LodgingPage({ bundle }: LodgingPageProps) {
       <div className="lodging-card-list">
         {lodgings.map((lodging, index) => {
           const status = lodging.checkInDate && lodging.place?.address ? 'confirmed' : 'unresolved'
-          const mapsHref = lodging.place?.google_maps_url || buildMapsLink(lodging.place?.maps_query || lodging.place?.name || lodging.placeId)
+          const mapsHref = buildMapsLink(lodging.place?.maps_query || lodging.place?.address || lodging.place?.name || lodging.placeId)
           return (
             <article className="lodging-card" key={lodging.id}>
               <div className="lodging-card-number"><span>STAY</span><strong>{String(index + 1).padStart(2, '0')}</strong></div>
