@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import {
   Bundle,
   BundlePlace,
@@ -6,7 +6,6 @@ import {
   operationalStatusClass,
   operationalStatusLabel,
 } from '../contracts/trip'
-import { buildRoutePath } from '../app/route-registry'
 
 interface LodgingPageProps {
   bundle: Bundle
@@ -21,7 +20,6 @@ interface LodgingItem {
   checkOutTime?: string
   nights?: number
   boundaryNote: string
-  route: string
   note?: string
 }
 
@@ -50,7 +48,6 @@ function daysBetween(start?: string, end?: string) {
 }
 
 export function LodgingPage({ bundle }: LodgingPageProps) {
-  const [copiedId, setCopiedId] = useState('')
   const lodgings = useMemo<LodgingItem[]>(() => {
     const allItems = bundle.days.flatMap((day) => day.items)
     const base = bundle.selected.hotel_place_ids.map((placeId) => {
@@ -80,24 +77,12 @@ export function LodgingPage({ bundle }: LodgingPageProps) {
         checkOutTime: entry.checkOut?.start_at || undefined,
         nights: daysBetween(checkInDate, checkOutDate),
         boundaryNote,
-        route: buildRoutePath({ section: 'today', day: checkInDate, item: entry.checkIn?.id }),
         note: entry.checkIn?.notes || undefined,
       }
     })
   }, [bundle.days, bundle.places, bundle.selected.hotel_place_ids])
 
   const totalNights = lodgings.reduce((sum, lodging) => sum + (lodging.nights || 0), 0)
-  const copyAddress = async (lodging: LodgingItem) => {
-    if (!lodging.place?.address) return
-    try {
-      await navigator.clipboard.writeText(`${lodging.place.name || lodging.placeId}\n${lodging.place.address}`)
-      setCopiedId(lodging.id)
-      window.setTimeout(() => setCopiedId(''), 1400)
-    } catch {
-      setCopiedId('error')
-    }
-  }
-
   return (
     <section className="lodging-workspace" aria-label="住宿手冊">
       <header className="page-intro">
@@ -133,10 +118,7 @@ export function LodgingPage({ bundle }: LodgingPageProps) {
                 {lodging.note ? <p className="stay-note"><strong>入住提醒：</strong>{lodging.note}</p> : null}
                 {lodging.place?.accessibility_notes ? <p className="stay-note"><strong>家庭／無障礙：</strong>{lodging.place.accessibility_notes}</p> : null}
                 <div className="stay-actions">
-                  <a className="primary" href={mapsHref} target="_blank" rel="noreferrer">開啟導航</a>
-                  <button type="button" disabled={!lodging.place?.address} onClick={() => copyAddress(lodging)}>{copiedId === lodging.id ? '地址已複製' : '複製住宿地址'}</button>
-                  <a href={lodging.route}>查看入住日</a>
-                  {lodging.place?.official_url ? <a href={lodging.place.official_url} target="_blank" rel="noreferrer">官方網站</a> : null}
+                  <a className="primary map-icon-link" href={mapsHref} target="_blank" rel="noreferrer" aria-label={`${lodging.place?.name || lodging.placeId} 在 Google Maps 開啟`} title="在 Google Maps 開啟"><span aria-hidden="true">🗺️</span></a>
                 </div>
               </div>
             </article>

@@ -48,7 +48,7 @@ export function DesktopSidebar({ sections, activeSection, onNavigate, title, sub
           </button>
         ))}
       </nav>
-      <footer className="trip-sidebar-footer"><span>●</span><p>已快取內容可離線閱讀<br /><small>地圖需連線開啟 OpenStreetMap</small></p></footer>
+      <footer className="trip-sidebar-footer"><span>●</span><p>已快取內容可離線閱讀<br /><small>地圖需連線開啟 Google Maps</small></p></footer>
     </aside>
   )
 }
