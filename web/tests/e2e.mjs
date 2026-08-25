@@ -195,7 +195,7 @@ try {
   await assertStyleContrast(mobile, '.day-tab:focus-visible', 'outlineColor', '.itinerary-day-nav', 'backgroundColor', 3, 'light control focus indicator')
   await assertTouchTargets(mobile, '.print-button', 'print')
   await assertTouchTargets(mobile, '.quick-mode button', 'quick mode')
-  await assertTouchTargets(mobile, '.timeline-actions a, .timeline-actions button', 'timeline action')
+  await assertTouchTargets(mobile, '.timeline-map-link', 'timeline Google Maps link')
   await mobile.locator('#itinerary-search').fill('淡路')
   await mobile.locator('.search-results button').first().waitFor()
   await assertTouchTargets(mobile, '.search-results button', 'search result')
@@ -255,7 +255,7 @@ try {
       const fixedCard = routePage.locator('.day-answer-grid > div').filter({ hasText: '固定時間' })
       const fixedText = await fixedCard.textContent()
       if (!fixedText?.includes('12:45') || !fixedText.includes('神戶機場 第二航廈')) throw new Error('Day 5 hero did not preserve the JX1835 departure time and origin')
-      const flightMapHref = await routePage.locator('#item-day5-departure-flight').getByRole('link', { name: '導航地圖' }).getAttribute('href')
+      const flightMapHref = await routePage.locator('#item-day5-departure-flight').locator('.timeline-map-link').getAttribute('href')
       const flightMapQuery = flightMapHref ? new URL(flightMapHref).searchParams.get('query') : null
       const normalizedFlightMapQuery = flightMapQuery?.toLowerCase() || ''
       if ((!normalizedFlightMapQuery.includes('kobe') && !flightMapQuery?.includes('神戸空港')) || flightMapQuery?.includes('桃園')) throw new Error(`Day 5 flight navigation target is incorrect: ${flightMapQuery}`)

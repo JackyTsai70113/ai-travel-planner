@@ -11,7 +11,6 @@ export type TripStatusType =
   | 'critical'
   | 'offline-cache'
   | 'offline-no-cache'
-  | 'newer-version'
   | 'route-not-found'
 
 interface TripShellProps {
@@ -21,7 +20,6 @@ interface TripShellProps {
   sections: SectionDefinition[]
   activeSection: string
   onNavigateSection: (nextSection: string) => void
-  onRetry: () => void
   isDrawerOpen: boolean
   setDrawerOpen: (open: boolean) => void
   children: ReactNode
@@ -34,7 +32,6 @@ const statusText: Record<TripStatusType, string> = {
   critical: '行程提醒：含關鍵警示',
   'offline-cache': '目前離線，使用快取資料',
   'offline-no-cache': '目前離線，無可用快取資料',
-  'newer-version': '有可用新版，建議重整理',
   'route-not-found': '頁面不存在',
 }
 
@@ -45,7 +42,6 @@ export default function TripShell({
   sections,
   activeSection,
   onNavigateSection,
-  onRetry,
   isDrawerOpen,
   setDrawerOpen,
   children,
@@ -156,11 +152,6 @@ export default function TripShell({
             </div>
             <div className="shell-status-line">
               <span>{currentStatusText}</span>
-              {shellStatus === 'newer-version' ? (
-                <button type="button" onClick={onRetry}>
-                  重新載入
-                </button>
-              ) : null}
             </div>
           </header>
 

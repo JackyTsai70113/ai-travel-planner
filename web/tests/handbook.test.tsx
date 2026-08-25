@@ -6,6 +6,7 @@ import { groupContiguousLegs, MapPage } from '../src/pages/MapPage'
 import { heroNextItem, ItineraryPage } from '../src/pages/ItineraryPage'
 import { OverviewPage } from '../src/pages/OverviewPage'
 import { PackingPage } from '../src/pages/PackingPage'
+import { ReservationsPage } from '../src/pages/ReservationsPage'
 import { TidesPage } from '../src/pages/TidesPage'
 import { buildReservationCalendarIcs } from '../src/pages/ReservationsPage'
 import type { TripCatalogEntry } from '../src/contracts/trip-registry'
@@ -177,6 +178,26 @@ describe('Issue 97 travel handbook', () => {
     expect(ics).toContain('DTSTART:20260828T084500Z')
     expect(ics).toContain('DTEND:20260828T094500Z')
     expect(ics).not.toContain('DTSTART:20260828T164500')
+  })
+
+  it('keeps reservation cards focused on time, place, address, and map link', () => {
+    render(<ReservationsPage bundle={{
+      ...bundle,
+      reservations: [{
+        id: 'reservation-1',
+        day: dates[0],
+        time: `${dates[0]}T12:50:00+09:00`,
+        name: 'うずしおクルーズ（福良港）',
+        place_id: 'b',
+        kind: 'fixed-reservation',
+      }],
+    }} />)
+    expect(screen.getByRole('heading', { name: /うずしおクルーズ（福良港）/ })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '淡路住宿 Google Maps' })).toBeInTheDocument()
+    expect(screen.queryByText('資料來源')).not.toBeInTheDocument()
+    expect(screen.queryByText('最後確認')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
+    expect(screen.queryByText('fixed-reservation')).not.toBeInTheDocument()
   })
 
   it('keeps itinerary day navigation route-aware', () => {

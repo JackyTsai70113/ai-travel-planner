@@ -226,7 +226,7 @@
           "expected_stay_minutes": 45,
           "id": "day1-lunch-ichiraku",
           "kind": "meal",
-          "notes": "Sheet 指定ラーメン一楽；時間為規劃估計，營業狀態出發前重查。",
+          "notes": "官方營業時間：平日 11:00–15:00（最後點餐 14:30）、16:00–18:00（最後點餐 17:30）；本次 12:45 抵達、13:30 離開。",
           "place_id": "ramen-ichiraku-nijigen",
           "start_at": "2026-08-27T12:45:00+09:00",
           "transfer_minutes": null,
@@ -1262,8 +1262,8 @@
   },
   "local_timezone": "Asia/Tokyo",
   "meta": {
-    "bundle_sha256": "2ddb8207bf4c36791567bb30320ee479ac17b062cc02e7890e98c8aa5bb7443e",
-    "generated_at": "2026-08-24T10:10:01+00:00",
+    "bundle_sha256": "839c58c9843c7067b4cf320a6b3f728c499bdbff016f13df6160d5809b34c5d4",
+    "generated_at": "2026-08-25T06:56:45+00:00",
     "source_coverage": {
       "days": 5,
       "places": 52,
@@ -1271,7 +1271,7 @@
       "selected_hotels": 3
     },
     "source_path": "trips/awaji-naruto-tokushima-kobe-2026/trip.json",
-    "source_sha256": "d113dc9fc54c67eeb6b27e111f3ff89738dd4e67c8f623ed9abb228ebc84882f",
+    "source_sha256": "875f2e25987402fc715ebd3e4809afed2ff29bc6568d455f90d9b6096a6ee673",
     "trip_schema": "trip-v1"
   },
   "operations": {
@@ -2519,15 +2519,15 @@
       "maps_query": "兵庫県淡路市楠本2425-2 兵庫県立淡路島公園内",
       "name": "ラーメン一楽（二次元之森 忍里內）",
       "official_url": null,
-      "opening_hours_note": "二次元之森園區餐飲；官方營業時間依忍里當日營運公告，Day 1 12:45 抵達前確認供餐與最後點餐。",
+      "opening_hours_note": "ラーメン一樂：平日 11:00–15:00（最後點餐 14:30）、16:00–18:00（最後點餐 17:30）；8/27（週四）12:45–13:30 位於午間營業時段內。",
       "provenance": {
-        "confidence": 0.8,
-        "note": "地點與用餐順序來自 Sheet；動態營業資訊待重查。",
-        "provider": "Google Sheet 行程總覽",
-        "retrieved_at": "2026-08-23T03:30:00+08:00",
-        "source_type": "user_input",
-        "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496",
-        "status": "unverified"
+        "confidence": 0.95,
+        "note": "官方料金與營業資訊列示 NARUTO&BORUTO 忍里 10:00 開始、20:00 最終入場；ラーメン一樂平日 11:00–15:00、16:00–18:00，最後點餐分別為 14:30、17:30；營業時間可能因季節或活動調整。",
+        "provider": "ニジゲンノモリ 官方料金與營業資訊",
+        "retrieved_at": "2026-08-25T14:48:30+08:00",
+        "source_type": "official",
+        "source_url": "https://nijigennomori.com/price/",
+        "status": "confirmed"
       }
     },
     {
@@ -2905,13 +2905,13 @@
       "supports": "place:awaji-nakajima-park"
     },
     {
-      "authority": "Google Sheet 行程總覽",
-      "confidence": 0.8,
+      "authority": "ニジゲンノモリ 官方料金與營業資訊",
+      "confidence": 0.95,
       "conflicts": false,
       "freshness": "unknown",
-      "last_checked": "2026-08-23T03:30:00+08:00",
-      "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496",
-      "status": "unverified",
+      "last_checked": "2026-08-25T14:48:30+08:00",
+      "source_url": "https://nijigennomori.com/price/",
+      "status": "confirmed",
       "supports": "place:ramen-ichiraku-nijigen"
     },
     {
