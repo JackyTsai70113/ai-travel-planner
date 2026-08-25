@@ -13,14 +13,14 @@ export type DataStatusTone =
 
 const STATUS_LABELS: Record<DataStatusTone, string> = {
   confirmed: '可執行',
-  estimated: '待更新',
+  estimated: '規劃估計',
   reported: '已回報',
   'user-confirmed': '已確認',
-  warning: '待補資訊',
+  warning: '有提醒',
   error: '嚴重訊息',
   critical: '關鍵風險',
   info: '注意',
-  unverified: '未驗證',
+  unverified: '來源資訊',
   stale: '資料過期',
   conflict: '衝突',
 }

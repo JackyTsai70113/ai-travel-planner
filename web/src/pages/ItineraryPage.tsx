@@ -283,7 +283,7 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
           const states = itemState(item, reservation?.unresolved === true, leg)
           const title = leg ? `${leg.from_label} → ${leg.to_label}` : findPlaceLabel(bundle.places, item.place_id)
           const detail = leg
-            ? leg.estimated_duration_minutes == null ? '車程尚未確認' : `約 ${leg.estimated_duration_minutes} 分鐘`
+            ? leg.estimated_duration_minutes == null ? '車程：—' : `約 ${leg.estimated_duration_minutes} 分鐘`
             : item.notes || `停留 ${item.expected_stay_minutes == null ? '—' : `${item.expected_stay_minutes} 分鐘`} · 前段移動 ${item.transfer_minutes == null ? '—' : `${item.transfer_minutes} 分鐘`}`
           const mapsHref = leg ? legDirectionsLink(bundle, leg) : place?.google_maps_url || buildMapsLink(place?.maps_query || place?.name || item.place_id)
           const itemAlternatives = (item.alternative_place_ids || [])

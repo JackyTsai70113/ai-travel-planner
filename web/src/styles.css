@@ -940,6 +940,11 @@ button { font-family: inherit; }
 .desktop-topbar-divider { color: #c5d0d6; }
 .desktop-status, .desktop-travelers { display: inline-flex; align-items: center; gap: 6px; padding: 7px 10px; border-radius: 9px; background: #f6f9fa; border: 1px solid #e4ebee; color: #526875; font-size: .7rem; }
 .desktop-status i { width: 7px; height: 7px; background: #2ba88f; border-radius: 50%; }
+.desktop-topbar-tools { gap: 10px; }
+.desktop-status, .desktop-travelers { min-height: 34px; padding: 6px 10px; white-space: nowrap; }
+.desktop-status { color: #24695f; border-color: #bfe3d9; background: #f1faf7; }
+.desktop-travelers { color: #304e5d; background: #fff; }
+.desktop-travelers small { color: #83949c; font-size: .64rem; }
 .trip-main-header { margin: 0 0 12px; }
 .main-title { font-size: 1.36rem; font-weight: 800; letter-spacing: -.025em; }
 .shell-status-line { margin-top: 4px; font-size: .78rem; }
@@ -1043,8 +1048,6 @@ body,
 .trip-sidebar-footer p { margin: 0; line-height: 1.55; }
 .trip-sidebar-footer small { color: #6f8999; }
 .desktop-topbar-tools { min-width: 0; }
-.desktop-quick-actions { display: flex; gap: 6px; }
-.desktop-quick-actions button { min-height: 34px; padding: 6px 10px; border: 1px solid #dce7ea; color: #466471; background: #fff; font-size: .7rem; }
 
 .page-intro {
   display: flex;
@@ -1214,7 +1217,6 @@ body,
 
 .desktop-status,
 .desktop-travelers,
-.desktop-quick-actions button,
 .day-tab,
 .print-button,
 .quick-mode button,
@@ -1233,7 +1235,6 @@ body,
   border-color: var(--line-strong);
 }
 
-.desktop-quick-actions button,
 .day-tab,
 .print-button,
 .quick-mode button,
@@ -1475,8 +1476,7 @@ body,
 .search-results button,
 .timeline-actions a,
 .timeline-actions button,
-.handbook-day-tabs button,
-.desktop-quick-actions button {
+.handbook-day-tabs button {
   min-width: 44px;
   min-height: 44px;
 }

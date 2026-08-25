@@ -69,7 +69,7 @@ export function LodgingPage({ bundle }: LodgingPageProps) {
         ? '退房時間已列入行程'
         : nextCheckIn
           ? '退房日依下一處入住日呈現'
-          : '退房資訊尚未排入行程'
+          : '退房日與時間：—'
       return {
         id: entry.placeId,
         placeId: entry.placeId,
@@ -119,7 +119,7 @@ export function LodgingPage({ bundle }: LodgingPageProps) {
               <div className="lodging-card-main">
                 <header>
                   <div><span className={operationalStatusClass(status)}>{operationalStatusLabel(status)}</span><h2>{lodging.place?.name || lodging.placeId}</h2>{lodging.place?.name_ja ? <p>{lodging.place.name_ja}</p> : null}</div>
-                  <span className="night-pill">{lodging.nights ? `${lodging.nights} 晚` : '晚數未確認'}</span>
+                  <span className="night-pill">{lodging.nights ? `${lodging.nights} 晚` : '晚數：—'}</span>
                 </header>
                 {lodging.place?.image_url ? <figure className="lodging-photo"><img src={lodging.place.image_url} alt={lodging.place.image_alt || `${lodging.place.name || lodging.placeId} 圖片`} loading="lazy" /><figcaption>{lodging.place.image_source_url ? <a href={lodging.place.image_source_url} target="_blank" rel="noreferrer">圖片來源</a> : '住宿圖片'}</figcaption></figure> : null}
                 <div className="stay-dates">

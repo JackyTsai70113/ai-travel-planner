@@ -140,6 +140,7 @@ try {
   mobile.setDefaultTimeout(10000)
 
   await openRoute(mobile, 'overview')
+  if ((await mobile.locator('.mobile-topbar-title small').textContent())?.includes('待補')) throw new Error('mobile trip subtitle still exposes a placeholder status')
   if (await mobile.locator('.mobile-bottom-nav').count()) throw new Error('mobile bottom navigation must not be rendered')
   const menuButton = mobile.locator('.menu-button')
   await assertTouchTargets(mobile, '.menu-button', 'hamburger menu')
@@ -233,6 +234,8 @@ try {
     await openRoute(desktop, route)
     await desktop.locator('.trip-sidebar').waitFor({ state: 'visible' })
     await desktop.locator('.app-main').waitFor({ state: 'visible' })
+    if (await desktop.locator('.desktop-quick-actions').count()) throw new Error('desktop quick-action buttons should not duplicate sidebar navigation')
+    if ((await desktop.locator('.desktop-travelers').textContent())?.replace(/\s+/g, '') !== '旅客6大1小') throw new Error('desktop traveler summary was not rendered as compact context')
     await assertNoHorizontalOverflow(desktop, `1440px ${route}`)
   }
   await assertTextContrast(desktop, '.trip-nav-item.is-active small', 4.5, 'active desktop navigation description')

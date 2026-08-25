@@ -63,7 +63,7 @@ export function isCatalogEntry(value: unknown): value is TripCatalogEntry {
 }
 
 export function formatDateRange(entry: { date_range: { start_date: string; end_date: string } }): string {
-  if (!entry.date_range.start_date || !entry.date_range.end_date) return '待補'
+  if (!entry.date_range.start_date || !entry.date_range.end_date) return '日期未排定'
   return `${entry.date_range.start_date} ~ ${entry.date_range.end_date}`
 }
 
