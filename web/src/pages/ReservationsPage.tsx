@@ -61,10 +61,10 @@ export function ReservationsPage({ bundle }: ReservationsPageProps) {
                   <article className="reservation-card" key={reservation.id}>
                     <div className="reservation-time"><strong>{formatTime(reservation.time)}</strong></div>
                     <div className="reservation-main">
-                      <div className="reservation-title-row"><h2><a href={mapHref} target="_blank" rel="noreferrer" aria-label={`${placeName} 在 Google Maps 開啟`}>{reservation.name || placeName}<span aria-hidden="true">↗</span></a></h2></div>
-                      {guide ? <p className="reservation-summary">{guide.duration}｜{guide.cost}｜排隊：{guide.queue}</p> : null}
+                      <div className="reservation-title-row"><h2><a href={mapHref} target="_blank" rel="noreferrer" aria-label={`${placeName} 在 Google Maps 開啟`}>{reservation.name || placeName}</a></h2></div>
+                      {guide ? <p className="reservation-summary">{guide.duration}｜{guide.cost}｜排隊與等候：{guide.queue}</p> : null}
                       {guide ? <ul className="reservation-highlights">{guide.highlights.slice(0, 3).map((highlight) => <li key={highlight}>{highlight}</li>)}</ul> : null}
-                      {reservation.official_url || guide?.sourceUrl ? <a className="official-info-link" href={reservation.official_url || guide?.sourceUrl} target="_blank" rel="noreferrer">查看官方資訊 ↗</a> : null}
+                      {reservation.official_url || guide?.sourceUrl ? <a className="official-info-link" href={reservation.official_url || guide?.sourceUrl} target="_blank" rel="noreferrer">官方網站</a> : null}
                     </div>
                   </article>
                 )

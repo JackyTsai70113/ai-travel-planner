@@ -864,16 +864,17 @@ textarea {
 .timeline-title-link:hover { color: #075f84; text-decoration: underline; text-underline-offset: 4px; }
 .timeline-title-link span { margin-left: 7px; color: #087d91; font-size: .8em; }
 .timeline-detail { color: #445f6b; font-size: .88rem; }
-.place-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 9px; margin: 15px 0 0; }
-.place-facts div { min-width: 0; padding: 11px; border: 1px solid #dce6ea; border-radius: 10px; background: #f6f9fa; }
-.place-facts dt { color: #087584; font-size: .7rem; }
-.place-facts dd { margin-top: 4px; color: #294854; font-size: .8rem; line-height: 1.45; overflow-wrap: anywhere; }
-.place-highlights { margin-top: 11px; padding: 13px 15px; border-left: 4px solid #20a295; border-radius: 0 10px 10px 0; color: #294954; background: #eff8f6; }
-.place-highlights > strong { color: #08766f; font-size: .78rem; }
-.place-highlights ul { display: flex; flex-wrap: wrap; gap: 6px 24px; margin-top: 4px; }
-.place-highlights li { margin: 3px 0; font-size: .82rem; }
-.arrival-parking { display: grid; gap: 3px; margin: 11px 0 0; padding: 11px 13px; border-radius: 10px; color: #36545f; background: #eef5f7; font-size: .82rem; line-height: 1.5; }
-.arrival-parking strong { color: #087584; font-size: .72rem; }
+.place-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin: 16px 0 0; }
+.place-facts div { min-width: 0; padding: 14px; border: 1px solid #cddde2; border-radius: 12px; background: #f7fafb; }
+.place-facts dt { color: #087584; font-size: .73rem; font-weight: 900; }
+.place-facts dd { margin-top: 6px; color: #294854; font-size: .84rem; line-height: 1.55; overflow-wrap: anywhere; }
+.place-highlights { margin-top: 13px; padding: 16px; border-left: 4px solid #20a295; border-radius: 0 13px 13px 0; color: #294954; background: #eff8f6; }
+.place-highlights > strong { color: #08766f; font-size: .8rem; }
+.place-highlights ul { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin: 10px 0 0; padding: 0; list-style: none; }
+.place-highlights li { display: grid; align-content: start; gap: 5px; min-width: 0; margin: 0; padding: 12px; border: 1px solid #cfe4df; border-radius: 10px; background: #fff; font-size: .82rem; }
+.place-highlights li > strong { color: #126f6b; line-height: 1.4; }.place-highlights li > span { color: #36555f; line-height: 1.55; }
+.arrival-parking { display: grid; gap: 5px; margin: 12px 0 0; padding: 14px 15px; border: 1px solid #cadde3; border-radius: 12px; color: #36545f; background: #eef6f8; font-size: .84rem; line-height: 1.55; }
+.arrival-parking strong { color: #087584; font-size: .74rem; }
 .official-info-link { display: inline-flex; margin-top: 11px; color: #075f84; font-size: .78rem; font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
 .day-alternatives { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 26px 0 8px; }
 .day-alternative-group { padding: 18px; border: 1px solid #c6d6dc; border-radius: 16px; background: #fff; box-shadow: 0 5px 16px rgba(20, 55, 72, .06); }
@@ -926,10 +927,11 @@ textarea {
 .food-card dd { margin-top: 3px; color: #36535f; font-size: .76rem; line-height: 1.45; }
 .food-hours { display: grid; gap: 3px; margin: 10px 0 0; color: #49636e; font-size: .78rem; }
 .food-hours strong { color: #173f4d; }
-.food-picks { margin-top: 11px; padding: 12px 14px; border-radius: 10px; background: #edf8f5; }
+.food-picks { margin-top: 11px; padding: 14px; border-radius: 11px; background: #edf8f5; }
 .food-picks > strong { color: #08766f; font-size: .76rem; }
-.food-picks ol { margin: 6px 0 0; padding-left: 20px; }
-.food-picks li { margin: 4px 0; color: #35545e; font-size: .8rem; }
+.food-picks ol { display: grid; gap: 8px; margin: 9px 0 0; padding: 0; list-style: none; }
+.food-picks li { display: grid; gap: 4px; margin: 0; padding: 10px 11px; border: 1px solid #cfe4df; border-radius: 9px; color: #35545e; background: #fff; font-size: .8rem; }
+.food-picks li > strong { color: #126f6b; }.food-picks li > span { line-height: 1.55; }
 
 .handbook-toolbar { display: grid; grid-template-columns: minmax(0, 1fr) 180px; gap: 10px; margin-bottom: 15px; }
 .handbook-toolbar input, .handbook-toolbar select { min-height: 48px; padding: 10px 13px; border: 1px solid #b9cdd5; border-radius: 11px; color: #244957; background: #fff; font: inherit; }
@@ -1256,13 +1258,22 @@ body,
 
 /* Overview */
 .trip-overview-shell { display: grid; gap: 24px; }
-.trip-overview-hero { display: grid; grid-template-columns: minmax(0, 1fr) 245px; gap: 34px; overflow: hidden; padding: 40px; border-radius: 24px; color: #fff; box-shadow: 0 18px 45px #143c4e22; }
-.trip-hero-content { min-width: 0; }
-.trip-hero-eyebrow { margin: 0 0 12px; color: #9fe3dd; font-size: .68rem; font-weight: 900; letter-spacing: .16em; }
-.trip-overview-hero h1 { max-width: 680px; margin: 0; color: #fff; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.18; letter-spacing: -.05em; }
-.trip-hero-route { margin: 12px 0 4px; color: #e7f6f5; font-size: .92rem; }
-.trip-hero-meta { display: flex; flex-wrap: wrap; gap: 8px 16px; color: #b8d3d5; font-size: .75rem; }
-.trip-overview-hero .hero-summary { max-width: 670px; margin: 18px 0; color: #d2e4e3; font-size: .86rem; line-height: 1.75; }
+.trip-overview-hero { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 310px); align-items: stretch; gap: clamp(28px, 5vw, 72px); overflow: hidden; min-height: 340px; padding: clamp(34px, 5vw, 68px); border: 1px solid #ffffff24; border-radius: 28px; color: #fff; box-shadow: 0 22px 55px #143c4e26; isolation: isolate; }
+.trip-overview-hero::before { content: ""; position: absolute; inset: -30% auto auto 38%; z-index: -1; width: 620px; height: 620px; border: 1px solid #ffffff18; border-radius: 46% 54% 60% 40%; box-shadow: 0 0 0 70px #ffffff08, 0 0 0 140px #ffffff05; transform: rotate(16deg); }
+.trip-overview-hero::after { content: ""; position: absolute; right: -60px; bottom: -110px; z-index: -1; width: 360px; height: 240px; border-radius: 50%; background: #71c9f12e; filter: blur(4px); }
+.trip-hero-content { position: relative; z-index: 1; display: grid; align-content: center; min-width: 0; }
+.trip-hero-eyebrow { margin: 0 0 12px; color: #a9eee8; font-size: .74rem; font-weight: 900; letter-spacing: .16em; }
+.trip-overview-hero h1 { max-width: 760px; margin: 0; color: #fff; font-size: clamp(2.15rem, 4.2vw, 4rem); line-height: 1.08; letter-spacing: -.055em; }
+.trip-hero-meta { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 16px; color: #d9edf1; font-size: .82rem; font-weight: 700; }
+.trip-hero-meta span + span { position: relative; padding-left: 18px; }.trip-hero-meta span + span::before { content: ""; position: absolute; left: 0; top: 50%; width: 4px; height: 4px; border-radius: 50%; background: #8de1db; transform: translateY(-50%); }
+.trip-overview-hero .hero-summary { max-width: none; margin: 24px 0 0; color: #e1f0f2; font-size: .9rem; line-height: 1.7; white-space: nowrap; }
+.hero-route-map { position: relative; z-index: 1; align-self: center; padding: 22px 22px 20px; border: 1px solid #ffffff38; border-radius: 20px; background: #071f3173; box-shadow: 0 16px 40px #051b2b2e; backdrop-filter: blur(12px); }
+.hero-route-map > p { margin: 0 0 16px; color: #a9dce1; font-size: .66rem; font-weight: 900; letter-spacing: .14em; }
+.hero-route-map ol { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.hero-route-map li { position: relative; display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: center; min-height: 48px; color: #fff; }
+.hero-route-map li:not(:last-child)::after { content: ""; position: absolute; left: 13px; top: 35px; width: 2px; height: 26px; background: linear-gradient(#7be0d4, #ffffff38); }
+.hero-route-map li span { display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid #9ce8df; border-radius: 50%; color: #062839; background: #b9f1eb; font-size: .68rem; font-weight: 900; }
+.hero-route-map li strong { font-size: .82rem; letter-spacing: .03em; }
 .hero-tags, .hero-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .status-pill { display: inline-flex; align-items: center; min-height: 28px; padding: 4px 9px; border: 1px solid #ffffff30; border-radius: 999px; color: #eaf8f7; background: #ffffff10; font-size: .66rem; font-weight: 800; }
 .status-ready, .status-published { color: #c6f4e8; border-color: #67caae80; }
@@ -1323,6 +1334,11 @@ body,
   .handbook-day-tabs { top: 58px; }
   .trip-overview-hero { grid-template-columns: 1fr; padding: 30px; }
   .hero-brief { display: none; }
+  .hero-route-map { max-width: none; }
+  .hero-route-map ol { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .hero-route-map li { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+  .hero-route-map li:not(:last-child)::after { left: calc(50% + 18px); top: 13px; width: calc(100% - 28px); height: 2px; }
+  .trip-overview-hero .hero-summary { white-space: normal; }
   .overview-columns { grid-template-columns: 1fr; }
 }
 
@@ -1330,9 +1346,14 @@ body,
   .page-intro { display: grid; gap: 14px; margin: 12px 0 16px; }
   .page-intro-stats { width: 100%; }
   .page-intro-stats span { flex: 1; min-width: 0; }
-  .trip-overview-hero { padding: 25px 20px; border-radius: 18px; }
-  .trip-overview-hero h1 { font-size: 1.65rem; }
+  .trip-overview-hero { min-height: 0; padding: 28px 22px; border-radius: 20px; }
+  .trip-overview-hero h1 { font-size: 2rem; }
   .trip-hero-meta { display: grid; }
+  .trip-hero-meta span + span { padding-left: 0; }.trip-hero-meta span + span::before { display: none; }
+  .hero-route-map { padding: 17px 14px; }
+  .hero-route-map > p { margin-bottom: 12px; }
+  .hero-route-map li { min-height: 42px; }
+  .hero-route-map li strong { font-size: .72rem; }
   .overview-section { padding: 15px; }
   .overview-day-card { grid-template-columns: 43px minmax(0, 1fr); gap: 10px; padding: 12px; }
   .overview-day-number strong { font-size: 1.15rem; }
@@ -1710,6 +1731,7 @@ body,
 .reservation-time strong { color: #905d17; font-size: 1.15rem; }
 @media (max-width: 900px) {
   .day-condition-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .place-highlights ul { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
   .itinerary-day-nav { top: 0; }
@@ -1728,4 +1750,151 @@ body,
   .reservation-summary { font-size: .88rem; }
   .reservation-card { grid-template-columns: 1fr; gap: 9px; padding: 16px; }
   .reservation-time { display: block; padding: 0 0 8px; border: 0; border-bottom: 1px solid #e2e9ec; }
+}
+
+/* 旅程資訊優先：每日照片、路線、停車與可收合桌面導覽。 */
+.trip-sidebar {
+  flex: 0 0 288px;
+  transition: width .2s ease, flex-basis .2s ease, padding .2s ease;
+}
+.trip-brand { position: relative; padding-right: 34px; }
+.sidebar-collapse {
+  position: absolute;
+  top: -4px;
+  right: 0;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid #315064;
+  border-radius: 10px;
+  color: #dce9ee;
+  background: #182f40;
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+.trip-nav-icon { font-size: 1.08rem; line-height: 1; }
+.trip-sidebar.is-collapsed { width: 78px; flex-basis: 78px; padding-inline: 12px; }
+.trip-sidebar.is-collapsed .trip-brand { min-height: 42px; padding: 0; text-align: center; }
+.trip-sidebar.is-collapsed .trip-brand-title { font-size: 0; }
+.trip-sidebar.is-collapsed .trip-brand-title span { font-size: 1.2rem; }
+.trip-sidebar.is-collapsed .sidebar-collapse { position: static; margin: 10px auto 0; }
+.trip-sidebar.is-collapsed .trip-nav-item { display: grid; place-items: center; padding: 10px; }
+.trip-sidebar.is-collapsed .trip-nav-copy { display: none; }
+.trip-sidebar.is-collapsed .trip-nav-icon { font-size: 1.2rem; }
+
+.day-media {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 18px;
+}
+.day-media figure,
+.food-photo {
+  position: relative;
+  overflow: hidden;
+  margin: 0;
+  border: 1px solid #bed0d8;
+  border-radius: 16px;
+  background: #eaf1f4;
+  box-shadow: 0 7px 20px rgba(20, 47, 61, .09);
+}
+.day-media img { display: block; width: 100%; height: 210px; object-fit: cover; }
+.day-media figcaption {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 11px 13px;
+  background: #fff;
+}
+.day-media figcaption span { color: #087584; font-size: .67rem; font-weight: 900; }
+.day-media figcaption strong { min-width: 0; color: #294854; font-size: .76rem; overflow-wrap: anywhere; }
+.day-media figcaption a,
+.food-photo figcaption a { color: #356b80; font-size: .66rem; font-weight: 800; }
+
+.daily-route-map {
+  overflow: hidden;
+  margin: 0 0 20px;
+  border: 1px solid #b9cbd3;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 8px 23px rgba(20, 47, 61, .09);
+}
+.daily-route-map > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+  padding: 18px 20px;
+  border-bottom: 1px solid #dbe5e9;
+}
+.daily-route-map header span { color: #087584; font-size: .66rem; font-weight: 900; letter-spacing: .1em; }
+.daily-route-map h3 { margin: 4px 0; color: #173e4d; font-size: 1.04rem; }
+.daily-route-map header p { margin: 0; color: #5a717c; font-size: .76rem; line-height: 1.55; }
+.daily-route-links { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.daily-route-links a,
+.parking-map-link,
+.arrival-parking a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 9px 12px;
+  border: 1px solid #83b7c8;
+  border-radius: 10px;
+  color: #075f84;
+  background: #eef8fb;
+  font-size: .73rem;
+  font-weight: 900;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.daily-route-body { display: grid; grid-template-columns: minmax(0, 1fr) 290px; min-height: 340px; }
+.daily-route-body iframe { width: 100%; min-height: 340px; border: 0; background: #e8eff1; }
+.daily-route-body ol { display: grid; align-content: start; gap: 8px; max-height: 340px; margin: 0; padding: 16px; overflow-y: auto; list-style: none; background: #f5f8f9; }
+.daily-route-body li { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 9px; align-items: center; margin: 0; padding: 10px; border: 1px solid #dce6e9; border-radius: 10px; background: #fff; }
+.daily-route-body li span { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; color: #fff; background: #087d91; font-size: .66rem; font-weight: 900; }
+.daily-route-body li strong { color: #35515d; font-size: .74rem; overflow-wrap: anywhere; }
+
+.arrival-parking { grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+.arrival-parking > div { display: grid; gap: 5px; }
+.arrival-parking > div span { color: #36545f; }
+.parking-map-link { margin-top: 11px; }
+.parking-map-link + .official-info-link { margin-left: 8px; }
+
+.food-card { overflow: hidden; }
+.food-photo { margin: -19px -19px 16px; border: 0; border-bottom: 1px solid #c5d7dd; border-radius: 0; box-shadow: none; }
+.food-photo img { display: block; width: 100%; height: 205px; object-fit: cover; }
+.food-photo figcaption { position: absolute; right: 9px; bottom: 9px; padding: 5px 8px; border-radius: 7px; background: rgba(255,255,255,.92); }
+.food-card dl { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+.food-card dl div { min-height: 82px; padding: 12px; border: 1px solid #d3e0e4; }
+.food-card dt { color: #087584; font-size: .73rem; font-weight: 900; }
+.food-card dd { margin-top: 6px; color: #294854; font-size: .82rem; line-height: 1.55; }
+
+@media (max-width: 960px) {
+  .sidebar-collapse { display: none; }
+  .day-media { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .day-media figure:first-child { grid-column: 1 / -1; }
+  .daily-route-body { grid-template-columns: 1fr; }
+  .daily-route-body ol { grid-template-columns: repeat(2, minmax(0, 1fr)); max-height: none; }
+}
+
+@media (max-width: 640px) {
+  .day-media { grid-template-columns: 1fr; }
+  .day-media figure:first-child { grid-column: auto; }
+  .day-media img { height: 190px; }
+  .day-media figcaption { grid-template-columns: 1fr auto; }
+  .day-media figcaption span { grid-column: 1 / -1; }
+  .daily-route-map > header { display: grid; gap: 13px; }
+  .daily-route-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .daily-route-links a { min-width: 0; white-space: normal; }
+  .daily-route-body iframe { min-height: 260px; }
+  .daily-route-body ol { grid-template-columns: 1fr; }
+  .arrival-parking { grid-template-columns: 1fr; }
+  .arrival-parking a { justify-self: stretch; }
+  .food-photo { margin: -16px -16px 14px; }
+  .food-card dl { grid-template-columns: 1fr; }
+  .food-card dl div { min-height: 0; }
 }

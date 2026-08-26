@@ -94,7 +94,8 @@ try {
   await openRoute(mobile, 'today/2026-08-27', '.itinerary-workspace')
   const arrivalParking = mobile.locator('#item-day1-drive-garb-aeon .arrival-parking')
   await arrivalParking.waitFor()
-  if (!(await arrivalParking.textContent())?.includes('商場停車場')) throw new Error('抵達前的交通卡缺少目的地停車資訊')
+  if (!(await arrivalParking.textContent())?.includes('473 台免費平面停車場')) throw new Error('抵達前的交通卡缺少具名目的地停車資訊')
+  if (!(await arrivalParking.getByRole('link', { name: '在 Google Maps 開啟停車場' }).getAttribute('href'))?.includes('maps/search')) throw new Error('交通卡缺少停車場 Google Maps 連結')
   if (await mobile.locator('#item-day1-night-shopping .arrival-parking').count()) throw new Error('停車資訊應放在抵達前的交通卡，不應在景點卡重複')
 
   await openRoute(mobile, 'today/2026-08-31', '.itinerary-workspace')
@@ -119,10 +120,17 @@ try {
   const desktopContext = await browser.newContext({ viewport: { width: 1440, height: 900 } })
   const desktop = await desktopContext.newPage()
   desktop.setDefaultTimeout(10000)
+  let sidebarCollapsed = false
   for (const [route, selector] of mobileRoutes) {
     await openRoute(desktop, route, selector)
     await desktop.locator('.trip-sidebar').waitFor({ state: 'visible' })
-    if ((await desktop.locator('.desktop-travelers').textContent())?.replace(/\s+/g, '') !== '旅客6大1小') throw new Error('desktop traveler summary is incorrect')
+    if (await desktop.locator('.desktop-travelers').count()) throw new Error('desktop should not repeat traveler count')
+    if (!sidebarCollapsed) {
+      await desktop.getByRole('button', { name: '收合導覽文字' }).click()
+      if (!(await desktop.locator('.trip-sidebar').evaluate((element) => element.classList.contains('is-collapsed')))) throw new Error('desktop sidebar did not collapse')
+      await desktop.getByRole('button', { name: '展開導覽文字' }).click()
+      sidebarCollapsed = true
+    }
     await assertNoHorizontalOverflow(desktop, `1440px ${route}`)
     await assertNoForbiddenText(desktop, route)
   }

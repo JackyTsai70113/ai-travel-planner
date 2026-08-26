@@ -54,23 +54,25 @@ function lodgingForDay(bundle: Bundle, date: string) {
 export function OverviewPage({ bundle, trip }: OverviewPageProps) {
   const heroImage = resolveHeroImage(trip)
 
-  const title = trip?.title || bundle?.title || '瀨戶內五日行'
-  const destinationText = trip?.destination_regions.join(' / ') || '淡路島・德島・神戶'
+  const title = trip?.title || bundle?.title || '淡路島五日行'
+  const routeStops = trip?.destination_regions.length
+    ? trip.destination_regions
+    : ['淡路島', '鳴門', '德島', '神戶']
+  const heroEyebrow = routeStops.length > 0 ? `${routeStops[0]}旅行` : '日本旅行'
+  const heroSummary = trip?.hero_summary || `${routeStops.join('、')}的每日行程、餐飲、住宿與導航資訊。`
   const dateText = trip
     ? `${trip.date_range.start_date} — ${trip.date_range.end_date} · ${trip.duration_days} 天`
     : bundle ? `${bundle.date_range.start_date} — ${bundle.date_range.end_date} · ${bundle.days.length} 天` : '行程資料載入中'
-  const travelersText = bundle
-    ? `${bundle.traveler_profile.adults} 大 ${bundle.traveler_profile.children_count} 小`
-    : trip?.travelers_summary || '旅客資料載入中'
-
   if (!bundle) {
     return (
       <section className="trip-overview-shell">
         <article className="trip-overview-hero" style={{ background: heroImage }}>
-          <h1>{title}</h1>
-          <p className="trip-hero-route">{destinationText}</p>
-          <div className="trip-hero-meta"><span>{dateText}</span><span>{travelersText}</span></div>
-          <p className="hero-summary">正在載入五日行程與實用旅遊資訊。</p>
+          <div className="trip-hero-content">
+            <p className="trip-hero-eyebrow">{heroEyebrow}</p>
+            <h1>{title}</h1>
+            <div className="trip-hero-meta"><span>{dateText}</span></div>
+            <p className="hero-summary">{heroSummary}</p>
+          </div>
         </article>
       </section>
     )
@@ -93,21 +95,20 @@ export function OverviewPage({ bundle, trip }: OverviewPageProps) {
     <section className="trip-overview-shell">
       <article className="trip-overview-hero" style={{ background: heroImage }}>
         <div className="trip-hero-content">
+          <p className="trip-hero-eyebrow">{heroEyebrow}</p>
           <h1>{title}</h1>
-          <p className="trip-hero-route">{destinationText}</p>
-          <div className="trip-hero-meta"><span>{dateText}</span><span>{travelersText}</span></div>
-          <p className="hero-summary">從淡路島到德島、神戶，每日時間、天候、體力負擔、餐飲、玩法、住宿與導航都集中在同一條時間軸。</p>
-          <div className="hero-actions">
-            <a className="primary" href={buildRoutePath({ section: 'today', day: bundle.days[0]?.date })}>查看每日行程</a>
-            <a href="#/packing">查看攜帶物品</a>
-          </div>
+          <div className="trip-hero-meta"><span>{dateText}</span></div>
+          <p className="hero-summary">{heroSummary}</p>
         </div>
+        <aside className="hero-route-map" aria-label={`五日移動路線：${routeStops.join('、')}`}>
+          <p>五日移動路線</p>
+          <ol>{routeStops.map((stop, index) => <li key={stop}><span>{index + 1}</span><strong>{stop}</strong></li>)}</ol>
+        </aside>
       </article>
 
       <section className="overview-section">
         <div className="section-heading">
           <div><p className="eyebrow">五日行程</p><h2>每天去哪裡，一眼掌握</h2></div>
-          <a href="#/today">開啟每日時間軸</a>
         </div>
         <div className="overview-day-grid">
           {bundle.days.map((day, index) => {
@@ -131,7 +132,7 @@ export function OverviewPage({ bundle, trip }: OverviewPageProps) {
 
       <div className="overview-columns">
         <section className="overview-section">
-          <div className="section-heading"><div><p className="eyebrow">住宿安排</p><h2>每天住哪裡</h2></div><a href="#/today">查看每日行程</a></div>
+          <div className="section-heading"><div><p className="eyebrow">住宿安排</p><h2>每天住哪裡</h2></div></div>
           <div className="overview-stay-list">
             {lodgingCards.map(({ placeId, place, checkIn, checkOut }, index) => (
               <article key={placeId}>
@@ -143,7 +144,7 @@ export function OverviewPage({ bundle, trip }: OverviewPageProps) {
         </section>
 
         <section className="overview-section">
-          <div className="section-heading"><div><p className="eyebrow">固定時間</p><h2>不能錯過的預約與航班</h2></div><a href="#/reservation">查看全部預約</a></div>
+          <div className="section-heading"><div><p className="eyebrow">固定時間</p><h2>不能錯過的預約與航班</h2></div></div>
           <div className="overview-alert-list">
             {fixedEntries.slice(0, 4).map(({ day, item, label }) => (
               <a href={buildRoutePath({ section: 'today', day, item: item.id })} key={item.id}>
