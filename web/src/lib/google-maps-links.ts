@@ -9,6 +9,12 @@ export interface MapsStop {
   longitude?: number | null
 }
 
+interface PlaceMapsTarget {
+  name?: string | null
+  maps_query?: string | null
+  google_maps_url?: string | null
+}
+
 export interface RouteDirectionChunk {
   id: string
   label: string
@@ -55,6 +61,32 @@ function stopQuery(stop: MapsStop): string {
 
 export function buildMapsSearchLink(placeLabel: string): string {
   return `${GOOGLE_MAPS_SEARCH_URL}${encodeURIComponent(safeToString(placeLabel) || 'point')}`
+}
+
+export function googleMapsQueryForPlace(place: PlaceMapsTarget | null | undefined, fallback = ''): string {
+  if (place?.google_maps_url) {
+    try {
+      const directQuery = new URL(place.google_maps_url).searchParams.get('query')?.trim()
+      if (directQuery) return directQuery
+    } catch {
+      // Invalid imported URL falls through to the canonical place name.
+    }
+  }
+  return safeToString(place?.name) || safeToString(place?.maps_query) || safeToString(fallback)
+}
+
+export function googleMapsHrefForPlace(place: PlaceMapsTarget | null | undefined, fallback = ''): string {
+  if (place?.google_maps_url) {
+    try {
+      const url = new URL(place.google_maps_url)
+      if (url.hostname === 'www.google.com' || url.hostname === 'google.com' || url.hostname === 'maps.google.com') {
+        return url.toString()
+      }
+    } catch {
+      // Invalid imported URL falls through to a generated search URL.
+    }
+  }
+  return buildMapsSearchLink(googleMapsQueryForPlace(place, fallback))
 }
 
 export function buildMapsDirectionsLink(chunks: MapsStop[], travelMode: MapsTravelMode = 'driving'): string {

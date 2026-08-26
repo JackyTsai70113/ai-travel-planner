@@ -22,7 +22,7 @@
       "gradient": "linear-gradient(130deg, #0b4a6f 0%, #2e90dc 55%, #79b8f8 100%)",
       "fallback": "淡路海岸晨霧"
     },
-    "hero_summary": "淡路島、鳴門、德島與神戶的每日時間、天氣、體力、餐飲、住宿與導航，依行程順序集中整理。",
+    "hero_summary": "淡路島、鳴門、德島與神戶的每日行程、天氣、餐飲、住宿與導航。",
     "key_messages": ["行程主題與路線已穩定。", "道路、營運與訂位狀態需於出發前重查。"],
     "critical_alert_count": 2
   },

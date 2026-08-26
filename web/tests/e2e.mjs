@@ -13,7 +13,7 @@ for (const item of readdirSync(new URL('../dist/', import.meta.url))) {
 const deploymentPath = '/ai-travel-planner/'
 const baseUrl = `http://127.0.0.1:4173${deploymentPath}trips/awaji-2026/`
 const dates = ['2026-08-27', '2026-08-28', '2026-08-29', '2026-08-30', '2026-08-31']
-const forbidden = /待補|未提供|狀態正常|規劃估計|硬截止|硬離場|Sheet 指定|家庭／無障礙|聯絡[／/]參考|Canonical Trip|資料快照|熱中症|UTC|資料來源|旅行資訊/
+const forbidden = /待補|未提供|未知|官方未公布|狀態正常|規劃估計|硬截止|硬離場|Sheet 指定|家庭／無障礙|聯絡[／/]參考|Canonical Trip|資料快照|熱中症|UTC|資料來源|旅行資訊|只提供出發前閱讀|不要求旅途中/
 const server = spawn('npm', ['run', 'preview', '--', '--base', deploymentPath, '--host', '127.0.0.1', '--port', '4173'], { stdio: 'inherit' })
 server.unref()
 const stop = () => server.kill('SIGTERM')
@@ -48,6 +48,36 @@ async function assertNoForbiddenText(page, label) {
   if (match) throw new Error(`${label} exposed forbidden text: ${match[0]}`)
 }
 
+async function assertNoOverlap(page, leftSelector, rightSelector, label) {
+  const [left, right] = await Promise.all([page.locator(leftSelector).boundingBox(), page.locator(rightSelector).boundingBox()])
+  if (!left || !right) throw new Error(`${label} missing overlap target`)
+  const overlapWidth = Math.max(0, Math.min(left.x + left.width, right.x + right.width) - Math.max(left.x, right.x))
+  const overlapHeight = Math.max(0, Math.min(left.y + left.height, right.y + right.height) - Math.max(left.y, right.y))
+  if (overlapWidth > 0 && overlapHeight > 0) throw new Error(`${label} overlaps by ${overlapWidth}x${overlapHeight}`)
+}
+
+async function assertExternalLinksOpen(page, selector, label) {
+  const links = page.locator(selector)
+  const count = await links.count()
+  await page.context().route('https://**/*', (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<title>external target</title>' }))
+  try {
+    for (let index = 0; index < count; index += 1) {
+      const link = links.nth(index)
+      const href = await link.getAttribute('href')
+      if (!href) throw new Error(`${label} link ${index + 1} has no href`)
+      await link.scrollIntoViewIfNeeded()
+      const popupPromise = page.waitForEvent('popup')
+      await link.click()
+      const popup = await popupPromise
+      await popup.waitForLoadState('domcontentloaded')
+      if (new URL(popup.url()).toString() !== new URL(href).toString()) throw new Error(`${label} link ${index + 1} opened ${popup.url()} instead of ${href}`)
+      await popup.close()
+    }
+  } finally {
+    await page.context().unroute('https://**/*')
+  }
+}
+
 let browser
 try {
   await waitForServer()
@@ -80,10 +110,9 @@ try {
   for (const date of dates) {
     await openRoute(mobile, `today/${date}`, '.itinerary-workspace')
     if (await mobile.locator('.day-condition-grid > div').count() !== 6) throw new Error(`${date} does not show six practical condition cards`)
-    if (await mobile.locator('.timeline-title-link').count() < 1) throw new Error(`${date} has no Google Maps title links`)
-    if (await mobile.locator('.timeline-map-link, .map-icon-link').count()) throw new Error(`${date} still renders a large map icon button`)
-    const transportCount = await mobile.locator('.timeline-entry.transport-leg').count()
-    if (await mobile.locator('.timeline-entry.transport-leg .arrival-parking').count() !== transportCount) throw new Error(`${date} has transport cards without arrival parking`)
+    if (await mobile.locator('.map-pin-link').count() < 1) throw new Error(`${date} has no map pin links`)
+    if (await mobile.locator('.timeline-map-link, .map-icon-link, .parking-map-link, .official-info-link').count()) throw new Error(`${date} still renders duplicate map or official text buttons`)
+    if (await mobile.locator('.timeline-entry.transport-leg .arrival-parking').count()) throw new Error(`${date} repeats destination parking inside transport cards`)
     if (await mobile.locator('.day-alternative-group').count() !== 2) throw new Error(`${date} does not show rain and extra-time alternatives`)
     const hasTide = await mobile.locator('.day-tide-card').count() === 1
     if (hasTide !== (date === '2026-08-29' || date === '2026-08-30')) throw new Error(`${date} tide placement is incorrect`)
@@ -92,17 +121,26 @@ try {
   }
 
   await openRoute(mobile, 'today/2026-08-27', '.itinerary-workspace')
-  const arrivalParking = mobile.locator('#item-day1-drive-garb-aeon .arrival-parking')
-  await arrivalParking.waitFor()
-  if (!(await arrivalParking.textContent())?.includes('473 台免費平面停車場')) throw new Error('抵達前的交通卡缺少具名目的地停車資訊')
-  if (!(await arrivalParking.getByRole('link', { name: '在 Google Maps 開啟停車場' }).getAttribute('href'))?.includes('maps/search')) throw new Error('交通卡缺少停車場 Google Maps 連結')
-  if (await mobile.locator('#item-day1-night-shopping .arrival-parking').count()) throw new Error('停車資訊應放在抵達前的交通卡，不應在景點卡重複')
+  const shoppingCard = mobile.locator('#item-day1-night-shopping')
+  if (!(await shoppingCard.textContent())?.includes('473 台免費平面停車場')) throw new Error('目的地卡缺少具名停車資訊')
+  if (!((await shoppingCard.locator('.map-pin-link').getAttribute('href')) || '').includes('maps/search')) throw new Error('目的地卡缺少單一 map pin 停車場連結')
+  if (await mobile.locator('.day-lodging-card').count()) throw new Error('住宿摘要與照片卡仍然重複')
+  if (await mobile.locator('.day-media').getByText('Awaji Riverside Terrace in Shizuki 780', { exact: true }).count() !== 1) throw new Error('住宿照片卡應只顯示一次住宿名稱')
+  const mediaGaps = await mobile.locator('.day-media figure').evaluateAll((figures) => figures.map((figure) => {
+    const caption = figure.querySelector('figcaption')?.getBoundingClientRect()
+    const bounds = figure.getBoundingClientRect()
+    return caption ? bounds.bottom - caption.bottom : 999
+  }))
+  if (mediaGaps.some((gap) => gap > 2)) throw new Error(`照片卡仍有拉伸空白：${mediaGaps.join(', ')}`)
+  const routeBHref = await mobile.getByRole('link', { name: '開啟路線B' }).getAttribute('href')
+  const routeBDestination = routeBHref ? new URL(routeBHref).searchParams.get('destination') : ''
+  if (!routeBDestination?.includes('Awaji Riverside Terrace Shizuki 780-12') || routeBDestination.includes('兵庫県淡路市志筑字黒田')) throw new Error(`路線 B 仍使用無法解析的飯店地址：${routeBDestination}`)
 
   await openRoute(mobile, 'today/2026-08-31', '.itinerary-workspace')
-  const flightLink = mobile.locator('#item-day5-departure-flight .timeline-title-link')
+  const flightLink = mobile.locator('#item-day5-departure-flight .map-pin-link')
   const flightHref = await flightLink.getAttribute('href')
   const flightQuery = flightHref ? new URL(flightHref).searchParams.get('query') : ''
-  if (!flightQuery?.includes('神戸空港') || flightQuery.includes('桃園')) throw new Error(`Day 5 flight map target is wrong: ${flightQuery}`)
+  if (!/神戸空港|Kobe Airport/i.test(flightQuery || '') || flightQuery?.includes('桃園')) throw new Error(`Day 5 flight map target is wrong: ${flightQuery}`)
 
   await openRoute(mobile, 'packing', '.packing-workspace')
   if (await mobile.getByRole('checkbox').count()) throw new Error('packing page must not ask travelers to check tasks')
@@ -110,7 +148,8 @@ try {
   await mobile.getByText('暈船藥或暈車用品', { exact: true }).waitFor()
 
   await openRoute(mobile, 'reservation', '.reservation-workspace')
-  if (await mobile.locator('.reservation-map-link, .map-icon-link, .reservation-card svg').count()) throw new Error('reservation page still renders map icon buttons')
+  if (await mobile.locator('.reservation-map-link, .map-icon-link').count()) throw new Error('reservation page still renders legacy map buttons')
+  if (await mobile.locator('.reservation-card .map-pin-link').count() !== 4) throw new Error('reservation page should render one map pin for each reservation')
   if (await mobile.locator('.reservation-card').count() !== 4) throw new Error('reservation count changed unexpectedly')
 
   await openRoute(mobile, 'food', '.food-workspace')
@@ -126,14 +165,37 @@ try {
     await desktop.locator('.trip-sidebar').waitFor({ state: 'visible' })
     if (await desktop.locator('.desktop-travelers').count()) throw new Error('desktop should not repeat traveler count')
     if (!sidebarCollapsed) {
-      await desktop.getByRole('button', { name: '收合導覽文字' }).click()
+      const collapseButton = desktop.getByRole('button', { name: '收合側欄' })
+      const before = await collapseButton.boundingBox()
+      await collapseButton.click()
       if (!(await desktop.locator('.trip-sidebar').evaluate((element) => element.classList.contains('is-collapsed')))) throw new Error('desktop sidebar did not collapse')
-      await desktop.getByRole('button', { name: '展開導覽文字' }).click()
+      const expandButton = desktop.getByRole('button', { name: '展開側欄' })
+      const after = await expandButton.boundingBox()
+      if (!before || !after || Math.abs(before.y - after.y) > 1) throw new Error(`sidebar control moved vertically: ${before?.y} -> ${after?.y}`)
+      await expandButton.click()
       sidebarCollapsed = true
     }
     await assertNoHorizontalOverflow(desktop, `1440px ${route}`)
     await assertNoForbiddenText(desktop, route)
   }
+
+  for (const width of [1200, 1366, 1440, 1920]) {
+    await desktop.setViewportSize({ width, height: 1000 })
+    await openRoute(desktop, 'overview', '.trip-overview-shell')
+    await assertNoOverlap(desktop, '.trip-hero-content', '.hero-route-map', `${width}px overview hero`)
+    const heroOverflow = await desktop.locator('.trip-hero-content').evaluate((element) => element.scrollWidth > element.clientWidth + 1)
+    if (heroOverflow) throw new Error(`${width}px overview content overflows its grid column`)
+  }
+
+  await desktop.setViewportSize({ width: 1440, height: 1000 })
+  for (const date of dates) {
+    await openRoute(desktop, `today/${date}`, '.itinerary-workspace')
+    await assertExternalLinksOpen(desktop, '.daily-route-links a, .timeline-place-heading > h3 a, .timeline-place-heading > .map-pin-link', `${date} primary external`)
+  }
+  await openRoute(desktop, 'food', '.food-workspace')
+  await assertExternalLinksOpen(desktop, '.food-place-heading > h3 a, .food-place-heading > .map-pin-link', 'food primary external')
+  await openRoute(desktop, 'reservation', '.reservation-workspace')
+  await assertExternalLinksOpen(desktop, '.reservation-title-row > h2 a, .reservation-title-row > .map-pin-link', 'reservation primary external')
   await desktopContext.close()
 } finally {
   await browser?.close()

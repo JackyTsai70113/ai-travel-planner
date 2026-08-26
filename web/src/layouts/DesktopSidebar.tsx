@@ -23,7 +23,6 @@ export function DesktopSidebar({ sections, activeSection, onNavigate, title }: D
     <aside className={`trip-sidebar ${collapsed ? 'is-collapsed' : ''}`} aria-label="主要導覽">
       <div className="trip-brand">
         <h1 className="trip-brand-title"><span aria-hidden="true">🌊</span>{' '}{title}</h1>
-        <button type="button" className="sidebar-collapse" onClick={() => setCollapsed((value) => !value)} aria-label={collapsed ? '展開導覽文字' : '收合導覽文字'} title={collapsed ? '展開導覽' : '收合導覽'}>{collapsed ? '›' : '‹'}</button>
       </div>
       <nav className="trip-nav" aria-label="行程區段">
         {sections.map((section) => (
@@ -41,6 +40,7 @@ export function DesktopSidebar({ sections, activeSection, onNavigate, title }: D
           </button>
         ))}
       </nav>
+      <button type="button" className="sidebar-collapse" onClick={() => setCollapsed((value) => !value)} aria-label={collapsed ? '展開側欄' : '收合側欄'} title={collapsed ? '展開側欄' : '收合側欄'}><span aria-hidden="true">{collapsed ? '→' : '←'}</span><span className="sidebar-collapse-label">{collapsed ? '展開側欄' : '收合側欄'}</span></button>
     </aside>
   )
 }

@@ -3,7 +3,10 @@ import {
   Bundle,
   BundleReservation,
 } from '../contracts/trip'
-import { buildMapsSearchLink } from '../lib/google-maps-links'
+import { MapPinLink } from '../components/MapPinLink'
+import { decisionCopy } from '../lib/decision-copy'
+import { googleMapsHrefForPlace } from '../lib/google-maps-links'
+import { usableOfficialHref } from '../lib/official-links'
 
 interface ReservationsPageProps {
   bundle: Bundle
@@ -42,7 +45,7 @@ export function ReservationsPage({ bundle }: ReservationsPageProps) {
   return (
     <section className="reservation-workspace" aria-label="預約與票券">
       <header className="page-intro reservation-intro">
-        <div><p className="eyebrow">預約總覽</p><h1>已排定的時間</h1><p>只保留日期、時間、地點與實際會用到的內容；詳細玩法仍放在每日行程。</p></div>
+        <div><p className="eyebrow">預約總覽</p><h1>已排定的時間</h1></div>
         <div className="page-intro-stats"><span><strong>{bundle.reservations.length}</strong> 筆</span></div>
       </header>
 
@@ -54,17 +57,18 @@ export function ReservationsPage({ bundle }: ReservationsPageProps) {
               {group.reservations.map((reservation) => {
                 const place = bundle.places?.find((candidate) => candidate.id === reservation.place_id)
                 const placeName = place?.name || reservation.name || reservation.place_id
-                const mapHref = buildMapsSearchLink(place?.maps_query || place?.address || placeName)
+                const mapHref = googleMapsHrefForPlace(place, placeName)
                 const guide = placeGuides[reservation.place_id]
+                const officialHref = usableOfficialHref(reservation.official_url || guide?.sourceUrl || place?.official_url)
+                const summary = guide ? [decisionCopy(guide.duration), decisionCopy(guide.cost), decisionCopy(guide.queue)].filter(Boolean).join('｜') : ''
 
                 return (
                   <article className="reservation-card" key={reservation.id}>
                     <div className="reservation-time"><strong>{formatTime(reservation.time)}</strong></div>
                     <div className="reservation-main">
-                      <div className="reservation-title-row"><h2><a href={mapHref} target="_blank" rel="noreferrer" aria-label={`${placeName} 在 Google Maps 開啟`}>{reservation.name || placeName}</a></h2></div>
-                      {guide ? <p className="reservation-summary">{guide.duration}｜{guide.cost}｜排隊與等候：{guide.queue}</p> : null}
+                      <div className="reservation-title-row"><h2>{officialHref ? <a className="official-title-link" href={officialHref} target="_blank" rel="noreferrer">{reservation.name || placeName}</a> : reservation.name || placeName}</h2><MapPinLink href={mapHref} label={`在 Google Maps 開啟 ${placeName}`} /></div>
+                      {summary ? <p className="reservation-summary">{summary}</p> : null}
                       {guide ? <ul className="reservation-highlights">{guide.highlights.slice(0, 3).map((highlight) => <li key={highlight}>{highlight}</li>)}</ul> : null}
-                      {reservation.official_url || guide?.sourceUrl ? <a className="official-info-link" href={reservation.official_url || guide?.sourceUrl} target="_blank" rel="noreferrer">官方網站</a> : null}
                     </div>
                   </article>
                 )
