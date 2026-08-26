@@ -222,10 +222,10 @@ class AwajiTripFixtureTests(unittest.TestCase):
             for item in day_three["items"]
             if item.get("transport_leg_id")
         ][:2]
-        self.assertEqual(first_refs, ["leg-day3-riverside-komeda", "leg-day3-komeda-sumoto"])
+        self.assertEqual(first_refs, ["leg-day3-riverside-breakfast", "leg-day3-breakfast-sumoto"])
         first, second = (source_legs[leg_id] for leg_id in first_refs)
         self.assertEqual(first["from_place_id"], "awaji-riverside-hotel")
-        self.assertEqual(first["to_place_id"], "komeda-shizuki")
+        self.assertEqual(first["to_place_id"], "familymart-shizuku-otoshi")
         self.assertEqual(second["from_place_id"], first["to_place_id"])
         self.assertEqual(second["to_place_id"], "sumoto-castle")
 
@@ -266,7 +266,7 @@ class AwajiTripFixtureTests(unittest.TestCase):
 
     def test_sheet_operational_notes_are_not_marked_confirmed(self):
         dynamic_ids = {
-            "komeda-shizuki", "bizan-ropeway", "familymart-tokushima-kanazawa",
+            "bizan-ropeway", "familymart-tokushima-kanazawa",
             "iwaya-port", "awaji-sa-ferris-wheel", "uzushio-cruise-fukura",
         }
         bundle_places = {place["id"]: place for place in self.bundle["places"]}
@@ -300,22 +300,19 @@ class AwajiTripFixtureTests(unittest.TestCase):
                     [expected_modes.get(source["mode"], "driving")],
                 )
 
-    def test_pretrip_checklist_has_30_complete_source_rows(self):
+    def test_public_bundle_does_not_expose_interactive_pretrip_tasks(self):
         override = next(
             item
             for item in self.trip["overrides"]
             if item["path"] == "/operations/pretrip_checklist"
         )
         source_checklist = override["value"]
-        bundle_checklist = self.bundle["operations"]["pretrip_checklist"]
-
         self.assertTrue(override["preserve_on_replan"])
         self.assertEqual(len(source_checklist), 28)
-        self.assertEqual(bundle_checklist, source_checklist)
+        self.assertEqual(self.bundle["operations"]["pretrip_checklist"], [])
         self.assertEqual(len({item["id"] for item in source_checklist}), 28)
         for item in source_checklist:
             with self.subTest(item_id=item["id"]):
-                self.assertFalse(item["completed"])
                 for field in ("timing", "item", "action", "fallback", "contact"):
                     self.assertIsInstance(item[field], str)
                     self.assertTrue(item[field].strip())
@@ -356,12 +353,14 @@ class AwajiTripFixtureTests(unittest.TestCase):
             self.assertNotIn(term, payload)
 
     def test_trip_title_scope(self):
-        self.assertEqual(self.trip["title"], "2026 淡路島・鳴門家庭旅行")
+        self.assertEqual(self.trip["title"], "2026 瀨戶內五日行")
 
-    def test_validation_requires_pretrip_refresh_without_stale_reservation_warning(self):
-        codes = {item.get("code") for item in self.trip["validation"]}
-        self.assertIn("PRETRIP_REFRESH_REQUIRED", codes)
-        self.assertNotIn("RESERVATION_UNCONFIRMED", codes)
+    def test_public_bundle_hides_obsolete_pretrip_refresh_warning(self):
+        source_codes = {item.get("code") for item in self.trip["validation"]}
+        bundle_codes = {item.get("code") for item in self.bundle["validation"]}
+        self.assertIn("PRETRIP_REFRESH_REQUIRED", source_codes)
+        self.assertNotIn("PRETRIP_REFRESH_REQUIRED", bundle_codes)
+        self.assertNotIn("RESERVATION_UNCONFIRMED", bundle_codes)
 
     def test_rewrite_without_fixed_slot_breaks_validation(self):
         mutated = copy.deepcopy(self.trip)

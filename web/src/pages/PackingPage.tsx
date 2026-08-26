@@ -1,171 +1,76 @@
-import { useMemo, useState } from 'react'
-import { Bundle, BundlePretripChecklistItem, DEFAULT_CHECKLIST } from '../contracts/trip'
-import { useTripStorage } from '../hooks/useTripStorage'
+import { Bundle } from '../contracts/trip'
 
-interface Note {
-  id: string
-  title: string
-  content: string
-  updatedAt: string
-}
-
-const EMPTY_KEYS: string[] = []
-const EMPTY_NOTES: Note[] = []
-const LEGACY_NOTE_KEYS = ['golden_trip_notes']
-
-const fallbackLabels: Record<string, string> = {
-  passport: '護照／身分文件',
-  twn_license: '台灣駕照與國際駕照',
-  insurance: '保險與租車文件',
-  itinerary_print: '行程離線檔',
-  cash_change: '零用金與零錢',
-  child_supplies: '幼兒用品',
-  elder_med: '長輩常用藥',
-  heat_rain: '防曬、防暑與雨具',
-  car_docs: '汽車文件',
-  stroller: '推車',
-  first_aid: '急救用品',
-}
-
-const validChecklist = (value: unknown): value is Record<string, boolean> =>
-  typeof value === 'object' &&
-  value !== null &&
-  !Array.isArray(value) &&
-  Object.values(value).every((item) => typeof item === 'boolean')
-
-const validNotes = (value: unknown): value is Note[] =>
-  Array.isArray(value) &&
-  value.every((item) => item && typeof item.id === 'string' && typeof item.title === 'string' && typeof item.content === 'string')
-
-function parseLegacyNotes(raw: string): Note[] | null {
-  try {
-    const value = JSON.parse(raw)
-    return typeof value === 'string' ? [{ id: `${Date.now()}`, title: '舊版備忘', content: value, updatedAt: new Date().toISOString() }] : null
-  } catch {
-    return null
-  }
-}
-
-function genericChecklist(): BundlePretripChecklistItem[] {
-  return Object.keys(DEFAULT_CHECKLIST).map((id) => ({
-    id,
-    timing: '通用行李',
-    item: fallbackLabels[id] || id,
-  }))
-}
-
-function isUrl(value: string) {
-  return /^https?:\/\//i.test(value)
-}
+const PACKING_GROUPS = [
+  {
+    title: '證件與付款',
+    summary: '放在隨身小包，不要放進托運行李。',
+    items: [
+      ['護照', '每位旅客各自一本；確認效期與姓名和機票一致。'],
+      ['台灣駕照、日文譯本與租車資料', '駕駛人集中保管，取用時不必翻大型行李。'],
+      ['信用卡 2 張與少量日圓', '不同發卡組織分開放；停車場、小店與寺院可能只收現金。'],
+      ['旅遊保險與航班資料', '保單、JX834、JX1835 與住宿訂單保留可直接開啟的電子版。'],
+    ],
+  },
+  {
+    title: '高溫、降雨與海風',
+    summary: '8 月底白天約 28–34°C，濕度高，午後可能雷雨。',
+    items: [
+      ['每人 600–1,000 ml 飲水', '車上另放補充水；戶外景點之間直接補充。'],
+      ['電解質飲料或補充錠', '忍里、花さじき、洲本城與鳴門公園曝曬較久。'],
+      ['寬帽沿帽、太陽眼鏡、SPF50+ 防曬', '海岸與山上遮蔭有限；防曬約每 2–3 小時補擦。'],
+      ['輕薄透氣上衣與吸汗內衣', '每人至少多帶 1 套可在車內更換的上衣。'],
+      ['折傘或輕量雨衣、防水鞋套', '雷雨時雙手仍可扶幼兒、欄杆或船上扶手。'],
+      ['薄外套', '觀潮船、室內冷氣與夜間山頂風大時使用。'],
+    ],
+  },
+  {
+    title: '走路與乘船',
+    summary: '第 3 天活動量最高，洲本城與眉山有坡道及階梯。',
+    items: [
+      ['止滑運動鞋', '避免新鞋；船上、石階與雨後步道都需要抓地力。'],
+      ['輕量折疊傘車', '確認可快速收折並放入後車廂；另帶防雨罩。'],
+      ['暈船藥或暈車用品', '依個人平常使用方式準備；觀潮船約 60 分鐘。'],
+      ['小毛巾與備用襪', '流汗、雨淋或乘船後可立即更換。'],
+    ],
+  },
+  {
+    title: '幼兒用品',
+    summary: '以一天一包的方式分裝，景點間不必重整整個行李箱。',
+    items: [
+      ['尿布、濕紙巾、隔尿墊與垃圾袋', '每日用量再多帶 2–3 片尿布。'],
+      ['替換衣物 2 套與薄外套', '分別放在隨身包與車上備用袋。'],
+      ['常吃的點心、水杯與兒童餐具', '排隊、塞車或餐點上桌較慢時可直接使用。'],
+      ['防曬、遮陽帽與防蚊液', '確認為幼兒可使用的產品。'],
+      ['熟悉的小玩具或安撫物', '長車程與餐廳等待時使用，避免攜帶容易遺失的小零件。'],
+    ],
+  },
+  {
+    title: '健康與常用藥',
+    summary: '只列會實際用到的品項；個人處方藥依原包裝攜帶。',
+    items: [
+      ['個人處方藥與用藥清單', '分開放一日份與備用份，標示使用者姓名。'],
+      ['退燒止痛、腸胃、過敏與蚊蟲用品', '依平常可安全使用的藥品準備。'],
+      ['OK 繃、消毒棉片與水泡貼', '階梯與長時間步行後可立即處理。'],
+      ['體溫計與口罩', '旅途中有人不適時能快速判斷狀況。'],
+      ['過敏資訊', '食物或藥物過敏者以中、英、日文存在手機。'],
+    ],
+  },
+  {
+    title: '手機與充電',
+    summary: '手機用於即時導航、查看官方營運資訊與出示電子票券。',
+    items: [
+      ['手機、充電線與行動電源', '導航、票券與翻譯耗電量高；行動電源隨身攜帶。'],
+      ['車用 USB 充電器', '至少提供駕駛導航手機與一台備用手機同時充電。'],
+      ['日本 eSIM／漫遊方案', '出發前完成啟用；抵達後直接使用即時導航與官方網站。'],
+      ['防水手機袋', '海邊、觀潮船與雷雨時保護手機。'],
+    ],
+  },
+] as const
 
 export function PackingPage({ bundle }: { bundle: Bundle }) {
-  const items = useMemo(() => {
-    const bundleItems = bundle.operations?.pretrip_checklist?.filter((item) => item.id && item.item) || []
-    return bundleItems.length ? bundleItems : genericChecklist()
-  }, [bundle.operations?.pretrip_checklist])
-  const usesBundleChecklist = (bundle.operations?.pretrip_checklist?.length || 0) > 0
-  const initialState = useMemo<Record<string, boolean>>(
-    () => Object.fromEntries(items.map((item) => [item.id, false])),
-    [items],
-  )
-  const checklist = useTripStorage({
-    tripId: bundle.trip_id,
-    module: 'checklist',
-    schemaVersion: 2,
-    fallback: initialState,
-    validate: validChecklist,
-    legacyKeys: EMPTY_KEYS,
-  })
-  const notes = useTripStorage({
-    tripId: bundle.trip_id,
-    module: 'notes',
-    schemaVersion: 1,
-    fallback: EMPTY_NOTES,
-    validate: validNotes,
-    legacyKeys: LEGACY_NOTE_KEYS,
-    legacyParser: parseLegacyNotes,
-  })
-  const [draft, setDraft] = useState<Note>({ id: '', title: '', content: '', updatedAt: '' })
-
-  const grouped = useMemo(() => {
-    const groups = new Map<string, BundlePretripChecklistItem[]>()
-    items.forEach((item) => {
-      const phase = item.timing || '出發前'
-      groups.set(phase, [...(groups.get(phase) || []), item])
-    })
-    return [...groups.entries()]
-  }, [items])
-
-  const completedCount = items.filter((item) => checklist.value[item.id]).length
-  const percentage = items.length ? Math.round(completedCount / items.length * 100) : 0
-
-  const saveNote = () => {
-    if (!draft.title.trim() && !draft.content.trim()) return
-    const item = {
-      ...draft,
-      id: draft.id || `${Date.now()}`,
-      title: draft.title.trim() || '未命名備忘',
-      content: draft.content.trim(),
-      updatedAt: new Date().toISOString(),
-    }
-    notes.setValue(draft.id ? notes.value.map((note) => note.id === draft.id ? item : note) : [item, ...notes.value])
-    setDraft({ id: '', title: '', content: '', updatedAt: '' })
-  }
-
-  return (
-    <section className="packing-workspace" aria-label="出發前清單與備忘">
-      <header className="page-intro">
-        <div><p className="eyebrow">PRE-TRIP CHECK</p><h1>出發前確認清單</h1><p>{usesBundleChecklist ? '依 Canonical Trip 內的試算表清單逐項確認，勾選結果只保存在此瀏覽器。' : 'Canonical Trip 尚無專屬清單，目前顯示通用備品。勾選結果只保存在此瀏覽器。'}</p></div>
-        <div className="checklist-progress" aria-label={`清單完成 ${percentage}%`}><strong>{percentage}%</strong><span>{completedCount} / {items.length} 完成</span></div>
-      </header>
-
-      <div className="progress-track" aria-hidden="true"><span style={{ width: `${percentage}%` }} /></div>
-
-      <div className="packing-toolbar">
-        <span className={usesBundleChecklist ? 'source-chip canonical' : 'source-chip fallback'}>{usesBundleChecklist ? '試算表清單已載入' : '通用 fallback'}</span>
-        <button type="button" className="secondary-button" onClick={() => checklist.reset(initialState)}>全部重設</button>
-        {checklist.warning || checklist.saveError || notes.warning || notes.saveError ? <span role="status" className="warning-text">{checklist.warning || checklist.saveError || notes.warning || notes.saveError}</span> : null}
-      </div>
-
-      <div className="checklist-groups">
-        {grouped.map(([phase, phaseItems]) => (
-          <section className="checklist-group" key={phase}>
-            <header><span>{phase}</span><small>{phaseItems.filter((item) => checklist.value[item.id]).length}/{phaseItems.length}</small></header>
-            <ul>
-              {phaseItems.map((item) => {
-                const checked = checklist.value[item.id] || false
-                return (
-                  <li className={checked ? 'is-checked' : ''} key={item.id}>
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={(event) => checklist.setValue({ ...checklist.value, [item.id]: event.target.checked })}
-                      />
-                      <span className="custom-checkbox" aria-hidden="true">✓</span>
-                      <span className="checklist-copy"><strong>{item.item}</strong>{item.action ? <p><b>要做：</b>{item.action}</p> : null}{item.fallback ? <p className="fallback-note"><b>未完成時：</b>{item.fallback}</p> : null}</span>
-                    </label>
-                    {item.contact ? isUrl(item.contact) ? <a href={item.contact} target="_blank" rel="noreferrer">參考連結</a> : <span className="reference-note">聯絡／參考：{item.contact}</span> : null}
-                  </li>
-                )
-              })}
-            </ul>
-          </section>
-        ))}
-      </div>
-
-      <section className="notes-workspace">
-        <div className="section-heading"><div><p className="eyebrow">LOCAL NOTES</p><h2>旅途中備忘</h2></div><span>僅此裝置</span></div>
-        <div className="note-editor">
-          <input aria-label="備忘標題" value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} placeholder="標題，例如：住宿晚到通知" />
-          <textarea aria-label="備忘內容" value={draft.content} onChange={(event) => setDraft({ ...draft, content: event.target.value })} placeholder="寫下現場才需要知道的資訊" />
-          <div className="action-row"><button type="button" onClick={saveNote}>{draft.id ? '更新備忘' : '新增備忘'}</button>{draft.id ? <button type="button" className="secondary-button" onClick={() => setDraft({ id: '', title: '', content: '', updatedAt: '' })}>取消</button> : null}</div>
-        </div>
-        <div className="note-list">
-          {notes.value.map((note) => <article className="note-card" key={note.id}><div><h3>{note.title}</h3><small>{note.updatedAt.slice(0, 16).replace('T', ' ')}</small></div><p>{note.content}</p><div className="action-row"><button type="button" className="secondary-button" onClick={() => setDraft(note)}>編輯</button><button type="button" className="danger-button" onClick={() => notes.setValue(notes.value.filter((item) => item.id !== note.id))}>刪除</button></div></article>)}
-          {notes.value.length === 0 ? <p className="honest-inline">尚無本機備忘。</p> : null}
-        </div>
-      </section>
-    </section>
-  )
+  return <section className="packing-workspace" aria-label="行前攜帶物品">
+    <header className="page-intro packing-intro"><div><p className="eyebrow">行前準備</p><h1>這趟旅程要帶什麼</h1><p>{bundle.traveler_profile.adults} 位大人與 {bundle.traveler_profile.children_count} 位幼兒的五日攜帶清單。這裡只提供出發前閱讀，不要求旅途中勾選或填寫。</p></div></header>
+    <div className="packing-guide-grid">{PACKING_GROUPS.map((group) => <section className="packing-guide-card" key={group.title}><header><h2>{group.title}</h2><p>{group.summary}</p></header><ul>{group.items.map(([name, reason]) => <li key={name}><strong>{name}</strong><span>{reason}</span></li>)}</ul></section>)}</div>
+    <p className="packing-reference">入境與緊急資訊可直接查看 <a href="https://www.japan.travel/tw/plan/" target="_blank" rel="noreferrer">日本政府觀光局旅遊資訊 ↗</a>。</p>
+  </section>
 }

@@ -527,7 +527,7 @@ def _bundle_alternatives(trip: dict) -> list[dict[str, Any]]:
                 "id": _safe_str(item.get("id")) or "alternative",
                 "title": _safe_str(item.get("title")) or "Plan B/C",
                 "status": _as_status(item.get("status")),
-                "summary": _safe_str(item.get("summary")) or _safe_str(item.get("notes")) or "待補",
+                "summary": _safe_str(item.get("summary")) or _safe_str(item.get("notes")) or "行程備案",
                 "reasons": _as_list(item.get("reasons")),
                 "decision_gate": _safe_str(item.get("decision_gate")),
                 "conditions": _as_list(item.get("conditions")),
@@ -576,7 +576,8 @@ def _bundle_operations(trip: dict) -> dict[str, Any]:
         "emergency": raw.get("emergency") or [],
         "handbook": raw.get("handbook") or [],
         "returns": raw.get("returns") or [],
-        "pretrip_checklist": _bundle_pretrip_checklist(trip),
+        # 公開網站是只讀的旅遊助手，不要求旅客在行程中勾選或填寫任務。
+        "pretrip_checklist": [],
     }
 
 
@@ -620,7 +621,7 @@ def _bundle_reservations(days: list[dict], places: dict[str, dict[str, object]])
             if item.get("id", "").startswith("fixed-"):
                 place = places.get(item.get("place_id"), {})
                 place_name = place.get("name") if isinstance(place, dict) else None
-                fallback_name = "8/28 17:45 固定預約（名稱待補）"
+                fallback_name = "固定預約"
                 resolution = place.get("resolution") if isinstance(place, dict) else {}
                 is_resolved = bool(
                     resolution
@@ -672,7 +673,10 @@ def build_public_bundle(trip: dict, trip_path: Path) -> dict:
     }
     days = _bundle_days(trip)
     reservations = _bundle_reservations(days, places)
-    validation = _as_list(trip.get("validation", []))
+    validation = [
+        item for item in _as_list(trip.get("validation", []))
+        if not isinstance(item, dict) or item.get("code") != "PRETRIP_REFRESH_REQUIRED"
+    ]
     validation_payload = _bundle_validation(validation)
     conditions = _bundle_conditions(trip)
     alternatives = _bundle_alternatives(trip)

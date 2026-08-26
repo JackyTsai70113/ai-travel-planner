@@ -101,7 +101,7 @@ export default function SiteRouter() {
     if (route.kind === 'home') {
       setPageMetadata({
         title: 'AI Travel Planner｜日本旅行網站入口',
-        description: '探索由 Canonical Trip 驅動、具備可信度狀態與目的地主題的日本旅行網站。',
+        description: '探索由主行程資料產生、清楚整理每日玩法與實用資訊的日本旅行網站。',
         canonical: siteRootUrl().toString(),
       })
     } else if (trip) {

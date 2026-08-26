@@ -177,14 +177,7 @@
       "summary": null
     }
   },
-  "critical_alerts": [
-    {
-      "id": "PRETRIP_REFRESH_REQUIRED",
-      "level": "warning",
-      "message": "道路時間均為規劃估計；天候、運航、營業、停車與未完成訂位須依出發前確認清單重查。",
-      "path": "/operations/pretrip_checklist"
-    }
-  ],
+  "critical_alerts": [],
   "date_range": {
     "end_date": "2026-08-31",
     "start_date": "2026-08-27"
@@ -628,42 +621,42 @@
         },
         {
           "alternative_place_ids": [],
-          "buffer_minutes": 5,
+          "buffer_minutes": 0,
           "end_at": "2026-08-29T06:50:00+09:00",
           "expected_stay_minutes": null,
-          "id": "day3-drive-riverside-komeda",
+          "id": "day3-drive-riverside-breakfast",
           "kind": "transport",
-          "notes": "住宿至 Komeda 的車程與 5 分緩衝皆為規劃估計；06:50 尚未抵達即改便利商店。",
-          "place_id": "komeda-shizuki",
+          "notes": "前往官方標示 24 小時營業的 FamilyMart 志筑大歲店。",
+          "place_id": "familymart-shizuku-otoshi",
           "start_at": "2026-08-29T06:35:00+09:00",
-          "transfer_minutes": 10,
-          "transport_leg_id": "leg-day3-riverside-komeda"
+          "transfer_minutes": 15,
+          "transport_leg_id": "leg-day3-riverside-breakfast"
         },
         {
           "alternative_place_ids": [],
           "buffer_minutes": null,
           "end_at": "2026-08-29T07:35:00+09:00",
           "expected_stay_minutes": 45,
-          "id": "day3-breakfast-komeda",
+          "id": "day3-breakfast-familymart",
           "kind": "meal",
-          "notes": "07:15 未入座或出餐慢即改便利商店外帶；07:35 離店，最晚 07:45 必須上路。",
-          "place_id": "komeda-shizuki",
+          "notes": "早餐建議飯糰或三明治、優格或水果、咖啡與電解質飲料；店舖 24 小時營業。",
+          "place_id": "familymart-shizuku-otoshi",
           "start_at": "2026-08-29T06:50:00+09:00",
           "transfer_minutes": null,
           "transport_leg_id": null
         },
         {
           "alternative_place_ids": [],
-          "buffer_minutes": 10,
+          "buffer_minutes": 0,
           "end_at": "2026-08-29T08:20:00+09:00",
           "expected_stay_minutes": null,
-          "id": "day3-drive-komeda-sumoto",
+          "id": "day3-drive-breakfast-sumoto",
           "kind": "transport",
           "notes": "早餐後直接前往洲本；30–35 分車程＋10 分緩衝，大型車不要硬闖最窄停車區；08:25 未停好車直接改往老街／S BRICK。",
           "place_id": "sumoto-castle",
           "start_at": "2026-08-29T07:35:00+09:00",
-          "transfer_minutes": 35,
-          "transport_leg_id": "leg-day3-komeda-sumoto"
+          "transfer_minutes": 45,
+          "transport_leg_id": "leg-day3-breakfast-sumoto"
         },
         {
           "alternative_place_ids": [],
@@ -1210,8 +1203,8 @@
   },
   "local_timezone": "Asia/Tokyo",
   "meta": {
-    "bundle_sha256": "cea80a0f0a5e70e523c560dc9185d43b2c67c1aed3285cb3ba92b056840c18f7",
-    "generated_at": "2026-08-25T07:47:47+00:00",
+    "bundle_sha256": "8c7014622921fcef667c13e36764b7657eab9b11971d92060bbe4aad2163919d",
+    "generated_at": "2026-08-26T03:03:29+00:00",
     "source_coverage": {
       "days": 5,
       "places": 51,
@@ -1219,272 +1212,19 @@
       "selected_hotels": 3
     },
     "source_path": "trips/awaji-naruto-tokushima-kobe-2026/trip.json",
-    "source_sha256": "428a3b40bb327c2a6a8053e40362e5a8f0f3df13410b8da15ed31023062c6971",
+    "source_sha256": "06e4a1baf23c74710594b861cff62c610730bb2e1ccbfbbc4e9b04bb4e2ea322",
     "trip_schema": "trip-v1"
   },
   "operations": {
     "emergency": [],
     "fuel": {},
     "handbook": [],
-    "pretrip_checklist": [
-      {
-        "action": "訂 8/29 11:30、6 大 1 小；確認兒童椅、幼兒餐／費用、最晚保留時間；先告知成人最低主餐約 ¥4,600 起。",
-        "completed": false,
-        "contact": "0799-82-1907／Ocean Terrace 官方預約",
-        "fallback": "訂不到 11:30：改洲本／志筑較快午餐並重畫 8/29。",
-        "id": "book-ocean-terrace",
-        "item": "預約 Ocean Terrace",
-        "timing": "現在"
-      },
-      {
-        "action": "確認網路預約並先填 7 人旅客名簿；保存 QR Code 與訂單編號。",
-        "completed": false,
-        "contact": "うずしおクルーズ官方",
-        "fallback": "12:50 異動時須重新調整うずの丘午餐時間。",
-        "id": "book-uzushio-cruise",
-        "item": "確認 8/30 12:50 觀潮船訂位",
-        "timing": "現在"
-      },
-      {
-        "action": "確認 8/29 7 人是否可預購／當日購票；記錄取消規則與座位方式。",
-        "completed": false,
-        "contact": "阿波舞會館官方",
-        "fallback": "無票或全員疲累：取消夜公演，改早晚餐與住宿休息。",
-        "id": "confirm-awaodori-show",
-        "item": "確認阿波舞會館 20:00 夜公演",
-        "timing": "現在"
-      },
-      {
-        "action": "告知為 Alphard，確認實車長／寬／高、停車場名稱、入口、限高、夜間進出與費用。",
-        "completed": false,
-        "contact": "ザ ロイヤルパーク キャンバス 神戸三宮 078-391-1110",
-        "fallback": "飯店無法保證：出發前選定可停大型車的平面停車場。",
-        "id": "confirm-kobe-parking",
-        "item": "確認神戶三宮飯店停車",
-        "timing": "現在"
-      },
-      {
-        "action": "前一天電話確認コメダ珈琲店淡路志筑店 8/29 7:00 正常營業。",
-        "completed": false,
-        "contact": "0799-62-1030／淡路市志筑1720-1",
-        "fallback": "07:15 未入座或休店：便利商店外帶，07:45 硬出發。",
-        "id": "confirm-day3-breakfast",
-        "item": "確認 8/29 早餐",
-        "timing": "現在"
-      },
-      {
-        "action": "前一晚買好早餐，或至 24 小時 FamilyMart 徳島金沢店外帶。",
-        "completed": false,
-        "contact": "088-664-8150／徳島市金沢2丁目1-4",
-        "fallback": "不再尋找未有精確定位與營業確認的咖啡店。",
-        "id": "prepare-day4-breakfast",
-        "item": "準備 8/30 早餐",
-        "timing": "現在"
-      },
-      {
-        "action": "看氣溫、降雨、雷雨、熱中症警戒、鳴門風浪，特別重查 8/30–8/31。",
-        "completed": false,
-        "contact": "日本氣象廳／各設施官方",
-        "fallback": "高溫縮短洲本城、慶野、絵島；雷雨取消纜車、摩天輪與海邊。",
-        "id": "recheck-weather-72h",
-        "item": "重查 8/27–8/31 天氣",
-        "timing": "出發前 72 小時"
-      },
-      {
-        "action": "確認 8/30 12:50 正常、船名、集合方式與 QR Code；確認日本丸 Fune Cafe 狀態。",
-        "completed": false,
-        "contact": "うずしおクルーズ官方運航資訊",
-        "fallback": "停航：改渦之道並依 13:20 潮流時刻重排。",
-        "id": "recheck-cruise-48h",
-        "item": "重查觀潮船運航",
-        "timing": "出發前 48 小時"
-      },
-      {
-        "action": "逐一查看 Ocean Terrace、S BRICK、うずの丘、Nojima Scuola、摩天輪。",
-        "completed": false,
-        "contact": "各設施官方網站／社群",
-        "fallback": "休業即採表內備案，不臨時找同級熱門店排隊。",
-        "id": "recheck-business-hours-48h",
-        "item": "確認餐廳與設施臨時營業",
-        "timing": "出發前 48 小時"
-      },
-      {
-        "action": "查 8/29 風雨、纜車停駛公告、夜公演是否照常。",
-        "completed": false,
-        "contact": "阿波舞會館官方",
-        "fallback": "纜車停駛保留 20:00 公演；公演取消則提早晚餐。",
-        "id": "recheck-awaodori-ropeway-48h",
-        "item": "確認阿波舞與眉山纜車運行",
-        "timing": "出發前 48 小時"
-      },
-      {
-        "action": "查看神戶淡路鳴門自動車道事故、施工、風速管制與週末壅塞。",
-        "completed": false,
-        "contact": "JB 本四高速／即時導航",
-        "fallback": "異常時優先保船班／航班，取消沿途可選景點。",
-        "id": "recheck-highways-48h",
-        "item": "確認高速與大橋交通",
-        "timing": "出發前 48 小時"
-      },
-      {
-        "action": "準備飲水、電解質飲料、鹽分、帽子、防曬、冰涼巾、暈船用品、幼兒替換衣物、常用藥與過敏資訊。",
-        "completed": false,
-        "contact": "共同物資清單",
-        "fallback": "車內至少保留一天份飲水與不易壞點心。",
-        "id": "pack-health-supplies-24h",
-        "item": "補給與健康用品",
-        "timing": "出發前 24 小時"
-      },
-      {
-        "action": "8/29、8/30 白天行李在車內；行李遮蔽、護照與貴重品隨身；另做每晚過夜小袋。",
-        "completed": false,
-        "contact": "車輛安全規則",
-        "fallback": "後車廂無法遮蔽時先到住宿寄放或減少暴露時間。",
-        "id": "secure-luggage-24h",
-        "item": "整理行李與貴重物品",
-        "timing": "出發前 24 小時"
-      },
-      {
-        "action": "預存住宿、停車場、餐廳、船碼頭與神戶機場第二航廈；渦之道設大鳴門橋架橋記念館 EDDY。",
-        "completed": false,
-        "contact": "OpenStreetMap／官方地址",
-        "fallback": "離線地圖與日文地址截圖各存一份。",
-        "id": "prepare-navigation-24h",
-        "item": "準備導航清單",
-        "timing": "出發前 24 小時"
-      },
-      {
-        "action": "不因早餐、整理行李或採買延後。",
-        "completed": false,
-        "contact": "Day 3 時間門",
-        "fallback": "每延誤 15 分，優先縮短洲本城／老街。",
-        "id": "gate-day3-depart-0745",
-        "item": "準時離開志筑住宿",
-        "timing": "8/29 07:45"
-      },
-      {
-        "action": "直接前往 Ocean Terrace，不再插入商店。",
-        "completed": false,
-        "contact": "Day 3 時間門",
-        "fallback": "會晚於訂位時間時先電話通知。",
-        "id": "gate-day3-sbrick-1035",
-        "item": "離開 S BRICK",
-        "timing": "8/29 10:35"
-      },
-      {
-        "action": "未離開 Ocean Terrace、高溫、雷雨或有人疲累，任一成立即取消。",
-        "completed": false,
-        "contact": "Day 3 取消順序第 1",
-        "fallback": "直接 Ocean Terrace → 鳴門公園，增加休息緩衝。",
-        "id": "gate-day3-keino-1315",
-        "item": "決定是否取消慶野松原",
-        "timing": "8/29 13:15"
-      },
-      {
-        "action": "16:30 後才抵停車場，或長輩不想再走，即直接去金沢住宿。",
-        "completed": false,
-        "contact": "Day 3 取消順序第 2",
-        "fallback": "保留入住、眉山／阿波舞。",
-        "id": "gate-day3-uzu-1630",
-        "item": "決定是否取消渦之道",
-        "timing": "8/29 16:30"
-      },
-      {
-        "action": "尚未完成入住、雷雨、強風或疲累即取消纜車。",
-        "completed": false,
-        "contact": "Day 3 取消順序第 3",
-        "fallback": "只保留 20:00 阿波舞；19:20 前在會館休息與墊胃。",
-        "id": "gate-day3-bizan-1730",
-        "item": "決定是否取消眉山夕陽",
-        "timing": "8/29 17:30"
-      },
-      {
-        "action": "Alphard 不進 155cm 車庫；確認 2.0m 限高後才進；21:15 麵王未入座就換店。",
-        "completed": false,
-        "contact": "新町地下／麵王",
-        "fallback": "AEON 原則取消，長輩幼兒優先回住宿。",
-        "id": "gate-day3-night",
-        "item": "停車與晚餐判斷",
-        "timing": "8/29 晚間"
-      },
-      {
-        "action": "尚未入座就改洋蔥漢堡或福良簡餐。",
-        "completed": false,
-        "contact": "Day 4 時間門",
-        "fallback": "不能用 12:50 船班交換排隊等餐。",
-        "id": "gate-day4-lunch-1045",
-        "item": "うずの丘午餐決策",
-        "timing": "8/30 10:45"
-      },
-      {
-        "action": "無論是否吃完，都按 11:20 前往福良 P0。",
-        "completed": false,
-        "contact": "Day 4 硬截止",
-        "fallback": "車上備點心；到福良再補食物。",
-        "id": "gate-day4-leave-lunch-1120",
-        "item": "離開うずの丘",
-        "timing": "8/30 11:20"
-      },
-      {
-        "action": "全員抵達、取票、名簿、廁所與補水；開航前 15 分前完成名簿。",
-        "completed": false,
-        "contact": "うずしおクルーズ",
-        "fallback": "資料缺漏由一位成人專責處理，其餘人不分散。",
-        "id": "gate-day4-cruise-1200",
-        "item": "完成船班報到準備",
-        "timing": "8/30 12:00"
-      },
-      {
-        "action": "超時直接取消絵島，前往淡路 SA。",
-        "completed": false,
-        "contact": "Day 4 取消順序第 1",
-        "fallback": "保住夕陽、晚餐與神戶入住時間。",
-        "id": "gate-day4-nojima-1610",
-        "item": "離開 Nojima Scuola",
-        "timing": "8/30 16:10"
-      },
-      {
-        "action": "能在淡路島／神戶進城前加滿油就完成；入住後由 1–2 位成人採買。",
-        "completed": false,
-        "contact": "Day 4 收尾",
-        "fallback": "20:30 後抵飯店取消夜購。",
-        "id": "gate-day4-fuel-hotel",
-        "item": "加油與飯店入住",
-        "timing": "8/30 晚間"
-      },
-      {
-        "action": "退房、行李整理完成，直接前往神戶機場第二航廈。",
-        "completed": false,
-        "contact": "Day 5 硬截止",
-        "fallback": "最晚 08:30；超過後直接進入報到流程。",
-        "id": "gate-day5-depart-0815",
-        "item": "飯店準時出發",
-        "timing": "8/31 08:15"
-      },
-      {
-        "action": "JX1835 先完成報到、托運、安檢與出境，再於航廈內候機。",
-        "completed": false,
-        "contact": "星宇神戶機場資訊",
-        "fallback": "若排隊拉長，優先完成報到與安檢。",
-        "id": "gate-day5-checkin-0940",
-        "item": "第二航廈辦理報到",
-        "timing": "8/31 09:40"
-      },
-      {
-        "action": "補水、上廁所、確認長輩與幼兒狀態；11:00–15:30 優先室內／車內。",
-        "completed": false,
-        "contact": "全程共同規則",
-        "fallback": "有人疲累、排隊或延誤超過 30 分，即依取消順序刪景點。",
-        "id": "daily-rest-cycle",
-        "item": "每 60–90 分鐘休息",
-        "timing": "每日"
-      }
-    ],
+    "pretrip_checklist": [],
     "returns": [],
     "supplies": []
   },
   "overview": {
-    "critical_unknown_count": 1,
+    "critical_unknown_count": 0,
     "next_recheck_at": null,
     "trip_scope": [
       "awaji",
@@ -1644,7 +1384,7 @@
       "maps_query": "兵庫県淡路市岩屋大林2674-3",
       "name": "淡路 SA／Highway Oasis",
       "official_url": "https://www.awajishimahighwayoasis.com/access/",
-      "opening_hours_note": "各餐飲與設施營業依當日現場；19:30 硬離場。",
+      "opening_hours_note": "美食區 24 小時；餐廳 07:00–21:00。",
       "provenance": {
         "confidence": 1,
         "note": null,
@@ -1794,6 +1534,29 @@
       }
     },
     {
+      "accessibility_notes": null,
+      "address": "兵庫県淡路市志筑1867-1",
+      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=FamilyMart+Shizuku+Otoshi+Awaji",
+      "id": "familymart-shizuku-otoshi",
+      "image_alt": null,
+      "image_source_url": null,
+      "image_url": null,
+      "kind": "restaurant",
+      "maps_query": "兵庫県淡路市志筑1867-1",
+      "name": "FamilyMart 志筑大歳店",
+      "official_url": "https://store.family.co.jp/points/52703",
+      "opening_hours_note": "24 小時營業；8/29（週六）06:50 可直接購買早餐。",
+      "provenance": {
+        "confidence": 1,
+        "note": "官方店舖頁列明志筑大歲店 24 小時營業。",
+        "provider": "FamilyMart 店舖搜尋",
+        "retrieved_at": "2026-08-26T11:00:00+08:00",
+        "source_type": "official",
+        "source_url": "https://store.family.co.jp/points/52703",
+        "status": "confirmed"
+      }
+    },
+    {
       "accessibility_notes": "不為早餐繞路；前晚能先買好即優先。",
       "address": "徳島県徳島市金沢2丁目1-4",
       "google_maps_url": "https://www.google.com/maps/search/?api=1&query=FamilyMart+Tokushima+Kanazawa",
@@ -1921,29 +1684,6 @@
       "name": "神戶機場 第二航廈",
       "official_url": null,
       "opening_hours_note": null,
-      "provenance": {
-        "confidence": 1,
-        "note": null,
-        "provider": "Google Sheet 行程表",
-        "retrieved_at": "2026-08-23T09:00:00+08:00",
-        "source_type": "user_input",
-        "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117",
-        "status": "reported"
-      }
-    },
-    {
-      "accessibility_notes": "7 人於 7:00 開門即進；07:15 未入座即改便利商店，07:45 硬出發。",
-      "address": "兵庫県淡路市志筑1720-1",
-      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Komeda+Awaji+Shizuki",
-      "id": "komeda-shizuki",
-      "image_alt": null,
-      "image_source_url": null,
-      "image_url": null,
-      "kind": "restaurant",
-      "maps_query": "兵庫県淡路市志筑1720-1",
-      "name": "コメダ珈琲店 淡路志筑店",
-      "official_url": null,
-      "opening_hours_note": "通常 7:00–22:00；2026/8/29 06:50 早餐早於通常開店時間，改列 FamilyMart 外帶為主，店方若公告提早營業才使用。",
       "provenance": {
         "confidence": 1,
         "note": null,
@@ -3102,14 +2842,14 @@
       "supports": "place:awaji-harbor-diner"
     },
     {
-      "authority": "Google Sheet 行程表",
+      "authority": "FamilyMart 店舖搜尋",
       "confidence": 1.0,
       "conflicts": false,
       "freshness": "unknown",
-      "last_checked": "2026-08-23T09:00:00+08:00",
-      "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117",
-      "status": "reported",
-      "supports": "place:komeda-shizuki"
+      "last_checked": "2026-08-26T11:00:00+08:00",
+      "source_url": "https://store.family.co.jp/points/52703",
+      "status": "confirmed",
+      "supports": "place:familymart-shizuku-otoshi"
     },
     {
       "authority": "Google Sheet 行程表",
@@ -3459,7 +3199,7 @@
       "last_checked": "2026-08-23T12:00:00+08:00",
       "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117",
       "status": "estimated",
-      "supports": "transport:leg-day3-riverside-komeda"
+      "supports": "transport:leg-day3-riverside-breakfast"
     },
     {
       "authority": "Google Sheet planning estimate",
@@ -3469,7 +3209,7 @@
       "last_checked": "2026-08-23T09:00:00+08:00",
       "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117",
       "status": "estimated",
-      "supports": "transport:leg-day3-komeda-sumoto"
+      "supports": "transport:leg-day3-breakfast-sumoto"
     },
     {
       "authority": "Google Sheet planning estimate",
@@ -3612,8 +3352,8 @@
       "supports": "validation"
     }
   ],
-  "status": "warning",
-  "title": "2026 淡路島・鳴門家庭旅行",
+  "status": "ok",
+  "title": "2026 瀨戶內五日行",
   "transport_legs": [
     {
       "arrival_at": "2026-08-27T12:45:00+09:00",
@@ -4081,18 +3821,18 @@
     },
     {
       "arrival_at": "2026-08-29T06:50:00+09:00",
-      "buffer_minutes": 5,
+      "buffer_minutes": 0,
       "departure_at": "2026-08-29T06:35:00+09:00",
-      "estimated_duration_minutes": 10,
+      "estimated_duration_minutes": 15,
       "from_label": "Awaji Riverside Terrace in Shizuki 780",
       "from_place": "awaji-riverside-hotel",
-      "google_maps_directions_url": "https://www.google.com/maps/dir/?api=1&origin=%E5%85%B5%E5%BA%AB%E7%9C%8C%E6%B7%A1%E8%B7%AF%E5%B8%82%E5%BF%97%E7%AD%91%E5%AD%97%E9%BB%92%E7%94%B0780-12&destination=%E5%85%B5%E5%BA%AB%E7%9C%8C%E6%B7%A1%E8%B7%AF%E5%B8%82%E5%BF%97%E7%AD%911720-1&travelmode=driving",
-      "id": "leg-day3-riverside-komeda",
+      "google_maps_directions_url": "https://www.google.com/maps/dir/?api=1&origin=%E5%85%B5%E5%BA%AB%E7%9C%8C%E6%B7%A1%E8%B7%AF%E5%B8%82%E5%BF%97%E7%AD%91%E5%AD%97%E9%BB%92%E7%94%B0780-12&destination=%E5%85%B5%E5%BA%AB%E7%9C%8C%E6%B7%A1%E8%B7%AF%E5%B8%82%E5%BF%97%E7%AD%911867-1&travelmode=driving",
+      "id": "leg-day3-riverside-breakfast",
       "mode": "car",
-      "note": "行車估計：10 分；緩衝：5 分。導航：住宿至コメダ淡路志筑店；延誤切點：06:50 尚未抵達即改便利商店外帶；家庭注意：先讓長輩幼兒在入口下車。",
+      "note": "行車約 10 分鐘；另留 5 分鐘停車。FamilyMart 志筑大歲店官方標示 24 小時營業。",
       "provenance": {
         "confidence": 0.5,
-        "note": "行車估計：10 分；緩衝：5 分。導航：住宿至コメダ淡路志筑店；延誤切點：06:50 尚未抵達即改便利商店外帶；家庭注意：先讓長輩幼兒在入口下車。",
+        "note": "行車約 10 分鐘；另留 5 分鐘停車。FamilyMart 志筑大歲店官方標示 24 小時營業。",
         "provider": "Google Sheet planning estimate",
         "retrieved_at": "2026-08-23T12:00:00+08:00",
         "source_type": "derived",
@@ -4104,24 +3844,24 @@
       ],
       "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117",
       "status": "estimated",
-      "to_label": "コメダ珈琲店 淡路志筑店",
-      "to_place": "komeda-shizuki",
-      "transfer_minutes": 10
+      "to_label": "FamilyMart 志筑大歳店",
+      "to_place": "familymart-shizuku-otoshi",
+      "transfer_minutes": 15
     },
     {
       "arrival_at": "2026-08-29T08:20:00+09:00",
-      "buffer_minutes": 10,
+      "buffer_minutes": 0,
       "departure_at": "2026-08-29T07:35:00+09:00",
-      "estimated_duration_minutes": 35,
-      "from_label": "コメダ珈琲店 淡路志筑店",
-      "from_place": "komeda-shizuki",
-      "google_maps_directions_url": "https://www.google.com/maps/dir/?api=1&origin=%E5%85%B5%E5%BA%AB%E7%9C%8C%E6%B7%A1%E8%B7%AF%E5%B8%82%E5%BF%97%E7%AD%911720-1&destination=%E5%85%B5%E5%BA%AB%E7%9C%8C%E6%B4%B2%E6%9C%AC%E5%B8%82%E5%B0%8F%E8%B7%AF%E8%B0%B71272-2&travelmode=driving",
-      "id": "leg-day3-komeda-sumoto",
+      "estimated_duration_minutes": 45,
+      "from_label": "FamilyMart 志筑大歳店",
+      "from_place": "familymart-shizuku-otoshi",
+      "google_maps_directions_url": "https://www.google.com/maps/dir/?api=1&origin=%E5%85%B5%E5%BA%AB%E7%9C%8C%E6%B7%A1%E8%B7%AF%E5%B8%82%E5%BF%97%E7%AD%911867-1&destination=%E5%85%B5%E5%BA%AB%E7%9C%8C%E6%B4%B2%E6%9C%AC%E5%B8%82%E5%B0%8F%E8%B7%AF%E8%B0%B71272-2&travelmode=driving",
+      "id": "leg-day3-breakfast-sumoto",
       "mode": "car",
-      "note": "行車估計：30–35 分；緩衝：10 分。導航：早餐後直接前往洲本並看即時路況，大型車勿闖最窄停車區；延誤切點：07:45 尚未上路或 08:25 未停好車即改往老街／S BRICK；家庭注意：乘客先在平緩處下車。",
+      "note": "行車約 35 分鐘；另留 10 分鐘供洲本城停車。洲本城上城停車區入口狹窄。",
       "provenance": {
         "confidence": 0.8,
-        "note": "行車估計：30–35 分；緩衝：10 分。導航：早餐後直接前往洲本並看即時路況，大型車勿闖最窄停車區；延誤切點：07:45 尚未上路或 08:25 未停好車即改往老街／S BRICK；家庭注意：乘客先在平緩處下車。",
+        "note": "行車約 35 分鐘；另留 10 分鐘供洲本城停車。洲本城上城停車區入口狹窄。",
         "provider": "Google Sheet planning estimate",
         "retrieved_at": "2026-08-23T09:00:00+08:00",
         "source_type": "derived",
@@ -4135,7 +3875,7 @@
       "status": "estimated",
       "to_label": "洲本城跡",
       "to_place": "sumoto-castle",
-      "transfer_minutes": 35
+      "transfer_minutes": 45
     },
     {
       "arrival_at": "2026-08-29T09:20:00+09:00",
@@ -4523,13 +4263,5 @@
     "children_count": 1
   },
   "trip_id": "awaji-naruto-tokushima-kobe-2026",
-  "validation": [
-    {
-      "code": "PRETRIP_REFRESH_REQUIRED",
-      "message": "道路時間均為規劃估計；天候、運航、營業、停車與未完成訂位須依出發前確認清單重查。",
-      "path": "/operations/pretrip_checklist",
-      "reference": null,
-      "severity": "warning"
-    }
-  ]
+  "validation": []
 }

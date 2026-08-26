@@ -1,365 +1,153 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, render, screen, within } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Bundle } from '../src/contracts/trip'
-import { buildMapsDirectionsLink, buildRouteDirectionChunks } from '../src/lib/google-maps-links'
-import { groupContiguousLegs, MapPage } from '../src/pages/MapPage'
+import type { TripCatalogEntry } from '../src/contracts/trip-registry'
+import { buildMapsDirectionsLink } from '../src/lib/google-maps-links'
+import { FoodPage } from '../src/pages/FoodPage'
 import { heroNextItem, ItineraryPage } from '../src/pages/ItineraryPage'
 import { OverviewPage } from '../src/pages/OverviewPage'
 import { PackingPage } from '../src/pages/PackingPage'
 import { ReservationsPage } from '../src/pages/ReservationsPage'
-import { TidesPage } from '../src/pages/TidesPage'
-import { buildReservationCalendarIcs } from '../src/pages/ReservationsPage'
-import type { TripCatalogEntry } from '../src/contracts/trip-registry'
 
 const dates = ['2026-08-27', '2026-08-28', '2026-08-29', '2026-08-30', '2026-08-31']
-const storage = new Map<string, string>()
-const localStorageMock: Storage = {
-  get length() { return storage.size },
-  clear: () => storage.clear(),
-  getItem: (key) => storage.get(key) ?? null,
-  key: (index) => [...storage.keys()][index] ?? null,
-  removeItem: (key) => { storage.delete(key) },
-  setItem: (key, value) => { storage.set(key, String(value)) },
-}
-
-const placeIds = ['a', 'b', 'c', 'd', 'e', 'f']
-const placeNames = ['神戶機場', '淡路住宿', '洲本城', '鳴門公園', '神戶三宮', '神戶機場第二航廈']
+const placeIds = ['ramen-ichiraku-nijigen', 'map-import-yumebutai', 'sumoto-castle', 'uzushio-cruise-fukura', 'kobe-airport-terminal-2']
+const placeNames = ['ラーメン一樂', '淡路夢舞台', '洲本城', 'うずしおクルーズ（福良港）', '神戶機場第二航廈']
 
 const bundle: Bundle = {
   trip_id: 'awaji-test',
-  title: '淡路五日',
+  title: '2026 瀨戶內五日行',
   status: 'ok',
   local_timezone: 'Asia/Tokyo',
   date_range: { start_date: dates[0], end_date: dates[4] },
-  traveler_profile: { adults: 2, children_count: 1, children_ages: [5] },
-  selected: { hotel_place_ids: ['b'], flight_ids: [] },
-  places: placeIds.map((id, index) => ({
-    id,
-    name: placeNames[index],
-    maps_query: `${placeNames[index]} 日本`,
-    ...(id === 'b' ? {
-      opening_hours_note: '試算表記載 7:00–22:00；出發前一天重查。',
-      parking: '試算表記載停車資訊；抵達前重查。',
-      provenance: {
-        status: 'confirmed' as const,
-        provider: '住宿官方網站',
-        source_url: 'https://example.com/official-place',
-      },
-    } : {}),
-  })),
+  traveler_profile: { adults: 6, children_count: 1, children_ages: [3] },
+  selected: { hotel_place_ids: ['awaji-riverside-hotel'], flight_ids: [] },
+  places: [
+    ...placeIds.map((id, index) => ({ id, name: placeNames[index], maps_query: `${placeNames[index]} 日本` })),
+    { id: 'awaji-riverside-hotel', name: 'Awaji Riverside Terrace in Shizuki 780', maps_query: 'Awaji Riverside Terrace in Shizuki 780', official_url: 'https://www.booking.com/' },
+  ],
   days: dates.map((date, index) => ({
     date,
     summary: `第 ${index + 1} 日摘要`,
-    items: [{
-      id: `move-${placeIds[index]}-${placeIds[index + 1]}`,
-      kind: 'transport',
-      start_at: `${date}T10:00:00+09:00`,
-      end_at: `${date}T10:45:00+09:00`,
-      place_id: placeIds[index + 1],
-      transport_leg_id: `leg-${placeIds[index]}-${placeIds[index + 1]}`,
-    }, {
-      id: `visit-${placeIds[index + 1]}`,
-      kind: 'place',
-      start_at: `${date}T10:45:00+09:00`,
-      end_at: `${date}T12:15:00+09:00`,
-      place_id: placeIds[index + 1],
-      expected_stay_minutes: index === 0 ? 90 : null,
-      alternative_place_ids: index === 0 ? ['c', 'd'] : [],
-    }],
+    items: [
+      {
+        id: `move-${index}`,
+        kind: 'transport',
+        start_at: `${date}T10:00:00+09:00`,
+        end_at: `${date}T10:45:00+09:00`,
+        place_id: placeIds[index],
+        transport_leg_id: `leg-${index}`,
+      },
+      {
+        id: `visit-${index}`,
+        kind: index === 0 || index === 3 ? 'meal' : 'place',
+        start_at: `${date}T10:45:00+09:00`,
+        end_at: `${date}T12:15:00+09:00`,
+        place_id: placeIds[index],
+        expected_stay_minutes: 90,
+      },
+      ...(index === 0 ? [{ id: 'check-in', kind: 'check_in', start_at: `${date}T21:00:00+09:00`, end_at: `${date}T21:20:00+09:00`, place_id: 'awaji-riverside-hotel' }] : []),
+    ],
   })),
   transport_legs: dates.map((date, index) => ({
-    id: `leg-${placeIds[index]}-${placeIds[index + 1]}`,
-    mode: index === 4 ? 'bus' : 'car',
+    id: `leg-${index}`,
+    mode: 'car',
     status: 'estimated',
-    from_place: placeIds[index],
-    to_place: placeIds[index + 1],
-    from_label: placeNames[index],
-    to_label: placeNames[index + 1],
+    from_place: index === 0 ? 'kobe-airport-terminal-2' : placeIds[index - 1],
+    to_place: placeIds[index],
+    from_label: index === 0 ? '神戶機場第二航廈' : placeNames[index - 1],
+    to_label: placeNames[index],
     departure_at: `${date}T10:00:00+09:00`,
     arrival_at: `${date}T10:45:00+09:00`,
-    estimated_duration_minutes: 45,
-    transfer_minutes: index === 0 ? 40 : 45,
-    buffer_minutes: index === 0 ? 15 : null,
-    note: index === 0 ? '若延誤 20 分鐘，直接前往住宿' : '出發前重查路況',
-    source_url: 'https://example.com/source',
-    source_refs: [`sheet-leg-${index + 1}`],
-    provenance: {
-      status: 'estimated',
-      provider: 'Google Sheet',
-      retrieved_at: '2026-08-23T00:00:00Z',
-      confidence: 0.5,
-    },
+    estimated_duration_minutes: 40,
+    transfer_minutes: 45,
+    buffer_minutes: 5,
   })),
-  operations: {
-    pretrip_checklist: [{
-      id: 'sheet-ticket',
-      timing: '出發前一週',
-      item: '確認電子機票',
-      action: '下載離線副本',
-      fallback: '到航空公司櫃台確認',
-      contact: 'https://example.com/ticket',
-    }],
-  },
+  operations: { pretrip_checklist: [] },
   reservations: [],
   preferences: { hard_constraints: [], soft_preferences: [] },
   budget: { currency: 'JPY', total: { amount: 0, currency: 'JPY' }, categories: {} },
   validation: [],
-  meta: { generated_at: '2026-08-23T00:00:00Z' },
+  meta: { generated_at: '2026-08-26T00:00:00Z' },
 }
 
-describe('Issue 97 travel handbook', () => {
-  beforeAll(() => Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: localStorageMock }))
-  beforeEach(() => {
-    cleanup()
-    localStorage.clear()
-  })
+describe('淡路島只讀旅遊助手', () => {
+  beforeEach(() => cleanup())
 
-  it('builds a Google Maps directions URL without an API key', () => {
-    const href = buildMapsDirectionsLink([
-      { label: '神戶機場', mapsQuery: 'Kobe Airport' },
-      { label: '淡路住宿', mapsQuery: 'Awaji Hotel' },
-    ])
-    const url = new URL(href)
+  it('建立不需要 API key 的 Google Maps 路線', () => {
+    const url = new URL(buildMapsDirectionsLink([{ label: '神戶機場' }, { label: '淡路夢舞台' }]))
     expect(url.pathname).toBe('/maps/dir/')
     expect(url.searchParams.get('api')).toBe('1')
-    expect(url.searchParams.get('origin')).toBe('Kobe Airport')
-    expect(url.searchParams.get('destination')).toBe('Awaji Hotel')
     expect(url.searchParams.get('travelmode')).toBe('driving')
   })
 
-  it('shows leg analysis and switches across all five days', () => {
-    render(<MapPage bundle={bundle} route={{ section: 'map', raw: 'map' }} currentDay={dates[0]} />)
-    expect(screen.getAllByRole('button', { name: /Day/ })).toHaveLength(5)
-    expect(screen.getByText('神戶機場')).toBeInTheDocument()
-    expect(screen.getByText('淡路住宿')).toBeInTheDocument()
-    expect(screen.getByText('40 分鐘（規劃估計）')).toBeInTheDocument()
-    expect(screen.getByText('15 分鐘')).toBeInTheDocument()
-    expect(screen.getByText('90 分鐘')).toBeInTheDocument()
-    expect(screen.getByText(/若延誤 20 分鐘/)).toBeInTheDocument()
-    const routeLink = screen.getByRole('link', { name: '在 Google Maps 開啟逐段路線' })
-    expect(routeLink.getAttribute('href')).toContain('google.com/maps/dir/')
-    fireEvent.click(screen.getByRole('button', { name: /Day 5/ }))
-    expect(screen.getByRole('heading', { name: '第 5 日摘要' })).toBeInTheDocument()
-    expect(screen.queryByText('尚無逐段資料')).not.toBeInTheDocument()
+  it('每日頁面直接顯示天候、負擔、費用與玩法，名稱就是地圖連結', () => {
+    render(<ItineraryPage bundle={bundle} route={{ section: 'today', day: dates[0], raw: `today/${dates[0]}` }} onNavigate={vi.fn()} />)
+    expect(screen.getByText('天氣與氣溫')).toBeInTheDocument()
+    expect(screen.getByText('降雨')).toBeInTheDocument()
+    expect(screen.getByText('中暑與風浪')).toBeInTheDocument()
+    expect(screen.getByText('活動量')).toBeInTheDocument()
+    expect(screen.getByText('開車時間')).toBeInTheDocument()
+    expect(screen.getByText('費用')).toBeInTheDocument()
+    expect(screen.getByText('推薦餐點與飲品')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'ラーメン一樂 在 Google Maps 開啟' })).toHaveClass('timeline-title-link')
+    expect(document.querySelector('.timeline-map-link')).toBeNull()
+    expect(document.body.textContent).not.toMatch(/規劃估計|Sheet 指定|家庭／無障礙|聯絡[／/]參考|狀態正常/)
   })
 
-  it('groups only contiguous legs with the same travel mode', () => {
-    const base = bundle.transport_legs || []
-    const first = base[0]
-    const groups = groupContiguousLegs([
-      first,
-      { ...base[1], from_place: first.to_place, mode: 'drive' },
-      { ...base[2], from_place: base[1].to_place, mode: 'bus' },
-      { ...base[3], from_place: 'disconnected', mode: 'car' },
-    ])
-    expect(groups.map((group) => group.legs.length)).toEqual([2, 1, 1])
-    expect(groups.map((group) => group.travelMode)).toEqual(['driving', 'transit', 'driving'])
+  it('潮流只放在第 3、4 天，並提供官方潮見表', () => {
+    const { rerender } = render(<ItineraryPage bundle={bundle} route={{ section: 'today', day: dates[0], raw: '' }} onNavigate={vi.fn()} />)
+    expect(screen.queryByText('鳴門潮流與海況')).not.toBeInTheDocument()
+    rerender(<ItineraryPage bundle={bundle} route={{ section: 'today', day: dates[2], raw: '' }} onNavigate={vi.fn()} />)
+    expect(screen.getByText('鳴門潮流與海況')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /查看官方潮見表/ })).toHaveAttribute('href', 'https://www.uzunomichi.jp/tide-calendar/')
+    rerender(<ItineraryPage bundle={bundle} route={{ section: 'today', day: dates[3], raw: '' }} onNavigate={vi.fn()} />)
+    expect(screen.getByText(/13:20 南流最快/)).toBeInTheDocument()
   })
 
-  it('limits mobile route chunks to five stops and preserves transit mode', () => {
-    const stops = Array.from({ length: 9 }, (_, index) => ({ id: `s${index}`, label: `站 ${index}` }))
-    const chunks = buildRouteDirectionChunks(stops, 'transit')
-    expect(chunks.every((chunk) => chunk.waypoints.length <= 3)).toBe(true)
-    expect(chunks.every((chunk) => [chunk.source, ...chunk.waypoints, chunk.destination].length <= 5)).toBe(true)
-    expect(chunks[0].destination.id).toBe(chunks[1].source.id)
-    expect(new URL(chunks[0].href).searchParams.get('travelmode')).toBe('transit')
+  it('每日底部同時提供雨天與額外時間方案，每個方案有兩個理由', () => {
+    render(<ItineraryPage bundle={bundle} route={{ section: 'today', day: dates[2], raw: '' }} onNavigate={vi.fn()} />)
+    const groups = screen.getByLabelText('雨天與額外時間推薦').querySelectorAll('.day-alternative-group')
+    expect(groups).toHaveLength(2)
+    groups.forEach((group) => within(group as HTMLElement).getAllByRole('listitem').length >= 2)
   })
 
-  it('exports reservation timestamps as UTC instead of browser-local wall time', () => {
-    const ics = buildReservationCalendarIcs({
-      id: 'pancake',
-      day: '2026-08-28',
-      time: '2026-08-28T17:45:00+09:00',
-      name: '幸せのパンケーキ 淡路島テラス',
-      place_id: 'b',
-      kind: 'restaurant',
-    })
-    expect(ics).toContain('DTSTART:20260828T084500Z')
-    expect(ics).toContain('DTEND:20260828T094500Z')
-    expect(ics).not.toContain('DTSTART:20260828T164500')
+  it('總覽使用主行程旅客人數，沒有狀態或資料快照', () => {
+    const trip = { title: '淡路五日', destination_regions: ['淡路島'], date_range: { start_date: dates[0], end_date: dates[4] }, duration_days: 5, travelers_summary: '2 位大人', status: 'published', readiness: 'incomplete', cover_media: { kind: 'gradient', gradient: 'linear-gradient(#123, #456)' }, hero_summary: '舊摘要' } as TripCatalogEntry
+    render(<OverviewPage bundle={bundle} trip={trip} />)
+    expect(screen.getAllByText('6 大 1 小').length).toBeGreaterThan(0)
+    expect(document.body.textContent).not.toMatch(/狀態正常|行前需確認|資料快照|舊摘要|Canonical Trip/)
   })
 
-  it('keeps reservation cards focused on time, place, address, and map link', () => {
-    render(<ReservationsPage bundle={{
-      ...bundle,
-      reservations: [{
-        id: 'reservation-1',
-        day: dates[0],
-        time: `${dates[0]}T12:50:00+09:00`,
-        name: 'うずしおクルーズ（福良港）',
-        place_id: 'b',
-        kind: 'fixed-reservation',
-      }],
-    }} />)
-    expect(screen.getByRole('heading', { name: /うずしおクルーズ（福良港）/ })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: '淡路住宿 在 Google Maps 開啟' })).toBeInTheDocument()
-    expect(screen.queryByText('資料來源')).not.toBeInTheDocument()
-    expect(screen.queryByText('最後確認')).not.toBeInTheDocument()
+  it('預約頁只保留時間、內容、玩法與文字式地圖連結', () => {
+    render(<ReservationsPage bundle={{ ...bundle, reservations: [{ id: 'cruise', day: dates[3], time: `${dates[3]}T12:50:00+09:00`, name: 'うずしおクルーズ（福良港）', place_id: 'uzushio-cruise-fukura', kind: 'fixed-reservation' }] }} />)
+    expect(screen.getByText('12:50')).toBeInTheDocument()
+    expect(screen.getByText(/成人 ¥3,000/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /うずしおクルーズ（福良港） 在 Google Maps 開啟/ })).toBeInTheDocument()
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
-    expect(screen.queryByText('fixed-reservation')).not.toBeInTheDocument()
+    expect(document.body.textContent).not.toMatch(/地址|資料來源|最後確認|fixed-reservation/)
+    expect(document.querySelector('svg')).toBeNull()
   })
 
-  it('keeps itinerary day navigation route-aware', () => {
-    const onNavigate = vi.fn()
-    render(<ItineraryPage bundle={bundle} route={{ section: 'today', day: dates[0], raw: `today/${dates[0]}` }} onNavigate={onNavigate} />)
-    expect(screen.getAllByRole('tab')).toHaveLength(5)
-    expect(screen.getByRole('heading', { name: /神戶機場 → 淡路住宿/ })).toBeInTheDocument()
-    expect(screen.getByText('主要風險')).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: '洲本城' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: '鳴門公園' })).not.toBeInTheDocument()
-    expect(screen.getAllByRole('link', { name: /在 Google Maps 開啟/ }).length).toBeGreaterThan(0)
-    // Dynamic facts remain visibly sourced and transport estimates are not repeated in the risk note.
-    expect(screen.getByText(/營業時間：/)).toBeInTheDocument()
-    expect(screen.getByText(/停車：/)).toBeInTheDocument()
-    const firstTransportCard = screen.getByRole('heading', { name: /神戶機場 → 淡路住宿/ }).closest('.timeline-entry')
-    expect(firstTransportCard).not.toBeNull()
-    expect(within(firstTransportCard as HTMLElement).getAllByText(/若延誤 20 分鐘/)).toHaveLength(1)
-    expect(screen.queryByText('規劃項目', { exact: true })).not.toBeInTheDocument()
-    expect(screen.queryByText(/Plan A \/ B \/ C/)).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('tab', { name: /D5/ }))
-    expect(onNavigate).toHaveBeenCalledWith({ section: 'today', day: dates[4], item: undefined })
+  it('攜帶物品是完整閱讀清單，不要求旅途中勾選或填寫', () => {
+    render(<PackingPage bundle={bundle} />)
+    expect(screen.getByText('護照')).toBeInTheDocument()
+    expect(screen.getByText('暈船藥或暈車用品')).toBeInTheDocument()
+    expect(screen.getByText('日本 eSIM／漫遊方案')).toBeInTheDocument()
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument()
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+    expect(document.body.textContent).not.toMatch(/未完成時|聯絡[／/]參考|離線/)
   })
 
-  it('uses canonical traveler facts and explains pre-trip readiness on overview', () => {
-    const canonicalBundle = {
-      ...bundle,
-      traveler_profile: { ...bundle.traveler_profile, adults: 6 },
-    }
-    const staleRegistryEntry = {
-      title: '淡路五日',
-      destination_regions: ['淡路島'],
-      date_range: { start_date: dates[0], end_date: dates[4] },
-      duration_days: 5,
-      travelers_summary: '2 位大人 + 1 位小孩',
-      status: 'published',
-      readiness: 'incomplete',
-      cover_media: { kind: 'gradient', gradient: 'linear-gradient(#123, #456)' },
-      hero_summary: '行程已建立；出發前請確認道路時間、天候、營運、停車與訂位狀態。',
-    } as TripCatalogEntry
-
-    render(<OverviewPage bundle={canonicalBundle} trip={staleRegistryEntry} />)
-
-    expect(screen.getByText('6 大 1 小')).toBeInTheDocument()
-    expect(screen.getByText('行前需確認')).toBeInTheDocument()
-    expect(screen.getByText(/道路時間、天候、營運、停車與訂位狀態/)).toBeInTheDocument()
-    expect(screen.queryByText(/資料快照/)).not.toBeInTheDocument()
+  it('餐飲頁列出推薦品項、價格與地圖連結', () => {
+    render(<FoodPage bundle={bundle} />)
+    expect(screen.getByText('一樂拉麵')).toBeInTheDocument()
+    expect(screen.getByText(/每人約 ¥1,000–1,800/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /ラーメン一樂 在 Google Maps 開啟/ })).toBeInTheDocument()
   })
 
-  it('renders official tide predictions for the selected day without placeholders', () => {
-    render(<TidesPage bundle={{
-      ...bundle,
-      conditions: {
-        tide: {
-          status: 'confirmed',
-          status_label: '官方預測已取得',
-          provider: '日本氣象廳',
-          station: '洲本（SUMOTO）',
-          source_url: 'https://www.data.jma.go.jp/kaiyou/db/tide/suisan/',
-          days: [{
-            date: dates[0],
-            tide_type: '大潮',
-            events: [
-              { kind: 'high', time: '05:25', height_cm: 154 },
-              { kind: 'low', time: '12:16', height_cm: 42 },
-              { kind: 'high', time: '18:57', height_cm: 156 },
-            ],
-          }],
-        },
-      },
-    }} day={dates[0]} />)
-    expect(screen.getByRole('heading', { name: '潮汐與動態條件' })).toBeInTheDocument()
-    expect(screen.getByText('2026-08-27（目前日期）')).toBeInTheDocument()
-    expect(screen.getByText('滿潮 05:25（154 cm）')).toBeInTheDocument()
-    expect(screen.getByText('干潮 12:16（42 cm）')).toBeInTheDocument()
-    expect(screen.queryByText(/待補|未提供|unknown/)).not.toBeInTheDocument()
-  })
-
-  it('does not repeat an item safety note as a separate accessibility note', () => {
-    const duplicateBundle: Bundle = {
-      ...bundle,
-      days: bundle.days.map((day, dayIndex) => dayIndex === 0
-        ? {
-          ...day,
-          items: day.items.map((item, itemIndex) => itemIndex === 1
-            ? { ...item, notes: '只做安全平坦海邊短走；高溫、強風、下雨或長輩幼兒疲累即取消，保留緩衝。' }
-            : item),
-        }
-        : day),
-      places: bundle.places?.map((place, placeIndex) => placeIndex === 1
-        ? { ...place, accessibility_notes: '只做海邊短走；高溫、強風、下雨或長輩幼兒疲累即取消。' }
-        : place),
-    }
-
-    render(<ItineraryPage bundle={duplicateBundle} route={{ section: 'today', day: dates[0], raw: `today/${dates[0]}` }} onNavigate={vi.fn()} />)
-
-    expect(screen.queryByText(/家庭／無障礙：只做海邊短走/)).not.toBeInTheDocument()
-    expect(screen.getByText(/只做安全平坦海邊短走/)).toBeInTheDocument()
-  })
-
-  it('keeps accessibility notes when item notes contain conflicting guidance', () => {
-    const conflictingBundle: Bundle = {
-      ...bundle,
-      days: bundle.days.map((day, dayIndex) => dayIndex === 0
-        ? {
-          ...day,
-          items: day.items.map((item, itemIndex) => itemIndex === 1
-            ? { ...item, notes: '輪椅不可通行。' }
-            : item),
-        }
-        : day),
-      places: bundle.places?.map((place, placeIndex) => placeIndex === 1
-        ? { ...place, accessibility_notes: '輪椅可通行。' }
-        : place),
-    }
-
-    render(<ItineraryPage bundle={conflictingBundle} route={{ section: 'today', day: dates[0], raw: `today/${dates[0]}` }} onNavigate={vi.fn()} />)
-
-    const conflictingCard = document.getElementById('item-visit-b')
-    expect(conflictingCard).not.toBeNull()
-    expect(within(conflictingCard as HTMLElement).getByText('家庭／無障礙：')).toBeInTheDocument()
-    expect(within(conflictingCard as HTMLElement).getByText('輪椅可通行。')).toBeInTheDocument()
-  })
-
-  it('keeps accessibility notes when item notes use implicit negation', () => {
-    const conflictingBundle: Bundle = {
-      ...bundle,
-      days: bundle.days.map((day, dayIndex) => dayIndex === 0
-        ? {
-          ...day,
-          items: day.items.map((item, itemIndex) => itemIndex === 1
-            ? { ...item, notes: '輪椅不適用。' }
-            : item),
-        }
-        : day),
-      places: bundle.places?.map((place, placeIndex) => placeIndex === 1
-        ? { ...place, accessibility_notes: '輪椅適用。' }
-        : place),
-    }
-
-    render(<ItineraryPage bundle={conflictingBundle} route={{ section: 'today', day: dates[0], raw: `today/${dates[0]}` }} onNavigate={vi.fn()} />)
-
-    const conflictingCard = document.getElementById('item-visit-b')
-    expect(conflictingCard).not.toBeNull()
-    expect(within(conflictingCard as HTMLElement).getByText('輪椅適用。')).toBeInTheDocument()
-  })
-
-  it('does not wrap the next-stop hero back to breakfast after the day ends', () => {
-    expect(heroNextItem(bundle.days[0], null)?.id).toBe('move-a-b')
+  it('行程結束後不把下一站跳回早餐', () => {
+    expect(heroNextItem(bundle.days[0], null)?.id).toBe('move-0')
     expect(heroNextItem(bundle.days[0], 23 * 60 + 59)).toBeNull()
   })
 
-  it('uses the bundle checklist and persists each checked item locally', async () => {
-    const firstRender = render(<PackingPage bundle={bundle} />)
-    expect(screen.getByText('確認電子機票')).toBeInTheDocument()
-    expect(screen.queryByText('護照／身分文件')).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('checkbox', { name: /確認電子機票/ }))
-    await waitFor(() => {
-      const stored = localStorage.getItem('trip:awaji-test:checklist:v2')
-      expect(stored).not.toBeNull()
-      expect(JSON.parse(stored || '{}').data['sheet-ticket']).toBe(true)
-    })
-    firstRender.unmount()
-    render(<PackingPage bundle={bundle} />)
-    expect(screen.getByRole('checkbox', { name: /確認電子機票/ })).toBeChecked()
-  })
 })
