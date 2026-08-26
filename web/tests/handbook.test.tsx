@@ -140,13 +140,15 @@ describe('淡路島只讀旅遊助手', () => {
     expect(screen.getAllByRole('link', { name: 'ラーメン一樂' }).some((link) => link.getAttribute('href') === 'https://nijigennomori.com/food/ichiraku/')).toBe(true)
     const mealCard = document.querySelector('#item-visit-0') as HTMLElement
     const placeMap = within(mealCard).getByRole('link', { name: '在 Google Maps 開啟 ラーメン一樂' })
-    const parkingMap = within(mealCard).getByRole('link', { name: '在 Google Maps 開啟 ラーメン一樂 停車場' })
+    const parkingMap = within(mealCard).getByRole('link', { name: '在 Google Maps 開啟 兵庫県立淡路島公園 E駐車場' })
     expect(placeMap).toHaveAttribute('href', expect.stringContaining(encodeURIComponent('ラーメン一樂')))
     expect(parkingMap).toHaveAttribute('href', expect.stringContaining(encodeURIComponent('兵庫県立淡路島公園 E駐車場')))
     expect(placeMap.getAttribute('href')).not.toBe(parkingMap.getAttribute('href'))
     expect(screen.getByText('午餐前預留 30 分鐘點餐')).toBeInTheDocument()
     expect(document.body.textContent).not.toMatch(/官方未公布|未提供|未知/)
-    expect(document.querySelector('.arrival-parking')).toBeNull()
+    const transportCard = document.querySelector('#item-move-0') as HTMLElement
+    expect(transportCard).not.toHaveTextContent('E 停車場 477 台免費，步行約 5 分鐘。')
+    expect(within(transportCard).queryByText('停車')).toBeNull()
     expect(document.querySelector('.parking-map-link')).toBeNull()
     expect(document.querySelector('.official-info-link')).toBeNull()
     expect(document.querySelector('.day-lodging-card')).toBeNull()
@@ -217,7 +219,7 @@ describe('淡路島只讀旅遊助手', () => {
     expect(screen.getByRole('link', { name: 'ラーメン一樂' })).toHaveAttribute('href', 'https://nijigennomori.com/food/ichiraku/')
     const foodCard = document.querySelector('.food-card') as HTMLElement
     const placeMap = within(foodCard).getByRole('link', { name: '在 Google Maps 開啟 ラーメン一樂' })
-    const parkingMap = within(foodCard).getByRole('link', { name: '在 Google Maps 開啟 ラーメン一樂 停車場' })
+    const parkingMap = within(foodCard).getByRole('link', { name: '在 Google Maps 開啟 兵庫県立淡路島公園 E駐車場' })
     expect(placeMap).toHaveAttribute('href', expect.stringContaining(encodeURIComponent('ラーメン一樂')))
     expect(parkingMap).toHaveAttribute('href', expect.stringContaining(encodeURIComponent('兵庫県立淡路島公園 E駐車場')))
     expect(placeMap.getAttribute('href')).not.toBe(parkingMap.getAttribute('href'))

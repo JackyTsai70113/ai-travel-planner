@@ -314,7 +314,7 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
               <div className="timeline-place-heading"><h3>{officialHref ? <a className="timeline-title-link" href={officialHref} target="_blank" rel="noreferrer">{title}</a> : title}</h3><MapPinLink href={mapHref} label={leg ? `在 Google Maps 開啟 ${title} 路線` : `在 Google Maps 開啟 ${title}`} /></div>
               {detail ? <p className="timeline-detail">{detail}</p> : null}
               {placeGuide ? <>
-                {facts.length > 0 ? <dl className="place-facts">{facts.map((fact) => <div key={fact.label}><dt>{fact.label}</dt><dd>{fact.href ? <a className="parking-fact-link" href={fact.href} target="_blank" rel="noreferrer" aria-label={`在 Google Maps 開啟 ${title} 停車場`}>{fact.value}</a> : fact.value}</dd></div>)}</dl> : null}
+                {facts.length > 0 ? <dl className="place-facts">{facts.map((fact) => <div key={fact.label}><dt>{fact.label}</dt><dd>{fact.href ? <a className="parking-fact-link" href={fact.href} target="_blank" rel="noreferrer" aria-label={`在 Google Maps 開啟 ${parkingMapsQuery}`}>{fact.value}</a> : fact.value}</dd></div>)}</dl> : null}
                 <div className="place-highlights"><strong>{visualKind === 'meal' ? '推薦餐點與飲品' : '值得看與值得玩'}</strong><ul>{placeGuide.highlights.map((highlight) => { const parts = highlightParts(highlight); return <li key={highlight}><strong>{parts.title}</strong>{parts.reason ? <span>{parts.reason}</span> : null}</li> })}</ul></div>
               </> : null}
             </div>

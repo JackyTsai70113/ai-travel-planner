@@ -1823,7 +1823,7 @@ body,
   background: #fff;
 }
 .day-media figcaption span { color: #087584; font-size: .67rem; font-weight: 900; }
-.day-media figcaption strong { display: -webkit-box; min-width: 0; overflow: hidden; color: #294854; font-size: .76rem; line-height: 1.45; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+.day-media figcaption strong { display: -webkit-box; min-width: 0; overflow: hidden; color: #294854; font-size: .76rem; line-height: 1.45; overflow-wrap: normal; word-break: keep-all; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
 .day-media figcaption a,
 .food-photo figcaption a { color: #356b80; font-size: .66rem; font-weight: 800; }
 .day-media .media-title-link { color: inherit; font-size: inherit; text-decoration: none; }

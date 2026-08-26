@@ -178,7 +178,12 @@ try {
     if (await mobile.locator('.day-condition-grid > div').count() !== 6) throw new Error(`${date} does not show six practical condition cards`)
     if (await mobile.locator('.map-pin-link').count() < 1) throw new Error(`${date} has no map pin links`)
     if (await mobile.locator('.timeline-map-link, .map-icon-link, .parking-map-link, .official-info-link').count()) throw new Error(`${date} still renders duplicate map or official text buttons`)
-    if (await mobile.locator('.timeline-entry.transport-leg .arrival-parking').count()) throw new Error(`${date} repeats destination parking inside transport cards`)
+    const repeatedParkingFacts = await mobile.locator('.timeline-entry.transport-leg').evaluateAll((cards) => cards.flatMap((card) => {
+      const destinationCard = card.nextElementSibling
+      const parkingText = destinationCard?.querySelector('.parking-fact-link')?.textContent?.trim() || ''
+      return parkingText && card.textContent?.includes(parkingText) ? [parkingText] : []
+    }))
+    if (repeatedParkingFacts.length) throw new Error(`${date} 交通卡重複目的地停車資訊：${repeatedParkingFacts.join('、')}`)
     const parkingPairs = await mobile.locator('.timeline-entry:not(.transport-leg):has(.parking-fact-link)').evaluateAll((cards) => cards.map((card) => {
       const placeHref = card.querySelector('.map-pin-link')?.getAttribute('href') || ''
       const parkingHref = card.querySelector('.parking-fact-link')?.getAttribute('href') || ''
@@ -280,6 +285,21 @@ try {
     await openRoute(desktop, 'today/2026-08-27', '.itinerary-workspace')
     const photoHeights = await desktop.locator('.day-media figure').evaluateAll((figures) => figures.map((figure) => figure.getBoundingClientRect().height))
     if (Math.max(...photoHeights) - Math.min(...photoHeights) > 1) throw new Error(`${width}px 同列照片卡高度不一致：${photoHeights.join(', ')}`)
+    const shinobiTitleLayout = await desktop.locator('.day-media strong[title*="Nijigen no Mori"]').evaluate((element) => {
+      const textNode = element.firstChild?.nodeType === Node.TEXT_NODE ? element.firstChild : element.querySelector('a')?.firstChild
+      const text = textNode?.textContent || ''
+      const firstIndex = text.indexOf('忍')
+      const secondIndex = text.indexOf('里')
+      if (!textNode || firstIndex < 0 || secondIndex < 0) return { text, sameLine: false }
+      const first = document.createRange()
+      first.setStart(textNode, firstIndex)
+      first.setEnd(textNode, firstIndex + 1)
+      const second = document.createRange()
+      second.setStart(textNode, secondIndex)
+      second.setEnd(textNode, secondIndex + 1)
+      return { text, sameLine: Math.abs(first.getBoundingClientRect().top - second.getBoundingClientRect().top) <= 1 }
+    })
+    if (shinobiTitleLayout.text !== 'NARUTO & BORUTO 忍里' || !shinobiTitleLayout.sameLine) throw new Error(`${width}px 忍里標題斷行不正確：${JSON.stringify(shinobiTitleLayout)}`)
   }
 
   await desktop.setViewportSize({ width: 1440, height: 1000 })
