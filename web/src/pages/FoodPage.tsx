@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import { Bundle, buildMapsLink, findPlaceLabel } from '../contracts/trip'
-import { AWAJI_PLACE_GUIDES } from '../content/awaji-travel-guide'
 
 interface FoodPageProps {
   bundle: Bundle
@@ -11,6 +10,7 @@ function timeLabel(value: string | null): string {
 }
 
 export function FoodPage({ bundle }: FoodPageProps) {
+  const placeGuides = bundle.travel_assistant?.place_guides || {}
   const mealGroups = useMemo(() => bundle.days.map((day) => ({
     date: day.date,
     meals: day.items.filter((item) => item.kind === 'meal'),
@@ -28,7 +28,7 @@ export function FoodPage({ bundle }: FoodPageProps) {
           <div className="food-card-grid">{group.meals.map((meal) => {
             const name = findPlaceLabel(bundle.places, meal.place_id)
             const place = bundle.places?.find((candidate) => candidate.id === meal.place_id)
-            const guide = AWAJI_PLACE_GUIDES[meal.place_id]
+            const guide = placeGuides[meal.place_id]
             return <article className="food-card" key={meal.id}>
               <div className="food-card-time">{timeLabel(meal.start_at)}</div>
               <h3><a href={buildMapsLink(place?.maps_query || name)} target="_blank" rel="noreferrer" aria-label={`${name} 在 Google Maps 開啟`}>{name}<span aria-hidden="true">↗</span></a></h3>

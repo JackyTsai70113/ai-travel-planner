@@ -355,6 +355,33 @@ class AwajiTripFixtureTests(unittest.TestCase):
     def test_trip_title_scope(self):
         self.assertEqual(self.trip["title"], "2026 瀨戶內五日行")
 
+    def test_travel_assistant_facts_come_from_canonical_trip_with_sources(self):
+        override = next(
+            item
+            for item in self.trip["overrides"]
+            if item["path"] == "/presentation/travel_assistant"
+        )
+        canonical = override["value"]
+        self.assertTrue(override["preserve_on_replan"])
+        self.assertEqual(self.bundle["travel_assistant"], canonical)
+        self.assertEqual(set(canonical["daily_guides"]), {day["date"] for day in self.trip["days"]})
+
+        for date, guide in canonical["daily_guides"].items():
+            with self.subTest(date=date):
+                source = guide["source"]
+                self.assertEqual(source["status"], "reported")
+                self.assertTrue(source["source_url"].startswith("https://"))
+                self.assertTrue(source["retrieved_at"])
+                self.assertEqual(source["timezone"], "Asia/Tokyo")
+                self.assertTrue(source["valid_from"].startswith(date))
+                self.assertTrue(source["valid_until"].startswith(date))
+
+        for place_id, guide in canonical["place_guides"].items():
+            with self.subTest(place_id=place_id):
+                self.assertEqual(guide["source"]["source_url"], guide["sourceUrl"])
+                self.assertEqual(guide["source"]["status"], "reported")
+                self.assertTrue(guide["source"]["retrieved_at"])
+
     def test_public_bundle_hides_obsolete_pretrip_refresh_warning(self):
         source_codes = {item.get("code") for item in self.trip["validation"]}
         bundle_codes = {item.get("code") for item in self.bundle["validation"]}

@@ -12,6 +12,19 @@ import { ReservationsPage } from '../src/pages/ReservationsPage'
 const dates = ['2026-08-27', '2026-08-28', '2026-08-29', '2026-08-30', '2026-08-31']
 const placeIds = ['ramen-ichiraku-nijigen', 'map-import-yumebutai', 'sumoto-castle', 'uzushio-cruise-fukura', 'kobe-airport-terminal-2']
 const placeNames = ['ラーメン一樂', '淡路夢舞台', '洲本城', 'うずしおクルーズ（福良港）', '神戶機場第二航廈']
+const guideSource = { provider: '官方網站', source_url: 'https://www.uzunomichi.jp/', retrieved_at: '2026-08-26T10:30:00+08:00', status: 'reported' as const }
+const dailyGuides = Object.fromEntries(dates.map((date, index) => [date, {
+  weather: '多雲', temperature: '25–33°C', rain: '降雨機率 35%｜雨量約 2.4 mm', heatRisk: '中暑風險高', wind: '風速約 11 km/h', activity: '中等', steps: '約 5,000 步', stairs: '約 80 階', slope: '有少量坡道', driving: '約 4 小時', fixedTimes: '12:50 觀潮船',
+  ...(index === 2 ? { tide: '鳴門海峽 12:40 南流最快' } : index === 3 ? { tide: '鳴門海峽 13:20 南流最快' } : {}),
+  rainOptions: [{ title: '室內方案', reasons: ['減少淋雨', '保留主要體驗'] }],
+  extraTimeOptions: [{ title: '鄰近景點', reasons: ['不增加車程', '停留時間容易控制'] }],
+  source: { ...guideSource, valid_from: `${date}T00:00:00+09:00`, valid_until: `${date}T23:59:59+09:00`, timezone: 'Asia/Tokyo' },
+}])) as NonNullable<Bundle['travel_assistant']>['daily_guides']
+
+const placeGuides = {
+  'ramen-ichiraku-nijigen': { duration: '45 分鐘', cost: '每人約 ¥1,000–1,800', queue: '午餐時段中等', parking: '園區停車場', highlights: ['一樂拉麵', '主題餐點', '限定飲品'], sourceUrl: 'https://nijigennomori.com/price/', hours: '11:00–18:00', source: guideSource },
+  'uzushio-cruise-fukura': { duration: '60 分鐘', cost: '成人 ¥3,000', queue: '週日高', parking: '福良港免費停車場', highlights: ['近看漩渦', '穿越橋下', '甲板海景'], sourceUrl: 'https://www.uzu-shio.com/timetable', hours: '12:50 船班', source: guideSource },
+} as NonNullable<Bundle['travel_assistant']>['place_guides']
 
 const bundle: Bundle = {
   trip_id: 'awaji-test',
@@ -63,6 +76,7 @@ const bundle: Bundle = {
     buffer_minutes: 5,
   })),
   operations: { pretrip_checklist: [] },
+  travel_assistant: { daily_guides: dailyGuides, place_guides: placeGuides },
   reservations: [],
   preferences: { hard_constraints: [], soft_preferences: [] },
   budget: { currency: 'JPY', total: { amount: 0, currency: 'JPY' }, categories: {} },

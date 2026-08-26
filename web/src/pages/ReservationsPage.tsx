@@ -4,7 +4,6 @@ import {
   BundleReservation,
 } from '../contracts/trip'
 import { buildMapsSearchLink } from '../lib/google-maps-links'
-import { AWAJI_PLACE_GUIDES } from '../content/awaji-travel-guide'
 
 interface ReservationsPageProps {
   bundle: Bundle
@@ -28,6 +27,7 @@ function formatTime(value: string | null) {
 }
 
 export function ReservationsPage({ bundle }: ReservationsPageProps) {
+  const placeGuides = bundle.travel_assistant?.place_guides || {}
   const grouped = useMemo(() => {
     const byDay = new Map<string, BundleReservation[]>()
     bundle.reservations.forEach((reservation) => {
@@ -55,7 +55,7 @@ export function ReservationsPage({ bundle }: ReservationsPageProps) {
                 const place = bundle.places?.find((candidate) => candidate.id === reservation.place_id)
                 const placeName = place?.name || reservation.name || reservation.place_id
                 const mapHref = buildMapsSearchLink(place?.maps_query || place?.address || placeName)
-                const guide = AWAJI_PLACE_GUIDES[reservation.place_id]
+                const guide = placeGuides[reservation.place_id]
 
                 return (
                   <article className="reservation-card" key={reservation.id}>

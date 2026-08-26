@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Bundle, BundleDay, BundleDayItem, BundleTransportLeg, buildMapsLink, findPlaceLabel } from '../contracts/trip'
 import { TripRoute } from '../app/route-registry'
 import { buildMapsDirectionsLink } from '../lib/google-maps-links'
-import { AWAJI_DAILY_GUIDE, AWAJI_PLACE_GUIDES, DailyAlternative } from '../content/awaji-travel-guide'
+import type { DailyAlternative } from '../content/awaji-travel-guide'
 
 interface ItineraryPageProps {
   bundle: Bundle
@@ -79,8 +79,8 @@ function legDirectionsLink(bundle: Bundle, leg: BundleTransportLeg): string {
   ], legTravelMode(leg.mode))
 }
 
-export function primaryRiskForDay(_bundle: Bundle, day: BundleDay): string {
-  return AWAJI_DAILY_GUIDE[day.date]?.heatRisk || '依當日氣溫安排補水與休息'
+export function primaryRiskForDay(bundle: Bundle, day: BundleDay): string {
+  return bundle.travel_assistant?.daily_guides[day.date]?.heatRisk || '依當日氣溫安排補水與休息'
 }
 
 export function heroNextItem(day: BundleDay, currentMinutes: number | null): BundleDayItem | null {
@@ -129,6 +129,8 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
   const [query, setQuery] = useState('')
   const [quickMode, setQuickMode] = useState<'all' | 'now' | 'next'>('all')
   const [showPrintView, setShowPrintView] = useState(false)
+  const dailyGuides = bundle.travel_assistant?.daily_guides || {}
+  const placeGuides = useMemo(() => bundle.travel_assistant?.place_guides || {}, [bundle.travel_assistant])
   const selectedDay = bundle.days.find((day) => day.date === route.day) ?? (route.day && Number(route.day) > 0 ? bundle.days[Number(route.day) - 1] : undefined) ?? bundle.days[0]
   const selectedDayIndex = bundle.days.findIndex((day) => day.date === selectedDay?.date)
   const currentMinutes = useMemo(() => selectedDay ? currentMinutesInTripZone(bundle.local_timezone, selectedDay.date) : null, [bundle.local_timezone, selectedDay])
@@ -147,10 +149,10 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
   const searchResults = useMemo(() => !normalizedQuery ? [] : bundle.days.flatMap((day, dayIndex) => day.items.flatMap((item) => {
     const place = bundle.places?.find((candidate) => candidate.id === item.place_id)
     const leg = transportLegForItem(bundle, item, day.date)
-    const guide = AWAJI_PLACE_GUIDES[item.place_id]
+    const guide = placeGuides[item.place_id]
     const text = [day.date, day.summary, place?.name, leg?.from_label, leg?.to_label, guide?.highlights.join(' ')].filter(Boolean).join(' ').toLowerCase()
     return text.includes(normalizedQuery) ? [{ day, dayIndex, item, label: leg ? `${leg.from_label} → ${leg.to_label}` : place?.name || item.place_id }] : []
-  })), [bundle, normalizedQuery])
+  })), [bundle, normalizedQuery, placeGuides])
 
   useEffect(() => {
     if (!route.item) return
@@ -160,7 +162,7 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
 
   if (!selectedDay) return <section className="card">沒有可顯示的行程日。</section>
 
-  const guide = AWAJI_DAILY_GUIDE[selectedDay.date]
+  const guide = dailyGuides[selectedDay.date]
   const lodging = lodgingForDay(bundle, selectedDay.date)
   const navigateTo = (day: string, item?: string) => onNavigate({ section: 'today', day, item })
 
@@ -200,9 +202,9 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
           const leg = transportLegForItem(bundle, item, selectedDay.date)
           const title = leg ? `${leg.from_label} → ${leg.to_label}` : findPlaceLabel(bundle.places, item.place_id)
           const mapHref = leg ? legDirectionsLink(bundle, leg) : buildMapsLink(place?.maps_query || place?.name || item.place_id)
-          const placeGuide = !leg ? AWAJI_PLACE_GUIDES[item.place_id] : undefined
+          const placeGuide = !leg ? placeGuides[item.place_id] : undefined
           const arrivalPlace = leg ? bundle.places?.find((candidate) => candidate.id === leg.to_place) : undefined
-          const arrivalParking = leg ? AWAJI_PLACE_GUIDES[leg.to_place]?.parking || arrivalPlace?.parking : undefined
+          const arrivalParking = leg ? placeGuides[leg.to_place]?.parking || arrivalPlace?.parking : undefined
           return <article tabIndex={-1} className={`timeline-entry ${visualKind} ${item.id === route.item ? 'item-highlight' : ''}`} id={`item-${item.id}`} key={item.id}>
             <div className="timeline-time"><strong>{timeLabel(item.start_at)}</strong><span>{item.end_at && item.end_at !== item.start_at ? timeLabel(item.end_at) : ''}</span></div>
             <div className="timeline-track"><span>{visualKind === 'reservation' ? '◆' : visualKind === 'meal' ? '✦' : visualKind === 'move' ? '→' : '●'}</span>{index < visibleItems.length - 1 ? <i /> : null}</div>
