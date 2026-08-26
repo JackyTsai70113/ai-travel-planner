@@ -6,11 +6,13 @@ import './responsive.css'
 
 async function removeStaleOfflineCache() {
   if ('serviceWorker' in navigator) {
-    const registrations = await navigator.serviceWorker.getRegistrations()
-    const appPath = new URL(import.meta.env.BASE_URL, window.location.href).pathname
-    await Promise.all(registrations
-      .filter((registration) => new URL(registration.scope).pathname.startsWith(appPath))
-      .map((registration) => registration.unregister()))
+    const tripScopePath = window.location.pathname.match(/^(.*\/trips\/[^/]+\/)/)?.[1]
+    if (tripScopePath) {
+      const registrations = await navigator.serviceWorker.getRegistrations()
+      await Promise.all(registrations
+        .filter((registration) => new URL(registration.scope).pathname === tripScopePath)
+        .map((registration) => registration.unregister()))
+    }
   }
 
   if ('caches' in window) {

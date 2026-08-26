@@ -13,6 +13,7 @@ export type TripStatusType =
 
 interface TripShellProps {
   bundle: Bundle | null
+  fallbackTitle?: string
   shellStatus: TripStatusType
   pageTitleId: string
   sections: SectionDefinition[]
@@ -33,6 +34,7 @@ const statusText: Record<TripStatusType, string> = {
 
 export default function TripShell({
   bundle,
+  fallbackTitle,
   shellStatus,
   pageTitleId,
   sections,
@@ -51,7 +53,7 @@ export default function TripShell({
     setCurrentStatusText(statusText[shellStatus])
   }, [shellStatus])
 
-  const title = bundle?.title ?? 'Golden Trip'
+  const title = bundle?.title ?? fallbackTitle ?? '日本旅程'
   const subtitle = bundle?.date_range
     ? `${bundle.date_range.start_date} ~ ${bundle.date_range.end_date}`
     : '行程資料載入中'

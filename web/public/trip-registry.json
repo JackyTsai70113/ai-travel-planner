@@ -49,8 +49,8 @@
       "gradient": "linear-gradient(130deg, #334155 0%, #f59e0b 55%, #fbbf24 100%)",
       "fallback": "關西山林與城市並存的夜景"
     },
-    "hero_summary": "預覽版，部份資訊待核對。",
-    "key_messages": ["未完成預約欄位", "住宿與行程時段仍待補"],
+    "hero_summary": "介面預覽用的關西自然體驗示例。",
+    "key_messages": ["不列入正式旅程", "用於預覽網站版型"],
     "critical_alert_count": 4
   },
   {
@@ -82,7 +82,7 @@
     "destination_regions": ["日本示例"],
     "date_range": {"start_date": "2026-11-01", "end_date": "2026-11-05"},
     "duration_days": 5,
-    "travelers_summary": "資料待補",
+    "travelers_summary": "示例旅程",
     "theme_id": "generic-japan",
     "status": "preview",
     "readiness": "blocked",

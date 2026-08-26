@@ -50,6 +50,38 @@
 
   .app-main { padding-top: var(--mobile-section-gap); }
 
+  .portal-page {
+    width: 100%;
+    padding: var(--mobile-page-gutter);
+  }
+
+  .portal-hero {
+    margin-bottom: var(--mobile-section-gap);
+    padding: 22px 18px;
+    border-radius: 20px;
+  }
+
+  .portal-hero h1 { font-size: clamp(2rem, 11vw, 2.7rem); }
+  .catalog-shell { gap: var(--mobile-section-gap); }
+
+  .search-shell {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    padding: var(--mobile-card-padding);
+  }
+
+  .search-shell label:not(:first-child) { margin-top: 4px; }
+  .catalog-section { gap: var(--mobile-card-gap); }
+
+  .trip-card {
+    grid-template-columns: minmax(0, 1fr);
+    border-radius: 18px;
+  }
+
+  .trip-card-media { min-height: 190px; padding: var(--mobile-card-padding); }
+  .trip-card-body { padding: var(--mobile-card-padding); }
+  .trip-card-body h3 { font-size: 1.2rem; }
+
   /* 日期是操作列，不是另一張大卡；五天在 375px 仍完整同列顯示。 */
   .itinerary-day-nav {
     gap: 0;

@@ -41,6 +41,10 @@ jobs:
           from pathlib import Path
 
           registry = json.loads(Path('web/public/trip-registry.json').read_text())
+          description_placeholder = '__TRIP_HERO_SUMMARY__'
+          root_html_path = Path('site/index.html')
+          root_html = root_html_path.read_text()
+          root_html_path.write_text(root_html.replace(description_placeholder, '清楚整理每日行程、餐飲、住宿與導航的日本旅行網站'))
           for entry in registry:
               slug = entry['slug']
               source_slug = entry.get('bundle_source_slug', slug)
@@ -62,7 +66,7 @@ jobs:
               html = html_path.read_text()
               html = html.replace('<title>AI Travel Planner｜日本旅行網站入口</title>', f"<title>{entry['title']}｜AI Travel Planner</title>")
               html = html.replace('content="AI Travel Planner｜日本旅行網站入口"', f"content=\"{entry['title']}｜AI Travel Planner\"")
-              html = html.replace('探索由 Canonical Trip 驅動的日本旅行網站', entry['hero_summary'])
+              html = html.replace(description_placeholder, entry['hero_summary'])
               html = html.replace('</head>', f'<link rel="canonical" href="./" /></head>')
               html_path.write_text(html)
           PY
@@ -75,6 +79,7 @@ jobs:
           test -s site/trips/japan-archive-example/public-bundle.json
           test -s site/trips/japan-blocked-example/public-bundle.json
           grep -q '2024 日本海岸線封存範例' site/trips/japan-archive-example/index.html
+          ! grep -R -q '__TRIP_HERO_SUMMARY__' site
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site

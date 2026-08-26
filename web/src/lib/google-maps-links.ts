@@ -32,6 +32,7 @@ const GOOGLE_MAPS_SEARCH_URL = 'https://www.google.com/maps/search/?api=1&query=
 // Five stops means origin + three waypoints + destination.
 const MAX_WAYPOINTS_PER_ROUTE = 3
 const MAX_MAPS_URL_LENGTH = 1900
+const REJECTED_IMPORTED_MAP_QUERY = /兵庫県淡路市志筑字黒田|徳島市金沢1丁目3[-－]44[-－]3|1[- ]3[- ]44[- ]3 Kanazawa/i
 
 function safeToString(value: unknown): string {
   if (typeof value === 'string') return value.trim()
@@ -64,28 +65,20 @@ export function buildMapsSearchLink(placeLabel: string): string {
 }
 
 export function googleMapsQueryForPlace(place: PlaceMapsTarget | null | undefined, fallback = ''): string {
+  const canonicalQuery = safeToString(place?.maps_query)
+  if (canonicalQuery && !REJECTED_IMPORTED_MAP_QUERY.test(canonicalQuery)) return canonicalQuery
   if (place?.google_maps_url) {
     try {
       const directQuery = new URL(place.google_maps_url).searchParams.get('query')?.trim()
-      if (directQuery) return directQuery
+      if (directQuery && !REJECTED_IMPORTED_MAP_QUERY.test(directQuery)) return directQuery
     } catch {
       // Invalid imported URL falls through to the canonical place name.
     }
   }
-  return safeToString(place?.name) || safeToString(place?.maps_query) || safeToString(fallback)
+  return safeToString(place?.name) || canonicalQuery || safeToString(fallback)
 }
 
 export function googleMapsHrefForPlace(place: PlaceMapsTarget | null | undefined, fallback = ''): string {
-  if (place?.google_maps_url) {
-    try {
-      const url = new URL(place.google_maps_url)
-      if (url.hostname === 'www.google.com' || url.hostname === 'google.com' || url.hostname === 'maps.google.com') {
-        return url.toString()
-      }
-    } catch {
-      // Invalid imported URL falls through to a generated search URL.
-    }
-  }
   return buildMapsSearchLink(googleMapsQueryForPlace(place, fallback))
 }
 
