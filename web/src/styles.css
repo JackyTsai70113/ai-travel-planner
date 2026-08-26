@@ -1931,3 +1931,198 @@ body,
   .food-card dl { grid-template-columns: 1fr; }
   .food-card dl div { min-height: 0; }
 }
+
+/* 行動版閱讀閘門：以單欄卡片、穩定留白與安全區域避免內容擠壓。 */
+@media (max-width: 960px) {
+  .trip-sidebar { display: none; }
+  .app-shell .app-main { display: block; }
+  .mobile-topbar {
+    min-height: calc(64px + env(safe-area-inset-top));
+    padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
+    column-gap: 13px;
+  }
+
+  .app-main {
+    padding: 20px 18px calc(32px + env(safe-area-inset-bottom));
+  }
+
+  .trip-content,
+  .trip-overview-shell,
+  .itinerary-workspace,
+  .reservation-workspace,
+  .food-workspace,
+  .packing-workspace {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .trip-overview-shell { gap: 22px; }
+  .overview-columns { gap: 22px; }
+  .overview-day-grid,
+  .reservation-groups,
+  .reservation-list,
+  .food-day-groups,
+  .packing-guide-grid { gap: 16px; }
+
+  .overview-section,
+  .day-hero,
+  .daily-route-map,
+  .reservation-card,
+  .food-card,
+  .packing-guide-card,
+  .day-alternative-group {
+    border-radius: 18px;
+    box-shadow: 0 8px 24px rgba(20, 47, 61, .09);
+  }
+
+  .page-intro {
+    margin: 0 0 20px;
+    padding: 2px;
+  }
+
+  .itinerary-day-nav {
+    margin: -20px -18px 20px;
+    padding: 11px 18px;
+  }
+
+  .day-hero,
+  .daily-route-map,
+  .day-media,
+  .timeline,
+  .day-alternatives { margin-bottom: 22px; }
+
+  .daily-route-map > header { padding: 18px; }
+  .daily-route-body ol { padding: 16px; }
+  .day-media { gap: 16px; }
+  .timeline-entry { margin-bottom: 16px; }
+  .timeline-card,
+  .timeline-entry.reservation .timeline-card { padding: 18px; }
+  .place-facts,
+  .place-highlights ul { gap: 12px; }
+  .place-facts div,
+  .place-highlights,
+  .food-picks { padding: 16px; }
+  .day-alternatives { gap: 16px; }
+  .day-alternative-group { padding: 18px; }
+  .reservation-card,
+  .food-card { padding: 18px; }
+  .packing-guide-card > header { padding: 18px; }
+  .packing-guide-card ul { padding: 10px 18px 16px; }
+}
+
+@media (max-width: 640px) {
+  .app-main {
+    padding: 18px 16px calc(32px + env(safe-area-inset-bottom));
+  }
+
+  .trip-overview-shell { gap: 20px; }
+  .trip-overview-hero {
+    gap: 28px;
+    padding: 28px 20px;
+    border-radius: 22px;
+  }
+  .trip-overview-hero h1 {
+    font-size: clamp(1.9rem, 9vw, 2.25rem);
+    line-height: 1.14;
+  }
+  .trip-overview-hero .hero-summary {
+    margin-top: 20px;
+    font-size: .95rem;
+    line-height: 1.75;
+  }
+  .hero-route-map {
+    padding: 18px 16px;
+    border-radius: 18px;
+  }
+
+  .overview-section { padding: 18px; }
+  .section-heading { margin-bottom: 18px; }
+  .section-heading h2 { line-height: 1.4; }
+  .overview-day-grid { gap: 14px; }
+  .overview-day-card {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding: 18px;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 5px 16px rgba(20, 47, 61, .07);
+  }
+  .overview-day-number {
+    display: flex;
+    align-items: baseline;
+    justify-content: flex-start;
+    gap: 7px;
+    padding: 0 0 11px;
+    border-right: 0;
+    border-bottom: 1px solid #d7e3e7;
+  }
+  .overview-day-number strong { font-size: 1.3rem; }
+  .overview-day-copy > p { font-size: .75rem; }
+  .overview-day-copy h3 {
+    margin: 7px 0 12px;
+    font-size: 1rem;
+    line-height: 1.55;
+  }
+  .overview-day-route {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px 8px;
+    font-size: .8rem;
+    line-height: 1.55;
+  }
+  .overview-day-route i {
+    width: auto;
+    transform: none;
+  }
+  .overview-stay-list article,
+  .overview-alert-list > a { padding: 13px; }
+
+  .itinerary-day-nav {
+    margin: -18px -16px 20px;
+    padding: 11px 16px;
+  }
+  .day-hero { padding: 22px 18px; }
+  .day-hero h2 { margin-bottom: 20px; }
+  .day-condition-grid { grid-template-columns: 1fr; gap: 12px; }
+  .day-condition-grid > div:nth-child(3),
+  .day-condition-grid > div:nth-child(4) { grid-column: auto; }
+  .day-condition-grid > div { padding: 16px; }
+  .day-tide-card { padding: 16px; }
+  .daily-route-links { grid-template-columns: 1fr; }
+  .daily-route-body ol { padding: 14px; }
+  .day-media img { height: 200px; }
+
+  .timeline-entry {
+    grid-template-columns: 46px 20px minmax(0, 1fr);
+    column-gap: 0;
+  }
+  .timeline-time { padding-right: 7px; }
+  .timeline-card,
+  .timeline-entry.reservation .timeline-card {
+    margin-left: 7px;
+    padding: 18px 16px;
+    border-radius: 16px;
+  }
+  .timeline-place-heading,
+  .food-place-heading { align-items: flex-start; }
+  .timeline-card h3,
+  .food-card h3 { line-height: 1.5; }
+  .place-facts { grid-template-columns: 1fr; }
+  .place-highlights ul { display: grid; grid-template-columns: 1fr; }
+  .place-highlights li,
+  .food-picks li { padding: 12px; }
+  .day-alternatives { grid-template-columns: 1fr; }
+  .day-alternative-group > div { gap: 12px; }
+
+  .reservation-card,
+  .food-card { padding: 18px; }
+  .reservation-title-row { gap: 10px; }
+  .reservation-title-row h2 { line-height: 1.5; }
+  .food-photo { margin: -18px -18px 16px; }
+  .food-card dl { grid-template-columns: 1fr; }
+  .food-card dl div { min-height: 0; padding: 13px; }
+  .packing-guide-card > header { padding: 18px; }
+  .packing-guide-card ul { padding: 10px 18px 16px; }
+  .packing-reference { padding: 16px 18px; line-height: 1.65; }
+}

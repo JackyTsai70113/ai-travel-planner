@@ -38,19 +38,6 @@ function fixedLabel(item: { kind: string; notes?: string }, fallback: string): s
   return fallback
 }
 
-function lodgingForDay(bundle: Bundle, date: string) {
-  const items = bundle.days.flatMap((day) => day.items)
-  const active = bundle.selected.hotel_place_ids
-    .map((placeId) => {
-      const checkIn = items.find((item) => item.kind === 'check_in' && item.place_id === placeId && item.start_at)
-      const checkOut = items.find((item) => item.kind === 'check_out' && item.place_id === placeId && item.start_at)
-      return { placeId, checkInDate: checkIn?.start_at?.slice(0, 10), checkOutDate: checkOut?.start_at?.slice(0, 10) }
-    })
-    .filter((stay) => stay.checkInDate && date >= stay.checkInDate && (!stay.checkOutDate || date < stay.checkOutDate))
-    .sort((a, b) => (b.checkInDate || '').localeCompare(a.checkInDate || ''))[0]
-  return bundle.places?.find((place) => place.id === active?.placeId)
-}
-
 export function OverviewPage({ bundle, trip }: OverviewPageProps) {
   const heroImage = resolveHeroImage(trip)
 
@@ -114,7 +101,6 @@ export function OverviewPage({ bundle, trip }: OverviewPageProps) {
           {bundle.days.map((day, index) => {
             const first = day.items[0]
             const last = day.items.at(-1)
-            const lodging = lodgingForDay(bundle, day.date)
             return (
               <a className="overview-day-card" href={buildRoutePath({ section: 'today', day: day.date })} key={day.date}>
                 <div className="overview-day-number"><span>DAY</span><strong>{String(index + 1).padStart(2, '0')}</strong></div>
@@ -122,7 +108,6 @@ export function OverviewPage({ bundle, trip }: OverviewPageProps) {
                   <p>{formatDay(day.date)} · {day.items.length} 個停靠</p>
                   <h3>{day.summary}</h3>
                   <div className="overview-day-route"><span>{first ? findPlaceLabel(bundle.places, first.place_id) : '—'}</span><i>→</i><span>{last ? findPlaceLabel(bundle.places, last.place_id) : '—'}</span></div>
-                  <div className="overview-day-foot"><span>住宿：{lodging?.name || '返程'}</span></div>
                 </div>
               </a>
             )

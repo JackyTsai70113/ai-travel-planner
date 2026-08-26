@@ -56,6 +56,36 @@ async function assertNoOverlap(page, leftSelector, rightSelector, label) {
   if (overlapWidth > 0 && overlapHeight > 0) throw new Error(`${label} overlaps by ${overlapWidth}x${overlapHeight}`)
 }
 
+async function assertViewportGutter(page, selector, label, minimum = 15) {
+  const result = await page.locator(selector).first().evaluate((element) => {
+    const bounds = element.getBoundingClientRect()
+    return { left: bounds.left, right: window.innerWidth - bounds.right }
+  })
+  if (result.left < minimum || result.right < minimum) {
+    throw new Error(`${label} viewport gutter is ${result.left}px / ${result.right}px`)
+  }
+}
+
+async function assertCardPadding(page, selector, label, minimum = 16) {
+  const violations = await page.locator(selector).evaluateAll((elements, minimumPadding) => elements.map((element) => {
+    const style = getComputedStyle(element)
+    return {
+      left: Number.parseFloat(style.paddingLeft),
+      right: Number.parseFloat(style.paddingRight),
+    }
+  }).filter((padding) => padding.left < minimumPadding || padding.right < minimumPadding), minimum)
+  if (violations.length) throw new Error(`${label} card padding is too small: ${JSON.stringify(violations)}`)
+}
+
+async function assertVerticalCardGap(page, selector, label, minimum = 13) {
+  const gaps = await page.locator(selector).evaluateAll((elements) => {
+    const rectangles = elements.map((element) => element.getBoundingClientRect()).sort((a, b) => a.top - b.top)
+    return rectangles.slice(1).map((current, index) => current.top - rectangles[index].bottom)
+  })
+  const violation = gaps.find((gap) => gap < minimum)
+  if (violation !== undefined) throw new Error(`${label} vertical card gap is ${violation}px`)
+}
+
 async function assertExternalLinksOpen(page, selector, label) {
   const links = page.locator(selector)
   const count = await links.count()
@@ -94,13 +124,43 @@ try {
     ['food', '.food-workspace'],
     ['packing', '.packing-workspace'],
   ]
-  for (const [route, selector] of mobileRoutes) {
-    await openRoute(mobile, route, selector)
-    await assertNoHorizontalOverflow(mobile, `390px ${route}`)
-    await assertNoForbiddenText(mobile, route)
+  const mobileCardSelectors = {
+    overview: '.trip-overview-hero, .overview-section, .overview-day-card',
+    today: '.day-hero, .timeline-card, .day-alternative-group',
+    reservation: '.reservation-card',
+    food: '.food-card',
+    packing: '.packing-guide-card > header, .packing-guide-card ul',
+  }
+  const mobileGapSelectors = {
+    overview: '.overview-day-card',
+    reservation: '.reservation-card',
+    food: '.food-card',
+    packing: '.packing-guide-card',
+  }
+  for (const width of [375, 390, 430]) {
+    await mobile.setViewportSize({ width, height: 844 })
+    for (const [route, selector] of mobileRoutes) {
+      await openRoute(mobile, route, selector)
+      const routeKind = route.startsWith('today/') ? 'today' : route
+      if (await mobile.locator('.trip-sidebar').isVisible()) throw new Error(`${width}px ${route} still shows the desktop sidebar`)
+      await assertNoHorizontalOverflow(mobile, `${width}px ${route}`)
+      await assertViewportGutter(mobile, selector, `${width}px ${route}`)
+      await assertCardPadding(mobile, mobileCardSelectors[routeKind], `${width}px ${route}`)
+      if (mobileGapSelectors[routeKind]) await assertVerticalCardGap(mobile, mobileGapSelectors[routeKind], `${width}px ${route}`)
+      await assertNoForbiddenText(mobile, route)
+    }
   }
 
+  await mobile.setViewportSize({ width: 390, height: 844 })
+
   await openRoute(mobile, 'overview', '.trip-overview-shell')
+  const overviewDayLayout = await mobile.locator('.overview-day-card').first().evaluate((card) => {
+    const number = card.querySelector('.overview-day-number')?.getBoundingClientRect()
+    const copy = card.querySelector('.overview-day-copy')?.getBoundingClientRect()
+    return number && copy ? { numberBottom: number.bottom, copyTop: copy.top } : null
+  })
+  if (!overviewDayLayout || overviewDayLayout.copyTop - overviewDayLayout.numberBottom < 13) throw new Error('mobile overview day card is still cramped')
+  if (await mobile.locator('.overview-day-foot').count()) throw new Error('overview day card repeats lodging information')
   if ((await mobile.locator('.mobile-topbar-title').textContent())?.trim() !== '旅行總覽') throw new Error('mobile header should show only the current section')
   await mobile.locator('.menu-button').click()
   const drawerText = await mobile.locator('#mobile-navigation-drawer').innerText()
