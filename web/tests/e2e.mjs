@@ -1,6 +1,6 @@
 import { chromium } from 'playwright'
 import { spawn } from 'node:child_process'
-import { copyFileSync, cpSync, mkdirSync, readdirSync } from 'node:fs'
+import { copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 
 copyFileSync(new URL('../public/trips/awaji-2026/public-bundle.json', import.meta.url), new URL('../dist/public-bundle.json', import.meta.url))
 mkdirSync(new URL('../dist/trips/awaji-2026/', import.meta.url), { recursive: true })
@@ -9,11 +9,17 @@ for (const item of readdirSync(new URL('../dist/', import.meta.url))) {
   if (item === 'trips') continue
   cpSync(new URL(`../dist/${item}`, import.meta.url), new URL(`../dist/trips/awaji-2026/${item}`, import.meta.url), { recursive: true })
 }
+const staleWorkerSource = "self.addEventListener('install', (event) => event.waitUntil(self.skipWaiting()))"
+writeFileSync(new URL('../dist/trips/awaji-2026/stale-worker.js', import.meta.url), staleWorkerSource)
+writeFileSync(new URL('../dist/unrelated-worker.js', import.meta.url), staleWorkerSource)
 
 const deploymentPath = '/ai-travel-planner/'
 const baseUrl = `http://127.0.0.1:4173${deploymentPath}trips/awaji-2026/`
 const dates = ['2026-08-27', '2026-08-28', '2026-08-29', '2026-08-30', '2026-08-31']
 const forbidden = /待補|未提供|未知|官方未公布|狀態正常|規劃估計|硬截止|硬離場|Sheet 指定|家庭／無障礙|聯絡[／/]參考|Canonical Trip|資料快照|熱中症|UTC|資料來源|旅行資訊|只提供出發前閱讀|不要求旅途中/
+const serviceWorkerSource = readFileSync(new URL('../public/sw.js', import.meta.url), 'utf8')
+if (!serviceWorkerSource.includes('registration.unregister()') || serviceWorkerSource.includes("addEventListener('fetch'")) throw new Error('舊版離線快取仍會攔截網頁請求')
+if (existsSync(new URL('../public/offline.html', import.meta.url))) throw new Error('舊版離線頁仍存在')
 const server = spawn('npm', ['run', 'preview', '--', '--base', deploymentPath, '--host', '127.0.0.1', '--port', '4173'], { stdio: 'inherit' })
 server.unref()
 const stop = () => server.kill('SIGTERM')
@@ -86,6 +92,32 @@ async function assertVerticalCardGap(page, selector, label, minimum = 14) {
   if (violation !== undefined) throw new Error(`${label} vertical card gap is ${violation}px`)
 }
 
+async function assertCompactConditionSummary(page, label) {
+  const conditionLayout = await page.locator('.day-condition-grid').evaluate((grid) => {
+    const bounds = grid.getBoundingClientRect()
+    const cards = [...grid.children].map((card) => {
+      const cardBounds = card.getBoundingClientRect()
+      const style = getComputedStyle(card)
+      return {
+        top: Math.round(cardBounds.top),
+        width: cardBounds.width,
+        paddingLeft: Number.parseFloat(style.paddingLeft),
+        paddingRight: Number.parseFloat(style.paddingRight),
+      }
+    })
+    return { height: bounds.height, width: bounds.width, cards }
+  })
+  const [weather, rain, heat, activity, driving, fixed] = conditionLayout.cards
+  if (
+    weather.top !== rain.top ||
+    heat.width < conditionLayout.width * 0.9 ||
+    activity.width < conditionLayout.width * 0.9 ||
+    driving.top !== fixed.top ||
+    conditionLayout.height > 760 ||
+    conditionLayout.cards.some((card) => card.paddingLeft > 14 || card.paddingRight > 14)
+  ) throw new Error(`${label} mobile condition summary is still oversized: ${JSON.stringify(conditionLayout)}`)
+}
+
 async function assertExternalLinksOpen(page, selector, label) {
   const links = page.locator(selector)
   const count = await links.count()
@@ -113,13 +145,32 @@ try {
   await waitForServer()
   browser = await chromium.launch()
 
+  // 模擬舊版離線 Worker 仍留在手機，確認只清除本行程，不影響同網域其他網站。
+  const staleCacheCleanupContext = await browser.newContext()
+  const staleCacheCleanupPage = await staleCacheCleanupContext.newPage()
+  await staleCacheCleanupPage.goto(baseUrl, { waitUntil: 'domcontentloaded' })
+  await staleCacheCleanupPage.evaluate(async () => {
+    await navigator.serviceWorker.register('stale-worker.js', { scope: './' })
+    await navigator.serviceWorker.register('../../unrelated-worker.js', { scope: '../../unrelated/' })
+  })
+  await staleCacheCleanupPage.waitForFunction(async () => (await navigator.serviceWorker.getRegistrations()).length === 2)
+  await staleCacheCleanupPage.reload({ waitUntil: 'domcontentloaded' })
+  await staleCacheCleanupPage.waitForFunction(async () => {
+    const registrations = await navigator.serviceWorker.getRegistrations()
+    return registrations.length === 1 && new URL(registrations[0].scope).pathname.endsWith('/ai-travel-planner/unrelated/')
+  })
+  await staleCacheCleanupPage.evaluate(async () => {
+    await Promise.all((await navigator.serviceWorker.getRegistrations()).map((registration) => registration.unregister()))
+  })
+  await staleCacheCleanupContext.close()
+
   const mobileContext = await browser.newContext({ viewport: { width: 390, height: 844 } })
   const mobile = await mobileContext.newPage()
   mobile.setDefaultTimeout(10000)
 
   const mobileRoutes = [
     ['overview', '.trip-overview-shell'],
-    ['today/2026-08-27', '.itinerary-workspace'],
+    ...dates.map((date) => [`today/${date}`, '.itinerary-workspace']),
     ['reservation', '.reservation-workspace'],
     ['food', '.food-workspace'],
     ['packing', '.packing-workspace'],
@@ -150,6 +201,7 @@ try {
       await assertViewportGutter(mobile, selector, `${width}px ${route}`)
       await assertCardPadding(mobile, mobileCardSelectors[routeKind], `${width}px ${route}`)
       if (mobileGapSelectors[routeKind]) await assertVerticalCardGap(mobile, mobileGapSelectors[routeKind], `${width}px ${route}`)
+      if (routeKind === 'today') await assertCompactConditionSummary(mobile, `${width}px ${route}`)
       await assertNoForbiddenText(mobile, route)
     }
   }
@@ -237,7 +289,7 @@ try {
   await mobile.getByText('暈船藥或暈車用品', { exact: true }).waitFor()
 
   await openRoute(mobile, 'reservation', '.reservation-workspace')
-  if (await mobile.locator('.reservation-map-link, .map-icon-link').count()) throw new Error('reservation page still renders legacy map buttons')
+  if (await mobile.locator('.reservation-map-link, .map-icon-link').count()) throw new Error('預約頁仍顯示舊版地圖按鈕')
   if (await mobile.locator('.reservation-card .map-pin-link').count() !== 4) throw new Error('reservation page should render one map pin for each reservation')
   if (await mobile.locator('.reservation-card').count() !== 4) throw new Error('reservation count changed unexpectedly')
 

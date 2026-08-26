@@ -1,13 +1,13 @@
 {
-  "name": "Awaji 2026 Golden Trip",
-  "short_name": "Awaji2026",
+  "name": "2026 淡路島五日行",
+  "short_name": "淡路島五日行",
   "id": "./",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#071026",
   "theme_color": "#0f6a69",
-  "description": "5-day offline-first trip guide for 淡路島・鳴門 family trip.",
+  "description": "淡路島、鳴門、德島與神戶的五日行程、餐飲、住宿與導航資訊。",
   "orientation": "portrait-primary",
   "icons": [
     {

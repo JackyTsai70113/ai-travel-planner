@@ -272,7 +272,7 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
           if (!place) return null
           const name = place.name || role
           return <figure key={place.id}>
-            <img src={place.image_url || ''} alt={place.image_alt || name} loading="lazy" />
+            <img src={place.image_url || ''} alt={place.image_alt || name} loading="eager" />
             <figcaption><span>{role}</span><strong title={name}>{officialUrl ? <a className="media-title-link" href={officialUrl} target="_blank" rel="noreferrer" aria-label={name}>{mediaTitle(name)}</a> : mediaTitle(name)}</strong>{place.image_source_url ? <a href={place.image_source_url} target="_blank" rel="noreferrer">圖片來源</a> : null}</figcaption>
           </figure>
         })}

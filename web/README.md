@@ -1,6 +1,6 @@
-# Issue 52 web app (Awaji 2026)
+# 淡路島旅行網站
 
-`web/` contains a minimal React + Vite + PWA for the 2026 淡路島・鳴門家庭行程.
+`web/` 是 2026 淡路島五日行的 React + Vite 網站。網站依賴即時網路資料，不提供離線快取或刷新提示。
 
 - bundle source: `trips/awaji-naruto-tokushima-kobe-2026/public-bundle.json`
 - build command: `npm run build`

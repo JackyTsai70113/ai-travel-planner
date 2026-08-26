@@ -1700,7 +1700,7 @@ body,
   .desktop-topbar { display: none !important; }
 }
 
-/* Final cascade for the daily assistant; legacy rules above remain for old renderers. */
+/* 每日行程的桌面版基礎樣式；行動版共用規則集中在 responsive.css。 */
 .day-hero {
   display: block;
   overflow: visible;
