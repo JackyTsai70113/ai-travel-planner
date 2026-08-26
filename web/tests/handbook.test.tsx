@@ -116,11 +116,15 @@ describe('淡路島只讀旅遊助手', () => {
   it('已知資訊後的未知尾句會移除，整段未知時不顯示', () => {
     expect(decisionCopy('GARB COSTA ORANGE 專用停車場 80 台免費；同一 Frogs FARM 三處停車場合計約 300 台免費，官方未公布各場滿位順序。')).toBe('GARB COSTA ORANGE 專用停車場 80 台免費；同一 Frogs FARM 三處停車場合計約 300 台免費')
     expect(decisionCopy('官方未公布分時人流。')).toBeNull()
+    expect(decisionCopy('臨時停車場 30 台免費、官方服務至 17:00；17:00 後未證實可使用，無法進場就直接前往晚餐。')).toBe('臨時停車場 30 台免費、官方服務至 17:00；無法進場就直接前往晚餐')
+    expect(decisionCopy('纜車單程約 6 分鐘，官方未公布夕陽時段等候分鐘；18:05 抵達後先買來回票，若排隊會壓縮 20:00 公演。')).toBe('纜車單程約 6 分鐘；18:05 抵達後先買來回票，若排隊會壓縮 20:00 公演')
+    expect(decisionCopy('11:30 已安排入座；官方未公布週六等候時間，固定七人座位應先完成線上預約，不用現場賭候位。')).toBe('11:30 已安排入座；固定七人座位應先完成線上預約，不用現場賭候位')
   })
 
   it('已失效的舊官方網址會改用已驗證的官方直達頁', () => {
     expect(usableOfficialHref('https://elb.nijigennomori.com/food/ichiraku/')).toBe('https://nijigennomori.com/food/ichiraku/')
     expect(usableOfficialHref('https://awaji-kanransya.com/')).toBe('https://www.jb-highway.co.jp/sapa/awaji_down.html')
+    expect(usableOfficialHref('https://www.booking.com/hotel/jp/example.html')).toBeUndefined()
   })
 
   it('每日頁面以名稱連官方網站、map pin 連地圖，並省略未知與重複資訊', () => {
@@ -144,6 +148,7 @@ describe('淡路島只讀旅遊助手', () => {
     expect(screen.getByTitle(`${dates[0]} 自駕路線圖`)).toHaveAttribute('src', expect.stringContaining('output=embed'))
     expect(screen.getAllByRole('link', { name: /開啟路線/ }).length).toBeGreaterThan(0)
     expect(screen.getAllByText('圖片來源').length).toBeGreaterThan(0)
+    expect(screen.getByText('Awaji Riverside Terrace in Shizuki 780', { selector: '.day-media strong' }).closest('a')).toBeNull()
     expect(document.body.textContent).not.toContain('↗')
     expect(document.querySelector('.timeline-map-link')).toBeNull()
     expect(document.body.textContent).not.toMatch(/規劃估計|Sheet 指定|家庭／無障礙|聯絡[／/]參考|狀態正常|住宿安排已放入今日時間軸/)

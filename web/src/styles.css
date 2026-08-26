@@ -1963,6 +1963,7 @@ body,
   .reservation-list,
   .food-day-groups,
   .packing-guide-grid { gap: 16px; }
+  .food-card-grid { gap: 14px; }
 
   .overview-section,
   .day-hero,
@@ -2125,4 +2126,11 @@ body,
   .packing-guide-card > header { padding: 18px; }
   .packing-guide-card ul { padding: 10px 18px 16px; }
   .packing-reference { padding: 16px 18px; line-height: 1.65; }
+
+  .card[aria-label="實用日文"] { padding: 18px; border-radius: 18px; }
+  .card[aria-label="實用日文"] .toolbar { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  .card[aria-label="實用日文"] .toolbar input,
+  .card[aria-label="實用日文"] .toolbar select { min-width: 0; min-height: 44px; }
+  .phrase-list { display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 18px; }
+  .phrase-list .subcard { margin: 0; padding: 18px; border: 1px solid #afc0c8; border-radius: 16px; background: #fff; box-shadow: 0 5px 16px rgba(20, 47, 61, .07); }
 }

@@ -77,7 +77,7 @@ async function assertCardPadding(page, selector, label, minimum = 16) {
   if (violations.length) throw new Error(`${label} card padding is too small: ${JSON.stringify(violations)}`)
 }
 
-async function assertVerticalCardGap(page, selector, label, minimum = 13) {
+async function assertVerticalCardGap(page, selector, label, minimum = 14) {
   const gaps = await page.locator(selector).evaluateAll((elements) => {
     const rectangles = elements.map((element) => element.getBoundingClientRect()).sort((a, b) => a.top - b.top)
     return rectangles.slice(1).map((current, index) => current.top - rectangles[index].bottom)
@@ -123,6 +123,7 @@ try {
     ['reservation', '.reservation-workspace'],
     ['food', '.food-workspace'],
     ['packing', '.packing-workspace'],
+    ['japanese', 'section.card[aria-label="實用日文"]'],
   ]
   const mobileCardSelectors = {
     overview: '.trip-overview-hero, .overview-section, .overview-day-card',
@@ -130,12 +131,14 @@ try {
     reservation: '.reservation-card',
     food: '.food-card',
     packing: '.packing-guide-card > header, .packing-guide-card ul',
+    japanese: 'section.card[aria-label="實用日文"], .phrase-list .subcard',
   }
   const mobileGapSelectors = {
     overview: '.overview-day-card',
     reservation: '.reservation-card',
     food: '.food-card',
     packing: '.packing-guide-card',
+    japanese: '.phrase-list .subcard',
   }
   for (const width of [375, 390, 430]) {
     await mobile.setViewportSize({ width, height: 844 })
@@ -161,6 +164,9 @@ try {
   })
   if (!overviewDayLayout || overviewDayLayout.copyTop - overviewDayLayout.numberBottom < 13) throw new Error('mobile overview day card is still cramped')
   if (await mobile.locator('.overview-day-foot').count()) throw new Error('overview day card repeats lodging information')
+  const firstDayCard = mobile.locator('.overview-day-card').first()
+  const firstDayLodgingCount = ((await firstDayCard.innerText()).match(/Awaji Riverside Terrace in Shizuki 780/g) || []).length
+  if (firstDayLodgingCount !== 1) throw new Error(`overview first day repeats lodging ${firstDayLodgingCount} times`)
   if ((await mobile.locator('.mobile-topbar-title').textContent())?.trim() !== '旅行總覽') throw new Error('mobile header should show only the current section')
   await mobile.locator('.menu-button').click()
   const drawerText = await mobile.locator('#mobile-navigation-drawer').innerText()
@@ -186,6 +192,7 @@ try {
   if (!((await shoppingCard.locator('.map-pin-link').getAttribute('href')) || '').includes('maps/search')) throw new Error('目的地卡缺少單一 map pin 停車場連結')
   if (await mobile.locator('.day-lodging-card').count()) throw new Error('住宿摘要與照片卡仍然重複')
   if (await mobile.locator('.day-media').getByText('Awaji Riverside Terrace in Shizuki 780', { exact: true }).count() !== 1) throw new Error('住宿照片卡應只顯示一次住宿名稱')
+  if (await mobile.locator('.day-media .media-title-link[href*="booking.com"]').count()) throw new Error('住宿名稱不應連到第三方訂房平台')
   const mediaGaps = await mobile.locator('.day-media figure').evaluateAll((figures) => figures.map((figure) => {
     const caption = figure.querySelector('figcaption')?.getBoundingClientRect()
     const bounds = figure.getBoundingClientRect()
