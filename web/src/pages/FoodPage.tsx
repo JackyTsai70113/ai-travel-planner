@@ -10,11 +10,12 @@ function timeLabel(value: string | null): string {
 }
 
 export function FoodPage({ bundle }: FoodPageProps) {
-  const placeGuides = bundle.travel_assistant?.place_guides || {}
-  const mealGroups = useMemo(() => bundle.days.map((day) => ({
+  const placeGuides = useMemo(() => bundle.travel_assistant?.place_guides || {}, [bundle.travel_assistant])
+  const mealGroups = useMemo(() => bundle.days.map((day, index) => ({
+    dayNumber: index + 1,
     date: day.date,
-    meals: day.items.filter((item) => item.kind === 'meal'),
-  })).filter((group) => group.meals.length > 0), [bundle.days])
+    meals: day.items.filter((item) => item.kind === 'meal' && placeGuides[item.place_id]),
+  })).filter((group) => group.meals.length > 0), [bundle.days, placeGuides])
 
   return (
     <section className="food-workspace" aria-label="餐飲與補給">
@@ -23,21 +24,22 @@ export function FoodPage({ bundle }: FoodPageProps) {
       </header>
 
       <div className="food-day-groups">
-        {mealGroups.map((group, dayIndex) => <section className="food-day" key={group.date}>
-          <header><span>第 {dayIndex + 1} 天</span><h2>{group.date}</h2></header>
+        {mealGroups.map((group) => <section className="food-day" key={group.date}>
+          <header><span>第 {group.dayNumber} 天</span><h2>{group.date}</h2></header>
           <div className="food-card-grid">{group.meals.map((meal) => {
             const name = findPlaceLabel(bundle.places, meal.place_id)
             const place = bundle.places?.find((candidate) => candidate.id === meal.place_id)
             const guide = placeGuides[meal.place_id]
+            if (!guide) return null
             return <article className="food-card" key={meal.id}>
               <div className="food-card-time">{timeLabel(meal.start_at)}</div>
               <h3><a href={buildMapsLink(place?.maps_query || name)} target="_blank" rel="noreferrer" aria-label={`${name} 在 Google Maps 開啟`}>{name}<span aria-hidden="true">↗</span></a></h3>
-              {guide ? <>
+              <>
                 <dl><div><dt>用餐時間</dt><dd>{guide.duration}</dd></div><div><dt>預算</dt><dd>{guide.cost}</dd></div><div><dt>排隊</dt><dd>{guide.queue}</dd></div><div><dt>停車</dt><dd>{guide.parking}</dd></div></dl>
                 {guide.hours ? <p className="food-hours"><strong>營業時間</strong>{guide.hours}</p> : null}
                 <div className="food-picks"><strong>推薦餐點與飲品</strong><ol>{guide.highlights.map((highlight) => <li key={highlight}>{highlight}</li>)}</ol></div>
                 <a className="official-info-link" href={guide.sourceUrl} target="_blank" rel="noreferrer">查看官方資訊 ↗</a>
-              </> : <p>這一餐以住宿內用餐為主，不需另找餐廳。</p>}
+              </>
             </article>
           })}</div>
         </section>)}

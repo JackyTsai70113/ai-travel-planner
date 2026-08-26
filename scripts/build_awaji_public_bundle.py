@@ -603,9 +603,11 @@ def _bundle_travel_assistant(trip: dict) -> dict[str, Any]:
     """從主行程覆寫資料輸出已研究的旅遊資訊。"""
     raw = _as_dict(_override_value(trip, "/presentation/travel_assistant"))
     daily_guides = _as_dict(raw.get("daily_guides"))
+    arrival_parking = _as_dict(raw.get("arrival_parking"))
     place_guides = _as_dict(raw.get("place_guides"))
     return {
         "daily_guides": daily_guides,
+        "arrival_parking": arrival_parking,
         "place_guides": place_guides,
     }
 

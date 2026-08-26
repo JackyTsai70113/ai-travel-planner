@@ -39,7 +39,14 @@ export interface PlaceGuide {
   source: BundleProvenance
 }
 
+export interface ArrivalParkingGuide {
+  text: string
+  sourceUrl: string
+  source: BundleProvenance
+}
+
 export interface TravelAssistantGuide {
   daily_guides: Record<string, DailyGuide>
+  arrival_parking: Record<string, ArrivalParkingGuide>
   place_guides: Record<string, PlaceGuide>
 }

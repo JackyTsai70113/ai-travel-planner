@@ -205,7 +205,7 @@
           "slope": "忍里有坡道與不平整路面",
           "source": {
             "provider": "Open-Meteo",
-            "retrieved_at": "2026-08-26T10:30:00+08:00",
+            "retrieved_at": "2026-08-26T11:30:00+09:00",
             "source_refs": [
               "https://api.open-meteo.com/v1/forecast"
             ],
@@ -255,7 +255,7 @@
           "slope": "夢舞台、百段苑與水御堂有階梯",
           "source": {
             "provider": "Open-Meteo",
-            "retrieved_at": "2026-08-26T10:30:00+08:00",
+            "retrieved_at": "2026-08-26T11:30:00+09:00",
             "source_refs": [
               "https://api.open-meteo.com/v1/forecast"
             ],
@@ -312,7 +312,7 @@
           "slope": "洲本城與眉山坡度明顯",
           "source": {
             "provider": "Open-Meteo 與日本氣象廳潮見表",
-            "retrieved_at": "2026-08-26T10:30:00+08:00",
+            "retrieved_at": "2026-08-26T11:30:00+09:00",
             "source_refs": [
               "https://api.open-meteo.com/v1/forecast",
               "https://marine-api.open-meteo.com/v1/marine",
@@ -372,7 +372,7 @@
           "slope": "鳴門橋紀念館周邊有坡道，船上需站穩",
           "source": {
             "provider": "Open-Meteo 與日本氣象廳潮見表",
-            "retrieved_at": "2026-08-26T10:30:00+08:00",
+            "retrieved_at": "2026-08-26T11:30:00+09:00",
             "source_refs": [
               "https://api.open-meteo.com/v1/forecast",
               "https://marine-api.open-meteo.com/v1/marine",
@@ -418,7 +418,7 @@
           "slope": "幾乎沒有",
           "source": {
             "provider": "Open-Meteo",
-            "retrieved_at": "2026-08-26T10:30:00+08:00",
+            "retrieved_at": "2026-08-26T11:30:00+09:00",
             "source_refs": [
               "https://api.open-meteo.com/v1/forecast"
             ],
@@ -435,7 +435,7 @@
           "wind": "最大風速約 17 km/h"
         }
       },
-      "last_checked": "2026-08-26T10:30:00+08:00",
+      "last_checked": "2026-08-26T11:30:00+09:00",
       "recheck_at": null,
       "source_url": "https://api.open-meteo.com/v1/forecast",
       "status": "reported",
@@ -1469,8 +1469,8 @@
   },
   "local_timezone": "Asia/Tokyo",
   "meta": {
-    "bundle_sha256": "7790565ecd4afe7318cd09652fe66dcde6192b1cb2708617268c4ebdfacbeb26",
-    "generated_at": "2026-08-26T03:25:35+00:00",
+    "bundle_sha256": "9abd0dec5b06040408f7d93b234049111df8fa3c0b654c2fbcfbf7f411ba9d57",
+    "generated_at": "2026-08-26T03:38:11+00:00",
     "source_coverage": {
       "days": 5,
       "places": 51,
@@ -1478,7 +1478,7 @@
       "selected_hotels": 3
     },
     "source_path": "trips/awaji-naruto-tokushima-kobe-2026/trip.json",
-    "source_sha256": "f7350ea87706c06b58243d04cb43515ff9d45a8deed2ac2b24e9a5215d78fc36",
+    "source_sha256": "e0f1b6d25a1b6e8555496b71cd1d87d18d3f4f527bb2a480a8b63f5244b52fa2",
     "trip_schema": "trip-v1"
   },
   "operations": {
@@ -4522,6 +4522,68 @@
     }
   ],
   "travel_assistant": {
+    "arrival_parking": {
+      "awaji-riverside-hotel": {
+        "source": {
+          "provider": "住宿公開頁",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
+          "source_url": "https://travel.rakuten.com/usa/en-us/hotel_info_item/cnt_japan/sub_hyogo_prefecture/cty_awaji_city/10123456959048",
+          "status": "reported"
+        },
+        "sourceUrl": "https://travel.rakuten.com/usa/en-us/hotel_info_item/cnt_japan/sub_hyogo_prefecture/cty_awaji_city/10123456959048",
+        "text": "敷地內免費私人停車位，最多 3 台"
+      },
+      "iwaya-port": {
+        "source": {
+          "provider": "淡路市官方網站",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
+          "source_url": "https://www.city.awaji.hyogo.jp/soshiki/kankou/49433.html",
+          "status": "reported"
+        },
+        "sourceUrl": "https://www.city.awaji.hyogo.jp/soshiki/kankou/49433.html",
+        "text": "岩屋 Port Terminal 有料停車場；24 小時、141 台、限高 2.1 公尺，首小時免費"
+      },
+      "kobe-airport-terminal-2": {
+        "source": {
+          "provider": "神戶機場官方網站",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
+          "source_url": "https://www.kairport.co.jp/access/parking",
+          "status": "reported"
+        },
+        "sourceUrl": "https://www.kairport.co.jp/access/parking",
+        "text": "第二航廈前一般車下客區；需要停車時使用第 1–3 停車場，30 分鐘內免費"
+      },
+      "road-station-fukura-p0": {
+        "source": {
+          "provider": "全國道之驛連絡會官方網站",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
+          "source_url": "https://www.michi-no-eki.jp/stations/views/19476",
+          "status": "reported"
+        },
+        "sourceUrl": "https://www.michi-no-eki.jp/stations/views/19476",
+        "text": "道之驛福良 P0 免費停車場"
+      },
+      "royal-park-canvas-kobe-sannomiya": {
+        "source": {
+          "provider": "鄰近飯店官方交通頁",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
+          "source_url": "https://www.apahotel.com/hotel/kansai/hyogo/kobesannomiya-ekimae/",
+          "status": "reported"
+        },
+        "sourceUrl": "https://www.apahotel.com/hotel/kansai/hyogo/kobesannomiya-ekimae/",
+        "text": "飯店無專用或合作停車場；使用步行約 1 分鐘的 COINPARK 下山手通二丁目平面停車場（23 台）"
+      },
+      "tokushima-seshi-besso-hotel-2": {
+        "source": {
+          "provider": "徳島別荘ホテル官方網站",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
+          "source_url": "https://yoyaku.raffles-home.jp/",
+          "status": "reported"
+        },
+        "sourceUrl": "https://yoyaku.raffles-home.jp/",
+        "text": "住宿附設停車位，數量有限"
+      }
+    },
     "daily_guides": {
       "2026-08-27": {
         "activity": "中高",
@@ -4557,7 +4619,7 @@
         "slope": "忍里有坡道與不平整路面",
         "source": {
           "provider": "Open-Meteo",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_refs": [
             "https://api.open-meteo.com/v1/forecast"
           ],
@@ -4607,7 +4669,7 @@
         "slope": "夢舞台、百段苑與水御堂有階梯",
         "source": {
           "provider": "Open-Meteo",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_refs": [
             "https://api.open-meteo.com/v1/forecast"
           ],
@@ -4664,7 +4726,7 @@
         "slope": "洲本城與眉山坡度明顯",
         "source": {
           "provider": "Open-Meteo 與日本氣象廳潮見表",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_refs": [
             "https://api.open-meteo.com/v1/forecast",
             "https://marine-api.open-meteo.com/v1/marine",
@@ -4724,7 +4786,7 @@
         "slope": "鳴門橋紀念館周邊有坡道，船上需站穩",
         "source": {
           "provider": "Open-Meteo 與日本氣象廳潮見表",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_refs": [
             "https://api.open-meteo.com/v1/forecast",
             "https://marine-api.open-meteo.com/v1/marine",
@@ -4770,7 +4832,7 @@
         "slope": "幾乎沒有",
         "source": {
           "provider": "Open-Meteo",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_refs": [
             "https://api.open-meteo.com/v1/forecast"
           ],
@@ -4801,7 +4863,7 @@
         "queue": "晚間低至中等",
         "source": {
           "provider": "設施或觀光單位官方網站",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_url": "https://www.aeon.com/store/%E3%82%A4%E3%82%AA%E3%83%B3/%E3%82%A4%E3%82%AA%E3%83%B3%E6%B7%A1%E8%B7%AF%E5%BA%97/shop_info/hours",
           "status": "reported"
         },
@@ -4820,7 +4882,7 @@
         "queue": "週日夕陽時段中高",
         "source": {
           "provider": "設施或觀光單位官方網站",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_url": "https://www.jb-highway.co.jp/sapa/awaji_down.html",
           "status": "reported"
         },
@@ -4839,7 +4901,7 @@
         "queue": "週日晚餐中高",
         "source": {
           "provider": "設施或觀光單位官方網站",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_url": "https://www.jb-highway.co.jp/sapa/awaji_down.html",
           "status": "reported"
         },
@@ -4858,7 +4920,7 @@
         "queue": "低",
         "source": {
           "provider": "設施或觀光單位官方網站",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_url": "https://www.awajishima-kanko.jp/",
           "status": "reported"
         },
@@ -4877,7 +4939,7 @@
         "queue": "20:00 夜間公演建議提早入場",
         "source": {
           "provider": "設施或觀光單位官方網站",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_url": "https://www.awaodori-kaikan.jp/",
           "status": "reported"
         },
@@ -4896,7 +4958,7 @@
         "queue": "夕陽前後中高",
         "source": {
           "provider": "設施或觀光單位官方網站",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_url": "https://www.awaodori-kaikan.jp/",
           "status": "reported"
         },
@@ -4915,7 +4977,7 @@
         "queue": "晚間低",
         "source": {
           "provider": "設施或觀光單位官方網站",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_url": "https://www.cosmospc.co.jp/shop/kansai/hyogo/awaji/",
           "status": "reported"
         },
@@ -4934,7 +4996,7 @@
         "queue": "低",
         "source": {
           "provider": "設施或觀光單位官方網站",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_url": "https://www.city.awaji.lg.jp/soshiki/shakai/51591.html",
           "status": "reported"
         },
@@ -4953,7 +5015,7 @@
         "queue": "低",
         "source": {
           "provider": "設施或觀光單位官方網站",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_url": "https://store.family.co.jp/points/52703",
           "status": "reported"
         },
@@ -4972,7 +5034,7 @@
         "queue": "低",
         "source": {
           "provider": "設施或觀光單位官方網站",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_url": "https://www.awajishima-kanko.jp/manual/detail.html?bid=454",
           "status": "reported"
         },
@@ -4991,7 +5053,7 @@
         "queue": "暑假午後中等",
         "source": {
           "provider": "設施或觀光單位官方網站",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_url": "https://awajihanasajiki.jp/5974/",
           "status": "reported"
         },
@@ -5010,7 +5072,7 @@
         "queue": "開店後熱門麵包可能較快售完",
         "source": {
           "provider": "設施或觀光單位官方網站",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_url": "https://www.instagram.com/boulangerie.rural/",
           "status": "reported"
         },
@@ -5029,7 +5091,7 @@
         "queue": "晚餐時段高，已訂位",
         "source": {
           "provider": "設施或觀光單位官方網站",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_url": "https://garbcostaorange.jp/menu/",
           "status": "reported"
         },
@@ -5048,7 +5110,7 @@
         "queue": "低",
         "source": {
           "provider": "設施或觀光單位官方網站",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_url": "https://www.awajishima-kanko.jp/",
           "status": "reported"
         },
@@ -5067,7 +5129,7 @@
         "queue": "開館初段低",
         "source": {
           "provider": "設施或觀光單位官方網站",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_url": "https://www.uzunomichi.jp/eddy/usage-guide-eddy/",
           "status": "reported"
         },
@@ -5086,7 +5148,7 @@
         "queue": "已安排 11:30，週六建議預約",
         "source": {
           "provider": "設施或觀光單位官方網站",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_url": "https://ocean-terrace.capoo.jp/",
           "status": "reported"
         },
@@ -5105,7 +5167,7 @@
         "queue": "週末中等",
         "source": {
           "provider": "設施或觀光單位官方網站",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_url": "https://sumoto-brick.jp/about/",
           "status": "reported"
         },
@@ -5124,7 +5186,7 @@
         "queue": "已訂位；週五午餐仍可能等候出餐",
         "source": {
           "provider": "設施或觀光單位官方網站",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_url": "https://www.shichicafe.com/taidoroboo/",
           "status": "reported"
         },
@@ -5143,7 +5205,7 @@
         "queue": "週日午餐高",
         "source": {
           "provider": "設施或觀光單位官方網站",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_url": "https://kinen.uzunokuni.com/",
           "status": "reported"
         },
@@ -5162,7 +5224,7 @@
         "queue": "低",
         "source": {
           "provider": "設施或觀光單位官方網站",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_url": "https://www.yumebutai.co.jp/yumebutai_guide/",
           "status": "reported"
         },
@@ -5181,7 +5243,7 @@
         "queue": "公演散場後中高",
         "source": {
           "provider": "設施或觀光單位官方網站",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_url": "https://7-men.com/shop_area/shikoku/?id=area-title",
           "status": "reported"
         },
@@ -5200,7 +5262,7 @@
         "queue": "熱門時段高，已訂位",
         "source": {
           "provider": "設施或觀光單位官方網站",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_url": "https://magia.tokyo/shop",
           "status": "reported"
         },
@@ -5219,7 +5281,7 @@
         "queue": "暑假午後偏高",
         "source": {
           "provider": "設施或觀光單位官方網站",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_url": "https://www.nijigennomori.com/naruto_shinobizato/",
           "status": "reported"
         },
@@ -5238,7 +5300,7 @@
         "queue": "週日下午中等",
         "source": {
           "provider": "設施或觀光單位官方網站",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_url": "https://nojima-scuola.com/faq/",
           "status": "reported"
         },
@@ -5257,7 +5319,7 @@
         "queue": "午餐時段中等",
         "source": {
           "provider": "設施或觀光單位官方網站",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_url": "https://nijigennomori.com/price/",
           "status": "reported"
         },
@@ -5276,7 +5338,7 @@
         "queue": "低",
         "source": {
           "provider": "設施或觀光單位官方網站",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_url": "https://www.awajishima-kanko.jp/",
           "status": "reported"
         },
@@ -5295,7 +5357,7 @@
         "queue": "低",
         "source": {
           "provider": "設施或觀光單位官方網站",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_url": "https://www.yumebutai.co.jp/yumebutai_guide/",
           "status": "reported"
         },
@@ -5314,7 +5376,7 @@
         "queue": "停車位少，週末早上中等",
         "source": {
           "provider": "設施或觀光單位官方網站",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_url": "https://www.city.sumoto.lg.jp/site/tunagarumachi/16885.html",
           "status": "reported"
         },
@@ -5333,7 +5395,7 @@
         "queue": "暑假週末中高",
         "source": {
           "provider": "設施或觀光單位官方網站",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_url": "https://www.uzunomichi.jp/usage-guide-uzu-no-michi/",
           "status": "reported"
         },
@@ -5352,7 +5414,7 @@
         "queue": "週日高，售票與登船前最繁忙",
         "source": {
           "provider": "設施或觀光單位官方網站",
-          "retrieved_at": "2026-08-26T10:30:00+08:00",
+          "retrieved_at": "2026-08-26T11:30:00+09:00",
           "source_url": "https://www.uzu-shio.com/timetable",
           "status": "reported"
         },

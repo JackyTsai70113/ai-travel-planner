@@ -76,7 +76,7 @@ const bundle: Bundle = {
     buffer_minutes: 5,
   })),
   operations: { pretrip_checklist: [] },
-  travel_assistant: { daily_guides: dailyGuides, place_guides: placeGuides },
+  travel_assistant: { daily_guides: dailyGuides, arrival_parking: {}, place_guides: placeGuides },
   reservations: [],
   preferences: { hard_constraints: [], soft_preferences: [] },
   budget: { currency: 'JPY', total: { amount: 0, currency: 'JPY' }, categories: {} },

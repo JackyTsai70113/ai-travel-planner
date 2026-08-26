@@ -82,6 +82,8 @@ try {
     if (await mobile.locator('.day-condition-grid > div').count() !== 6) throw new Error(`${date} does not show six practical condition cards`)
     if (await mobile.locator('.timeline-title-link').count() < 1) throw new Error(`${date} has no Google Maps title links`)
     if (await mobile.locator('.timeline-map-link, .map-icon-link').count()) throw new Error(`${date} still renders a large map icon button`)
+    const transportCount = await mobile.locator('.timeline-entry.transport-leg').count()
+    if (await mobile.locator('.timeline-entry.transport-leg .arrival-parking').count() !== transportCount) throw new Error(`${date} has transport cards without arrival parking`)
     if (await mobile.locator('.day-alternative-group').count() !== 2) throw new Error(`${date} does not show rain and extra-time alternatives`)
     const hasTide = await mobile.locator('.day-tide-card').count() === 1
     if (hasTide !== (date === '2026-08-29' || date === '2026-08-30')) throw new Error(`${date} tide placement is incorrect`)

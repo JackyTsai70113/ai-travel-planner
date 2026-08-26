@@ -13,6 +13,7 @@ EVIDENCE_PATH = Path("trips/awaji-naruto-tokushima-kobe-2026/evidence.json")
 CONDITIONS_PATH = Path("trips/awaji-naruto-tokushima-kobe-2026/conditions.json")
 TRIP_BUNDLE_PATH = Path("trips/awaji-naruto-tokushima-kobe-2026/public-bundle.json")
 WEB_BUNDLE_PATH = Path("web/public/trips/awaji-2026/public-bundle.json")
+EXAMPLE_BUNDLE_PATH = Path("tests/fixtures/awaji-2026/public-bundle-example.json")
 
 
 class AwajiTripFixtureTests(unittest.TestCase):
@@ -214,6 +215,28 @@ class AwajiTripFixtureTests(unittest.TestCase):
             day_refs = [item.get("transport_leg_id") for item in day["items"] if item.get("transport_leg_id")]
             self.assertGreater(len(day_refs), 0, day["date"])
 
+    def test_every_transport_destination_has_arrival_parking(self):
+        travel_assistant = next(
+            item["value"]
+            for item in self.trip["overrides"]
+            if item["path"] == "/presentation/travel_assistant"
+        )
+        for leg in self.trip["candidate_sets"]["transport_legs"]:
+            destination = self.places[leg["to_place_id"]]
+            parking = (
+                travel_assistant["place_guides"].get(leg["to_place_id"], {}).get("parking")
+                or travel_assistant["arrival_parking"].get(leg["to_place_id"], {}).get("text")
+            )
+            with self.subTest(leg_id=leg["id"], destination=destination["name"]):
+                self.assertTrue(parking)
+
+        for place_id, guide in travel_assistant["arrival_parking"].items():
+            with self.subTest(arrival_parking_place_id=place_id):
+                self.assertIn(place_id, self.places)
+                self.assertEqual(guide["source"]["source_url"], guide["sourceUrl"])
+                self.assertEqual(guide["source"]["status"], "reported")
+                self.assertEqual(datetime.fromisoformat(guide["source"]["retrieved_at"]).utcoffset().total_seconds(), 9 * 60 * 60)
+
     def test_day_three_breakfast_route_is_continuous(self):
         day_three = next(day for day in self.trip["days"] if day["date"] == "2026-08-29")
         source_legs = {leg["id"]: leg for leg in self.trip["candidate_sets"]["transport_legs"]}
@@ -343,7 +366,9 @@ class AwajiTripFixtureTests(unittest.TestCase):
     def test_checked_in_public_bundles_are_identical(self):
         trip_bundle = json.loads(TRIP_BUNDLE_PATH.read_text(encoding="utf-8"))
         web_bundle = json.loads(WEB_BUNDLE_PATH.read_text(encoding="utf-8"))
+        example_bundle = json.loads(EXAMPLE_BUNDLE_PATH.read_text(encoding="utf-8"))
         self.assertEqual(web_bundle, trip_bundle)
+        self.assertEqual(example_bundle, trip_bundle)
 
     def test_no_removed_child_elders_constraints(self):
         serialized = self.trip["preferences"]["hard_constraints"] + self.trip["preferences"]["soft_preferences"]
@@ -372,6 +397,7 @@ class AwajiTripFixtureTests(unittest.TestCase):
                 self.assertEqual(source["status"], "reported")
                 self.assertTrue(source["source_url"].startswith("https://"))
                 self.assertTrue(source["retrieved_at"])
+                self.assertEqual(datetime.fromisoformat(source["retrieved_at"]).utcoffset().total_seconds(), 9 * 60 * 60)
                 self.assertEqual(source["timezone"], "Asia/Tokyo")
                 self.assertTrue(source["valid_from"].startswith(date))
                 self.assertTrue(source["valid_until"].startswith(date))
@@ -381,6 +407,7 @@ class AwajiTripFixtureTests(unittest.TestCase):
                 self.assertEqual(guide["source"]["source_url"], guide["sourceUrl"])
                 self.assertEqual(guide["source"]["status"], "reported")
                 self.assertTrue(guide["source"]["retrieved_at"])
+                self.assertEqual(datetime.fromisoformat(guide["source"]["retrieved_at"]).utcoffset().total_seconds(), 9 * 60 * 60)
                 self.assertTrue(guide["hours"])
                 self.assertTrue(guide["parking"])
 

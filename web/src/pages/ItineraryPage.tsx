@@ -204,8 +204,8 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
           const mapHref = leg ? legDirectionsLink(bundle, leg) : buildMapsLink(place?.maps_query || place?.name || item.place_id)
           const placeGuide = !leg ? placeGuides[item.place_id] : undefined
           const arrivalPlace = leg ? bundle.places?.find((candidate) => candidate.id === leg.to_place) : undefined
-          const arrivalParking = leg ? placeGuides[leg.to_place]?.parking || arrivalPlace?.parking : undefined
-          return <article tabIndex={-1} className={`timeline-entry ${visualKind} ${item.id === route.item ? 'item-highlight' : ''}`} id={`item-${item.id}`} key={item.id}>
+          const arrivalParking = leg ? placeGuides[leg.to_place]?.parking || bundle.travel_assistant?.arrival_parking?.[leg.to_place]?.text || arrivalPlace?.parking : undefined
+          return <article tabIndex={-1} className={`timeline-entry ${visualKind} ${leg ? 'transport-leg' : ''} ${item.id === route.item ? 'item-highlight' : ''}`} id={`item-${item.id}`} key={item.id}>
             <div className="timeline-time"><strong>{timeLabel(item.start_at)}</strong><span>{item.end_at && item.end_at !== item.start_at ? timeLabel(item.end_at) : ''}</span></div>
             <div className="timeline-track"><span>{visualKind === 'reservation' ? '◆' : visualKind === 'meal' ? '✦' : visualKind === 'move' ? '→' : '●'}</span>{index < visibleItems.length - 1 ? <i /> : null}</div>
             <div className="timeline-card">

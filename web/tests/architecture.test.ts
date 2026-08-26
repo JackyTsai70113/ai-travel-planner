@@ -16,11 +16,12 @@ describe('production architecture regression gates', () => {
   })
 
   it('does not reintroduce trip-time writing, legacy storage, or fallback probing', () => {
-    const sourceFiles = ['main.tsx', 'app/TripApp.tsx', 'hooks/useBundleLoader.ts']
+    const sourceFiles = ['main.tsx', 'app/TripApp.tsx', 'hooks/useBundleLoader.ts', 'hooks/useTripNavigation.ts']
       .map((path) => read(path)).join('\n')
     expect(sourceFiles).not.toMatch(/awaji_2026_/)
     expect(sourceFiles).not.toContain('candidates')
     expect(sourceFiles).not.toContain("'./public-bundle.json'")
+    expect(sourceFiles).not.toMatch(/localStorage|sessionStorage/)
     expect(existsSync(resolve(sourceRoot, 'hooks/useTripStorage.ts'))).toBe(false)
     expect(existsSync(resolve(sourceRoot, 'lib/storage/tripStorage.ts'))).toBe(false)
     expect(read('hooks/useBundleLoader.ts')).toContain('resolveBundleUrl')

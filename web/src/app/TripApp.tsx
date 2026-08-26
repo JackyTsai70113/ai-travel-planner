@@ -111,42 +111,33 @@ export default function TripApp({ tripMeta = null, tripSlug }: TripAppProps) {
     setRouteNotFound(hasInvalidDay)
   }, [bundleLoader.bundle, isDayScopedSection, route, routeSectionNotFound])
 
-  const itineraryDayFromLastNavigation = useMemo(() => {
+  const defaultItineraryDay = useMemo(() => {
     if (!bundleLoader.bundle) return undefined
-    if (route.day) return normalizeDay(route.day)
-    const saved = localStorage.getItem(`trip:active:last-day:${selectedSection}:v1`)
-    return normalizeDay(saved || undefined) || bundleLoader.bundle.days[0]?.date
-  }, [bundleLoader.bundle, normalizeDay, route.day, selectedSection])
+    return normalizeDay(route.day) || bundleLoader.bundle.days[0]?.date
+  }, [bundleLoader.bundle, normalizeDay, route.day])
 
   const effectiveRoute = useMemo<TripRoute>(() => {
     if (!isDayScopedSection) return route
     return {
       ...route,
       section: selectedSection,
-      day: activeDay?.date || itineraryDayFromLastNavigation,
+      day: activeDay?.date || defaultItineraryDay,
       raw: route.raw,
     }
-  }, [activeDay?.date, itineraryDayFromLastNavigation, isDayScopedSection, route, selectedSection])
-
-  useEffect(() => {
-    if (!activeDay) return
-    if (selectedSection === 'today') {
-      localStorage.setItem('trip:active:last-day:today:v1', activeDay.date)
-    }
-  }, [activeDay, selectedSection])
+  }, [activeDay?.date, defaultItineraryDay, isDayScopedSection, route, selectedSection])
 
   const gotoSection = useCallback(
     (nextSection: string) => {
       const dayAwareSection = nextSection === 'today'
       const next: Partial<TripRoute> = { section: nextSection as SectionId }
-      if (dayAwareSection && itineraryDayFromLastNavigation) {
-        next.day = itineraryDayFromLastNavigation
+      if (dayAwareSection && defaultItineraryDay) {
+        next.day = defaultItineraryDay
       } else if (!dayAwareSection) {
         next.day = undefined
       }
       navigate(next)
     },
-    [itineraryDayFromLastNavigation, navigate],
+    [defaultItineraryDay, navigate],
   )
 
   const gotoRoute = useCallback((next: Partial<TripRoute>) => navigate(next), [navigate])
