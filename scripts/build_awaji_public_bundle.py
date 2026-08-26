@@ -465,6 +465,22 @@ def _bundle_conditions(trip: dict) -> dict[str, Any]:
             "freshness": "unknown",
         }
     weather = raw.get("weather") if isinstance(raw.get("weather"), dict) else {}
+    daily_weather = _as_dict(
+        _as_dict(_override_value(trip, "/presentation/travel_assistant")).get(
+            "daily_guides"
+        )
+    )
+    if not weather and daily_weather:
+        first_guide = next(iter(daily_weather.values()), {})
+        first_source = _as_dict(_as_dict(first_guide).get("source"))
+        weather = {
+            "status": "reported",
+            "status_label": "已取得逐日預報",
+            "summary": "8/27–8/31 氣溫、降雨、風速與中暑風險已整理至每日行程。",
+            "last_checked": _safe_str(first_source.get("retrieved_at")),
+            "source_url": _safe_str(first_source.get("source_url")),
+            "days": daily_weather,
+        }
     tide = raw.get("tide") if isinstance(raw.get("tide"), dict) else {}
     return {
         "weather": {
@@ -473,6 +489,8 @@ def _bundle_conditions(trip: dict) -> dict[str, Any]:
             "summary": _safe_str(weather.get("summary")),
             "last_checked": _safe_str(weather.get("last_checked")),
             "recheck_at": _safe_str(weather.get("recheck_at")),
+            "source_url": _safe_str(weather.get("source_url")),
+            "days": _as_dict(weather.get("days")),
         },
         "tide": {
             "status": _as_status(tide.get("status")),
@@ -527,7 +545,7 @@ def _bundle_alternatives(trip: dict) -> list[dict[str, Any]]:
                 "id": _safe_str(item.get("id")) or "alternative",
                 "title": _safe_str(item.get("title")) or "Plan B/C",
                 "status": _as_status(item.get("status")),
-                "summary": _safe_str(item.get("summary")) or _safe_str(item.get("notes")) or "待補",
+                "summary": _safe_str(item.get("summary")) or _safe_str(item.get("notes")) or "行程備案",
                 "reasons": _as_list(item.get("reasons")),
                 "decision_gate": _safe_str(item.get("decision_gate")),
                 "conditions": _as_list(item.get("conditions")),
@@ -576,7 +594,21 @@ def _bundle_operations(trip: dict) -> dict[str, Any]:
         "emergency": raw.get("emergency") or [],
         "handbook": raw.get("handbook") or [],
         "returns": raw.get("returns") or [],
-        "pretrip_checklist": _bundle_pretrip_checklist(trip),
+        # 公開網站是只讀的旅遊助手，不要求旅客在行程中勾選或填寫任務。
+        "pretrip_checklist": [],
+    }
+
+
+def _bundle_travel_assistant(trip: dict) -> dict[str, Any]:
+    """從主行程覆寫資料輸出已研究的旅遊資訊。"""
+    raw = _as_dict(_override_value(trip, "/presentation/travel_assistant"))
+    daily_guides = _as_dict(raw.get("daily_guides"))
+    arrival_parking = _as_dict(raw.get("arrival_parking"))
+    place_guides = _as_dict(raw.get("place_guides"))
+    return {
+        "daily_guides": daily_guides,
+        "arrival_parking": arrival_parking,
+        "place_guides": place_guides,
     }
 
 
@@ -620,7 +652,7 @@ def _bundle_reservations(days: list[dict], places: dict[str, dict[str, object]])
             if item.get("id", "").startswith("fixed-"):
                 place = places.get(item.get("place_id"), {})
                 place_name = place.get("name") if isinstance(place, dict) else None
-                fallback_name = "8/28 17:45 固定預約（名稱待補）"
+                fallback_name = "固定預約"
                 resolution = place.get("resolution") if isinstance(place, dict) else {}
                 is_resolved = bool(
                     resolution
@@ -672,11 +704,15 @@ def build_public_bundle(trip: dict, trip_path: Path) -> dict:
     }
     days = _bundle_days(trip)
     reservations = _bundle_reservations(days, places)
-    validation = _as_list(trip.get("validation", []))
+    validation = [
+        item for item in _as_list(trip.get("validation", []))
+        if not isinstance(item, dict) or item.get("code") != "PRETRIP_REFRESH_REQUIRED"
+    ]
     validation_payload = _bundle_validation(validation)
     conditions = _bundle_conditions(trip)
     alternatives = _bundle_alternatives(trip)
     operations = _bundle_operations(trip)
+    travel_assistant = _bundle_travel_assistant(trip)
     transport_legs = _bundle_transport_legs(trip, places)
     place_index = _bundle_place_index(places)
     source_ledger = _bundle_source_ledger(places, trip)
@@ -723,6 +759,7 @@ def build_public_bundle(trip: dict, trip_path: Path) -> dict:
         "conditions": conditions,
         "alternatives": alternatives,
         "operations": operations,
+        "travel_assistant": travel_assistant,
         "budget": {
             "currency": budget.get("currency"),
             "total": _money_entry(budget.get("total")) or {"amount": 0, "currency": budget.get("currency") or "JPY"},

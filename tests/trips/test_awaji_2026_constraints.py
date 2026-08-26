@@ -13,6 +13,7 @@ EVIDENCE_PATH = Path("trips/awaji-naruto-tokushima-kobe-2026/evidence.json")
 CONDITIONS_PATH = Path("trips/awaji-naruto-tokushima-kobe-2026/conditions.json")
 TRIP_BUNDLE_PATH = Path("trips/awaji-naruto-tokushima-kobe-2026/public-bundle.json")
 WEB_BUNDLE_PATH = Path("web/public/trips/awaji-2026/public-bundle.json")
+EXAMPLE_BUNDLE_PATH = Path("tests/fixtures/awaji-2026/public-bundle-example.json")
 
 
 class AwajiTripFixtureTests(unittest.TestCase):
@@ -214,6 +215,28 @@ class AwajiTripFixtureTests(unittest.TestCase):
             day_refs = [item.get("transport_leg_id") for item in day["items"] if item.get("transport_leg_id")]
             self.assertGreater(len(day_refs), 0, day["date"])
 
+    def test_every_transport_destination_has_arrival_parking(self):
+        travel_assistant = next(
+            item["value"]
+            for item in self.trip["overrides"]
+            if item["path"] == "/presentation/travel_assistant"
+        )
+        for leg in self.trip["candidate_sets"]["transport_legs"]:
+            destination = self.places[leg["to_place_id"]]
+            parking = (
+                travel_assistant["place_guides"].get(leg["to_place_id"], {}).get("parking")
+                or travel_assistant["arrival_parking"].get(leg["to_place_id"], {}).get("text")
+            )
+            with self.subTest(leg_id=leg["id"], destination=destination["name"]):
+                self.assertTrue(parking)
+
+        for place_id, guide in travel_assistant["arrival_parking"].items():
+            with self.subTest(arrival_parking_place_id=place_id):
+                self.assertIn(place_id, self.places)
+                self.assertEqual(guide["source"]["source_url"], guide["sourceUrl"])
+                self.assertEqual(guide["source"]["status"], "reported")
+                self.assertEqual(datetime.fromisoformat(guide["source"]["retrieved_at"]).utcoffset().total_seconds(), 9 * 60 * 60)
+
     def test_day_three_breakfast_route_is_continuous(self):
         day_three = next(day for day in self.trip["days"] if day["date"] == "2026-08-29")
         source_legs = {leg["id"]: leg for leg in self.trip["candidate_sets"]["transport_legs"]}
@@ -222,10 +245,10 @@ class AwajiTripFixtureTests(unittest.TestCase):
             for item in day_three["items"]
             if item.get("transport_leg_id")
         ][:2]
-        self.assertEqual(first_refs, ["leg-day3-riverside-komeda", "leg-day3-komeda-sumoto"])
+        self.assertEqual(first_refs, ["leg-day3-riverside-breakfast", "leg-day3-breakfast-sumoto"])
         first, second = (source_legs[leg_id] for leg_id in first_refs)
         self.assertEqual(first["from_place_id"], "awaji-riverside-hotel")
-        self.assertEqual(first["to_place_id"], "komeda-shizuki")
+        self.assertEqual(first["to_place_id"], "familymart-shizuku-otoshi")
         self.assertEqual(second["from_place_id"], first["to_place_id"])
         self.assertEqual(second["to_place_id"], "sumoto-castle")
 
@@ -266,7 +289,7 @@ class AwajiTripFixtureTests(unittest.TestCase):
 
     def test_sheet_operational_notes_are_not_marked_confirmed(self):
         dynamic_ids = {
-            "komeda-shizuki", "bizan-ropeway", "familymart-tokushima-kanazawa",
+            "bizan-ropeway", "familymart-tokushima-kanazawa",
             "iwaya-port", "awaji-sa-ferris-wheel", "uzushio-cruise-fukura",
         }
         bundle_places = {place["id"]: place for place in self.bundle["places"]}
@@ -300,22 +323,19 @@ class AwajiTripFixtureTests(unittest.TestCase):
                     [expected_modes.get(source["mode"], "driving")],
                 )
 
-    def test_pretrip_checklist_has_30_complete_source_rows(self):
+    def test_public_bundle_does_not_expose_interactive_pretrip_tasks(self):
         override = next(
             item
             for item in self.trip["overrides"]
             if item["path"] == "/operations/pretrip_checklist"
         )
         source_checklist = override["value"]
-        bundle_checklist = self.bundle["operations"]["pretrip_checklist"]
-
         self.assertTrue(override["preserve_on_replan"])
         self.assertEqual(len(source_checklist), 28)
-        self.assertEqual(bundle_checklist, source_checklist)
+        self.assertEqual(self.bundle["operations"]["pretrip_checklist"], [])
         self.assertEqual(len({item["id"] for item in source_checklist}), 28)
         for item in source_checklist:
             with self.subTest(item_id=item["id"]):
-                self.assertFalse(item["completed"])
                 for field in ("timing", "item", "action", "fallback", "contact"):
                     self.assertIsInstance(item[field], str)
                     self.assertTrue(item[field].strip())
@@ -346,7 +366,9 @@ class AwajiTripFixtureTests(unittest.TestCase):
     def test_checked_in_public_bundles_are_identical(self):
         trip_bundle = json.loads(TRIP_BUNDLE_PATH.read_text(encoding="utf-8"))
         web_bundle = json.loads(WEB_BUNDLE_PATH.read_text(encoding="utf-8"))
+        example_bundle = json.loads(EXAMPLE_BUNDLE_PATH.read_text(encoding="utf-8"))
         self.assertEqual(web_bundle, trip_bundle)
+        self.assertEqual(example_bundle, trip_bundle)
 
     def test_no_removed_child_elders_constraints(self):
         serialized = self.trip["preferences"]["hard_constraints"] + self.trip["preferences"]["soft_preferences"]
@@ -356,12 +378,45 @@ class AwajiTripFixtureTests(unittest.TestCase):
             self.assertNotIn(term, payload)
 
     def test_trip_title_scope(self):
-        self.assertEqual(self.trip["title"], "2026 淡路島・鳴門家庭旅行")
+        self.assertEqual(self.trip["title"], "2026 瀨戶內五日行")
 
-    def test_validation_requires_pretrip_refresh_without_stale_reservation_warning(self):
-        codes = {item.get("code") for item in self.trip["validation"]}
-        self.assertIn("PRETRIP_REFRESH_REQUIRED", codes)
-        self.assertNotIn("RESERVATION_UNCONFIRMED", codes)
+    def test_travel_assistant_facts_come_from_canonical_trip_with_sources(self):
+        override = next(
+            item
+            for item in self.trip["overrides"]
+            if item["path"] == "/presentation/travel_assistant"
+        )
+        canonical = override["value"]
+        self.assertTrue(override["preserve_on_replan"])
+        self.assertEqual(self.bundle["travel_assistant"], canonical)
+        self.assertEqual(set(canonical["daily_guides"]), {day["date"] for day in self.trip["days"]})
+
+        for date, guide in canonical["daily_guides"].items():
+            with self.subTest(date=date):
+                source = guide["source"]
+                self.assertEqual(source["status"], "reported")
+                self.assertTrue(source["source_url"].startswith("https://"))
+                self.assertTrue(source["retrieved_at"])
+                self.assertEqual(datetime.fromisoformat(source["retrieved_at"]).utcoffset().total_seconds(), 9 * 60 * 60)
+                self.assertEqual(source["timezone"], "Asia/Tokyo")
+                self.assertTrue(source["valid_from"].startswith(date))
+                self.assertTrue(source["valid_until"].startswith(date))
+
+        for place_id, guide in canonical["place_guides"].items():
+            with self.subTest(place_id=place_id):
+                self.assertEqual(guide["source"]["source_url"], guide["sourceUrl"])
+                self.assertEqual(guide["source"]["status"], "reported")
+                self.assertTrue(guide["source"]["retrieved_at"])
+                self.assertEqual(datetime.fromisoformat(guide["source"]["retrieved_at"]).utcoffset().total_seconds(), 9 * 60 * 60)
+                self.assertTrue(guide["hours"])
+                self.assertTrue(guide["parking"])
+
+    def test_public_bundle_hides_obsolete_pretrip_refresh_warning(self):
+        source_codes = {item.get("code") for item in self.trip["validation"]}
+        bundle_codes = {item.get("code") for item in self.bundle["validation"]}
+        self.assertIn("PRETRIP_REFRESH_REQUIRED", source_codes)
+        self.assertNotIn("PRETRIP_REFRESH_REQUIRED", bundle_codes)
+        self.assertNotIn("RESERVATION_UNCONFIRMED", bundle_codes)
 
     def test_rewrite_without_fixed_slot_breaks_validation(self):
         mutated = copy.deepcopy(self.trip)

@@ -2,14 +2,9 @@ export type SectionId =
   | 'overview'
   | 'today'
   | 'reservation'
-  | 'tides'
   | 'food'
-  | 'lodging'
-  | 'handbook'
   | 'packing'
-  | 'budget'
   | 'japanese'
-  | 'sources'
 
 export interface SectionDefinition {
   id: SectionId
@@ -20,17 +15,12 @@ export interface SectionDefinition {
 }
 
 export const SECTION_DEFINITIONS: SectionDefinition[] = [
-  { id: 'overview', label: '旅行總覽', description: 'trip overview', quick: true },
+  { id: 'overview', label: '旅行總覽', description: '五日重點與住宿安排', quick: true },
   { id: 'today', label: '每日行程', description: '今天應看哪些行程', dayScoped: true, quick: true },
-  { id: 'reservation', label: '預約與票券', description: '確認既有預約', quick: true },
-  { id: 'tides', label: '潮汐與動態', description: '潮汐與可變條件', dayScoped: true },
-  { id: 'food', label: '餐飲與補給', description: '飲食與補給與替代方案' },
-  { id: 'lodging', label: '住宿', description: '住宿安排與備註' },
-  { id: 'handbook', label: '旅行手冊', description: '緊急與重要行前資訊' },
-  { id: 'packing', label: '行李與備忘', description: '行前項目與本機備註' },
-  { id: 'budget', label: '行李與預算', description: '預算與費用紀錄' },
+  { id: 'reservation', label: '預約時間', description: '已排定的日期與時間', quick: true },
+  { id: 'food', label: '餐飲與補給', description: '餐廳、餐點與補給資訊' },
+  { id: 'packing', label: '攜帶物品', description: '清楚列出這趟旅程要帶什麼' },
   { id: 'japanese', label: '實用日文', description: '實用句型與緊急用語' },
-  { id: 'sources', label: '資料來源', description: '內容來源與更新狀態' },
 ]
 
 export const SECTION_BY_ID = new Map<string, SectionDefinition>(SECTION_DEFINITIONS.map((item) => [item.id, item]))

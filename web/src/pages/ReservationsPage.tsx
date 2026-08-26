@@ -3,48 +3,12 @@ import {
   Bundle,
   BundleReservation,
 } from '../contracts/trip'
-import { MapPinIcon } from '../design-system/primitives/MapPinIcon'
 import { buildMapsSearchLink } from '../lib/google-maps-links'
 
 interface ReservationsPageProps {
   bundle: Bundle
 }
 
-function escapeIcsText(value: string): string {
-  return value
-    .replace(/\\/g, '\\\\')
-    .replace(/\r?\n/g, '\\n')
-    .replace(/,/g, '\\,')
-    .replace(/;/g, '\\;')
-}
-
-function utcCalendarValue(date: Date): string {
-  const year = date.getUTCFullYear()
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0')
-  const day = String(date.getUTCDate()).padStart(2, '0')
-  const hours = String(date.getUTCHours()).padStart(2, '0')
-  const minutes = String(date.getUTCMinutes()).padStart(2, '0')
-  const seconds = String(date.getUTCSeconds()).padStart(2, '0')
-  return `${year}${month}${day}T${hours}${minutes}${seconds}Z`
-}
-
-export function buildReservationCalendarIcs(reservation: BundleReservation): string | null {
-  if (!reservation.time || !reservation.name) return null
-  const startDate = new Date(reservation.time)
-  if (Number.isNaN(startDate.getTime())) return null
-  const endDate = new Date(startDate.getTime() + 60 * 60 * 1000)
-  return `BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//AI Travel Planner//Reservation//ZH-TW
-BEGIN:VEVENT
-UID:${escapeIcsText(reservation.id)}
-DTSTART:${utcCalendarValue(startDate)}
-DTEND:${utcCalendarValue(endDate)}
-SUMMARY:${escapeIcsText(reservation.name)}
-DESCRIPTION:${escapeIcsText(reservation.kind)}
-END:VEVENT
-END:VCALENDAR`
-}
 function formatDate(value: string) {
   try {
     return new Intl.DateTimeFormat('zh-TW', {
@@ -63,6 +27,7 @@ function formatTime(value: string | null) {
 }
 
 export function ReservationsPage({ bundle }: ReservationsPageProps) {
+  const placeGuides = bundle.travel_assistant?.place_guides || {}
   const grouped = useMemo(() => {
     const byDay = new Map<string, BundleReservation[]>()
     bundle.reservations.forEach((reservation) => {
@@ -76,9 +41,9 @@ export function ReservationsPage({ bundle }: ReservationsPageProps) {
 
   return (
     <section className="reservation-workspace" aria-label="預約與票券">
-      <header className="page-intro">
-        <div><p className="eyebrow">BOOKING DESK</p><h1>預約與固定時間</h1><p>集中查看已排定的日期、時間與集合地點。</p></div>
-        <div className="page-intro-stats"><span><strong>{bundle.reservations.length}</strong> 件預約</span></div>
+      <header className="page-intro reservation-intro">
+        <div><p className="eyebrow">預約總覽</p><h1>已排定的時間</h1><p>只保留日期、時間、地點與實際會用到的內容；詳細玩法仍放在每日行程。</p></div>
+        <div className="page-intro-stats"><span><strong>{bundle.reservations.length}</strong> 筆</span></div>
       </header>
 
       <div className="reservation-groups">
@@ -89,15 +54,17 @@ export function ReservationsPage({ bundle }: ReservationsPageProps) {
               {group.reservations.map((reservation) => {
                 const place = bundle.places?.find((candidate) => candidate.id === reservation.place_id)
                 const placeName = place?.name || reservation.name || reservation.place_id
-                const address = place?.address
                 const mapHref = buildMapsSearchLink(place?.maps_query || place?.address || placeName)
+                const guide = placeGuides[reservation.place_id]
 
                 return (
                   <article className="reservation-card" key={reservation.id}>
                     <div className="reservation-time"><strong>{formatTime(reservation.time)}</strong></div>
                     <div className="reservation-main">
-                      <div className="reservation-title-row"><h2>{reservation.name || placeName}<a className="reservation-map-link" href={mapHref} target="_blank" rel="noreferrer" aria-label={`${placeName} 在 Google Maps 開啟`} title="在 Google Maps 開啟"><MapPinIcon /></a></h2></div>
-                      {address ? <p className="reservation-address">{address}</p> : null}
+                      <div className="reservation-title-row"><h2><a href={mapHref} target="_blank" rel="noreferrer" aria-label={`${placeName} 在 Google Maps 開啟`}>{reservation.name || placeName}<span aria-hidden="true">↗</span></a></h2></div>
+                      {guide ? <p className="reservation-summary">{guide.duration}｜{guide.cost}｜排隊：{guide.queue}</p> : null}
+                      {guide ? <ul className="reservation-highlights">{guide.highlights.slice(0, 3).map((highlight) => <li key={highlight}>{highlight}</li>)}</ul> : null}
+                      {reservation.official_url || guide?.sourceUrl ? <a className="official-info-link" href={reservation.official_url || guide?.sourceUrl} target="_blank" rel="noreferrer">查看官方資訊 ↗</a> : null}
                     </div>
                   </article>
                 )

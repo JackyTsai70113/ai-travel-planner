@@ -1,3 +1,5 @@
+import type { TravelAssistantGuide } from '../content/awaji-travel-guide'
+
 export type OperationalStatus = 'confirmed' | 'estimated' | 'reported' | 'user-confirmed' | 'warning' | 'error' | 'critical' | 'info' | 'unverified' | 'stale' | 'conflict' | 'unresolved' | 'unknown'
 
 export interface BundleProvenance {
@@ -184,6 +186,7 @@ export interface Bundle {
     closures?: unknown[]
     freshness?: string
   }
+  travel_assistant?: TravelAssistantGuide
   days: BundleDay[]
   transport_legs?: BundleTransportLeg[]
   alternatives?: Array<{

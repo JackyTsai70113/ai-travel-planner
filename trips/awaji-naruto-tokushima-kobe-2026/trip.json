@@ -1,7 +1,7 @@
 {
   "schema_version": "trip-v1",
   "id": "awaji-naruto-tokushima-kobe-2026",
-  "title": "2026 淡路島・鳴門家庭旅行",
+  "title": "2026 瀨戶內五日行",
   "local_timezone": "Asia/Tokyo",
   "date_range": {
     "start_date": "2026-08-27",
@@ -813,15 +813,14 @@
         }
       },
       {
-        "id": "komeda-shizuki",
-        "name": "コメダ珈琲店 淡路志筑店",
+        "id": "familymart-shizuku-otoshi",
+        "name": "FamilyMart 志筑大歳店",
         "kind": "restaurant",
-        "address": "兵庫県淡路市志筑1720-1",
-        "phone": "0799-62-1030",
-        "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Komeda+Awaji+Shizuki",
-        "opening_hours_note": "通常 7:00–22:00；2026/8/29 06:50 早餐早於通常開店時間，改列 FamilyMart 外帶為主，店方若公告提早營業才使用。",
-        "accessibility_notes": "7 人於 7:00 開門即進；07:15 未入座即改便利商店，07:45 硬出發。",
-        "provenance": {"source_type":"user_input","provider":"Google Sheet 行程表","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T09:00:00+08:00","confidence":1,"status":"reported"}
+        "address": "兵庫県淡路市志筑1867-1",
+        "google_maps_url": "https://www.google.com/maps/search/?api=1&query=FamilyMart+Shizuku+Otoshi+Awaji",
+        "opening_hours_note": "24 小時營業；8/29（週六）06:50 可直接購買早餐。",
+        "identifiers": [{"type":"official_url","value":"https://store.family.co.jp/points/52703","provenance":{"source_type":"official","provider":"FamilyMart 店舖搜尋","source_url":"https://store.family.co.jp/points/52703","retrieved_at":"2026-08-26T11:00:00+08:00","confidence":1,"status":"confirmed"}}],
+        "provenance": {"source_type":"official","provider":"FamilyMart 店舖搜尋","source_url":"https://store.family.co.jp/points/52703","retrieved_at":"2026-08-26T11:00:00+08:00","confidence":1,"status":"confirmed","note":"官方店舖頁列明志筑大歲店 24 小時營業。"}
       },
       {
         "id": "sumoto-castle",
@@ -951,7 +950,7 @@
         "kind": "poi",
         "address": "兵庫県淡路市岩屋大林2674-3",
         "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Awaji+Service+Area+Highway+Oasis",
-        "opening_hours_note": "各餐飲與設施營業依當日現場；19:30 硬離場。",
+        "opening_hours_note": "美食區 24 小時；餐廳 07:00–21:00。",
         "accessibility_notes": "一般道路不可由淡路 IC 進 SA；確認 ETC 專用淡路北 Smart IC／正確高速動線。",
         "identifiers": [{"type":"official_url","value":"https://www.awajishimahighwayoasis.com/access/","provenance":{"source_type":"official","provider":"淡路ハイウェイオアシス","source_url":"https://www.awajishimahighwayoasis.com/access/","retrieved_at":"2026-08-23T03:20:00+08:00","status":"reported","note":"官方交通頁確認地址與進出方式"}}],
         "provenance": {"source_type":"official","provider":"淡路ハイウェイオアシス","source_url":"https://www.awajishimahighwayoasis.com/access/","retrieved_at":"2026-08-23T03:20:00+08:00","confidence":1,"status":"confirmed"}
@@ -1265,27 +1264,27 @@
         "provenance": {"source_type":"derived","provider":"Google Sheet planning estimate","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117","retrieved_at":"2026-08-23T03:30:00+08:00","confidence":0.6,"status":"estimated","note":"步行估計：5 分；緩衝：0 分。導航：老街至 S BRICK 短距離轉場；延誤切點：直接進 S BRICK；家庭注意：平地短走。"}
       },
       {
-        "id": "leg-day3-riverside-komeda",
+        "id": "leg-day3-riverside-breakfast",
         "mode": "car",
         "from_place_id": "awaji-riverside-hotel",
-        "to_place_id": "komeda-shizuki",
+        "to_place_id": "familymart-shizuku-otoshi",
         "departure_at": "2026-08-29T06:35:00+09:00",
         "arrival_at": "2026-08-29T06:50:00+09:00",
         "provenance": {
           "source_type": "derived", "provider": "Google Sheet planning estimate", "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117", "retrieved_at": "2026-08-23T12:00:00+08:00", "confidence": 0.5, "status": "estimated",
-          "note": "行車估計：10 分；緩衝：5 分。導航：住宿至コメダ淡路志筑店；延誤切點：06:50 尚未抵達即改便利商店外帶；家庭注意：先讓長輩幼兒在入口下車。"
+          "note": "行車約 10 分鐘；另留 5 分鐘停車。FamilyMart 志筑大歲店官方標示 24 小時營業。"
         }
       },
       {
-        "id": "leg-day3-komeda-sumoto",
+        "id": "leg-day3-breakfast-sumoto",
         "mode": "car",
-        "from_place_id": "komeda-shizuki",
+        "from_place_id": "familymart-shizuku-otoshi",
         "to_place_id": "sumoto-castle",
         "departure_at": "2026-08-29T07:35:00+09:00",
         "arrival_at": "2026-08-29T08:20:00+09:00",
         "provenance": {
           "source_type": "derived", "provider": "Google Sheet planning estimate", "source_url": "https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=539581117", "retrieved_at": "2026-08-23T09:00:00+08:00", "confidence": 0.8, "status": "estimated",
-          "note": "行車估計：30–35 分；緩衝：10 分。導航：早餐後直接前往洲本並看即時路況，大型車勿闖最窄停車區；延誤切點：07:45 尚未上路或 08:25 未停好車即改往老街／S BRICK；家庭注意：乘客先在平緩處下車。"
+          "note": "行車約 35 分鐘；另留 10 分鐘供洲本城停車。洲本城上城停車區入口狹窄。"
         }
       },
       {
@@ -1431,7 +1430,7 @@
           "notes": "18:30 已訂位；開始時間為使用者確認，19:30 結束為規劃估計，實際用餐時長未確認。"
         },
         {"id":"day1-drive-garb-aeon","kind":"transport","place_id":"aeon-awaji","start_at":"2026-08-27T19:30:00+09:00","end_at":"2026-08-27T20:00:00+09:00","transport_leg_id":"leg-day1-garb-aeon","selection_status":"selected"},
-        {"id":"day1-night-shopping","kind":"visit","place_id":"aeon-awaji","start_at":"2026-08-27T20:00:00+09:00","end_at":"2026-08-27T20:40:00+09:00","selection_status":"selected","alternative_place_ids":["plant-awaji"],"notes":"Sheet 指定 AEON 或 PLANT；自由彈性、時間為規劃估計，疲累即取消。"},
+        {"id":"day1-night-shopping","kind":"visit","place_id":"aeon-awaji","start_at":"2026-08-27T20:00:00+09:00","end_at":"2026-08-27T20:40:00+09:00","selection_status":"selected","alternative_place_ids":["plant-awaji"],"notes":"晚間補充飲水、早餐與日用品；若已備齊可直接前往住宿。"},
         {"id":"day1-drive-aeon-riverside","kind":"transport","place_id":"awaji-riverside-hotel","start_at":"2026-08-27T20:40:00+09:00","end_at":"2026-08-27T21:00:00+09:00","transport_leg_id":"leg-day1-aeon-riverside","selection_status":"selected"},
         {"id":"day1-checkin","kind":"check_in","place_id":"awaji-riverside-hotel","start_at":"2026-08-27T21:00:00+09:00","end_at":"2026-08-27T21:20:00+09:00","selection_status":"selected","notes":"住宿與地址為使用者確認；入住時間為規劃估計。"}
       ]
@@ -1445,7 +1444,7 @@
         {"id":"day2-drive-rural-yumebutai","kind":"transport","place_id":"map-import-yumebutai","start_at":"2026-08-28T08:15:00+09:00","end_at":"2026-08-28T08:45:00+09:00","transport_leg_id":"leg-day2-rural-yumebutai","selection_status":"selected"},
         {"id":"day2-yumebutai","kind":"visit","place_id":"map-import-yumebutai","start_at":"2026-08-28T08:45:00+09:00","end_at":"2026-08-28T09:45:00+09:00","selection_status":"selected","notes":"Sheet 指定 Awaji Yumebutai；時間為規劃估計。"},
         {"id":"day2-walk-yumebutai-sea-church","kind":"transport","place_id":"sea-church-awaji","start_at":"2026-08-28T09:45:00+09:00","end_at":"2026-08-28T09:55:00+09:00","transport_leg_id":"leg-day2-yumebutai-sea-church","selection_status":"selected"},
-        {"id":"day2-sea-church","kind":"visit","place_id":"sea-church-awaji","start_at":"2026-08-28T09:55:00+09:00","end_at":"2026-08-28T10:25:00+09:00","selection_status":"selected","notes":"獨立停靠；入內參觀須依婚禮與館方當日開放狀況，未開放則改為外觀短停。"},
+        {"id":"day2-sea-church","kind":"visit","place_id":"sea-church-awaji","start_at":"2026-08-28T09:55:00+09:00","end_at":"2026-08-28T10:25:00+09:00","selection_status":"selected","notes":"安排建築外觀與淡路夢舞台公共區域，不進入飯店內的海之教會。"},
         {"id":"day2-drive-sea-church-mizumido","kind":"transport","place_id":"honpukuji-mizumido","start_at":"2026-08-28T10:25:00+09:00","end_at":"2026-08-28T10:45:00+09:00","transport_leg_id":"leg-day2-sea-church-mizumido","selection_status":"selected"},
         {"id":"day2-mizumido","kind":"visit","place_id":"honpukuji-mizumido","start_at":"2026-08-28T10:45:00+09:00","end_at":"2026-08-28T11:30:00+09:00","selection_status":"selected","notes":"Sheet 將本福寺水御堂列為獨立停靠；時間為規劃估計。"},
         {"id":"day2-drive-mizumido-taidrobou","kind":"transport","place_id":"map-import-taidrobou","start_at":"2026-08-28T11:30:00+09:00","end_at":"2026-08-28T13:00:00+09:00","transport_leg_id":"leg-day2-mizumido-taidrobou","selection_status":"selected","notes":"50 分規劃車程＋40 分訂位緩衝，不把 90 分全部當車程。"},
@@ -1490,7 +1489,7 @@
           "notes": "Sheet 指定民宿自炊；時間為規劃估計。"
         },
         {"id":"day2-drive-riverside-cosmos","kind":"transport","place_id":"cosmos-shizuki","start_at":"2026-08-28T20:30:00+09:00","end_at":"2026-08-28T20:45:00+09:00","transport_leg_id":"leg-day2-riverside-cosmos","selection_status":"selected"},
-        {"id":"day2-night-shopping","kind":"visit","place_id":"cosmos-shizuki","start_at":"2026-08-28T20:45:00+09:00","end_at":"2026-08-28T21:15:00+09:00","selection_status":"selected","notes":"Sheet 指定 Cosmos 或超商巡禮；自由彈性、時間為規劃估計，疲累即取消。"},
+        {"id":"day2-night-shopping","kind":"visit","place_id":"cosmos-shizuki","start_at":"2026-08-28T20:45:00+09:00","end_at":"2026-08-28T21:15:00+09:00","selection_status":"selected","notes":"補充飲水、防曬、常用藥品與隔日早餐；若已備齊可直接返回住宿。"},
         {"id":"day2-drive-cosmos-riverside","kind":"transport","place_id":"awaji-riverside-hotel","start_at":"2026-08-28T21:15:00+09:00","end_at":"2026-08-28T21:25:00+09:00","transport_leg_id":"leg-day2-cosmos-riverside","selection_status":"selected"}
       ]
     },
@@ -1504,18 +1503,18 @@
           "notes": "住宿規則退房至 10:00；為配合 06:35 出發，06:20–06:35 完成退房、裝車與最後巡房。"
         },
         {
-          "id": "day3-drive-riverside-komeda", "kind": "transport", "place_id": "komeda-shizuki",
-          "start_at": "2026-08-29T06:35:00+09:00", "end_at": "2026-08-29T06:50:00+09:00", "transport_leg_id": "leg-day3-riverside-komeda", "selection_status": "selected",
-          "notes": "住宿至 Komeda 的車程與 5 分緩衝皆為規劃估計；06:50 尚未抵達即改便利商店。"
+          "id": "day3-drive-riverside-breakfast", "kind": "transport", "place_id": "familymart-shizuku-otoshi",
+          "start_at": "2026-08-29T06:35:00+09:00", "end_at": "2026-08-29T06:50:00+09:00", "transport_leg_id": "leg-day3-riverside-breakfast", "selection_status": "selected",
+          "notes": "前往官方標示 24 小時營業的 FamilyMart 志筑大歲店。"
         },
         {
-          "id": "day3-breakfast-komeda", "kind": "meal", "place_id": "komeda-shizuki",
+          "id": "day3-breakfast-familymart", "kind": "meal", "place_id": "familymart-shizuku-otoshi",
           "start_at": "2026-08-29T06:50:00+09:00", "end_at": "2026-08-29T07:35:00+09:00", "selection_status": "selected",
-          "notes": "07:15 未入座或出餐慢即改便利商店外帶；07:35 離店，最晚 07:45 必須上路。"
+          "notes": "早餐建議飯糰或三明治、優格或水果、咖啡與電解質飲料；店舖 24 小時營業。"
         },
         {
-          "id": "day3-drive-komeda-sumoto", "kind": "transport", "place_id": "sumoto-castle",
-          "start_at": "2026-08-29T07:35:00+09:00", "end_at": "2026-08-29T08:20:00+09:00", "transport_leg_id": "leg-day3-komeda-sumoto", "selection_status": "selected",
+          "id": "day3-drive-breakfast-sumoto", "kind": "transport", "place_id": "sumoto-castle",
+          "start_at": "2026-08-29T07:35:00+09:00", "end_at": "2026-08-29T08:20:00+09:00", "transport_leg_id": "leg-day3-breakfast-sumoto", "selection_status": "selected",
           "notes": "早餐後直接前往洲本；30–35 分車程＋10 分緩衝，大型車不要硬闖最窄停車區；08:25 未停好車直接改往老街／S BRICK。"
         },
         {
@@ -1784,6 +1783,920 @@
       }
     },
     {
+      "id": "awaji-travel-assistant-guide",
+      "path": "/presentation/travel_assistant",
+      "value": {
+        "daily_guides": {
+          "2026-08-27": {
+            "weather": "多雲、上午可能有雷雨，午後仍可能有短暫雨",
+            "temperature": "27–33°C",
+            "rain": "降雨機率 29%｜雨量約 0.1 mm",
+            "heatRisk": "中暑風險高：忍里與海岸行程曝曬時間長",
+            "wind": "最大風速約 25 km/h；海邊風感明顯",
+            "activity": "中高",
+            "steps": "約 6,000–8,000 步",
+            "stairs": "約 60–120 階",
+            "slope": "忍里有坡道與不平整路面",
+            "driving": "約 3 小時 35 分",
+            "fixedTimes": "10:30 JX834 抵達｜18:30 GARB 晚餐",
+            "rainOptions": [
+              {
+                "title": "縮短忍里，改逛二次元之森室內商店與餐飲區",
+                "reasons": [
+                  "仍保留 NARUTO 主題體驗",
+                  "不必增加跨區車程"
+                ]
+              },
+              {
+                "title": "取消海岸散步，提早到 GARB COSTA ORANGE",
+                "reasons": [
+                  "避免雷雨與強風曝露",
+                  "可保留晚餐前休息時間"
+                ]
+              }
+            ],
+            "extraTimeOptions": [
+              {
+                "title": "兵庫縣立淡路島公園展望區",
+                "reasons": [
+                  "與忍里同園區，不必另找停車位",
+                  "可看明石海峽與園區景觀"
+                ]
+              }
+            ],
+            "source": {
+              "provider": "Open-Meteo",
+              "source_url": "https://api.open-meteo.com/v1/forecast",
+              "source_refs": [
+                "https://api.open-meteo.com/v1/forecast"
+              ],
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported",
+              "valid_from": "2026-08-27T00:00:00+09:00",
+              "valid_until": "2026-08-27T23:59:59+09:00",
+              "timezone": "Asia/Tokyo"
+            }
+          },
+          "2026-08-28": {
+            "weather": "陰天，午後有雨",
+            "temperature": "25–30°C",
+            "rain": "降雨機率 65%｜雨量約 17.7 mm",
+            "heatRisk": "中暑風險中等：濕度高，體感仍悶熱",
+            "wind": "最大風速約 21 km/h",
+            "activity": "高",
+            "steps": "約 7,000–9,000 步",
+            "stairs": "約 150–250 階",
+            "slope": "夢舞台、百段苑與水御堂有階梯",
+            "driving": "約 5 小時",
+            "fixedTimes": "13:00 鯛料理午餐｜17:45 幸福鬆餅",
+            "rainOptions": [
+              {
+                "title": "以淡路夢舞台室內空間與安藤建築動線為主",
+                "reasons": [
+                  "地下停車場可直接進入建築群",
+                  "可避開花田長時間淋雨"
+                ]
+              },
+              {
+                "title": "花さじき改為 HELLO KITTY SMILE",
+                "reasons": [
+                  "主要展區在室內",
+                  "同在淡路島西海岸，容易銜接 17:45 預約"
+                ]
+              }
+            ],
+            "extraTimeOptions": [
+              {
+                "title": "淡路夢舞台圓形廣場與海回廊",
+                "reasons": [
+                  "安藤忠雄建築特色集中",
+                  "免費且與原行程同場域"
+                ]
+              }
+            ],
+            "source": {
+              "provider": "Open-Meteo",
+              "source_url": "https://api.open-meteo.com/v1/forecast",
+              "source_refs": [
+                "https://api.open-meteo.com/v1/forecast"
+              ],
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported",
+              "valid_from": "2026-08-28T00:00:00+09:00",
+              "valid_until": "2026-08-28T23:59:59+09:00",
+              "timezone": "Asia/Tokyo"
+            }
+          },
+          "2026-08-29": {
+            "weather": "上午可能有雷雨，之後多雲且非常潮濕",
+            "temperature": "26–32°C",
+            "rain": "降雨機率 30%｜雨量約 7.3 mm",
+            "heatRisk": "中暑風險高：洲本城、鳴門公園與眉山皆有爬升",
+            "wind": "鳴門最大風速約 11 km/h｜浪高最高約 0.48 m",
+            "activity": "全程最高",
+            "steps": "約 8,000–11,000 步",
+            "stairs": "約 200–350 階",
+            "slope": "洲本城與眉山坡度明顯",
+            "driving": "約 5 小時",
+            "fixedTimes": "11:30 Ocean Terrace｜20:00 阿波舞公演",
+            "tide": "鳴門海峽 12:40 南流最快、19:00 北流最快；15:30 渦之道已離午間最佳時段一段時間，以橋景與海上步道為主。",
+            "rainOptions": [
+              {
+                "title": "取消洲本城與慶野松原，保留 S BRICK、EDDY 與阿波舞",
+                "reasons": [
+                  "把戶外爬坡改成室內展館",
+                  "仍保留淡路、鳴門、德島三段代表體驗"
+                ]
+              },
+              {
+                "title": "眉山纜車改為阿波舞會館提早入場",
+                "reasons": [
+                  "雷雨或強風時不需上山",
+                  "可在室內休息並看阿波舞資料"
+                ]
+              }
+            ],
+            "extraTimeOptions": [
+              {
+                "title": "大鳴門橋架橋記念館 EDDY",
+                "reasons": [
+                  "與渦之道步行相連",
+                  "能用互動展覽理解漩渦與大橋結構"
+                ]
+              },
+              {
+                "title": "洲本市民廣場紅磚建築群",
+                "reasons": [
+                  "緊鄰 S BRICK",
+                  "平地短走、適合拍照"
+                ]
+              }
+            ],
+            "source": {
+              "provider": "Open-Meteo 與日本氣象廳潮見表",
+              "source_url": "https://api.open-meteo.com/v1/forecast",
+              "source_refs": [
+                "https://api.open-meteo.com/v1/forecast",
+                "https://marine-api.open-meteo.com/v1/marine",
+                "https://www.uzunomichi.jp/tide-calendar/"
+              ],
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported",
+              "valid_from": "2026-08-29T00:00:00+09:00",
+              "valid_until": "2026-08-29T23:59:59+09:00",
+              "timezone": "Asia/Tokyo"
+            }
+          },
+          "2026-08-30": {
+            "weather": "炎熱、非常潮濕，午後有短暫陣雨",
+            "temperature": "26–33°C",
+            "rain": "降雨機率 35%｜雨量約 2.4 mm",
+            "heatRisk": "中暑風險很高：港區與服務區廣場曝曬強",
+            "wind": "鳴門最大風速約 11 km/h｜浪高最高約 0.48 m",
+            "activity": "中等",
+            "steps": "約 5,000–7,000 步",
+            "stairs": "約 80–150 階",
+            "slope": "鳴門橋紀念館周邊有坡道，船上需站穩",
+            "driving": "約 4 小時 10 分",
+            "fixedTimes": "12:50 觀潮船",
+            "tide": "鳴門海峽 13:20 南流最快；12:50 船班正好涵蓋接近最佳潮流的時段。航程約 60 分鐘。",
+            "rainOptions": [
+              {
+                "title": "保留觀潮船，取消絵島與戶外觀景",
+                "reasons": [
+                  "船班是當日固定核心體驗",
+                  "Nojima Scuola 與淡路 SA 都有室內空間"
+                ]
+              },
+              {
+                "title": "若船班停航，改走渦之道與 EDDY 共通票",
+                "reasons": [
+                  "仍可在大鳴門橋上看潮流",
+                  "互動展館不受降雨影響"
+                ]
+              }
+            ],
+            "extraTimeOptions": [
+              {
+                "title": "福良港足湯「うずのゆ」",
+                "reasons": [
+                  "就在乘船區旁",
+                  "免費且適合船班前後短休息"
+                ]
+              },
+              {
+                "title": "淡路 SA 大觀覽車",
+                "reasons": [
+                  "一圈約 15 分鐘，容易控制停留時間",
+                  "可看明石海峽大橋與神戶方向夜景"
+                ]
+              }
+            ],
+            "source": {
+              "provider": "Open-Meteo 與日本氣象廳潮見表",
+              "source_url": "https://api.open-meteo.com/v1/forecast",
+              "source_refs": [
+                "https://api.open-meteo.com/v1/forecast",
+                "https://marine-api.open-meteo.com/v1/marine",
+                "https://www.uzunomichi.jp/tide-calendar/"
+              ],
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported",
+              "valid_from": "2026-08-30T00:00:00+09:00",
+              "valid_until": "2026-08-30T23:59:59+09:00",
+              "timezone": "Asia/Tokyo"
+            }
+          },
+          "2026-08-31": {
+            "weather": "炎熱潮濕，午後可能有短暫雨",
+            "temperature": "25–32°C",
+            "rain": "降雨機率 33%｜雨量約 2.7 mm",
+            "heatRisk": "中暑風險中等：主要活動在飯店與航廈內",
+            "wind": "最大風速約 17 km/h",
+            "activity": "低",
+            "steps": "約 3,000–5,000 步",
+            "stairs": "少量，航廈可使用電梯",
+            "slope": "幾乎沒有",
+            "driving": "約 1 小時 10 分",
+            "fixedTimes": "12:45 JX1835 起飛",
+            "rainOptions": [
+              {
+                "title": "維持原行程，直接進入神戶機場第二航廈",
+                "reasons": [
+                  "全程以室內動線為主",
+                  "不增加返程日風險"
+                ]
+              }
+            ],
+            "extraTimeOptions": [
+              {
+                "title": "神戶機場觀景台",
+                "reasons": [
+                  "位於同一航廈區域",
+                  "可看跑道、神戶港與飛機起降"
+                ]
+              }
+            ],
+            "source": {
+              "provider": "Open-Meteo",
+              "source_url": "https://api.open-meteo.com/v1/forecast",
+              "source_refs": [
+                "https://api.open-meteo.com/v1/forecast"
+              ],
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported",
+              "valid_from": "2026-08-31T00:00:00+09:00",
+              "valid_until": "2026-08-31T23:59:59+09:00",
+              "timezone": "Asia/Tokyo"
+            }
+          }
+        },
+        "arrival_parking": {
+          "awaji-riverside-hotel": {
+            "text": "敷地內免費私人停車位，最多 3 台",
+            "sourceUrl": "https://travel.rakuten.com/usa/en-us/hotel_info_item/cnt_japan/sub_hyogo_prefecture/cty_awaji_city/10123456959048",
+            "source": {
+              "provider": "住宿公開頁",
+              "source_url": "https://travel.rakuten.com/usa/en-us/hotel_info_item/cnt_japan/sub_hyogo_prefecture/cty_awaji_city/10123456959048",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "tokushima-seshi-besso-hotel-2": {
+            "text": "住宿附設停車位，數量有限",
+            "sourceUrl": "https://yoyaku.raffles-home.jp/",
+            "source": {
+              "provider": "徳島別荘ホテル官方網站",
+              "source_url": "https://yoyaku.raffles-home.jp/",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "royal-park-canvas-kobe-sannomiya": {
+            "text": "飯店無專用或合作停車場；使用步行約 1 分鐘的 COINPARK 下山手通二丁目平面停車場（23 台）",
+            "sourceUrl": "https://www.apahotel.com/hotel/kansai/hyogo/kobesannomiya-ekimae/",
+            "source": {
+              "provider": "鄰近飯店官方交通頁",
+              "source_url": "https://www.apahotel.com/hotel/kansai/hyogo/kobesannomiya-ekimae/",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "road-station-fukura-p0": {
+            "text": "道之驛福良 P0 免費停車場",
+            "sourceUrl": "https://www.michi-no-eki.jp/stations/views/19476",
+            "source": {
+              "provider": "全國道之驛連絡會官方網站",
+              "source_url": "https://www.michi-no-eki.jp/stations/views/19476",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "iwaya-port": {
+            "text": "岩屋 Port Terminal 有料停車場；24 小時、141 台、限高 2.1 公尺，首小時免費",
+            "sourceUrl": "https://www.city.awaji.hyogo.jp/soshiki/kankou/49433.html",
+            "source": {
+              "provider": "淡路市官方網站",
+              "source_url": "https://www.city.awaji.hyogo.jp/soshiki/kankou/49433.html",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "kobe-airport-terminal-2": {
+            "text": "第二航廈前一般車下客區；需要停車時使用第 1–3 停車場，30 分鐘內免費",
+            "sourceUrl": "https://www.kairport.co.jp/access/parking",
+            "source": {
+              "provider": "神戶機場官方網站",
+              "source_url": "https://www.kairport.co.jp/access/parking",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          }
+        },
+        "place_guides": {
+          "ramen-ichiraku-nijigen": {
+            "duration": "45 分鐘",
+            "cost": "每人約 ¥1,000–1,800",
+            "queue": "午餐時段中等",
+            "parking": "使用二次元之森停車場",
+            "highlights": [
+              "一樂拉麵",
+              "拉麵搭配火影忍者主題餐點",
+              "限定飲品與紀念杯"
+            ],
+            "sourceUrl": "https://nijigennomori.com/price/",
+            "hours": "平日 11:00–15:00、16:00–18:00",
+            "source": {
+              "provider": "設施或觀光單位官方網站",
+              "source_url": "https://nijigennomori.com/price/",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "nijigen-no-mori-shinobi": {
+            "duration": "2 小時",
+            "cost": "成人票依日期約 ¥3,300–3,900",
+            "queue": "暑假午後偏高",
+            "parking": "大型園區停車場；步行距離較長",
+            "highlights": [
+              "天之卷立體迷宮",
+              "地之卷任務解謎",
+              "火影岩與忍里場景拍照"
+            ],
+            "sourceUrl": "https://www.nijigennomori.com/naruto_shinobizato/",
+            "hours": "平日通常 10:00 開始，暑假依官方票券時段",
+            "source": {
+              "provider": "設施或觀光單位官方網站",
+              "source_url": "https://www.nijigennomori.com/naruto_shinobizato/",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "awaji-sunset-line": {
+            "duration": "30–60 分鐘",
+            "cost": "免費",
+            "queue": "低",
+            "parking": "只停合法停車區，不在路肩臨停",
+            "highlights": [
+              "瀨戶內海夕景",
+              "西海岸海景",
+              "短距離平坦散步"
+            ],
+            "sourceUrl": "https://www.awajishima-kanko.jp/",
+            "hours": "戶外海岸道路，無固定開放時段",
+            "source": {
+              "provider": "設施或觀光單位官方網站",
+              "source_url": "https://www.awajishima-kanko.jp/",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "map-import-garb-costa-orange": {
+            "duration": "60–90 分鐘",
+            "cost": "單點約 ¥1,500–4,800；夕陽套餐 ¥7,700",
+            "queue": "晚餐時段高，已訂位",
+            "parking": "園區約 300 台免費車位",
+            "highlights": [
+              "薪窯瑪格麗特披薩",
+              "淡路島吻仔魚與海苔義大利麵",
+              "淡路島鮮魚或黑毛和牛料理"
+            ],
+            "sourceUrl": "https://garbcostaorange.jp/menu/",
+            "hours": "晚餐 17:00–21:00，餐點最後點餐 20:00",
+            "source": {
+              "provider": "設施或觀光單位官方網站",
+              "source_url": "https://garbcostaorange.jp/menu/",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "aeon-awaji": {
+            "duration": "30–40 分鐘",
+            "cost": "依採買內容",
+            "queue": "晚間低至中等",
+            "parking": "商場停車場",
+            "highlights": [
+              "補充飲水與早餐",
+              "淡路島零食與伴手禮",
+              "日用品一次購足"
+            ],
+            "sourceUrl": "https://www.aeon.com/store/%E3%82%A4%E3%82%AA%E3%83%B3/%E3%82%A4%E3%82%AA%E3%83%B3%E6%B7%A1%E8%B7%AF%E5%BA%97/shop_info/hours",
+            "hours": "食品與日用品 08:00–22:00",
+            "source": {
+              "provider": "設施或觀光單位官方網站",
+              "source_url": "https://www.aeon.com/store/%E3%82%A4%E3%82%AA%E3%83%B3/%E3%82%A4%E3%82%AA%E3%83%B3%E6%B7%A1%E8%B7%AF%E5%BA%97/shop_info/hours",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "map-import-boulangerie-rural": {
+            "duration": "30 分鐘",
+            "cost": "每人約 ¥600–1,200",
+            "queue": "開店後熱門麵包可能較快售完",
+            "parking": "店前少量車位",
+            "highlights": [
+              "現烤可頌類麵包",
+              "鹹味惣菜麵包",
+              "咖啡或當日季節麵包"
+            ],
+            "sourceUrl": "https://www.instagram.com/boulangerie.rural/",
+            "hours": "週三至週日 08:00–18:00；8/28 週五正常營業",
+            "source": {
+              "provider": "設施或觀光單位官方網站",
+              "source_url": "https://www.instagram.com/boulangerie.rural/",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "map-import-yumebutai": {
+            "duration": "60 分鐘",
+            "cost": "百段苑與公共建築區免費",
+            "queue": "低",
+            "parking": "地下停車場 600 台，¥700／次",
+            "highlights": [
+              "百段苑",
+              "圓形廣場與水庭",
+              "海回廊與大阪灣景觀"
+            ],
+            "sourceUrl": "https://www.yumebutai.co.jp/yumebutai_guide/",
+            "hours": "百段苑與展望區 07:00–22:00，電梯至 18:00",
+            "source": {
+              "provider": "設施或觀光單位官方網站",
+              "source_url": "https://www.yumebutai.co.jp/yumebutai_guide/",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "sea-church-awaji": {
+            "duration": "20–30 分鐘",
+            "cost": "外觀與公共區域免費",
+            "queue": "低",
+            "parking": "與淡路夢舞台共用地下停車場",
+            "highlights": [
+              "海之教會建築外觀",
+              "安藤忠雄清水模建築群",
+              "夢舞台與大阪灣景觀"
+            ],
+            "sourceUrl": "https://www.yumebutai.co.jp/yumebutai_guide/",
+            "hours": "淡路夢舞台公共區域 07:00–22:00；本行程不進入海之教會內部",
+            "source": {
+              "provider": "設施或觀光單位官方網站",
+              "source_url": "https://www.yumebutai.co.jp/yumebutai_guide/",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "honpukuji-mizumido": {
+            "duration": "40–50 分鐘",
+            "cost": "成人 ¥400、兒童 ¥200",
+            "queue": "低",
+            "parking": "免費，普通車約 30 台",
+            "highlights": [
+              "蓮池中央階梯",
+              "地下朱紅色本堂",
+              "安藤忠雄清水模建築"
+            ],
+            "sourceUrl": "https://www.awajishima-kanko.jp/manual/detail.html?bid=454",
+            "hours": "09:00–17:00，全年無休",
+            "source": {
+              "provider": "設施或觀光單位官方網站",
+              "source_url": "https://www.awajishima-kanko.jp/manual/detail.html?bid=454",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "map-import-taidrobou": {
+            "duration": "60–75 分鐘",
+            "cost": "二種鯛料理比較御膳 ¥4,900 起",
+            "queue": "已訂位；週五午餐仍可能等候出餐",
+            "parking": "店家大型停車場",
+            "highlights": [
+              "二種鯛料理比較御膳",
+              "鯛刺身與炙燒",
+              "海景座位"
+            ],
+            "sourceUrl": "https://www.shichicafe.com/taidoroboo/",
+            "hours": "平日 11:00 起營業",
+            "source": {
+              "provider": "設施或觀光單位官方網站",
+              "source_url": "https://www.shichicafe.com/taidoroboo/",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "map-import-awaji-hanasajiki": {
+            "duration": "60–90 分鐘",
+            "cost": "入園免費；普通車停車 ¥200",
+            "queue": "暑假午後中等",
+            "parking": "普通車約 200 台",
+            "highlights": [
+              "高原花田全景",
+              "明石海峽與大阪灣景觀",
+              "天空迴廊觀景台"
+            ],
+            "sourceUrl": "https://awajihanasajiki.jp/5974/",
+            "hours": "8/28 09:00–17:00，最後入園 16:30",
+            "source": {
+              "provider": "設施或觀光單位官方網站",
+              "source_url": "https://awajihanasajiki.jp/5974/",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "naruto-ferry-fixed-activity": {
+            "duration": "30–60 分鐘",
+            "cost": "招牌舒芙蕾鬆餅約 ¥1,000 起",
+            "queue": "熱門時段高，已訂位",
+            "parking": "約 200 台",
+            "highlights": [
+              "幸福鬆餅原味",
+              "季節水果鬆餅",
+              "海景露台與岬角拍照區"
+            ],
+            "sourceUrl": "https://magia.tokyo/shop",
+            "hours": "平日 10:00–20:00，最後點餐 18:45",
+            "source": {
+              "provider": "設施或觀光單位官方網站",
+              "source_url": "https://magia.tokyo/shop",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "cosmos-shizuki": {
+            "duration": "20–30 分鐘",
+            "cost": "依採買內容",
+            "queue": "晚間低",
+            "parking": "店前停車場",
+            "highlights": [
+              "飲水與電解質飲料",
+              "防曬與常用藥品",
+              "隔日早餐與車上點心"
+            ],
+            "sourceUrl": "https://www.cosmospc.co.jp/shop/kansai/hyogo/awaji/",
+            "hours": "10:00–21:00",
+            "source": {
+              "provider": "設施或觀光單位官方網站",
+              "source_url": "https://www.cosmospc.co.jp/shop/kansai/hyogo/awaji/",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "familymart-shizuku-otoshi": {
+            "duration": "20–30 分鐘",
+            "cost": "每人約 ¥500–900",
+            "queue": "低",
+            "parking": "店前停車位",
+            "highlights": [
+              "飯糰或三明治",
+              "FAMIMA CAFÉ 咖啡",
+              "優格、水果與電解質飲料"
+            ],
+            "sourceUrl": "https://store.family.co.jp/points/52703",
+            "hours": "24 小時營業",
+            "source": {
+              "provider": "設施或觀光單位官方網站",
+              "source_url": "https://store.family.co.jp/points/52703",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "sumoto-castle": {
+            "duration": "45–60 分鐘",
+            "cost": "免費",
+            "queue": "停車位少，週末早上中等",
+            "parking": "上城兩處約 10／20 台，免費；入口狹窄",
+            "highlights": [
+              "模擬天守與洲本灣全景",
+              "珍貴的登石垣遺構",
+              "本丸大石階"
+            ],
+            "sourceUrl": "https://www.city.sumoto.lg.jp/site/tunagarumachi/16885.html",
+            "hours": "城跡公園全天免費開放；模擬天守內部不可進入",
+            "source": {
+              "provider": "設施或觀光單位官方網站",
+              "source_url": "https://www.city.sumoto.lg.jp/site/tunagarumachi/16885.html",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "retro-komichi": {
+            "duration": "30–40 分鐘",
+            "cost": "免費",
+            "queue": "低",
+            "parking": "使用洲本市區公共停車場",
+            "highlights": [
+              "昭和街屋與巷弄",
+              "洲本老城街景",
+              "在地小店外觀與攝影"
+            ],
+            "sourceUrl": "https://www.awajishima-kanko.jp/",
+            "hours": "戶外街區無固定開放時段；沿線店家各自營業",
+            "source": {
+              "provider": "設施或觀光單位官方網站",
+              "source_url": "https://www.awajishima-kanko.jp/",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "map-import-sbrick-warehouse": {
+            "duration": "35–50 分鐘",
+            "cost": "公共空間免費；餐飲另計",
+            "queue": "週末中等",
+            "parking": "專用 8 台，滿位使用洲本巴士中心前停車場",
+            "highlights": [
+              "紅磚倉庫建築",
+              "FOOD BASE 起司與披薩",
+              "市民廣場與室內休息區"
+            ],
+            "sourceUrl": "https://sumoto-brick.jp/about/",
+            "hours": "S BRICK 10:00–18:00",
+            "source": {
+              "provider": "設施或觀光單位官方網站",
+              "source_url": "https://sumoto-brick.jp/about/",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "map-import-ocean-terrace": {
+            "duration": "90 分鐘",
+            "cost": "主餐約 ¥3,500–8,500；兒童餐 ¥2,000",
+            "queue": "已安排 11:30，週六建議預約",
+            "parking": "免費 50 台",
+            "highlights": [
+              "淡路牛自助烤肉",
+              "淡路雞或惠比壽麻糬豬組合",
+              "約 30 種沙拉、配菜與甜點"
+            ],
+            "sourceUrl": "https://ocean-terrace.capoo.jp/",
+            "hours": "午餐 11:30–15:30，最後入店 14:00",
+            "source": {
+              "provider": "設施或觀光單位官方網站",
+              "source_url": "https://ocean-terrace.capoo.jp/",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "map-import-keino-beach": {
+            "duration": "20–30 分鐘",
+            "cost": "免費",
+            "queue": "低",
+            "parking": "海灘周邊停車區",
+            "highlights": [
+              "日本夕陽百選海岸",
+              "黑松林景觀",
+              "五色卵石海灘"
+            ],
+            "sourceUrl": "https://www.awajishima-kanko.jp/",
+            "hours": "海灘公共區域無固定開放時段",
+            "source": {
+              "provider": "設施或觀光單位官方網站",
+              "source_url": "https://www.awajishima-kanko.jp/",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "uzu-no-michi": {
+            "duration": "45–60 分鐘",
+            "cost": "成人 ¥510；與 EDDY 共通票成人 ¥900",
+            "queue": "暑假週末中高",
+            "parking": "鳴門公園停車場 200 台，普通車 ¥500",
+            "highlights": [
+              "海上 45 公尺玻璃地板",
+              "大鳴門橋橋下步道",
+              "鳴門海峽潮流與橋景"
+            ],
+            "sourceUrl": "https://www.uzunomichi.jp/usage-guide-uzu-no-michi/",
+            "hours": "暑假 08:00–19:00，最後入場 18:30",
+            "source": {
+              "provider": "設施或觀光單位官方網站",
+              "source_url": "https://www.uzunomichi.jp/usage-guide-uzu-no-michi/",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "bizan-ropeway": {
+            "duration": "60–75 分鐘",
+            "cost": "成人來回 ¥1,500",
+            "queue": "夕陽前後中高",
+            "parking": "使用阿波舞會館周邊停車場",
+            "highlights": [
+              "眉山山頂德島市景",
+              "吉野川與紀伊水道遠景",
+              "往返纜車空中景觀"
+            ],
+            "sourceUrl": "https://www.awaodori-kaikan.jp/",
+            "hours": "4–10 月 09:00–21:00",
+            "source": {
+              "provider": "設施或觀光單位官方網站",
+              "source_url": "https://www.awaodori-kaikan.jp/",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "awaodori-kaikan": {
+            "duration": "50 分鐘",
+            "cost": "夜間公演成人 ¥1,600",
+            "queue": "20:00 夜間公演建議提早入場",
+            "parking": "會館停車位有限，使用周邊停車場",
+            "highlights": [
+              "專業連演出",
+              "觀眾一起學阿波舞",
+              "樂器與舞步近距離觀賞"
+            ],
+            "sourceUrl": "https://www.awaodori-kaikan.jp/",
+            "hours": "夜間公演 20:00–20:50",
+            "source": {
+              "provider": "設施或觀光單位官方網站",
+              "source_url": "https://www.awaodori-kaikan.jp/",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "menoh-tokushima": {
+            "duration": "45–60 分鐘",
+            "cost": "每人約 ¥900–1,400",
+            "queue": "公演散場後中高",
+            "parking": "使用市區停車場",
+            "highlights": [
+              "德島拉麵肉玉入",
+              "生雞蛋搭配濃厚豚骨醬油湯",
+              "餃子或炒飯"
+            ],
+            "sourceUrl": "https://7-men.com/shop_area/shikoku/?id=area-title",
+            "hours": "10:00–24:00，全年無休",
+            "source": {
+              "provider": "設施或觀光單位官方網站",
+              "source_url": "https://7-men.com/shop_area/shikoku/?id=area-title",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "map-import-naruto-bridge-memorial": {
+            "duration": "50–65 分鐘",
+            "cost": "成人 ¥620；與渦之道共通票成人 ¥900",
+            "queue": "開館初段低",
+            "parking": "鳴門公園停車場普通車 ¥500",
+            "highlights": [
+              "漩渦形成互動展示",
+              "大鳴門橋施工與結構展示",
+              "Play the Eddy 體驗區"
+            ],
+            "sourceUrl": "https://www.uzunomichi.jp/eddy/usage-guide-eddy/",
+            "hours": "暑假 09:00–18:00，最後入館 17:30",
+            "source": {
+              "provider": "設施或觀光單位官方網站",
+              "source_url": "https://www.uzunomichi.jp/eddy/usage-guide-eddy/",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "map-import-uzuno-oka": {
+            "duration": "60–90 分鐘",
+            "cost": "每人約 ¥1,000–2,500",
+            "queue": "週日午餐高",
+            "parking": "園區免費停車場",
+            "highlights": [
+              "淡路島洋蔥牛肉堡",
+              "海膽涮涮鍋或海鮮料理",
+              "巨大洋蔥裝置與大鳴門橋展望"
+            ],
+            "sourceUrl": "https://kinen.uzunokuni.com/",
+            "hours": "09:00–17:00；週二公休",
+            "source": {
+              "provider": "設施或觀光單位官方網站",
+              "source_url": "https://kinen.uzunokuni.com/",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "uzushio-cruise-fukura": {
+            "duration": "航程 60 分鐘；另留 40–50 分鐘報到",
+            "cost": "成人 ¥3,000；未就學幼兒每位成人可帶 1 位免費",
+            "queue": "週日高，售票與登船前最繁忙",
+            "parking": "道之驛福良周邊停車場免費",
+            "highlights": [
+              "近距離觀察鳴門漩渦",
+              "從船上穿越大鳴門橋下方",
+              "咸臨丸或日本丸甲板海景"
+            ],
+            "sourceUrl": "https://www.uzu-shio.com/timetable",
+            "hours": "12:50 已排定；建議 40–50 分鐘前到達",
+            "source": {
+              "provider": "設施或觀光單位官方網站",
+              "source_url": "https://www.uzu-shio.com/timetable",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "nojima-scuola": {
+            "duration": "45–60 分鐘",
+            "cost": "參觀免費；餐飲約 ¥400–1,700",
+            "queue": "週日下午中等",
+            "parking": "免費約 80–95 台",
+            "highlights": [
+              "舊小學校舍再生建築",
+              "淡路牛筋咖哩或淡路洋蔥披薩",
+              "自家製起司蛋糕與島檸檬蘇打"
+            ],
+            "sourceUrl": "https://nojima-scuola.com/faq/",
+            "hours": "週日市集 10:00–19:00、咖啡 10:30–18:00",
+            "source": {
+              "provider": "設施或觀光單位官方網站",
+              "source_url": "https://nojima-scuola.com/faq/",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "eshima": {
+            "duration": "20–25 分鐘",
+            "cost": "免費",
+            "queue": "低",
+            "parking": "岩屋港周邊有料停車場；絵島本體禁止進入",
+            "highlights": [
+              "國生神話地景",
+              "砂岩層理與侵蝕外觀",
+              "岩屋港與明石海峽背景"
+            ],
+            "sourceUrl": "https://www.city.awaji.lg.jp/soshiki/shakai/51591.html",
+            "hours": "岸邊公共觀景區無固定開放時段；絵島本體禁止進入",
+            "source": {
+              "provider": "設施或觀光單位官方網站",
+              "source_url": "https://www.city.awaji.lg.jp/soshiki/shakai/51591.html",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "awaji-sa-ferris-wheel": {
+            "duration": "15–30 分鐘",
+            "cost": "一般票 ¥800",
+            "queue": "週日夕陽時段中高",
+            "parking": "淡路 SA 大型停車場",
+            "highlights": [
+              "一圈約 15 分鐘",
+              "明石海峽大橋全景",
+              "神戶與大阪灣方向夜景"
+            ],
+            "sourceUrl": "https://www.jb-highway.co.jp/sapa/awaji_down.html",
+            "hours": "09:00–21:00，最後搭乘 20:45",
+            "source": {
+              "provider": "設施或觀光單位官方網站",
+              "source_url": "https://www.jb-highway.co.jp/sapa/awaji_down.html",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          },
+          "awaji-sa-highway-oasis": {
+            "duration": "45–60 分鐘",
+            "cost": "每人約 ¥800–1,800",
+            "queue": "週日晚餐中高",
+            "parking": "小型車 348 台",
+            "highlights": [
+              "淡路島洋蔥拉麵或咖哩",
+              "淡路島漢堡",
+              "明石燒、甜點與伴手禮"
+            ],
+            "sourceUrl": "https://www.jb-highway.co.jp/sapa/awaji_down.html",
+            "hours": "美食區 24 小時，餐廳 07:00–21:00",
+            "source": {
+              "provider": "設施或觀光單位官方網站",
+              "source_url": "https://www.jb-highway.co.jp/sapa/awaji_down.html",
+              "retrieved_at": "2026-08-26T11:30:00+09:00",
+              "status": "reported"
+            }
+          }
+        }
+      },
+      "preserve_on_replan": true,
+      "provenance": {
+        "source_type": "derived",
+        "provider": "2026-08-26 淡路島旅遊資料盤點",
+        "retrieved_at": "2026-08-26T11:30:00+09:00",
+        "confidence": 0.9,
+        "status": "reported",
+        "note": "逐日天候、海況、潮流、活動量與各站費用、排隊、停車、營業時間及推薦內容；每筆資料保留支援來源。"
+      }
+    },
+    {
       "id": "sheet-pretrip-checklist",
       "path": "/operations/pretrip_checklist",
       "value": [
@@ -1791,16 +2704,16 @@
         {"id":"book-uzushio-cruise","completed":false,"timing":"現在","item":"確認 8/30 12:50 觀潮船訂位","action":"確認網路預約並先填 7 人旅客名簿；保存 QR Code 與訂單編號。","fallback":"12:50 異動時須重新調整うずの丘午餐時間。","contact":"うずしおクルーズ官方"},
         {"id":"confirm-awaodori-show","completed":false,"timing":"現在","item":"確認阿波舞會館 20:00 夜公演","action":"確認 8/29 7 人是否可預購／當日購票；記錄取消規則與座位方式。","fallback":"無票或全員疲累：取消夜公演，改早晚餐與住宿休息。","contact":"阿波舞會館官方"},
         {"id":"confirm-kobe-parking","completed":false,"timing":"現在","item":"確認神戶三宮飯店停車","action":"告知為 Alphard，確認實車長／寬／高、停車場名稱、入口、限高、夜間進出與費用。","fallback":"飯店無法保證：出發前選定可停大型車的平面停車場。","contact":"ザ ロイヤルパーク キャンバス 神戸三宮 078-391-1110"},
-        {"id":"confirm-day3-breakfast","completed":false,"timing":"現在","item":"確認 8/29 早餐","action":"前一天電話確認コメダ珈琲店淡路志筑店 8/29 7:00 正常營業。","fallback":"07:15 未入座或休店：便利商店外帶，07:45 硬出發。","contact":"0799-62-1030／淡路市志筑1720-1"},
+        {"id":"confirm-day3-breakfast","completed":true,"timing":"8/29 07:15","item":"FamilyMart 志筑大歳店早餐","action":"24 小時營業；外帶飯糰、三明治、咖啡、優格或水果。","fallback":"07:45 依行程前往洲本城。","contact":"https://store.family.co.jp/points/52703"},
         {"id":"prepare-day4-breakfast","completed":false,"timing":"現在","item":"準備 8/30 早餐","action":"前一晚買好早餐，或至 24 小時 FamilyMart 徳島金沢店外帶。","fallback":"不再尋找未有精確定位與營業確認的咖啡店。","contact":"088-664-8150／徳島市金沢2丁目1-4"},
-        {"id":"recheck-weather-72h","completed":false,"timing":"出發前 72 小時","item":"重查 8/27–8/31 天氣","action":"看氣溫、降雨、雷雨、熱中症警戒、鳴門風浪，特別重查 8/30–8/31。","fallback":"高溫縮短洲本城、慶野、絵島；雷雨取消纜車、摩天輪與海邊。","contact":"日本氣象廳／各設施官方"},
+        {"id":"recheck-weather-72h","completed":true,"timing":"2026/8/26 已取得","item":"8/27–8/31 天氣與海況","action":"每日行程已列氣溫、降雨機率、雨量、中暑風險、風速與鳴門浪高。","fallback":"每日頁面底部已列雨天方案。","contact":"https://open-meteo.com/"},
         {"id":"recheck-cruise-48h","completed":false,"timing":"出發前 48 小時","item":"重查觀潮船運航","action":"確認 8/30 12:50 正常、船名、集合方式與 QR Code；確認日本丸 Fune Cafe 狀態。","fallback":"停航：改渦之道並依 13:20 潮流時刻重排。","contact":"うずしおクルーズ官方運航資訊"},
         {"id":"recheck-business-hours-48h","completed":false,"timing":"出發前 48 小時","item":"確認餐廳與設施臨時營業","action":"逐一查看 Ocean Terrace、S BRICK、うずの丘、Nojima Scuola、摩天輪。","fallback":"休業即採表內備案，不臨時找同級熱門店排隊。","contact":"各設施官方網站／社群"},
         {"id":"recheck-awaodori-ropeway-48h","completed":false,"timing":"出發前 48 小時","item":"確認阿波舞與眉山纜車運行","action":"查 8/29 風雨、纜車停駛公告、夜公演是否照常。","fallback":"纜車停駛保留 20:00 公演；公演取消則提早晚餐。","contact":"阿波舞會館官方"},
         {"id":"recheck-highways-48h","completed":false,"timing":"出發前 48 小時","item":"確認高速與大橋交通","action":"查看神戶淡路鳴門自動車道事故、施工、風速管制與週末壅塞。","fallback":"異常時優先保船班／航班，取消沿途可選景點。","contact":"JB 本四高速／即時導航"},
         {"id":"pack-health-supplies-24h","completed":false,"timing":"出發前 24 小時","item":"補給與健康用品","action":"準備飲水、電解質飲料、鹽分、帽子、防曬、冰涼巾、暈船用品、幼兒替換衣物、常用藥與過敏資訊。","fallback":"車內至少保留一天份飲水與不易壞點心。","contact":"共同物資清單"},
         {"id":"secure-luggage-24h","completed":false,"timing":"出發前 24 小時","item":"整理行李與貴重物品","action":"8/29、8/30 白天行李在車內；行李遮蔽、護照與貴重品隨身；另做每晚過夜小袋。","fallback":"後車廂無法遮蔽時先到住宿寄放或減少暴露時間。","contact":"車輛安全規則"},
-        {"id":"prepare-navigation-24h","completed":false,"timing":"出發前 24 小時","item":"準備導航清單","action":"預存住宿、停車場、餐廳、船碼頭與神戶機場第二航廈；渦之道設大鳴門橋架橋記念館 EDDY。","fallback":"離線地圖與日文地址截圖各存一份。","contact":"OpenStreetMap／官方地址"},
+        {"id":"prepare-navigation-24h","completed":true,"timing":"已整合","item":"Google Maps 導航","action":"每日行程中的景點、餐廳與交通名稱皆可直接開啟 Google Maps。","fallback":"依即時路況選擇路線。","contact":"https://maps.google.com/"},
         {"id":"gate-day3-depart-0745","completed":false,"timing":"8/29 07:45","item":"準時離開志筑住宿","action":"不因早餐、整理行李或採買延後。","fallback":"每延誤 15 分，優先縮短洲本城／老街。","contact":"Day 3 時間門"},
         {"id":"gate-day3-sbrick-1035","completed":false,"timing":"8/29 10:35","item":"離開 S BRICK","action":"直接前往 Ocean Terrace，不再插入商店。","fallback":"會晚於訂位時間時先電話通知。","contact":"Day 3 時間門"},
         {"id":"gate-day3-keino-1315","completed":false,"timing":"8/29 13:15","item":"決定是否取消慶野松原","action":"未離開 Ocean Terrace、高溫、雷雨或有人疲累，任一成立即取消。","fallback":"直接 Ocean Terrace → 鳴門公園，增加休息緩衝。","contact":"Day 3 取消順序第 1"},
@@ -1808,11 +2721,11 @@
         {"id":"gate-day3-bizan-1730","completed":false,"timing":"8/29 17:30","item":"決定是否取消眉山夕陽","action":"尚未完成入住、雷雨、強風或疲累即取消纜車。","fallback":"只保留 20:00 阿波舞；19:20 前在會館休息與墊胃。","contact":"Day 3 取消順序第 3"},
         {"id":"gate-day3-night","completed":false,"timing":"8/29 晚間","item":"停車與晚餐判斷","action":"Alphard 不進 155cm 車庫；確認 2.0m 限高後才進；21:15 麵王未入座就換店。","fallback":"AEON 原則取消，長輩幼兒優先回住宿。","contact":"新町地下／麵王"},
         {"id":"gate-day4-lunch-1045","completed":false,"timing":"8/30 10:45","item":"うずの丘午餐決策","action":"尚未入座就改洋蔥漢堡或福良簡餐。","fallback":"不能用 12:50 船班交換排隊等餐。","contact":"Day 4 時間門"},
-        {"id":"gate-day4-leave-lunch-1120","completed":false,"timing":"8/30 11:20","item":"離開うずの丘","action":"無論是否吃完，都按 11:20 前往福良 P0。","fallback":"車上備點心；到福良再補食物。","contact":"Day 4 硬截止"},
+        {"id":"gate-day4-leave-lunch-1120","completed":false,"timing":"8/30 11:20","item":"離開うずの丘","action":"11:20 前往福良港，預留觀潮船報到時間。","fallback":"到福良港再補充點心。","contact":"Day 4 固定船班時間"},
         {"id":"gate-day4-cruise-1200","completed":false,"timing":"8/30 12:00","item":"完成船班報到準備","action":"全員抵達、取票、名簿、廁所與補水；開航前 15 分前完成名簿。","fallback":"資料缺漏由一位成人專責處理，其餘人不分散。","contact":"うずしおクルーズ"},
         {"id":"gate-day4-nojima-1610","completed":false,"timing":"8/30 16:10","item":"離開 Nojima Scuola","action":"超時直接取消絵島，前往淡路 SA。","fallback":"保住夕陽、晚餐與神戶入住時間。","contact":"Day 4 取消順序第 1"},
         {"id":"gate-day4-fuel-hotel","completed":false,"timing":"8/30 晚間","item":"加油與飯店入住","action":"能在淡路島／神戶進城前加滿油就完成；入住後由 1–2 位成人採買。","fallback":"20:30 後抵飯店取消夜購。","contact":"Day 4 收尾"},
-        {"id":"gate-day5-depart-0815","completed":false,"timing":"8/31 08:15","item":"飯店準時出發","action":"退房、行李整理完成，直接前往神戶機場第二航廈。","fallback":"最晚 08:30；超過後直接進入報到流程。","contact":"Day 5 硬截止"},
+        {"id":"gate-day5-depart-0815","completed":false,"timing":"8/31 08:15","item":"飯店出發","action":"08:15 前往神戶機場第二航廈。","fallback":"抵達後直接辦理 JX1835 報到。","contact":"Day 5 航班報到時間"},
         {"id":"gate-day5-checkin-0940","completed":false,"timing":"8/31 09:40","item":"第二航廈辦理報到","action":"JX1835 先完成報到、托運、安檢與出境，再於航廈內候機。","fallback":"若排隊拉長，優先完成報到與安檢。","contact":"星宇神戶機場資訊"},
         {"id":"daily-rest-cycle","completed":false,"timing":"每日","item":"每 60–90 分鐘休息","action":"補水、上廁所、確認長輩與幼兒狀態；11:00–15:30 優先室內／車內。","fallback":"有人疲累、排隊或延誤超過 30 分，即依取消順序刪景點。","contact":"全程共同規則"}
       ],

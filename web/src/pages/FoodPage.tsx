@@ -1,55 +1,49 @@
 import { useMemo } from 'react'
-import { Bundle, findPlaceLabel } from '../contracts/trip'
-import { MapPinIcon } from '../design-system/primitives/MapPinIcon'
-import { buildMapsSearchLink } from '../lib/google-maps-links'
+import { Bundle, buildMapsLink, findPlaceLabel } from '../contracts/trip'
 
 interface FoodPageProps {
   bundle: Bundle
 }
 
+function timeLabel(value: string | null): string {
+  return value?.match(/T(\d{2}:\d{2})/)?.[1] || '彈性安排'
+}
+
 export function FoodPage({ bundle }: FoodPageProps) {
-  const mealGroups = useMemo(() => {
-    return bundle.days
-      .map((day) => ({
-        date: day.date,
-        meals: day.items.filter((item) => item.kind === 'meal'),
-      }))
-      .filter((group) => group.meals.length > 0)
-  }, [bundle.days])
+  const placeGuides = useMemo(() => bundle.travel_assistant?.place_guides || {}, [bundle.travel_assistant])
+  const mealGroups = useMemo(() => bundle.days.map((day, index) => ({
+    dayNumber: index + 1,
+    date: day.date,
+    meals: day.items.filter((item) => item.kind === 'meal' && placeGuides[item.place_id]),
+  })).filter((group) => group.meals.length > 0), [bundle.days, placeGuides])
 
   return (
-    <section className="card hub-card-wrapper" aria-label="餐飲與補給">
-      <header className="hub-header">
-        <h2>餐飲與補給</h2>
-        <p>依每日行程整理用餐時間與地點。</p>
+    <section className="food-workspace" aria-label="餐飲與補給">
+      <header className="page-intro food-intro">
+        <div><p className="eyebrow">每日餐飲</p><h1>吃什麼，一眼就知道</h1><p>依日期整理用餐時間、推薦餐點、價格、排隊與停車資訊；點餐廳名稱即可在 Google Maps 開啟。</p></div>
       </header>
 
-      <div className="hub-stats">
-        <p>餐食段落：{mealGroups.reduce((sum, group) => sum + group.meals.length, 0)}</p>
-        <p>可回溯日程：{mealGroups.length} 天</p>
+      <div className="food-day-groups">
+        {mealGroups.map((group) => <section className="food-day" key={group.date}>
+          <header><span>第 {group.dayNumber} 天</span><h2>{group.date}</h2></header>
+          <div className="food-card-grid">{group.meals.map((meal) => {
+            const name = findPlaceLabel(bundle.places, meal.place_id)
+            const place = bundle.places?.find((candidate) => candidate.id === meal.place_id)
+            const guide = placeGuides[meal.place_id]
+            if (!guide) return null
+            return <article className="food-card" key={meal.id}>
+              <div className="food-card-time">{timeLabel(meal.start_at)}</div>
+              <h3><a href={buildMapsLink(place?.maps_query || name)} target="_blank" rel="noreferrer" aria-label={`${name} 在 Google Maps 開啟`}>{name}<span aria-hidden="true">↗</span></a></h3>
+              <>
+                <dl><div><dt>用餐時間</dt><dd>{guide.duration}</dd></div><div><dt>預算</dt><dd>{guide.cost}</dd></div><div><dt>排隊</dt><dd>{guide.queue}</dd></div><div><dt>停車</dt><dd>{guide.parking}</dd></div></dl>
+                {guide.hours ? <p className="food-hours"><strong>營業時間</strong>{guide.hours}</p> : null}
+                <div className="food-picks"><strong>推薦餐點與飲品</strong><ol>{guide.highlights.map((highlight) => <li key={highlight}>{highlight}</li>)}</ol></div>
+                <a className="official-info-link" href={guide.sourceUrl} target="_blank" rel="noreferrer">查看官方資訊 ↗</a>
+              </>
+            </article>
+          })}</div>
+        </section>)}
       </div>
-
-      {mealGroups.length > 0 ? (
-        mealGroups.map((group) => (
-          <section className="hub-section" key={group.date}>
-            <h3>{group.date}</h3>
-            <ul className="hub-items">
-              {group.meals.map((meal) => (
-                <li className="hub-item" key={meal.id}>
-                  <div className="hub-item-row">
-                    <h4>{findPlaceLabel(bundle.places, meal.place_id)}<a className="hub-map-link" href={buildMapsSearchLink(findPlaceLabel(bundle.places, meal.place_id))} target="_blank" rel="noreferrer" aria-label={`${findPlaceLabel(bundle.places, meal.place_id)} 在 Google Maps 開啟`} title="在 Google Maps 開啟"><MapPinIcon /></a></h4>
-                  </div>
-                  <p>用餐時間：{meal.start_at ? new Date(meal.start_at).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }) : '—'}</p>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))
-      ) : (
-        <p className="hub-empty">
-          目前沒有餐飲節點。
-        </p>
-      )}
     </section>
   )
 }

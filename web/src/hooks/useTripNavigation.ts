@@ -3,12 +3,10 @@ import { parseRouteFromHash, SectionId, TripRoute, buildRoutePath } from '../app
 
 interface UseTripNavigationOptions {
   defaultSection?: SectionId
-  storageKey?: string
 }
 
 export function useTripNavigation(options: UseTripNavigationOptions = {}) {
   const defaultSection = options.defaultSection ?? 'overview'
-  const storageKey = options.storageKey ?? 'trip:active:navigation:v1'
 
   const parse = useCallback(() => parseRouteFromHash(window.location.hash, defaultSection), [defaultSection])
   const [route, setRoute] = useState<TripRoute>(() => parse())
@@ -17,13 +15,12 @@ export function useTripNavigation(options: UseTripNavigationOptions = {}) {
     const onChange = () => {
       const next = parse()
       setRoute(next)
-      localStorage.setItem(storageKey, next.raw)
     }
 
     onChange()
     window.addEventListener('hashchange', onChange)
     return () => window.removeEventListener('hashchange', onChange)
-  }, [parse, storageKey])
+  }, [parse])
 
   const navigate = useCallback(
     (next: Partial<TripRoute>) => {
@@ -40,7 +37,6 @@ export function useTripNavigation(options: UseTripNavigationOptions = {}) {
   )
 
   const current = useMemo(() => route, [route])
-  const lastNavigation = localStorage.getItem(storageKey) || ''
 
-  return { current, navigate, lastNavigation }
+  return { current, navigate }
 }

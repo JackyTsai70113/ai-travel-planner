@@ -826,6 +826,152 @@ textarea {
   }
 }
 
+/* 2026 Awaji read-only travel assistant */
+.day-hero {
+  display: block;
+  overflow: visible;
+  padding: clamp(20px, 3vw, 34px);
+  color: #173443;
+  border: 1px solid #b9cdd6;
+  background: linear-gradient(145deg, #ffffff 0%, #edf7f8 100%);
+  box-shadow: 0 12px 30px rgba(20, 55, 72, .10);
+}
+.day-hero::after { display: none; }
+.day-kicker { color: #087d91; font-size: .78rem; }
+.day-kicker span + span { color: #516c79; }
+.day-hero h2 { max-width: none; margin: 10px 0 22px; color: #173443; font-size: clamp(1.55rem, 3vw, 2.25rem); }
+.day-condition-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.day-condition-grid > div { display: grid; align-content: start; gap: 5px; min-height: 126px; padding: 16px; border: 1px solid #c9d9df; border-radius: 14px; background: rgba(255,255,255,.92); box-shadow: 0 5px 14px rgba(18, 54, 70, .07); }
+.day-condition-grid span { color: #087584; font-size: .74rem; font-weight: 900; letter-spacing: .05em; }
+.day-condition-grid strong { color: #173443; font-size: 1rem; line-height: 1.45; }
+.day-condition-grid small { color: #4f6975; font-size: .82rem; line-height: 1.55; }
+.day-lodging-card, .day-tide-card { position: relative; z-index: 1; display: grid; gap: 5px; margin-top: 14px; padding: 16px 18px; border: 1px solid #b7d5d5; border-radius: 14px; color: #244956; background: #eaf7f5; }
+.day-lodging-card span, .day-tide-card span { color: #08766f; font-size: .73rem; font-weight: 900; letter-spacing: .05em; }
+.day-lodging-card strong { font-size: 1.06rem; }
+.day-lodging-card small { color: #45636d; font-size: .8rem; }
+.day-lodging-card a, .day-tide-card a { justify-self: start; color: #075f84; font-size: .78rem; font-weight: 800; }
+.day-tide-card { border-color: #b8cee2; background: #eef6fd; }
+.day-tide-card span { color: #185f91; }
+.day-tide-card p { max-width: none; color: #304f63; font-size: .88rem; line-height: 1.65; }
+
+.timeline { padding-top: 18px; }
+.timeline-entry { min-height: 0; margin-bottom: 14px; }
+.timeline-card, .timeline-entry.reservation .timeline-card { padding: 20px; margin: 0 0 0 9px; border: 1px solid #cbd9df; border-radius: 16px; background: #fff; box-shadow: 0 6px 18px rgba(23, 60, 76, .07); }
+.timeline-entry.reservation .timeline-card { border-color: #e6c57f; background: #fffaf0; }
+.timeline-category { color: #506d79; font-size: .72rem; }
+.timeline-card h3 { margin: 7px 0 8px; font-size: 1.22rem; }
+.timeline-title-link { color: #173443; text-decoration: none; }
+.timeline-title-link:hover { color: #075f84; text-decoration: underline; text-underline-offset: 4px; }
+.timeline-title-link span { margin-left: 7px; color: #087d91; font-size: .8em; }
+.timeline-detail { color: #445f6b; font-size: .88rem; }
+.place-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 9px; margin: 15px 0 0; }
+.place-facts div { min-width: 0; padding: 11px; border: 1px solid #dce6ea; border-radius: 10px; background: #f6f9fa; }
+.place-facts dt { color: #087584; font-size: .7rem; }
+.place-facts dd { margin-top: 4px; color: #294854; font-size: .8rem; line-height: 1.45; overflow-wrap: anywhere; }
+.place-highlights { margin-top: 11px; padding: 13px 15px; border-left: 4px solid #20a295; border-radius: 0 10px 10px 0; color: #294954; background: #eff8f6; }
+.place-highlights > strong { color: #08766f; font-size: .78rem; }
+.place-highlights ul { display: flex; flex-wrap: wrap; gap: 6px 24px; margin-top: 4px; }
+.place-highlights li { margin: 3px 0; font-size: .82rem; }
+.arrival-parking { display: grid; gap: 3px; margin: 11px 0 0; padding: 11px 13px; border-radius: 10px; color: #36545f; background: #eef5f7; font-size: .82rem; line-height: 1.5; }
+.arrival-parking strong { color: #087584; font-size: .72rem; }
+.official-info-link { display: inline-flex; margin-top: 11px; color: #075f84; font-size: .78rem; font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
+.day-alternatives { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 26px 0 8px; }
+.day-alternative-group { padding: 18px; border: 1px solid #c6d6dc; border-radius: 16px; background: #fff; box-shadow: 0 5px 16px rgba(20, 55, 72, .06); }
+.day-alternative-group h3 { margin: 0 0 12px; color: #173f4e; font-size: 1rem; }
+.day-alternative-group > div { display: grid; gap: 9px; }
+.day-alternative-group article { padding: 12px 14px; border-radius: 11px; background: #f3f8fa; }
+.day-alternative-group article strong { color: #24515e; font-size: .86rem; }
+.day-alternative-group ul { margin-top: 5px; color: #526b76; }
+.day-alternative-group li { margin: 3px 0; font-size: .78rem; line-height: 1.5; }
+
+.packing-guide-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.packing-guide-card { overflow: hidden; border: 1px solid #c5d6dd; border-radius: 17px; background: #fff; box-shadow: 0 7px 20px rgba(20, 54, 70, .07); }
+.packing-guide-card > header { padding: 18px 20px; border-bottom: 1px solid #dce7ea; background: #eef6f8; }
+.packing-guide-card h2 { margin: 0 0 5px; color: #173c4b; font-size: 1.08rem; }
+.packing-guide-card header p { margin: 0; color: #516b77; font-size: .8rem; line-height: 1.55; }
+.packing-guide-card ul { margin: 0; padding: 9px 20px 14px; list-style: none; }
+.packing-guide-card li { display: grid; gap: 3px; margin: 0; padding: 11px 0; border-bottom: 1px solid #e8eef0; }
+.packing-guide-card li:last-child { border-bottom: 0; }
+.packing-guide-card li strong { color: #244957; font-size: .9rem; }
+.packing-guide-card li span { color: #526b76; font-size: .8rem; line-height: 1.55; }
+.packing-reference { margin: 18px 0 0; padding: 15px 18px; border-radius: 12px; color: #3c5c68; background: #eaf5f3; }
+.packing-reference a { color: #075f84; font-weight: 800; }
+
+.reservation-list { gap: 12px; }
+.reservation-card { grid-template-columns: 78px minmax(0, 1fr); gap: 16px; padding: 18px; border-color: #c4d4db; border-radius: 15px; box-shadow: 0 6px 17px rgba(20, 54, 70, .07); }
+.reservation-time { justify-items: center; padding-right: 14px; }
+.reservation-time strong { color: #905d17; font-size: 1.15rem; }
+.reservation-title-row h2 { margin: 0; }
+.reservation-title-row h2 a { color: #173d4c; text-decoration: none; }
+.reservation-title-row h2 a:hover { color: #075f84; text-decoration: underline; text-underline-offset: 4px; }
+.reservation-title-row h2 a span { margin-left: 6px; color: #087d91; font-size: .8em; }
+.reservation-summary { margin: 8px 0; color: #425f6b; font-size: .82rem; line-height: 1.55; }
+.reservation-highlights { display: flex; flex-wrap: wrap; gap: 5px 22px; margin: 0; color: #385661; }
+.reservation-highlights li { margin: 2px 0; font-size: .78rem; }
+
+.food-day-groups { display: grid; gap: 20px; }
+.food-day > header { display: flex; align-items: baseline; gap: 10px; margin-bottom: 9px; color: #536f7a; }
+.food-day > header span { color: #087d91; font-size: .72rem; font-weight: 900; }
+.food-day > header h2 { margin: 0; font-size: .9rem; }
+.food-card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; }
+.food-card { position: relative; padding: 19px; border: 1px solid #c5d7dd; border-radius: 16px; background: #fff; box-shadow: 0 6px 18px rgba(20, 54, 70, .07); }
+.food-card-time { color: #966218; font: 800 .88rem/1.2 ui-monospace, monospace; }
+.food-card h3 { margin: 7px 0 13px; font-size: 1.08rem; }
+.food-card h3 a { color: #173d4c; text-decoration: none; }
+.food-card h3 a:hover { color: #075f84; text-decoration: underline; text-underline-offset: 4px; }
+.food-card h3 span { margin-left: 6px; color: #087d91; }
+.food-card dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin: 0; }
+.food-card dl div { padding: 9px 10px; border-radius: 9px; background: #f2f7f8; }
+.food-card dt { color: #087584; font-size: .68rem; }
+.food-card dd { margin-top: 3px; color: #36535f; font-size: .76rem; line-height: 1.45; }
+.food-hours { display: grid; gap: 3px; margin: 10px 0 0; color: #49636e; font-size: .78rem; }
+.food-hours strong { color: #173f4d; }
+.food-picks { margin-top: 11px; padding: 12px 14px; border-radius: 10px; background: #edf8f5; }
+.food-picks > strong { color: #08766f; font-size: .76rem; }
+.food-picks ol { margin: 6px 0 0; padding-left: 20px; }
+.food-picks li { margin: 4px 0; color: #35545e; font-size: .8rem; }
+
+.handbook-toolbar { display: grid; grid-template-columns: minmax(0, 1fr) 180px; gap: 10px; margin-bottom: 15px; }
+.handbook-toolbar input, .handbook-toolbar select { min-height: 48px; padding: 10px 13px; border: 1px solid #b9cdd5; border-radius: 11px; color: #244957; background: #fff; font: inherit; }
+.handbook-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; }
+.handbook-grid .subcard, .emergency-panel { margin: 0; padding: 18px; border: 1px solid #c5d6dd; border-radius: 15px; background: #fff; box-shadow: 0 5px 16px rgba(20, 54, 70, .06); }
+.handbook-grid h2, .emergency-panel h2 { color: #173d4c; font-size: 1rem; }
+.handbook-grid p, .handbook-grid li, .emergency-panel p { color: #49636e; font-size: .82rem; line-height: 1.6; }
+.handbook-grid button { padding: 8px 12px; color: #075f84; border: 1px solid #9fc4d2; background: #edf7fa; }
+.handbook-grid a, .emergency-panel a { color: #075f84; font-weight: 800; }
+.emergency-panel { margin-top: 16px; border-color: #e0c88f; background: #fffaf0; }
+
+@media (max-width: 900px) {
+  .day-condition-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .place-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .itinerary-day-nav { padding-top: 11px; padding-bottom: 11px; }
+  .day-tabs { gap: 7px; overflow-x: auto; grid-template-columns: repeat(5, minmax(62px, 1fr)); scrollbar-width: none; }
+  .day-tab { min-width: 62px; padding: 10px 7px; }
+  .print-button { display: none; }
+  .day-hero { padding: 19px 16px; }
+  .day-hero h2 { margin-bottom: 17px; font-size: 1.5rem; }
+  .day-condition-grid, .day-alternatives, .packing-guide-grid, .food-card-grid, .handbook-grid { grid-template-columns: 1fr; }
+  .day-condition-grid > div { min-height: 0; padding: 14px; }
+  .day-condition-grid strong { font-size: .97rem; }
+  .day-condition-grid small { font-size: .84rem; }
+  .timeline-entry { grid-template-columns: 50px 22px minmax(0, 1fr); }
+  .timeline-time { padding-right: 6px; }
+  .timeline-time strong { font-size: .72rem; }
+  .timeline-track > span { width: 20px; height: 20px; }
+  .timeline-card, .timeline-entry.reservation .timeline-card { margin-left: 5px; padding: 16px 14px; }
+  .timeline-card h3 { font-size: 1.08rem; }
+  .place-facts { grid-template-columns: 1fr 1fr; }
+  .place-highlights ul { display: block; }
+  .reservation-card { grid-template-columns: 1fr; gap: 9px; padding: 16px; }
+  .reservation-time { display: block; padding: 0 0 8px; border: 0; border-bottom: 1px solid #e2e9ec; }
+  .food-card { padding: 16px; }
+  .handbook-toolbar { grid-template-columns: 1fr; }
+  .packing-guide-card > header, .packing-guide-card ul { padding-left: 16px; padding-right: 16px; }
+  .page-intro h1 { font-size: 1.65rem; }
+}
+
 /* Readability pass for operational hub pages and compact reservation cards. */
 .hub-card-wrapper {
   padding: 22px;
@@ -1527,4 +1673,59 @@ body,
   .itinerary-alternatives,
   .hero-actions,
   .desktop-topbar { display: none !important; }
+}
+
+/* Final cascade for the daily assistant; legacy rules above remain for old renderers. */
+.day-hero {
+  display: block;
+  overflow: visible;
+  padding: clamp(20px, 3vw, 34px);
+  color: #173443;
+  border: 1px solid #b9cdd6;
+  background: linear-gradient(145deg, #ffffff 0%, #edf7f8 100%);
+  box-shadow: 0 12px 30px rgba(20, 55, 72, .10);
+}
+.day-hero::after { display: none; }
+.day-kicker { color: #087d91; font-size: .78rem; }
+.day-kicker span + span { color: #516c79; }
+.day-hero h2 { max-width: none; margin: 10px 0 22px; color: #173443; font-size: clamp(1.55rem, 3vw, 2.25rem); }
+.day-condition-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.day-condition-grid > div { display: grid; align-content: start; gap: 5px; min-height: 126px; padding: 16px; border: 1px solid #c9d9df; border-radius: 14px; background: rgba(255,255,255,.92); box-shadow: 0 5px 14px rgba(18, 54, 70, .07); }
+.day-condition-grid span { color: #087584; font-size: .74rem; font-weight: 900; letter-spacing: .05em; }
+.day-condition-grid strong { color: #173443; font-size: 1rem; line-height: 1.45; }
+.day-condition-grid small { color: #4f6975; font-size: .82rem; line-height: 1.55; }
+.day-lodging-card, .day-tide-card { position: relative; z-index: 1; display: grid; gap: 5px; margin-top: 14px; padding: 16px 18px; border: 1px solid #b7d5d5; border-radius: 14px; color: #244956; background: #eaf7f5; }
+.day-tide-card { border-color: #b8cee2; background: #eef6fd; }
+.day-tide-card p { max-width: none; color: #304f63; font-size: .88rem; }
+.timeline-entry { min-height: 0; margin-bottom: 14px; }
+.timeline-card, .timeline-entry.reservation .timeline-card { padding: 20px; margin: 0 0 0 9px; border: 1px solid #cbd9df; border-radius: 16px; background: #fff; box-shadow: 0 6px 18px rgba(23, 60, 76, .07); }
+.timeline-entry.reservation .timeline-card { border-color: #e6c57f; background: #fffaf0; }
+.timeline-category { color: #506d79; font-size: .72rem; }
+.timeline-card h3 { margin: 7px 0 8px; font-size: 1.22rem; }
+.timeline-title-link { color: #173443; text-decoration: none; }
+.timeline-title-link span { margin-left: 7px; color: #087d91; font-size: .8em; }
+.timeline-detail { color: #445f6b; font-size: .88rem; }
+.reservation-card { grid-template-columns: 78px minmax(0, 1fr); gap: 16px; padding: 18px; border-color: #c4d4db; border-radius: 15px; box-shadow: 0 6px 17px rgba(20, 54, 70, .07); }
+.reservation-time { justify-items: center; padding-right: 14px; }
+.reservation-time strong { color: #905d17; font-size: 1.15rem; }
+@media (max-width: 900px) {
+  .day-condition-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .itinerary-day-nav { top: 0; }
+  .day-condition-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .day-condition-grid > div:nth-child(3),
+  .day-condition-grid > div:nth-child(4) { grid-column: 1 / -1; }
+  .day-condition-grid > div { min-height: 0; padding: 14px; }
+  .day-condition-grid span { font-size: .78rem; }
+  .day-condition-grid small { font-size: .9rem; }
+  .timeline-entry { grid-template-columns: 50px 22px minmax(0, 1fr); }
+  .timeline-card, .timeline-entry.reservation .timeline-card { margin-left: 5px; padding: 16px 14px; }
+  .timeline-detail { font-size: .9rem; }
+  .place-facts dt, .food-card dt { font-size: .74rem; }
+  .place-facts dd, .food-card dd { font-size: .84rem; }
+  .place-highlights li, .food-picks li, .reservation-highlights li { font-size: .85rem; }
+  .reservation-summary { font-size: .88rem; }
+  .reservation-card { grid-template-columns: 1fr; gap: 9px; padding: 16px; }
+  .reservation-time { display: block; padding: 0 0 8px; border: 0; border-bottom: 1px solid #e2e9ec; }
 }

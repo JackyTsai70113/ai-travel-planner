@@ -1,13 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Bundle, parseBundle } from '../contracts/trip'
 
-type LoadStatus = 'loading' | 'ready' | 'error' | 'offline-with-cache' | 'offline-without-cache'
+type LoadStatus = 'loading' | 'ready' | 'error'
 
 interface BundleLoaderState {
   bundle: Bundle | null
   status: LoadStatus
   error: string
-  isOnline: boolean
 }
 
 function resolveAppBaseUrl(baseUrl: string, pageUrl: string): URL {
@@ -40,10 +39,8 @@ export function resolveBundleUrl(baseUrl: string, canonicalUrl: string, pageUrl 
 
 export function useBundleLoader(tripSlug?: string): BundleLoaderState {
   const [bundle, setBundle] = useState<Bundle | null>(null)
-  const bundleRef = useRef<Bundle | null>(null)
   const [status, setStatus] = useState<LoadStatus>('loading')
   const [error, setError] = useState('')
-  const [isOnline, setIsOnline] = useState(true)
 
   const baseUrl = String(import.meta.env.BASE_URL || '/')
 
@@ -64,10 +61,9 @@ export function useBundleLoader(tripSlug?: string): BundleLoaderState {
       response = await fetch(resolveBundleUrl(baseUrl, entry.canonical_url))
       if (!response.ok) throw new Error(`bundle HTTP ${response.status}`)
     } catch (error) {
-      const hasCache = !!bundleRef.current
-      const message = `${hasCache ? '目前為離線快取資料' : '載入不到行程資料'}（${error instanceof Error ? error.message : 'network error'}）`
+      const message = `載入不到行程資料（${error instanceof Error ? error.message : 'network error'}）`
       setError(message)
-      setStatus(hasCache ? 'offline-with-cache' : 'offline-without-cache')
+      setStatus('error')
       return
     }
 
@@ -75,7 +71,6 @@ export function useBundleLoader(tripSlug?: string): BundleLoaderState {
       const parsed = parseBundle(await response.json())
       if (!parsed.ok) throw new Error(parsed.error)
       const data = parsed.value
-      bundleRef.current = data
       setBundle(data)
       setStatus('ready')
     } catch (err) {
@@ -85,28 +80,12 @@ export function useBundleLoader(tripSlug?: string): BundleLoaderState {
   }, [baseUrl, tripSlug])
 
   useEffect(() => {
-    setIsOnline(window.navigator.onLine)
-    const handleOnline = () => {
-      setIsOnline(true)
-    }
-    const handleOffline = () => {
-      setIsOnline(false)
-    }
-
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
     load()
-
-    return () => {
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
-    }
   }, [load])
 
   return {
     bundle,
     status,
     error,
-    isOnline,
   }
 }

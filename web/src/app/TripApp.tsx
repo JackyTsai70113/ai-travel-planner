@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import TripShell from '../layouts/TripShell'
-import { Bundle, toFriendlyStatus } from '../contracts/trip'
+import { Bundle } from '../contracts/trip'
 import { useBundleLoader } from '../hooks/useBundleLoader'
 import { useTripNavigation } from '../hooks/useTripNavigation'
 import {
@@ -13,14 +13,9 @@ import {
 import { OverviewPage } from '../pages/OverviewPage'
 import { ItineraryPage } from '../pages/ItineraryPage'
 import { ReservationsPage } from '../pages/ReservationsPage'
-import { TidesPage } from '../pages/TidesPage'
 import { FoodPage } from '../pages/FoodPage'
-import { LodgingPage } from '../pages/LodgingPage'
-import { HandbookPage } from '../pages/HandbookPage'
 import { PackingPage } from '../pages/PackingPage'
-import { BudgetPage } from '../pages/BudgetPage'
 import { JapanesePage } from '../pages/JapanesePage'
-import { SourcesPage } from '../pages/SourcesPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
 import { TripStatusType } from '../layouts/TripShell'
 import type { TripCatalogEntry } from '../contracts/trip-registry'
@@ -29,8 +24,6 @@ type AppStatusType =
   | 'loading'
   | 'invalid'
   | 'critical'
-  | 'offline-cache'
-  | 'offline-no-cache'
   | 'route-not-found'
   | 'normal'
 
@@ -50,14 +43,10 @@ function deriveDayFromRoute(bundle: Bundle, route: TripRoute): number | null {
 function resolveStatus(
   bundle: Bundle | null,
   status: string,
-  isOnline: boolean,
 ): AppStatusType {
   if (status === 'loading') return 'loading'
-  if (!bundle) {
-    return isOnline ? 'invalid' : 'offline-no-cache'
-  }
+  if (!bundle) return 'invalid'
   if (bundle.validation.some((item) => item.severity === 'error')) return 'critical'
-  if (!isOnline) return 'offline-cache'
   if (status === 'error') return 'invalid'
   return 'normal'
 }
@@ -70,7 +59,7 @@ export default function TripApp({ tripMeta = null, tripSlug }: TripAppProps) {
   const pageTitleId = 'trip-page-title'
 
   const selectedSection = parseSection(route.section, 'overview')
-  const isDayScopedSection = selectedSection === 'today' || selectedSection === 'tides'
+  const isDayScopedSection = selectedSection === 'today'
   const requestedSection = route.raw
     ? (() => {
       try {
@@ -84,14 +73,12 @@ export default function TripApp({ tripMeta = null, tripSlug }: TripAppProps) {
 
   const shellStatus: TripStatusType = useMemo<TripStatusType>(() => {
     if (routeNotFound) return 'route-not-found'
-    const base = resolveStatus(bundleLoader.bundle, bundleLoader.status, bundleLoader.isOnline)
+    const base = resolveStatus(bundleLoader.bundle, bundleLoader.status)
     if (base === 'loading') return 'loading'
     if (base === 'invalid') return 'invalid'
-    if (base === 'offline-no-cache') return 'offline-no-cache'
-    if (base === 'offline-cache') return 'offline-cache'
     if (base === 'critical') return 'critical'
     return 'normal'
-  }, [bundleLoader.bundle, bundleLoader.isOnline, bundleLoader.status, routeNotFound])
+  }, [bundleLoader.bundle, bundleLoader.status, routeNotFound])
 
   const normalizeDay = useCallback(
     (candidate: string | undefined) => {
@@ -124,45 +111,33 @@ export default function TripApp({ tripMeta = null, tripSlug }: TripAppProps) {
     setRouteNotFound(hasInvalidDay)
   }, [bundleLoader.bundle, isDayScopedSection, route, routeSectionNotFound])
 
-  const itineraryDayFromLastNavigation = useMemo(() => {
+  const defaultItineraryDay = useMemo(() => {
     if (!bundleLoader.bundle) return undefined
-    if (route.day) return normalizeDay(route.day)
-    const saved = localStorage.getItem(`trip:active:last-day:${selectedSection}:v1`)
-    return normalizeDay(saved || undefined) || bundleLoader.bundle.days[0]?.date
-  }, [bundleLoader.bundle, normalizeDay, route.day, selectedSection])
+    return normalizeDay(route.day) || bundleLoader.bundle.days[0]?.date
+  }, [bundleLoader.bundle, normalizeDay, route.day])
 
   const effectiveRoute = useMemo<TripRoute>(() => {
     if (!isDayScopedSection) return route
     return {
       ...route,
       section: selectedSection,
-      day: activeDay?.date || itineraryDayFromLastNavigation,
+      day: activeDay?.date || defaultItineraryDay,
       raw: route.raw,
     }
-  }, [activeDay?.date, itineraryDayFromLastNavigation, isDayScopedSection, route, selectedSection])
-
-  useEffect(() => {
-    if (!activeDay) return
-    if (selectedSection === 'today') {
-      localStorage.setItem('trip:active:last-day:today:v1', activeDay.date)
-    }
-    if (selectedSection === 'tides') {
-      localStorage.setItem('trip:active:last-day:tides:v1', activeDay.date)
-    }
-  }, [activeDay, selectedSection])
+  }, [activeDay?.date, defaultItineraryDay, isDayScopedSection, route, selectedSection])
 
   const gotoSection = useCallback(
     (nextSection: string) => {
-      const dayAwareSection = nextSection === 'today' || nextSection === 'tides'
+      const dayAwareSection = nextSection === 'today'
       const next: Partial<TripRoute> = { section: nextSection as SectionId }
-      if (dayAwareSection && itineraryDayFromLastNavigation) {
-        next.day = itineraryDayFromLastNavigation
+      if (dayAwareSection && defaultItineraryDay) {
+        next.day = defaultItineraryDay
       } else if (!dayAwareSection) {
         next.day = undefined
       }
       navigate(next)
     },
-    [itineraryDayFromLastNavigation, navigate],
+    [defaultItineraryDay, navigate],
   )
 
   const gotoRoute = useCallback((next: Partial<TripRoute>) => navigate(next), [navigate])
@@ -204,36 +179,19 @@ export default function TripApp({ tripMeta = null, tripSlug }: TripAppProps) {
     if (selectedSection === 'reservation') {
       return <ReservationsPage bundle={bundle} />
     }
-    if (selectedSection === 'tides') {
-      return <TidesPage bundle={bundle} day={effectiveRoute.day} />
-    }
     if (selectedSection === 'food') {
       return <FoodPage bundle={bundle} />
-    }
-    if (selectedSection === 'lodging') {
-      return <LodgingPage bundle={bundle} />
-    }
-    if (selectedSection === 'handbook') {
-      return <HandbookPage bundle={bundle} />
     }
     if (selectedSection === 'packing') {
       return <PackingPage bundle={bundle} />
     }
-    if (selectedSection === 'budget') {
-      return <BudgetPage bundle={bundle} />
-    }
     if (selectedSection === 'japanese') {
       return <JapanesePage />
-    }
-    if (selectedSection === 'sources') {
-      return <SourcesPage bundle={bundle} />
     }
     return <NotFoundPage path={effectiveRoute.raw || 'n/a'} />
   }, [bundleLoader.bundle, effectiveRoute, gotoRoute, routeNotFound, selectedSection, tripMeta])
 
-  const statusLabel = toFriendlyStatus(bundleLoader.bundle?.status || 'warning')
   const renderBundleLoading = !bundleLoader.bundle && shellStatus === 'loading'
-  const titleInfo = useMemo(() => `行程狀態：${statusLabel}`, [statusLabel])
 
   if (renderBundleLoading) {
     return (
@@ -266,10 +224,6 @@ export default function TripApp({ tripMeta = null, tripSlug }: TripAppProps) {
       isDrawerOpen={drawerOpen}
       setDrawerOpen={setDrawerOpen}
     >
-      <p className="muted">
-        {titleInfo}
-        {shellStatus === 'route-not-found' ? '｜頁面路徑不存在，將導向可存取頁' : ''}
-      </p>
       {mainSection}
     </TripShell>
   )

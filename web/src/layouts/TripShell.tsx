@@ -9,8 +9,6 @@ export type TripStatusType =
   | 'loading'
   | 'invalid'
   | 'critical'
-  | 'offline-cache'
-  | 'offline-no-cache'
   | 'route-not-found'
 
 interface TripShellProps {
@@ -26,12 +24,10 @@ interface TripShellProps {
 }
 
 const statusText: Record<TripStatusType, string> = {
-  normal: '狀態正常',
+  normal: '',
   loading: '資料載入中',
   invalid: '行程資料不可用',
   critical: '行程提醒：含關鍵警示',
-  'offline-cache': '目前離線，使用快取資料',
-  'offline-no-cache': '目前離線，無可用快取資料',
   'route-not-found': '頁面不存在',
 }
 
@@ -120,8 +116,7 @@ export default function TripShell({
     <div className={`app-shell ${visibleState ? 'with-alert' : ''}`}>
       <a className="skip-link" href="#trip-main">跳到主要內容</a>
       <MobileHeader
-        title={title}
-        subtitle={subtitle}
+        sectionLabel={activeLabel}
         onOpenMenu={() => setDrawerOpen(true)}
         isMenuOpen={isDrawerOpen}
         menuButtonRef={menuButtonRef}
@@ -135,21 +130,18 @@ export default function TripShell({
           activeSection={activeSection}
           onNavigate={onNavigateSection}
           title={title}
-          subtitle={subtitle}
         />
 
         <main className="app-main" id="trip-main" aria-labelledby={pageTitleId}>
           <header className="desktop-topbar">
             <div><span className="desktop-topbar-section">{activeLabel}</span><span className="desktop-topbar-divider">/</span><span>{subtitle}</span></div>
-            <div className="desktop-topbar-tools"><span className="desktop-status"><i />{currentStatusText}</span><span className="desktop-travelers"><small>旅客</small>{travelerText}</span></div>
+            <div className="desktop-topbar-tools">{visibleState ? <span className="desktop-status"><i />{currentStatusText}</span> : null}<span className="desktop-travelers"><small>旅客</small>{travelerText}</span></div>
           </header>
           <header className="trip-main-header">
             <div className="main-title" id={pageTitleId}>
               {title}
             </div>
-            <div className="shell-status-line">
-              <span>{currentStatusText}</span>
-            </div>
+            {visibleState ? <div className="shell-status-line"><span>{currentStatusText}</span></div> : null}
           </header>
 
           <section className="trip-content">
