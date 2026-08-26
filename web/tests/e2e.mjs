@@ -179,6 +179,20 @@ try {
     if (await mobile.locator('.map-pin-link').count() < 1) throw new Error(`${date} has no map pin links`)
     if (await mobile.locator('.timeline-map-link, .map-icon-link, .parking-map-link, .official-info-link').count()) throw new Error(`${date} still renders duplicate map or official text buttons`)
     if (await mobile.locator('.timeline-entry.transport-leg .arrival-parking').count()) throw new Error(`${date} repeats destination parking inside transport cards`)
+    const parkingPairs = await mobile.locator('.timeline-entry:not(.transport-leg):has(.parking-fact-link)').evaluateAll((cards) => cards.map((card) => {
+      const placeHref = card.querySelector('.map-pin-link')?.getAttribute('href') || ''
+      const parkingHref = card.querySelector('.parking-fact-link')?.getAttribute('href') || ''
+      const placeQuery = placeHref ? new URL(placeHref).searchParams.get('query') || '' : ''
+      const parkingQuery = parkingHref ? new URL(parkingHref).searchParams.get('query') || '' : ''
+      return { placeHref, parkingHref, placeQuery, parkingQuery }
+    }))
+    if (parkingPairs.some(({ placeHref, parkingHref, placeQuery, parkingQuery }) => !placeHref || !parkingHref || placeHref === parkingHref || /駐車場|parking/i.test(placeQuery) || !/駐車場|parking/i.test(parkingQuery))) throw new Error(`${date} 景點與停車場連結混用：${JSON.stringify(parkingPairs)}`)
+    const dayTabs = await mobile.locator('.day-tab').evaluateAll((tabs) => tabs.map((tab) => {
+      const day = tab.querySelector('strong')?.getBoundingClientRect()
+      const date = tab.querySelector('span')?.getBoundingClientRect()
+      return { text: tab.textContent || '', verticalDifference: day && date ? Math.abs(day.top - date.top) : 999 }
+    }))
+    if (dayTabs.some(({ text, verticalDifference }) => /0\d-\d{2}/.test(text) || verticalDifference > 3)) throw new Error(`${date} day tabs wrap or use an unclear date format: ${JSON.stringify(dayTabs)}`)
     if (await mobile.locator('.day-alternative-group').count() !== 2) throw new Error(`${date} does not show rain and extra-time alternatives`)
     const hasTide = await mobile.locator('.day-tide-card').count() === 1
     if (hasTide !== (date === '2026-08-29' || date === '2026-08-30')) throw new Error(`${date} tide placement is incorrect`)
@@ -189,7 +203,10 @@ try {
   await openRoute(mobile, 'today/2026-08-27', '.itinerary-workspace')
   const shoppingCard = mobile.locator('#item-day1-night-shopping')
   if (!(await shoppingCard.textContent())?.includes('473 台免費平面停車場')) throw new Error('目的地卡缺少具名停車資訊')
-  if (!((await shoppingCard.locator('.map-pin-link').getAttribute('href')) || '').includes('maps/search')) throw new Error('目的地卡缺少單一 map pin 停車場連結')
+  const shoppingPlaceHref = await shoppingCard.locator('.map-pin-link').getAttribute('href')
+  const shoppingParkingHref = await shoppingCard.locator('.parking-fact-link').getAttribute('href')
+  if (!shoppingPlaceHref?.includes('maps/search') || !shoppingParkingHref?.includes('maps/search')) throw new Error('目的地或停車場 Google Maps 連結缺漏')
+  if (shoppingPlaceHref === shoppingParkingHref || !/AEON Awaji|イオン淡路店/i.test(new URL(shoppingPlaceHref).searchParams.get('query') || '') || !new URL(shoppingParkingHref).searchParams.get('query')?.includes('駐車場')) throw new Error(`景點與停車場連結混用：${shoppingPlaceHref} / ${shoppingParkingHref}`)
   if (await mobile.locator('.day-lodging-card').count()) throw new Error('住宿摘要與照片卡仍然重複')
   if (await mobile.locator('.day-media').getByText('Awaji Riverside Terrace in Shizuki 780', { exact: true }).count() !== 1) throw new Error('住宿照片卡應只顯示一次住宿名稱')
   if (await mobile.locator('.day-media .media-title-link[href*="booking.com"]').count()) throw new Error('住宿名稱不應連到第三方訂房平台')
@@ -221,6 +238,14 @@ try {
 
   await openRoute(mobile, 'food', '.food-workspace')
   await mobile.getByText('推薦餐點與飲品', { exact: true }).first().waitFor()
+  const foodParkingPairs = await mobile.locator('.food-card:has(.parking-fact-link)').evaluateAll((cards) => cards.map((card) => {
+    const placeHref = card.querySelector('.map-pin-link')?.getAttribute('href') || ''
+    const parkingHref = card.querySelector('.parking-fact-link')?.getAttribute('href') || ''
+    const placeQuery = placeHref ? new URL(placeHref).searchParams.get('query') || '' : ''
+    const parkingQuery = parkingHref ? new URL(parkingHref).searchParams.get('query') || '' : ''
+    return { placeHref, parkingHref, placeQuery, parkingQuery }
+  }))
+  if (foodParkingPairs.some(({ placeHref, parkingHref, placeQuery, parkingQuery }) => !placeHref || !parkingHref || placeHref === parkingHref || /駐車場|parking/i.test(placeQuery) || !/駐車場|parking/i.test(parkingQuery))) throw new Error(`餐飲頁景點與停車場連結混用：${JSON.stringify(foodParkingPairs)}`)
   await mobileContext.close()
 
   const desktopContext = await browser.newContext({ viewport: { width: 1440, height: 900 } })
@@ -252,15 +277,31 @@ try {
     await assertNoOverlap(desktop, '.trip-hero-content', '.hero-route-map', `${width}px overview hero`)
     const heroOverflow = await desktop.locator('.trip-hero-content').evaluate((element) => element.scrollWidth > element.clientWidth + 1)
     if (heroOverflow) throw new Error(`${width}px overview content overflows its grid column`)
+    await openRoute(desktop, 'today/2026-08-27', '.itinerary-workspace')
+    const photoHeights = await desktop.locator('.day-media figure').evaluateAll((figures) => figures.map((figure) => figure.getBoundingClientRect().height))
+    if (Math.max(...photoHeights) - Math.min(...photoHeights) > 1) throw new Error(`${width}px 同列照片卡高度不一致：${photoHeights.join(', ')}`)
   }
 
   await desktop.setViewportSize({ width: 1440, height: 1000 })
   for (const date of dates) {
     await openRoute(desktop, `today/${date}`, '.itinerary-workspace')
-    await assertExternalLinksOpen(desktop, '.daily-route-links a, .timeline-place-heading > h3 a, .timeline-place-heading > .map-pin-link', `${date} primary external`)
+    await assertExternalLinksOpen(desktop, '.daily-route-links a, .timeline-place-heading > h3 a, .timeline-place-heading > .map-pin-link, .parking-fact-link', `${date} primary external`)
   }
+  await openRoute(desktop, 'today/2026-08-27', '.itinerary-workspace')
+  await desktop.locator('.day-media').scrollIntoViewIfNeeded()
+  await desktop.waitForFunction(() => [...document.querySelectorAll('.day-media img')].every((image) => image.complete && image.naturalWidth > 0))
+  const mediaCards = await desktop.locator('.day-media figure').evaluateAll((figures) => figures.map((figure) => ({
+    height: figure.getBoundingClientRect().height,
+    titleHeight: figure.querySelector('figcaption strong')?.getBoundingClientRect().height || 0,
+    lineHeight: Number.parseFloat(getComputedStyle(figure.querySelector('figcaption strong')).lineHeight),
+  })))
+  const mediaHeights = mediaCards.map(({ height }) => height)
+  if (Math.max(...mediaHeights) - Math.min(...mediaHeights) > 1) throw new Error(`同列照片卡高度不一致：${mediaHeights.join(', ')}`)
+  if (mediaCards.some(({ titleHeight, lineHeight }) => titleHeight > lineHeight * 2 + 1)) throw new Error(`照片卡標題超過兩行：${JSON.stringify(mediaCards)}`)
+  const shinobiPhoto = desktop.locator('.day-media img[alt*="忍里"]')
+  if (!(await shinobiPhoto.getAttribute('src'))?.includes('aba1dd9afd994bc383f5259806be7bb4')) throw new Error('忍里仍使用裝飾性佔位圖片')
   await openRoute(desktop, 'food', '.food-workspace')
-  await assertExternalLinksOpen(desktop, '.food-place-heading > h3 a, .food-place-heading > .map-pin-link', 'food primary external')
+  await assertExternalLinksOpen(desktop, '.food-place-heading > h3 a, .food-place-heading > .map-pin-link, .food-card .parking-fact-link', 'food primary external')
   await openRoute(desktop, 'reservation', '.reservation-workspace')
   await assertExternalLinksOpen(desktop, '.reservation-title-row > h2 a, .reservation-title-row > .map-pin-link', 'reservation primary external')
   await desktopContext.close()

@@ -191,9 +191,9 @@
         "kind": "poi",
         "address": "兵庫県淡路市楠本2425-2 兵庫県立淡路島公園内",
         "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Nijigen+no+Mori+Shinobi+Village",
-        "image_url": "https://www.nijigennomori.com/wp-content/themes/habakiri-child/naruto_shinobizato/images/tennomaki.png",
+        "image_url": "https://nijigennomori-s3-loadbalancer.s3.ap-northeast-1.amazonaws.com/wp-content/uploads/2024/09/aba1dd9afd994bc383f5259806be7bb4-scaled.jpg",
         "image_source_url": "https://www.nijigennomori.com/naruto_shinobizato/",
-        "image_alt": "NARUTO & BORUTO 忍里天之卷立體迷宮",
+        "image_alt": "遊客在 NARUTO & BORUTO 忍里的角色造景前合影",
         "identifiers": [{"type":"official_url","value":"https://nijigennomori.com/naruto_shinobizato/","provenance":{"source_type":"official","provider":"ニジゲンノモリ","source_url":"https://nijigennomori.com/naruto_shinobizato/","retrieved_at":"2026-08-23T03:30:00+08:00","status":"reported"}}],
         "provenance": {"source_type":"user_input","provider":"Google Sheet 行程總覽","source_url":"https://docs.google.com/spreadsheets/d/1nPusA23w-CKnUHFZDj5U_OGdR1DrXX_Hf7_27ZRGvPE/edit?gid=1150292496","retrieved_at":"2026-08-23T03:30:00+08:00","confidence":1,"status":"reported","note":"Sheet 指定景點；票價與營業時間出發前查官方。"}
       },
