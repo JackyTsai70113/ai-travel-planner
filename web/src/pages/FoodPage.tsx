@@ -42,21 +42,21 @@ export function FoodPage({ bundle }: FoodPageProps) {
             const guide = placeGuides[meal.place_id]
             if (!guide) return null
             const parkingMapsQuery = (guide as typeof guide & { parkingMapsQuery?: string }).parkingMapsQuery
-            const mapHref = parkingMapsQuery ? buildMapsLink(parkingMapsQuery) : googleMapsHrefForPlace(place, name)
+            const mapHref = googleMapsHrefForPlace(place, name)
             const officialHref = usableOfficialHref(guide.sourceUrl || place?.official_url)
             const facts = [
               { label: '預計用餐', value: decisionCopy(guide.duration) },
               { label: '預估花費', value: decisionCopy(guide.cost) },
               { label: '營業時間', value: decisionCopy(guide.hours) },
               { label: '排隊與等候', value: decisionCopy(guide.queue) },
-              { label: '停車', value: decisionCopy(guide.parking) },
-            ].filter((fact): fact is { label: string; value: string } => Boolean(fact.value))
+              { label: '停車', value: decisionCopy(guide.parking), href: parkingMapsQuery ? buildMapsLink(parkingMapsQuery) : undefined },
+            ].filter((fact): fact is { label: string; value: string; href?: string } => Boolean(fact.value))
             return <article className="food-card" key={meal.id}>
               {place?.image_url ? <figure className="food-photo"><img src={place.image_url} alt={place.image_alt || name} loading="lazy" />{place.image_source_url ? <figcaption><a href={place.image_source_url} target="_blank" rel="noreferrer">圖片來源</a></figcaption> : null}</figure> : null}
               <div className="food-card-time">{timeLabel(meal.start_at)}</div>
-              <div className="food-place-heading"><h3>{officialHref ? <a className="official-title-link" href={officialHref} target="_blank" rel="noreferrer">{name}</a> : name}</h3><MapPinLink href={mapHref} label={`在 Google Maps 開啟 ${parkingMapsQuery ? `${name} 停車場` : name}`} /></div>
+              <div className="food-place-heading"><h3>{officialHref ? <a className="official-title-link" href={officialHref} target="_blank" rel="noreferrer">{name}</a> : name}</h3><MapPinLink href={mapHref} label={`在 Google Maps 開啟 ${name}`} /></div>
               <>
-                {facts.length > 0 ? <dl>{facts.map((fact) => <div key={fact.label}><dt>{fact.label}</dt><dd>{fact.value}</dd></div>)}</dl> : null}
+                {facts.length > 0 ? <dl>{facts.map((fact) => <div key={fact.label}><dt>{fact.label}</dt><dd>{fact.href ? <a className="parking-fact-link" href={fact.href} target="_blank" rel="noreferrer" aria-label={`在 Google Maps 開啟 ${parkingMapsQuery}`}>{fact.value}</a> : fact.value}</dd></div>)}</dl> : null}
                 <div className="food-picks"><strong>推薦餐點與飲品</strong><ol>{guide.highlights.map((highlight) => { const parts = highlightParts(highlight); return <li key={highlight}><strong>{parts.title}</strong>{parts.reason ? <span>{parts.reason}</span> : null}</li> })}</ol></div>
               </>
             </article>

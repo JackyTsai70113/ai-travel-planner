@@ -138,10 +138,17 @@ describe('淡路島只讀旅遊助手', () => {
     expect(screen.getByText('推薦餐點與飲品')).toBeInTheDocument()
     expect(screen.getByText(/可從三種湯頭選擇/)).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: 'ラーメン一樂' }).some((link) => link.getAttribute('href') === 'https://nijigennomori.com/food/ichiraku/')).toBe(true)
-    expect(screen.getByRole('link', { name: /在 Google Maps 開啟 ラーメン一樂.*停車場/ })).toHaveAttribute('href', expect.stringContaining('maps/search'))
+    const mealCard = document.querySelector('#item-visit-0') as HTMLElement
+    const placeMap = within(mealCard).getByRole('link', { name: '在 Google Maps 開啟 ラーメン一樂' })
+    const parkingMap = within(mealCard).getByRole('link', { name: '在 Google Maps 開啟 兵庫県立淡路島公園 E駐車場' })
+    expect(placeMap).toHaveAttribute('href', expect.stringContaining(encodeURIComponent('ラーメン一樂')))
+    expect(parkingMap).toHaveAttribute('href', expect.stringContaining(encodeURIComponent('兵庫県立淡路島公園 E駐車場')))
+    expect(placeMap.getAttribute('href')).not.toBe(parkingMap.getAttribute('href'))
     expect(screen.getByText('午餐前預留 30 分鐘點餐')).toBeInTheDocument()
     expect(document.body.textContent).not.toMatch(/官方未公布|未提供|未知/)
-    expect(document.querySelector('.arrival-parking')).toBeNull()
+    const transportCard = document.querySelector('#item-move-0') as HTMLElement
+    expect(transportCard).not.toHaveTextContent('E 停車場 477 台免費，步行約 5 分鐘。')
+    expect(within(transportCard).queryByText('停車')).toBeNull()
     expect(document.querySelector('.parking-map-link')).toBeNull()
     expect(document.querySelector('.official-info-link')).toBeNull()
     expect(document.querySelector('.day-lodging-card')).toBeNull()
@@ -151,6 +158,7 @@ describe('淡路島只讀旅遊助手', () => {
     expect(screen.getByText('Awaji Riverside Terrace in Shizuki 780', { selector: '.day-media strong' }).closest('a')).toBeNull()
     expect(document.body.textContent).not.toContain('↗')
     expect(document.querySelector('.timeline-map-link')).toBeNull()
+    expect(screen.getByRole('tab', { name: '第 1 天，8/27' })).toHaveTextContent('D18/27')
     expect(document.body.textContent).not.toMatch(/規劃估計|Sheet 指定|家庭／無障礙|聯絡[／/]參考|狀態正常|住宿安排已放入今日時間軸/)
   })
 
@@ -204,12 +212,17 @@ describe('淡路島只讀旅遊助手', () => {
     expect(document.body.textContent).not.toMatch(/未完成時|聯絡[／/]參考|離線|只提供出發前閱讀|不要求旅途中/)
   })
 
-  it('餐飲頁列出推薦品項，名稱連官方網站且 map pin 連停車場', () => {
+  it('餐飲頁的 map pin 連餐廳，停車資訊另連停車場', () => {
     render(<FoodPage bundle={bundle} />)
     expect(screen.getByText('一樂拉麵')).toBeInTheDocument()
     expect(screen.getByText(/每人約 ¥1,000–1,800/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'ラーメン一樂' })).toHaveAttribute('href', 'https://nijigennomori.com/food/ichiraku/')
-    expect(screen.getByRole('link', { name: /在 Google Maps 開啟 ラーメン一樂.*停車場/ })).toBeInTheDocument()
+    const foodCard = document.querySelector('.food-card') as HTMLElement
+    const placeMap = within(foodCard).getByRole('link', { name: '在 Google Maps 開啟 ラーメン一樂' })
+    const parkingMap = within(foodCard).getByRole('link', { name: '在 Google Maps 開啟 兵庫県立淡路島公園 E駐車場' })
+    expect(placeMap).toHaveAttribute('href', expect.stringContaining(encodeURIComponent('ラーメン一樂')))
+    expect(parkingMap).toHaveAttribute('href', expect.stringContaining(encodeURIComponent('兵庫県立淡路島公園 E駐車場')))
+    expect(placeMap.getAttribute('href')).not.toBe(parkingMap.getAttribute('href'))
     expect(document.body.textContent).not.toMatch(/官方未公布|官方網站/)
   })
 

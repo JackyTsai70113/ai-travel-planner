@@ -1469,8 +1469,8 @@
   },
   "local_timezone": "Asia/Tokyo",
   "meta": {
-    "bundle_sha256": "1a3547db273a759ae842108412227f2523d85b43879f0bf685d392f469ca30e7",
-    "generated_at": "2026-08-26T04:26:44+00:00",
+    "bundle_sha256": "6b0c69d48ae875e3d15f32da4db42ac82fa5180263a35ad8519f002cdf99c9cb",
+    "generated_at": "2026-08-26T07:55:33+00:00",
     "source_coverage": {
       "days": 5,
       "places": 51,
@@ -1478,7 +1478,7 @@
       "selected_hotels": 3
     },
     "source_path": "trips/awaji-naruto-tokushima-kobe-2026/trip.json",
-    "source_sha256": "0e5d5db4b799756bb2ea8a3da9146d5c4c2c078591a1e45ce1fc17f90da3504b",
+    "source_sha256": "81cf2c2bd6c4ed00887f1f339eb6fe5b27cc30ef71c552f3417227bc9c0aa85c",
     "trip_schema": "trip-v1"
   },
   "operations": {
@@ -2379,9 +2379,9 @@
       "address": "兵庫県淡路市楠本2425-2 兵庫県立淡路島公園内",
       "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Nijigen+no+Mori+Shinobi+Village",
       "id": "nijigen-no-mori-shinobi",
-      "image_alt": "NARUTO & BORUTO 忍里天之卷立體迷宮",
+      "image_alt": "遊客在 NARUTO & BORUTO 忍里的角色造景前合影",
       "image_source_url": "https://www.nijigennomori.com/naruto_shinobizato/",
-      "image_url": "https://www.nijigennomori.com/wp-content/themes/habakiri-child/naruto_shinobizato/images/tennomaki.png",
+      "image_url": "https://nijigennomori-s3-loadbalancer.s3.ap-northeast-1.amazonaws.com/wp-content/uploads/2024/09/aba1dd9afd994bc383f5259806be7bb4-scaled.jpg",
       "kind": "poi",
       "maps_query": "兵庫県淡路市楠本2425-2 兵庫県立淡路島公園内",
       "name": "Nijigen no Mori NARUTO & BORUTO 忍里",
