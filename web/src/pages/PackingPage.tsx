@@ -67,9 +67,9 @@ const PACKING_GROUPS = [
   },
 ] as const
 
-export function PackingPage({ bundle }: { bundle: Bundle }) {
+export function PackingPage(_props: { bundle: Bundle }) {
   return <section className="packing-workspace" aria-label="行前攜帶物品">
-    <header className="page-intro packing-intro"><div><p className="eyebrow">行前準備</p><h1>這趟旅程要帶什麼</h1><p>{bundle.traveler_profile.adults} 位大人與 {bundle.traveler_profile.children_count} 位幼兒的五日攜帶清單。這裡只提供出發前閱讀，不要求旅途中勾選或填寫。</p></div></header>
+    <header className="page-intro packing-intro"><div><p className="eyebrow">行前準備</p><h1>這趟旅程要帶什麼</h1></div></header>
     <div className="packing-guide-grid">{PACKING_GROUPS.map((group) => <section className="packing-guide-card" key={group.title}><header><h2>{group.title}</h2><p>{group.summary}</p></header><ul>{group.items.map(([name, reason]) => <li key={name}><strong>{name}</strong><span>{reason}</span></li>)}</ul></section>)}</div>
     <p className="packing-reference">入境與緊急資訊可直接查看 <a href="https://www.japan.travel/tw/plan/" target="_blank" rel="noreferrer">日本政府觀光局旅遊資訊</a>。</p>
   </section>

@@ -440,7 +440,13 @@ class AwajiTripFixtureTests(unittest.TestCase):
                 self.assertTrue(visible_place_ids & set(place_images))
 
         guidance = PRESENTATION_GUIDELINES_PATH.read_text(encoding="utf-8")
-        for phrase in ("只讀工具", "具名停車場", "Google Maps", "禁止只寫「高、中、低」", "右上角旅客人數"):
+        for phrase in (
+            "具名停車場",
+            "Google 地圖",
+            "禁止只寫「高、中、低」",
+            "右上角旅客人數",
+            "桌面側欄展開與收合控制固定在同一位置",
+        ):
             self.assertIn(phrase, guidance)
 
     def test_public_bundle_hides_obsolete_pretrip_refresh_warning(self):

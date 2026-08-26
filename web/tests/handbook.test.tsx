@@ -2,7 +2,9 @@ import { cleanup, render, screen, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Bundle } from '../src/contracts/trip'
 import type { TripCatalogEntry } from '../src/contracts/trip-registry'
-import { buildMapsDirectionsLink, buildRouteDirectionChunks } from '../src/lib/google-maps-links'
+import { decisionCopy } from '../src/lib/decision-copy'
+import { buildMapsDirectionsLink, buildRouteDirectionChunks, googleMapsQueryForPlace } from '../src/lib/google-maps-links'
+import { usableOfficialHref } from '../src/lib/official-links'
 import { FoodPage } from '../src/pages/FoodPage'
 import { heroNextItem, ItineraryPage } from '../src/pages/ItineraryPage'
 import { OverviewPage } from '../src/pages/OverviewPage'
@@ -35,8 +37,8 @@ const bundle: Bundle = {
   traveler_profile: { adults: 6, children_count: 1, children_ages: [3] },
   selected: { hotel_place_ids: ['awaji-riverside-hotel'], flight_ids: [] },
   places: [
-    ...placeIds.map((id, index) => ({ id, name: placeNames[index], maps_query: `${placeNames[index]} 日本`, ...(index === 0 ? { image_url: 'https://example.com/ramen.jpg', image_source_url: 'https://example.com/official', image_alt: '一樂拉麵' } : {}) })),
-    { id: 'awaji-riverside-hotel', name: 'Awaji Riverside Terrace in Shizuki 780', maps_query: 'Awaji Riverside Terrace in Shizuki 780', official_url: 'https://www.booking.com/', image_url: 'https://example.com/hotel.jpg', image_source_url: 'https://example.com/hotel', image_alt: '住宿外觀' },
+    ...placeIds.map((id, index) => ({ id, name: placeNames[index], maps_query: `${placeNames[index]} 日本`, google_maps_url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(placeNames[index])}`, ...(index === 0 ? { image_url: 'https://example.com/ramen.jpg', image_source_url: 'https://example.com/official', image_alt: '一樂拉麵' } : {}) })),
+    { id: 'awaji-riverside-hotel', name: 'Awaji Riverside Terrace in Shizuki 780', maps_query: '兵庫県淡路市志筑字黒田780-12', google_maps_url: 'https://www.google.com/maps/search/?api=1&query=Awaji+Riverside+Terrace+Shizuki+780-12', official_url: 'https://www.booking.com/', image_url: 'https://example.com/hotel.jpg', image_source_url: 'https://example.com/hotel', image_alt: '住宿外觀' },
   ],
   days: dates.map((date, index) => ({
     date,
@@ -107,7 +109,25 @@ describe('淡路島只讀旅遊助手', () => {
     chunks.forEach((chunk) => expect(chunk.href).toContain('maps/dir/'))
   })
 
-  it('每日頁面直接顯示天候、負擔、費用與玩法，名稱就是地圖連結', () => {
+  it('路線優先使用已驗證的 Google Maps 查詢詞，不回退到無法解析的地址', () => {
+    expect(googleMapsQueryForPlace(bundle.places?.find((place) => place.id === 'awaji-riverside-hotel'))).toBe('Awaji Riverside Terrace Shizuki 780-12')
+  })
+
+  it('已知資訊後的未知尾句會移除，整段未知時不顯示', () => {
+    expect(decisionCopy('GARB COSTA ORANGE 專用停車場 80 台免費；同一 Frogs FARM 三處停車場合計約 300 台免費，官方未公布各場滿位順序。')).toBe('GARB COSTA ORANGE 專用停車場 80 台免費；同一 Frogs FARM 三處停車場合計約 300 台免費')
+    expect(decisionCopy('官方未公布分時人流。')).toBeNull()
+    expect(decisionCopy('臨時停車場 30 台免費、官方服務至 17:00；17:00 後未證實可使用，無法進場就直接前往晚餐。')).toBe('臨時停車場 30 台免費、官方服務至 17:00；無法進場就直接前往晚餐')
+    expect(decisionCopy('纜車單程約 6 分鐘，官方未公布夕陽時段等候分鐘；18:05 抵達後先買來回票，若排隊會壓縮 20:00 公演。')).toBe('纜車單程約 6 分鐘；18:05 抵達後先買來回票，若排隊會壓縮 20:00 公演')
+    expect(decisionCopy('11:30 已安排入座；官方未公布週六等候時間，固定七人座位應先完成線上預約，不用現場賭候位。')).toBe('11:30 已安排入座；固定七人座位應先完成線上預約，不用現場賭候位')
+  })
+
+  it('已失效的舊官方網址會改用已驗證的官方直達頁', () => {
+    expect(usableOfficialHref('https://elb.nijigennomori.com/food/ichiraku/')).toBe('https://nijigennomori.com/food/ichiraku/')
+    expect(usableOfficialHref('https://awaji-kanransya.com/')).toBe('https://www.jb-highway.co.jp/sapa/awaji_down.html')
+    expect(usableOfficialHref('https://www.booking.com/hotel/jp/example.html')).toBeUndefined()
+  })
+
+  it('每日頁面以名稱連官方網站、map pin 連地圖，並省略未知與重複資訊', () => {
     render(<ItineraryPage bundle={bundle} route={{ section: 'today', day: dates[0], raw: `today/${dates[0]}` }} onNavigate={vi.fn()} />)
     expect(screen.getByText('天氣與氣溫')).toBeInTheDocument()
     expect(screen.getByText('降雨')).toBeInTheDocument()
@@ -117,11 +137,18 @@ describe('淡路島只讀旅遊助手', () => {
     expect(screen.getByText('預估花費')).toBeInTheDocument()
     expect(screen.getByText('推薦餐點與飲品')).toBeInTheDocument()
     expect(screen.getByText(/可從三種湯頭選擇/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'ラーメン一樂 在 Google Maps 開啟' })).toHaveClass('timeline-title-link')
-    expect(screen.getByRole('link', { name: '在 Google Maps 開啟停車場' })).toHaveAttribute('href', expect.stringContaining('maps/search'))
+    expect(screen.getAllByRole('link', { name: 'ラーメン一樂' }).some((link) => link.getAttribute('href') === 'https://nijigennomori.com/food/ichiraku/')).toBe(true)
+    expect(screen.getByRole('link', { name: /在 Google Maps 開啟 ラーメン一樂.*停車場/ })).toHaveAttribute('href', expect.stringContaining('maps/search'))
+    expect(screen.getByText('午餐前預留 30 分鐘點餐')).toBeInTheDocument()
+    expect(document.body.textContent).not.toMatch(/官方未公布|未提供|未知/)
+    expect(document.querySelector('.arrival-parking')).toBeNull()
+    expect(document.querySelector('.parking-map-link')).toBeNull()
+    expect(document.querySelector('.official-info-link')).toBeNull()
+    expect(document.querySelector('.day-lodging-card')).toBeNull()
     expect(screen.getByTitle(`${dates[0]} 自駕路線圖`)).toHaveAttribute('src', expect.stringContaining('output=embed'))
     expect(screen.getAllByRole('link', { name: /開啟路線/ }).length).toBeGreaterThan(0)
     expect(screen.getAllByText('圖片來源').length).toBeGreaterThan(0)
+    expect(screen.getByText('Awaji Riverside Terrace in Shizuki 780', { selector: '.day-media strong' }).closest('a')).toBeNull()
     expect(document.body.textContent).not.toContain('↗')
     expect(document.querySelector('.timeline-map-link')).toBeNull()
     expect(document.body.textContent).not.toMatch(/規劃估計|Sheet 指定|家庭／無障礙|聯絡[／/]參考|狀態正常|住宿安排已放入今日時間軸/)
@@ -156,14 +183,15 @@ describe('淡路島只讀旅遊助手', () => {
     expect(document.body.textContent).not.toMatch(/狀態正常|行前需確認|資料快照|Canonical Trip/)
   })
 
-  it('預約頁只保留時間、內容、玩法與文字式地圖連結', () => {
+  it('預約頁名稱連官方網站，map pin 連 Google Maps', () => {
     render(<ReservationsPage bundle={{ ...bundle, reservations: [{ id: 'cruise', day: dates[3], time: `${dates[3]}T12:50:00+09:00`, name: 'うずしおクルーズ（福良港）', place_id: 'uzushio-cruise-fukura', kind: 'fixed-reservation' }] }} />)
     expect(screen.getByText('12:50')).toBeInTheDocument()
     expect(screen.getByText(/成人 ¥3,000/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /うずしおクルーズ（福良港） 在 Google Maps 開啟/ })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'うずしおクルーズ（福良港）' })).toHaveAttribute('href', 'https://www.uzu-shio.com/timetable')
+    expect(screen.getByRole('link', { name: /在 Google Maps 開啟 うずしおクルーズ/ })).toBeInTheDocument()
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
     expect(document.body.textContent).not.toMatch(/地址|資料來源|最後確認|fixed-reservation/)
-    expect(document.querySelector('svg')).toBeNull()
+    expect(document.querySelectorAll('.map-pin-link svg')).toHaveLength(1)
   })
 
   it('攜帶物品是完整閱讀清單，不要求旅途中勾選或填寫', () => {
@@ -173,14 +201,16 @@ describe('淡路島只讀旅遊助手', () => {
     expect(screen.getByText('日本 eSIM／漫遊方案')).toBeInTheDocument()
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument()
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
-    expect(document.body.textContent).not.toMatch(/未完成時|聯絡[／/]參考|離線/)
+    expect(document.body.textContent).not.toMatch(/未完成時|聯絡[／/]參考|離線|只提供出發前閱讀|不要求旅途中/)
   })
 
-  it('餐飲頁列出推薦品項、價格與地圖連結', () => {
+  it('餐飲頁列出推薦品項，名稱連官方網站且 map pin 連停車場', () => {
     render(<FoodPage bundle={bundle} />)
     expect(screen.getByText('一樂拉麵')).toBeInTheDocument()
     expect(screen.getByText(/每人約 ¥1,000–1,800/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /ラーメン一樂 在 Google Maps 開啟/ })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'ラーメン一樂' })).toHaveAttribute('href', 'https://nijigennomori.com/food/ichiraku/')
+    expect(screen.getByRole('link', { name: /在 Google Maps 開啟 ラーメン一樂.*停車場/ })).toBeInTheDocument()
+    expect(document.body.textContent).not.toMatch(/官方未公布|官方網站/)
   })
 
   it('行程結束後不把下一站跳回早餐', () => {

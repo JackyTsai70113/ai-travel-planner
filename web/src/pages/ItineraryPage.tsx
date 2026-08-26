@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Bundle, BundleDay, BundleDayItem, BundleTransportLeg, buildMapsLink, findPlaceLabel } from '../contracts/trip'
 import { TripRoute } from '../app/route-registry'
-import { buildMapsDirectionsLink, buildRouteDirectionChunks } from '../lib/google-maps-links'
+import { MapPinLink } from '../components/MapPinLink'
+import { decisionCopy } from '../lib/decision-copy'
+import { buildMapsDirectionsLink, buildRouteDirectionChunks, googleMapsHrefForPlace, googleMapsQueryForPlace } from '../lib/google-maps-links'
+import { usableOfficialHref } from '../lib/official-links'
 import type { DailyAlternative } from '../content/awaji-travel-guide'
 
 interface ItineraryPageProps {
@@ -80,8 +83,8 @@ function legDirectionsLink(bundle: Bundle, leg: BundleTransportLeg): string {
   const from = bundle.places?.find((place) => place.id === leg.from_place)
   const to = bundle.places?.find((place) => place.id === leg.to_place)
   return buildMapsDirectionsLink([
-    { id: leg.from_place, label: leg.from_label, mapsQuery: from?.maps_query || from?.address },
-    { id: leg.to_place, label: leg.to_label, mapsQuery: to?.maps_query || to?.address },
+    { id: leg.from_place, label: leg.from_label, mapsQuery: googleMapsQueryForPlace(from, leg.from_label) },
+    { id: leg.to_place, label: leg.to_label, mapsQuery: googleMapsQueryForPlace(to, leg.to_label) },
   ], legTravelMode(leg.mode))
 }
 
@@ -94,7 +97,7 @@ interface RoutePoint {
 function placeRoutePoint(bundle: Bundle, placeId: string, fallbackLabel?: string): RoutePoint | null {
   const place = bundle.places?.find((candidate) => candidate.id === placeId)
   const label = place?.name || fallbackLabel || placeId
-  const query = place?.maps_query || place?.address || label
+  const query = googleMapsQueryForPlace(place, label)
   return query ? { id: placeId, label, query } : null
 }
 
@@ -225,7 +228,11 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
       if (!place?.image_url || seen.has(place.id)) return false
       seen.add(place.id)
       return true
-    }).slice(0, 3)
+    }).slice(0, 3).map(({ place, role }) => ({
+      place,
+      role,
+      officialUrl: usableOfficialHref(place ? place.official_url || placeGuides[place.id]?.sourceUrl : undefined),
+    }))
   })()
   const navigateTo = (day: string, item?: string) => onNavigate({ section: 'today', day, item })
 
@@ -248,14 +255,13 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
           <div><span>開車時間</span><strong>{guide.driving}</strong><small>不含景點停留與用餐</small></div>
           <div><span>固定時間</span><strong>{guide.fixedTimes}</strong><small>其餘停留可依體力調整</small></div>
         </div> : null}
-        {lodging ? <div className="day-lodging-card"><span>當晚住宿</span><strong>{lodging.name}</strong>{lodging.official_url ? <a href={lodging.official_url} target="_blank" rel="noreferrer">住宿資訊</a> : null}</div> : null}
         {guide?.tide ? <div className="day-tide-card"><span>鳴門潮流與海況</span><p>{guide.tide}</p><a href="https://www.uzunomichi.jp/tide-calendar/" target="_blank" rel="noreferrer">官方潮見表</a></div> : null}
       </header>
 
       {dailyMedia.length > 0 ? <section className="day-media" aria-label="當日住宿與景點照片">
-        {dailyMedia.map(({ place, role }) => place ? <figure key={place.id}>
+        {dailyMedia.map(({ place, role, officialUrl }) => place ? <figure key={place.id}>
           <img src={place.image_url || ''} alt={place.image_alt || place.name || role} loading="lazy" />
-          <figcaption><span>{role}</span><strong>{place.name}</strong>{place.image_source_url ? <a href={place.image_source_url} target="_blank" rel="noreferrer">圖片來源</a> : null}</figcaption>
+          <figcaption><span>{role}</span><strong>{officialUrl ? <a className="media-title-link" href={officialUrl} target="_blank" rel="noreferrer">{place.name}</a> : place.name}</strong>{place.image_source_url ? <a href={place.image_source_url} target="_blank" rel="noreferrer">圖片來源</a> : null}</figcaption>
         </figure> : null)}
       </section> : null}
 
@@ -276,28 +282,28 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
           const visualKind = itemVisualKind(item, !!reservation)
           const leg = transportLegForItem(bundle, item, selectedDay.date)
           const title = leg ? `${leg.from_label} → ${leg.to_label}` : findPlaceLabel(bundle.places, item.place_id)
-          const mapHref = leg ? legDirectionsLink(bundle, leg) : buildMapsLink(place?.maps_query || place?.name || item.place_id)
+          const mapHref = leg ? legDirectionsLink(bundle, leg) : googleMapsHrefForPlace(place, item.place_id)
           const placeGuide = !leg ? placeGuides[item.place_id] : undefined
-          const arrivalPlace = leg ? bundle.places?.find((candidate) => candidate.id === leg.to_place) : undefined
-          const arrivalGuide = leg ? placeGuides[leg.to_place] : undefined
-          const arrivalParkingGuide = leg ? bundle.travel_assistant?.arrival_parking?.[leg.to_place] : undefined
-          const arrivalParking = leg ? arrivalGuide?.parking || arrivalParkingGuide?.text || arrivalPlace?.parking : undefined
-          const parkingMapsQuery = ((leg ? arrivalGuide : placeGuide) as typeof placeGuide & { parkingMapsQuery?: string } | undefined)?.parkingMapsQuery
-            || (arrivalParkingGuide as typeof arrivalParkingGuide & { parkingMapsQuery?: string } | undefined)?.parkingMapsQuery
+          const parkingMapsQuery = (placeGuide as typeof placeGuide & { parkingMapsQuery?: string } | undefined)?.parkingMapsQuery
+          const officialHref = !leg ? usableOfficialHref(placeGuide?.sourceUrl || place?.official_url) : undefined
+          const titleMapHref = parkingMapsQuery ? buildMapsLink(parkingMapsQuery) : mapHref
+          const facts = placeGuide ? [
+            { label: '預估花費', value: decisionCopy(placeGuide.cost) },
+            { label: '排隊與等候', value: decisionCopy(placeGuide.queue) },
+            { label: '開放／營業時間', value: decisionCopy(placeGuide.hours) },
+            { label: '停車', value: decisionCopy(placeGuide.parking) },
+          ].filter((fact): fact is { label: string; value: string } => Boolean(fact.value)) : []
           const detail = placeGuide?.duration ? `停留 ${placeGuide.duration}` : objectiveItemDetail(item, leg)
           return <article tabIndex={-1} className={`timeline-entry ${visualKind} ${leg ? 'transport-leg' : ''} ${item.id === route.item ? 'item-highlight' : ''}`} id={`item-${item.id}`} key={item.id}>
             <div className="timeline-time"><strong>{timeLabel(item.start_at)}</strong><span>{item.end_at && item.end_at !== item.start_at ? timeLabel(item.end_at) : ''}</span></div>
             <div className="timeline-track"><span>{visualKind === 'reservation' ? '◆' : visualKind === 'meal' ? '✦' : visualKind === 'move' ? '→' : '●'}</span>{index < visibleItems.length - 1 ? <i /> : null}</div>
             <div className="timeline-card">
               <span className="timeline-category">{categoryLabel(visualKind, item)}</span>
-              <h3><a className="timeline-title-link" href={mapHref} target="_blank" rel="noreferrer" aria-label={`${title} 在 Google Maps 開啟`}>{title}</a></h3>
+              <div className="timeline-place-heading"><h3>{officialHref ? <a className="timeline-title-link" href={officialHref} target="_blank" rel="noreferrer">{title}</a> : title}</h3><MapPinLink href={titleMapHref} label={leg ? `在 Google Maps 開啟 ${title} 路線` : `在 Google Maps 開啟 ${parkingMapsQuery ? `${title} 停車場` : title}`} /></div>
               {detail ? <p className="timeline-detail">{detail}</p> : null}
-              {arrivalParking ? <div className="arrival-parking"><div><strong>抵達停車建議</strong><span>{arrivalParking}</span></div>{parkingMapsQuery ? <a href={buildMapsLink(parkingMapsQuery)} target="_blank" rel="noreferrer" aria-label="在 Google Maps 開啟停車場">停車場地圖</a> : null}</div> : null}
               {placeGuide ? <>
-                <dl className="place-facts"><div><dt>預估花費</dt><dd>{placeGuide.cost}</dd></div><div><dt>排隊與等候</dt><dd>{placeGuide.queue}</dd></div>{placeGuide.hours ? <div><dt>開放／營業時間</dt><dd>{placeGuide.hours}</dd></div> : null}</dl>
+                {facts.length > 0 ? <dl className="place-facts">{facts.map((fact) => <div key={fact.label}><dt>{fact.label}</dt><dd>{fact.value}</dd></div>)}</dl> : null}
                 <div className="place-highlights"><strong>{visualKind === 'meal' ? '推薦餐點與飲品' : '值得看與值得玩'}</strong><ul>{placeGuide.highlights.map((highlight) => { const parts = highlightParts(highlight); return <li key={highlight}><strong>{parts.title}</strong>{parts.reason ? <span>{parts.reason}</span> : null}</li> })}</ul></div>
-                {!leg && parkingMapsQuery ? <a className="parking-map-link" href={buildMapsLink(parkingMapsQuery)} target="_blank" rel="noreferrer">開啟停車場地圖</a> : null}
-                {placeGuide.sourceUrl ? <a className="official-info-link" href={placeGuide.sourceUrl} target="_blank" rel="noreferrer">官方網站</a> : null}
               </> : null}
             </div>
           </article>
