@@ -381,6 +381,8 @@ class AwajiTripFixtureTests(unittest.TestCase):
                 self.assertEqual(guide["source"]["source_url"], guide["sourceUrl"])
                 self.assertEqual(guide["source"]["status"], "reported")
                 self.assertTrue(guide["source"]["retrieved_at"])
+                self.assertTrue(guide["hours"])
+                self.assertTrue(guide["parking"])
 
     def test_public_bundle_hides_obsolete_pretrip_refresh_warning(self):
         source_codes = {item.get("code") for item in self.trip["validation"]}

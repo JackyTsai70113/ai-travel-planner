@@ -89,6 +89,12 @@ try {
     await assertNoForbiddenText(mobile, `today/${date}`)
   }
 
+  await openRoute(mobile, 'today/2026-08-27', '.itinerary-workspace')
+  const arrivalParking = mobile.locator('#item-day1-drive-garb-aeon .arrival-parking')
+  await arrivalParking.waitFor()
+  if (!(await arrivalParking.textContent())?.includes('商場停車場')) throw new Error('抵達前的交通卡缺少目的地停車資訊')
+  if (await mobile.locator('#item-day1-night-shopping .arrival-parking').count()) throw new Error('停車資訊應放在抵達前的交通卡，不應在景點卡重複')
+
   await openRoute(mobile, 'today/2026-08-31', '.itinerary-workspace')
   const flightLink = mobile.locator('#item-day5-departure-flight .timeline-title-link')
   const flightHref = await flightLink.getAttribute('href')

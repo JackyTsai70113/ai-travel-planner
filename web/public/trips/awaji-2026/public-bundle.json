@@ -578,7 +578,7 @@
           "expected_stay_minutes": 40,
           "id": "day1-night-shopping",
           "kind": "visit",
-          "notes": "Sheet 指定 AEON 或 PLANT；自由彈性、時間為規劃估計，疲累即取消。",
+          "notes": "晚間補充飲水、早餐與日用品；若已備齊可直接前往住宿。",
           "place_id": "aeon-awaji",
           "start_at": "2026-08-27T20:00:00+09:00",
           "transfer_minutes": null,
@@ -688,7 +688,7 @@
           "expected_stay_minutes": 30,
           "id": "day2-sea-church",
           "kind": "visit",
-          "notes": "獨立停靠；入內參觀須依婚禮與館方當日開放狀況，未開放則改為外觀短停。",
+          "notes": "安排建築外觀與淡路夢舞台公共區域，不進入飯店內的海之教會。",
           "place_id": "sea-church-awaji",
           "start_at": "2026-08-28T09:55:00+09:00",
           "transfer_minutes": null,
@@ -847,7 +847,7 @@
           "expected_stay_minutes": 30,
           "id": "day2-night-shopping",
           "kind": "visit",
-          "notes": "Sheet 指定 Cosmos 或超商巡禮；自由彈性、時間為規劃估計，疲累即取消。",
+          "notes": "補充飲水、防曬、常用藥品與隔日早餐；若已備齊可直接返回住宿。",
           "place_id": "cosmos-shizuki",
           "start_at": "2026-08-28T20:45:00+09:00",
           "transfer_minutes": null,
@@ -1469,8 +1469,8 @@
   },
   "local_timezone": "Asia/Tokyo",
   "meta": {
-    "bundle_sha256": "d8195e7a23f0376975e0676d84034f508c4472d324de3fa7bfb3a8e9207ac5bb",
-    "generated_at": "2026-08-26T03:19:39+00:00",
+    "bundle_sha256": "7790565ecd4afe7318cd09652fe66dcde6192b1cb2708617268c4ebdfacbeb26",
+    "generated_at": "2026-08-26T03:25:35+00:00",
     "source_coverage": {
       "days": 5,
       "places": 51,
@@ -1478,7 +1478,7 @@
       "selected_hotels": 3
     },
     "source_path": "trips/awaji-naruto-tokushima-kobe-2026/trip.json",
-    "source_sha256": "9dabcd88efba733d756666c7c6bd700a0ac95170e5e13d6d2c760cc60243ee4f",
+    "source_sha256": "f7350ea87706c06b58243d04cb43515ff9d45a8deed2ac2b24e9a5215d78fc36",
     "trip_schema": "trip-v1"
   },
   "operations": {
@@ -4796,15 +4796,16 @@
           "淡路島零食與伴手禮",
           "日用品一次購足"
         ],
+        "hours": "食品與日用品 08:00–22:00",
         "parking": "商場停車場",
         "queue": "晚間低至中等",
         "source": {
           "provider": "設施或觀光單位官方網站",
           "retrieved_at": "2026-08-26T10:30:00+08:00",
-          "source_url": "https://www.aeon.com/store/",
+          "source_url": "https://www.aeon.com/store/%E3%82%A4%E3%82%AA%E3%83%B3/%E3%82%A4%E3%82%AA%E3%83%B3%E6%B7%A1%E8%B7%AF%E5%BA%97/shop_info/hours",
           "status": "reported"
         },
-        "sourceUrl": "https://www.aeon.com/store/"
+        "sourceUrl": "https://www.aeon.com/store/%E3%82%A4%E3%82%AA%E3%83%B3/%E3%82%A4%E3%82%AA%E3%83%B3%E6%B7%A1%E8%B7%AF%E5%BA%97/shop_info/hours"
       },
       "awaji-sa-ferris-wheel": {
         "cost": "一般票 ¥800",
@@ -4852,6 +4853,7 @@
           "西海岸海景",
           "短距離平坦散步"
         ],
+        "hours": "戶外海岸道路，無固定開放時段",
         "parking": "只停合法停車區，不在路肩臨停",
         "queue": "低",
         "source": {
@@ -4908,15 +4910,16 @@
           "防曬與常用藥品",
           "隔日早餐與車上點心"
         ],
+        "hours": "10:00–21:00",
         "parking": "店前停車場",
         "queue": "晚間低",
         "source": {
           "provider": "設施或觀光單位官方網站",
           "retrieved_at": "2026-08-26T10:30:00+08:00",
-          "source_url": "https://www.cosmospc.co.jp/shop/",
+          "source_url": "https://www.cosmospc.co.jp/shop/kansai/hyogo/awaji/",
           "status": "reported"
         },
-        "sourceUrl": "https://www.cosmospc.co.jp/shop/"
+        "sourceUrl": "https://www.cosmospc.co.jp/shop/kansai/hyogo/awaji/"
       },
       "eshima": {
         "cost": "免費",
@@ -4926,15 +4929,16 @@
           "砂岩層理與侵蝕外觀",
           "岩屋港與明石海峽背景"
         ],
+        "hours": "岸邊公共觀景區無固定開放時段；絵島本體禁止進入",
         "parking": "岩屋港周邊有料停車場；絵島本體禁止進入",
         "queue": "低",
         "source": {
           "provider": "設施或觀光單位官方網站",
           "retrieved_at": "2026-08-26T10:30:00+08:00",
-          "source_url": "https://www.city.awaji.lg.jp/",
+          "source_url": "https://www.city.awaji.lg.jp/soshiki/shakai/51591.html",
           "status": "reported"
         },
-        "sourceUrl": "https://www.city.awaji.lg.jp/"
+        "sourceUrl": "https://www.city.awaji.lg.jp/soshiki/shakai/51591.html"
       },
       "familymart-shizuku-otoshi": {
         "cost": "每人約 ¥500–900",
@@ -5039,6 +5043,7 @@
           "黑松林景觀",
           "五色卵石海灘"
         ],
+        "hours": "海灘公共區域無固定開放時段",
         "parking": "海灘周邊停車區",
         "queue": "低",
         "source": {
@@ -5133,15 +5138,16 @@
           "海膽涮涮鍋或海鮮料理",
           "巨大洋蔥裝置與大鳴門橋展望"
         ],
+        "hours": "09:00–17:00；週二公休",
         "parking": "園區免費停車場",
         "queue": "週日午餐高",
         "source": {
           "provider": "設施或觀光單位官方網站",
           "retrieved_at": "2026-08-26T10:30:00+08:00",
-          "source_url": "https://rest.uzunokuni.com/",
+          "source_url": "https://kinen.uzunokuni.com/",
           "status": "reported"
         },
-        "sourceUrl": "https://rest.uzunokuni.com/"
+        "sourceUrl": "https://kinen.uzunokuni.com/"
       },
       "map-import-yumebutai": {
         "cost": "百段苑與公共建築區免費",
@@ -5170,15 +5176,16 @@
           "生雞蛋搭配濃厚豚骨醬油湯",
           "餃子或炒飯"
         ],
+        "hours": "10:00–24:00，全年無休",
         "parking": "使用市區停車場",
         "queue": "公演散場後中高",
         "source": {
           "provider": "設施或觀光單位官方網站",
           "retrieved_at": "2026-08-26T10:30:00+08:00",
-          "source_url": "https://www.menya-oh.com/",
+          "source_url": "https://7-men.com/shop_area/shikoku/?id=area-title",
           "status": "reported"
         },
-        "sourceUrl": "https://www.menya-oh.com/"
+        "sourceUrl": "https://7-men.com/shop_area/shikoku/?id=area-title"
       },
       "naruto-ferry-fixed-activity": {
         "cost": "招牌舒芙蕾鬆餅約 ¥1,000 起",
@@ -5264,6 +5271,7 @@
           "洲本老城街景",
           "在地小店外觀與攝影"
         ],
+        "hours": "戶外街區無固定開放時段；沿線店家各自營業",
         "parking": "使用洲本市區公共停車場",
         "queue": "低",
         "source": {
@@ -5278,19 +5286,20 @@
         "cost": "外觀與公共區域免費",
         "duration": "20–30 分鐘",
         "highlights": [
-          "十字形採光",
-          "安藤忠雄清水模空間",
-          "教堂與海景軸線"
+          "海之教會建築外觀",
+          "安藤忠雄清水模建築群",
+          "夢舞台與大阪灣景觀"
         ],
+        "hours": "淡路夢舞台公共區域 07:00–22:00；本行程不進入海之教會內部",
         "parking": "與淡路夢舞台共用地下停車場",
         "queue": "低",
         "source": {
           "provider": "設施或觀光單位官方網站",
           "retrieved_at": "2026-08-26T10:30:00+08:00",
-          "source_url": "https://www.yumebutai.co.jp/",
+          "source_url": "https://www.yumebutai.co.jp/yumebutai_guide/",
           "status": "reported"
         },
-        "sourceUrl": "https://www.yumebutai.co.jp/"
+        "sourceUrl": "https://www.yumebutai.co.jp/yumebutai_guide/"
       },
       "sumoto-castle": {
         "cost": "免費",
@@ -5300,6 +5309,7 @@
           "珍貴的登石垣遺構",
           "本丸大石階"
         ],
+        "hours": "城跡公園全天免費開放；模擬天守內部不可進入",
         "parking": "上城兩處約 10／20 台，免費；入口狹窄",
         "queue": "停車位少，週末早上中等",
         "source": {

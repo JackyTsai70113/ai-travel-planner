@@ -1430,7 +1430,7 @@
           "notes": "18:30 已訂位；開始時間為使用者確認，19:30 結束為規劃估計，實際用餐時長未確認。"
         },
         {"id":"day1-drive-garb-aeon","kind":"transport","place_id":"aeon-awaji","start_at":"2026-08-27T19:30:00+09:00","end_at":"2026-08-27T20:00:00+09:00","transport_leg_id":"leg-day1-garb-aeon","selection_status":"selected"},
-        {"id":"day1-night-shopping","kind":"visit","place_id":"aeon-awaji","start_at":"2026-08-27T20:00:00+09:00","end_at":"2026-08-27T20:40:00+09:00","selection_status":"selected","alternative_place_ids":["plant-awaji"],"notes":"Sheet 指定 AEON 或 PLANT；自由彈性、時間為規劃估計，疲累即取消。"},
+        {"id":"day1-night-shopping","kind":"visit","place_id":"aeon-awaji","start_at":"2026-08-27T20:00:00+09:00","end_at":"2026-08-27T20:40:00+09:00","selection_status":"selected","alternative_place_ids":["plant-awaji"],"notes":"晚間補充飲水、早餐與日用品；若已備齊可直接前往住宿。"},
         {"id":"day1-drive-aeon-riverside","kind":"transport","place_id":"awaji-riverside-hotel","start_at":"2026-08-27T20:40:00+09:00","end_at":"2026-08-27T21:00:00+09:00","transport_leg_id":"leg-day1-aeon-riverside","selection_status":"selected"},
         {"id":"day1-checkin","kind":"check_in","place_id":"awaji-riverside-hotel","start_at":"2026-08-27T21:00:00+09:00","end_at":"2026-08-27T21:20:00+09:00","selection_status":"selected","notes":"住宿與地址為使用者確認；入住時間為規劃估計。"}
       ]
@@ -1444,7 +1444,7 @@
         {"id":"day2-drive-rural-yumebutai","kind":"transport","place_id":"map-import-yumebutai","start_at":"2026-08-28T08:15:00+09:00","end_at":"2026-08-28T08:45:00+09:00","transport_leg_id":"leg-day2-rural-yumebutai","selection_status":"selected"},
         {"id":"day2-yumebutai","kind":"visit","place_id":"map-import-yumebutai","start_at":"2026-08-28T08:45:00+09:00","end_at":"2026-08-28T09:45:00+09:00","selection_status":"selected","notes":"Sheet 指定 Awaji Yumebutai；時間為規劃估計。"},
         {"id":"day2-walk-yumebutai-sea-church","kind":"transport","place_id":"sea-church-awaji","start_at":"2026-08-28T09:45:00+09:00","end_at":"2026-08-28T09:55:00+09:00","transport_leg_id":"leg-day2-yumebutai-sea-church","selection_status":"selected"},
-        {"id":"day2-sea-church","kind":"visit","place_id":"sea-church-awaji","start_at":"2026-08-28T09:55:00+09:00","end_at":"2026-08-28T10:25:00+09:00","selection_status":"selected","notes":"獨立停靠；入內參觀須依婚禮與館方當日開放狀況，未開放則改為外觀短停。"},
+        {"id":"day2-sea-church","kind":"visit","place_id":"sea-church-awaji","start_at":"2026-08-28T09:55:00+09:00","end_at":"2026-08-28T10:25:00+09:00","selection_status":"selected","notes":"安排建築外觀與淡路夢舞台公共區域，不進入飯店內的海之教會。"},
         {"id":"day2-drive-sea-church-mizumido","kind":"transport","place_id":"honpukuji-mizumido","start_at":"2026-08-28T10:25:00+09:00","end_at":"2026-08-28T10:45:00+09:00","transport_leg_id":"leg-day2-sea-church-mizumido","selection_status":"selected"},
         {"id":"day2-mizumido","kind":"visit","place_id":"honpukuji-mizumido","start_at":"2026-08-28T10:45:00+09:00","end_at":"2026-08-28T11:30:00+09:00","selection_status":"selected","notes":"Sheet 將本福寺水御堂列為獨立停靠；時間為規劃估計。"},
         {"id":"day2-drive-mizumido-taidrobou","kind":"transport","place_id":"map-import-taidrobou","start_at":"2026-08-28T11:30:00+09:00","end_at":"2026-08-28T13:00:00+09:00","transport_leg_id":"leg-day2-mizumido-taidrobou","selection_status":"selected","notes":"50 分規劃車程＋40 分訂位緩衝，不把 90 分全部當車程。"},
@@ -1489,7 +1489,7 @@
           "notes": "Sheet 指定民宿自炊；時間為規劃估計。"
         },
         {"id":"day2-drive-riverside-cosmos","kind":"transport","place_id":"cosmos-shizuki","start_at":"2026-08-28T20:30:00+09:00","end_at":"2026-08-28T20:45:00+09:00","transport_leg_id":"leg-day2-riverside-cosmos","selection_status":"selected"},
-        {"id":"day2-night-shopping","kind":"visit","place_id":"cosmos-shizuki","start_at":"2026-08-28T20:45:00+09:00","end_at":"2026-08-28T21:15:00+09:00","selection_status":"selected","notes":"Sheet 指定 Cosmos 或超商巡禮；自由彈性、時間為規劃估計，疲累即取消。"},
+        {"id":"day2-night-shopping","kind":"visit","place_id":"cosmos-shizuki","start_at":"2026-08-28T20:45:00+09:00","end_at":"2026-08-28T21:15:00+09:00","selection_status":"selected","notes":"補充飲水、防曬、常用藥品與隔日早餐；若已備齊可直接返回住宿。"},
         {"id":"day2-drive-cosmos-riverside","kind":"transport","place_id":"awaji-riverside-hotel","start_at":"2026-08-28T21:15:00+09:00","end_at":"2026-08-28T21:25:00+09:00","transport_leg_id":"leg-day2-cosmos-riverside","selection_status":"selected"}
       ]
     },
@@ -2101,6 +2101,7 @@
               "短距離平坦散步"
             ],
             "sourceUrl": "https://www.awajishima-kanko.jp/",
+            "hours": "戶外海岸道路，無固定開放時段",
             "source": {
               "provider": "設施或觀光單位官方網站",
               "source_url": "https://www.awajishima-kanko.jp/",
@@ -2137,10 +2138,11 @@
               "淡路島零食與伴手禮",
               "日用品一次購足"
             ],
-            "sourceUrl": "https://www.aeon.com/store/",
+            "sourceUrl": "https://www.aeon.com/store/%E3%82%A4%E3%82%AA%E3%83%B3/%E3%82%A4%E3%82%AA%E3%83%B3%E6%B7%A1%E8%B7%AF%E5%BA%97/shop_info/hours",
+            "hours": "食品與日用品 08:00–22:00",
             "source": {
               "provider": "設施或觀光單位官方網站",
-              "source_url": "https://www.aeon.com/store/",
+              "source_url": "https://www.aeon.com/store/%E3%82%A4%E3%82%AA%E3%83%B3/%E3%82%A4%E3%82%AA%E3%83%B3%E6%B7%A1%E8%B7%AF%E5%BA%97/shop_info/hours",
               "retrieved_at": "2026-08-26T10:30:00+08:00",
               "status": "reported"
             }
@@ -2189,14 +2191,15 @@
             "queue": "低",
             "parking": "與淡路夢舞台共用地下停車場",
             "highlights": [
-              "十字形採光",
-              "安藤忠雄清水模空間",
-              "教堂與海景軸線"
+              "海之教會建築外觀",
+              "安藤忠雄清水模建築群",
+              "夢舞台與大阪灣景觀"
             ],
-            "sourceUrl": "https://www.yumebutai.co.jp/",
+            "sourceUrl": "https://www.yumebutai.co.jp/yumebutai_guide/",
+            "hours": "淡路夢舞台公共區域 07:00–22:00；本行程不進入海之教會內部",
             "source": {
               "provider": "設施或觀光單位官方網站",
-              "source_url": "https://www.yumebutai.co.jp/",
+              "source_url": "https://www.yumebutai.co.jp/yumebutai_guide/",
               "retrieved_at": "2026-08-26T10:30:00+08:00",
               "status": "reported"
             }
@@ -2287,10 +2290,11 @@
               "防曬與常用藥品",
               "隔日早餐與車上點心"
             ],
-            "sourceUrl": "https://www.cosmospc.co.jp/shop/",
+            "sourceUrl": "https://www.cosmospc.co.jp/shop/kansai/hyogo/awaji/",
+            "hours": "10:00–21:00",
             "source": {
               "provider": "設施或觀光單位官方網站",
-              "source_url": "https://www.cosmospc.co.jp/shop/",
+              "source_url": "https://www.cosmospc.co.jp/shop/kansai/hyogo/awaji/",
               "retrieved_at": "2026-08-26T10:30:00+08:00",
               "status": "reported"
             }
@@ -2325,6 +2329,7 @@
               "本丸大石階"
             ],
             "sourceUrl": "https://www.city.sumoto.lg.jp/site/tunagarumachi/16885.html",
+            "hours": "城跡公園全天免費開放；模擬天守內部不可進入",
             "source": {
               "provider": "設施或觀光單位官方網站",
               "source_url": "https://www.city.sumoto.lg.jp/site/tunagarumachi/16885.html",
@@ -2343,6 +2348,7 @@
               "在地小店外觀與攝影"
             ],
             "sourceUrl": "https://www.awajishima-kanko.jp/",
+            "hours": "戶外街區無固定開放時段；沿線店家各自營業",
             "source": {
               "provider": "設施或觀光單位官方網站",
               "source_url": "https://www.awajishima-kanko.jp/",
@@ -2399,6 +2405,7 @@
               "五色卵石海灘"
             ],
             "sourceUrl": "https://www.awajishima-kanko.jp/",
+            "hours": "海灘公共區域無固定開放時段",
             "source": {
               "provider": "設施或觀光單位官方網站",
               "source_url": "https://www.awajishima-kanko.jp/",
@@ -2473,10 +2480,11 @@
               "生雞蛋搭配濃厚豚骨醬油湯",
               "餃子或炒飯"
             ],
-            "sourceUrl": "https://www.menya-oh.com/",
+            "sourceUrl": "https://7-men.com/shop_area/shikoku/?id=area-title",
+            "hours": "10:00–24:00，全年無休",
             "source": {
               "provider": "設施或觀光單位官方網站",
-              "source_url": "https://www.menya-oh.com/",
+              "source_url": "https://7-men.com/shop_area/shikoku/?id=area-title",
               "retrieved_at": "2026-08-26T10:30:00+08:00",
               "status": "reported"
             }
@@ -2510,10 +2518,11 @@
               "海膽涮涮鍋或海鮮料理",
               "巨大洋蔥裝置與大鳴門橋展望"
             ],
-            "sourceUrl": "https://rest.uzunokuni.com/",
+            "sourceUrl": "https://kinen.uzunokuni.com/",
+            "hours": "09:00–17:00；週二公休",
             "source": {
               "provider": "設施或觀光單位官方網站",
-              "source_url": "https://rest.uzunokuni.com/",
+              "source_url": "https://kinen.uzunokuni.com/",
               "retrieved_at": "2026-08-26T10:30:00+08:00",
               "status": "reported"
             }
@@ -2566,10 +2575,11 @@
               "砂岩層理與侵蝕外觀",
               "岩屋港與明石海峽背景"
             ],
-            "sourceUrl": "https://www.city.awaji.lg.jp/",
+            "sourceUrl": "https://www.city.awaji.lg.jp/soshiki/shakai/51591.html",
+            "hours": "岸邊公共觀景區無固定開放時段；絵島本體禁止進入",
             "source": {
               "provider": "設施或觀光單位官方網站",
-              "source_url": "https://www.city.awaji.lg.jp/",
+              "source_url": "https://www.city.awaji.lg.jp/soshiki/shakai/51591.html",
               "retrieved_at": "2026-08-26T10:30:00+08:00",
               "status": "reported"
             }
