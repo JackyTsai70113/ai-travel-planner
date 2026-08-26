@@ -2,9 +2,9 @@
   {
     "slug": "awaji-2026",
     "canonical_url": "trips/awaji-2026",
-    "title": "2026 瀨戶內五日行",
-    "short_title": "瀨戶內五日行",
-    "destination_regions": ["淡路島", "鳴門"],
+    "title": "2026 淡路島五日行",
+    "short_title": "淡路島五日行",
+    "destination_regions": ["淡路島", "鳴門", "德島", "神戶"],
     "date_range": {
       "start_date": "2026-08-27",
       "end_date": "2026-08-31"
@@ -22,7 +22,7 @@
       "gradient": "linear-gradient(130deg, #0b4a6f 0%, #2e90dc 55%, #79b8f8 100%)",
       "fallback": "淡路海岸晨霧"
     },
-    "hero_summary": "淡路島、鳴門、德島與神戶五日行程。",
+    "hero_summary": "淡路島、鳴門、德島與神戶的每日時間、天氣、體力、餐飲、住宿與導航，依行程順序集中整理。",
     "key_messages": ["行程主題與路線已穩定。", "道路、營運與訂位狀態需於出發前重查。"],
     "critical_alert_count": 2
   },

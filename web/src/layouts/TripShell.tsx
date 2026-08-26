@@ -108,10 +108,6 @@ export default function TripShell({
 
   const visibleState = useMemo(() => shellStatus !== 'normal', [shellStatus])
   const activeLabel = sections.find((section) => section.id === activeSection)?.label || '旅行總覽'
-  const travelerText = bundle
-    ? `${bundle.traveler_profile.adults} 大 ${bundle.traveler_profile.children_count} 小`
-    : '旅客資料載入中'
-
   return (
     <div className={`app-shell ${visibleState ? 'with-alert' : ''}`}>
       <a className="skip-link" href="#trip-main">跳到主要內容</a>
@@ -135,7 +131,7 @@ export default function TripShell({
         <main className="app-main" id="trip-main" aria-labelledby={pageTitleId}>
           <header className="desktop-topbar">
             <div><span className="desktop-topbar-section">{activeLabel}</span><span className="desktop-topbar-divider">/</span><span>{subtitle}</span></div>
-            <div className="desktop-topbar-tools">{visibleState ? <span className="desktop-status"><i />{currentStatusText}</span> : null}<span className="desktop-travelers"><small>旅客</small>{travelerText}</span></div>
+            {visibleState ? <div className="desktop-topbar-tools"><span className="desktop-status"><i />{currentStatusText}</span></div> : null}
           </header>
           <header className="trip-main-header">
             <div className="main-title" id={pageTitleId}>

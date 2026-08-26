@@ -6,8 +6,8 @@
   "theme_id": "setouchi-awaji",
   "media_manifest": "site-media.json",
   "features": {"itinerary": true, "driving": true, "conditions": true, "local_planner": false},
-  "pwa": {"name": "2026 瀨戶內五日行", "scope": "/trips/awaji-2026/"},
-  "seo": {"title": "2026 瀨戶內五日行", "description": "淡路島、鳴門、德島與神戶五日行程。"},
+  "pwa": {"name": "2026 淡路島五日行", "scope": "/trips/awaji-2026/"},
+  "seo": {"title": "2026 淡路島五日行", "description": "淡路島、鳴門、德島與神戶的每日時間、天氣、體力、餐飲、住宿與導航，依行程順序集中整理。"},
   "output_path": "trips/awaji-2026/",
   "trip_file": "../../trips/awaji-naruto-tokushima-kobe-2026/trip.json"
 }

@@ -14,6 +14,7 @@ CONDITIONS_PATH = Path("trips/awaji-naruto-tokushima-kobe-2026/conditions.json")
 TRIP_BUNDLE_PATH = Path("trips/awaji-naruto-tokushima-kobe-2026/public-bundle.json")
 WEB_BUNDLE_PATH = Path("web/public/trips/awaji-2026/public-bundle.json")
 EXAMPLE_BUNDLE_PATH = Path("tests/fixtures/awaji-2026/public-bundle-example.json")
+PRESENTATION_GUIDELINES_PATH = Path("trips/awaji-naruto-tokushima-kobe-2026/PRESENTATION_GUIDELINES.md")
 
 
 class AwajiTripFixtureTests(unittest.TestCase):
@@ -112,8 +113,8 @@ class AwajiTripFixtureTests(unittest.TestCase):
         self.assertEqual(pancake["name"], "幸せのパンケーキ 淡路島テラス")
         self.assertEqual(pancake["address"], "兵庫県淡路市尾崎42-1")
         self.assertEqual(pancake["resolution"]["state"], "resolved")
-        self.assertEqual(pancake["provenance"]["source_url"], "https://magia.tokyo/shop")
-        self.assertTrue(any(item["value"] == "https://magia.tokyo/shop" for item in pancake["identifiers"]))
+        self.assertEqual(pancake["provenance"]["source_url"], "https://magia.tokyo/awaji/")
+        self.assertTrue(any(item["value"] == "https://magia.tokyo/awaji/" for item in pancake["identifiers"]))
 
         reservation = next(
             item
@@ -236,6 +237,7 @@ class AwajiTripFixtureTests(unittest.TestCase):
                 self.assertEqual(guide["source"]["source_url"], guide["sourceUrl"])
                 self.assertEqual(guide["source"]["status"], "reported")
                 self.assertEqual(datetime.fromisoformat(guide["source"]["retrieved_at"]).utcoffset().total_seconds(), 9 * 60 * 60)
+                self.assertTrue(guide["parkingMapsQuery"])
 
     def test_day_three_breakfast_route_is_continuous(self):
         day_three = next(day for day in self.trip["days"] if day["date"] == "2026-08-29")
@@ -378,7 +380,7 @@ class AwajiTripFixtureTests(unittest.TestCase):
             self.assertNotIn(term, payload)
 
     def test_trip_title_scope(self):
-        self.assertEqual(self.trip["title"], "2026 瀨戶內五日行")
+        self.assertEqual(self.trip["title"], "2026 淡路島五日行")
 
     def test_travel_assistant_facts_come_from_canonical_trip_with_sources(self):
         override = next(
@@ -410,6 +412,36 @@ class AwajiTripFixtureTests(unittest.TestCase):
                 self.assertEqual(datetime.fromisoformat(guide["source"]["retrieved_at"]).utcoffset().total_seconds(), 9 * 60 * 60)
                 self.assertTrue(guide["hours"])
                 self.assertTrue(guide["parking"])
+                self.assertGreater(len(guide["queue"]), 20)
+                self.assertNotIn(guide["queue"].strip(), {"低", "中", "高", "中高", "低至中", "週日高"})
+                self.assertEqual(len(guide["highlights"]), 3)
+                self.assertTrue(all("：" in highlight for highlight in guide["highlights"]))
+                if place_id != "familymart-shizuku-otoshi":
+                    self.assertTrue(guide["parkingMapsQuery"])
+
+        forbidden_homepages = {
+            "https://www.awajishima-kanko.jp/",
+            "https://www.awaodori-kaikan.jp/",
+            "https://kinen.uzunokuni.com/",
+        }
+        self.assertFalse({guide["sourceUrl"] for guide in canonical["place_guides"].values()} & forbidden_homepages)
+
+    def test_each_day_has_attributed_public_media_and_repository_guidelines(self):
+        place_images = {
+            place["id"]: place
+            for place in self.trip["candidate_sets"]["places"]
+            if place.get("image_url") and place.get("image_source_url") and place.get("image_alt")
+        }
+        self.assertGreaterEqual(len(place_images), 15)
+        for day in self.trip["days"]:
+            visible_place_ids = {item["place_id"] for item in day["items"]}
+            visible_place_ids.update(self.trip["selected"]["hotel_place_ids"])
+            with self.subTest(date=day["date"]):
+                self.assertTrue(visible_place_ids & set(place_images))
+
+        guidance = PRESENTATION_GUIDELINES_PATH.read_text(encoding="utf-8")
+        for phrase in ("只讀工具", "具名停車場", "Google Maps", "禁止只寫「高、中、低」", "右上角旅客人數"):
+            self.assertIn(phrase, guidance)
 
     def test_public_bundle_hides_obsolete_pretrip_refresh_warning(self):
         source_codes = {item.get("code") for item in self.trip["validation"]}
