@@ -111,6 +111,12 @@ describe('淡路島只讀旅遊助手', () => {
 
   it('路線優先使用已驗證的 Google Maps 查詢詞，不回退到無法解析的地址', () => {
     expect(googleMapsQueryForPlace(bundle.places?.find((place) => place.id === 'awaji-riverside-hotel'))).toBe('Awaji Riverside Terrace Shizuki 780-12')
+    expect(googleMapsQueryForPlace({ name: '徳島別荘ホテル2', maps_query: '徳島県徳島市金沢1丁目3-44-3', google_maps_url: 'https://www.google.com/maps/search/?api=1&query=1-3-44-3+Kanazawa+Tokushima' })).toBe('徳島別荘ホテル2')
+  })
+
+  it('其他景點與路線優先使用研究後的日文地點查詢', () => {
+    expect(googleMapsQueryForPlace({ name: '本福寺 水御堂', maps_query: '兵庫県淡路市浦1310', google_maps_url: 'https://www.google.com/maps/search/?api=1&query=Honpukuji+Mizumido' })).toBe('兵庫県淡路市浦1310')
+    expect(googleMapsQueryForPlace({ name: 'レトロこみち', maps_query: '兵庫県洲本市本町', google_maps_url: 'https://www.google.com/maps/search/?api=1&query=Retro+Komichi+Sumoto' })).toBe('兵庫県洲本市本町')
   })
 
   it('已知資訊後的未知尾句會移除，整段未知時不顯示', () => {

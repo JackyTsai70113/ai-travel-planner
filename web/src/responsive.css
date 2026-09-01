@@ -1,0 +1,247 @@
+/*
+ * 行動版版面系統
+ *
+ * 這裡集中處理所有公開頁的手機資訊密度。不要在 styles.css 尾端再疊加零散的
+ * media query；手機版變更必須同時通過 375、390、430px 的整站瀏覽器驗收。
+ */
+
+@media (max-width: 960px) {
+  :root {
+    --mobile-page-gutter: 18px;
+    --mobile-section-gap: 20px;
+    --mobile-card-gap: 14px;
+    --mobile-card-padding: 16px;
+    --mobile-compact-padding: 12px;
+  }
+
+  .app-main {
+    padding: var(--mobile-section-gap) var(--mobile-page-gutter) calc(32px + env(safe-area-inset-bottom));
+  }
+
+  .page-intro { margin-bottom: var(--mobile-section-gap); }
+
+  .trip-overview-shell,
+  .overview-columns,
+  .reservation-groups,
+  .food-day-groups,
+  .packing-guide-grid { gap: var(--mobile-section-gap); }
+
+  .overview-day-grid,
+  .reservation-list,
+  .food-card-grid,
+  .phrase-list { gap: var(--mobile-card-gap); }
+
+  .day-media,
+  .timeline,
+  .day-alternatives,
+  .daily-route-map { margin-bottom: var(--mobile-section-gap); }
+
+  .timeline-entry { margin-bottom: var(--mobile-card-gap); }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --mobile-page-gutter: 16px;
+    --mobile-section-gap: 18px;
+    --mobile-card-gap: 14px;
+    --mobile-card-padding: 16px;
+    --mobile-compact-padding: 12px;
+  }
+
+  .app-main { padding-top: var(--mobile-section-gap); }
+
+  .portal-page {
+    width: 100%;
+    padding: var(--mobile-page-gutter);
+  }
+
+  .portal-hero {
+    margin-bottom: var(--mobile-section-gap);
+    padding: 22px 18px;
+    border-radius: 20px;
+  }
+
+  .portal-hero h1 { font-size: clamp(2rem, 11vw, 2.7rem); }
+  .catalog-shell { gap: var(--mobile-section-gap); }
+
+  .search-shell {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    padding: var(--mobile-card-padding);
+  }
+
+  .search-shell label:not(:first-child) { margin-top: 4px; }
+  .catalog-section { gap: var(--mobile-card-gap); }
+
+  .trip-card {
+    grid-template-columns: minmax(0, 1fr);
+    border-radius: 18px;
+  }
+
+  .trip-card-media { min-height: 190px; padding: var(--mobile-card-padding); }
+  .trip-card-body { padding: var(--mobile-card-padding); }
+  .trip-card-body h3 { font-size: 1.2rem; }
+
+  /* 日期是操作列，不是另一張大卡；五天在 375px 仍完整同列顯示。 */
+  .itinerary-day-nav {
+    gap: 0;
+    margin: calc(-1 * var(--mobile-section-gap)) calc(-1 * var(--mobile-page-gutter)) var(--mobile-section-gap);
+    padding: 10px var(--mobile-page-gutter);
+  }
+
+  .day-nav-label,
+  .itinerary-day-nav .print-button { display: none; }
+
+  .day-tabs {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
+    width: 100%;
+    overflow: visible;
+    padding: 0;
+  }
+
+  .day-tab {
+    min-width: 0;
+    min-height: 44px;
+    padding: 8px 4px;
+    gap: 4px;
+    border-radius: 11px;
+    font-size: .7rem;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .day-tab strong,
+  .day-tab span {
+    flex: 0 0 auto;
+    font-size: .68rem;
+    line-height: 1;
+  }
+
+  /* 天候摘要使用一個儀表板表面，不再堆六張厚重全寬卡。 */
+  .day-hero {
+    padding: 18px 16px;
+    border-radius: 18px;
+  }
+
+  .day-hero h2 {
+    margin: 9px 0 16px;
+    font-size: clamp(1.38rem, 6.5vw, 1.62rem);
+    line-height: 1.35;
+  }
+
+  .day-condition-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .day-condition-grid > div {
+    min-height: 0;
+    padding: var(--mobile-compact-padding);
+    gap: 4px;
+    border-color: #d5e2e6;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, .78);
+    box-shadow: none;
+  }
+
+  .day-condition-grid > div:nth-child(3),
+  .day-condition-grid > div:nth-child(4) { grid-column: 1 / -1; }
+
+  .day-condition-grid span { font-size: .72rem; letter-spacing: .03em; }
+  .day-condition-grid strong { font-size: .9rem; line-height: 1.4; }
+  .day-condition-grid small { font-size: .78rem; line-height: 1.45; }
+
+  .day-tide-card {
+    margin-top: 10px;
+    padding: 13px 14px;
+    border-radius: 12px;
+  }
+
+  /* 每日內容維持清楚層級，但移除卡片套卡片造成的多餘厚度。 */
+  .day-media { gap: var(--mobile-card-gap); }
+  .day-media img { height: 188px; }
+  .day-media figcaption { height: 82px; padding: 10px 12px; }
+
+  .timeline-card,
+  .timeline-entry.reservation .timeline-card {
+    margin-left: 6px;
+    padding: var(--mobile-card-padding);
+    border-radius: 15px;
+  }
+
+  .place-facts { gap: 8px; }
+
+  .place-facts div,
+  .place-highlights,
+  .food-picks { padding: 13px; }
+
+  .place-highlights ul,
+  .food-picks ol { gap: 8px; }
+
+  .place-highlights li,
+  .food-picks li { padding: 10px; }
+
+  .day-alternatives { gap: var(--mobile-card-gap); }
+  .day-alternative-group { padding: var(--mobile-card-padding); }
+  .day-alternative-group > div { gap: 10px; }
+
+  /* 總覽：保留外層區段，內層日程改成精簡列卡。 */
+  .trip-overview-hero { gap: 22px; padding: 24px 18px; }
+  .trip-overview-hero .hero-summary { margin-top: 16px; }
+  .overview-section { padding: var(--mobile-card-padding); }
+  .section-heading { margin-bottom: 14px; }
+
+  .overview-day-card {
+    gap: 14px;
+    padding: var(--mobile-card-padding);
+    box-shadow: none;
+  }
+
+  .overview-day-number { padding-bottom: 9px; }
+
+  .overview-stay-list article,
+  .overview-alert-list > a { padding: 11px 12px; }
+
+  /* 預約與餐飲：短數據並排，長文字獨占一列。 */
+  .reservation-card,
+  .food-card { padding: var(--mobile-card-padding); }
+
+  .reservation-highlights,
+  .food-picks { margin-top: 12px; }
+
+  .food-photo {
+    margin: calc(-1 * var(--mobile-card-padding)) calc(-1 * var(--mobile-card-padding)) 14px;
+  }
+
+  .food-card dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .food-card dl div { min-height: 0; padding: 11px; }
+  .food-card dl div:nth-child(n + 3) { grid-column: 1 / -1; }
+  .food-picks ol { display: grid; grid-template-columns: 1fr; }
+
+  /* 行前與日文：主卡維持 16px，內容列用分隔線取代額外巢狀留白。 */
+  .packing-guide-card > header,
+  .packing-guide-card ul,
+  .card[aria-label="實用日文"],
+  .phrase-list .subcard {
+    padding-left: var(--mobile-card-padding);
+    padding-right: var(--mobile-card-padding);
+  }
+
+  .packing-guide-card > header {
+    padding-top: var(--mobile-card-padding);
+    padding-bottom: 14px;
+  }
+
+  .packing-guide-card ul { padding-top: 8px; padding-bottom: 12px; }
+
+  .phrase-list .subcard {
+    padding-top: var(--mobile-card-padding);
+    padding-bottom: var(--mobile-card-padding);
+  }
+}

@@ -1,6 +1,6 @@
 import { chromium } from 'playwright'
-import { spawn } from 'node:child_process'
-import { copyFileSync, cpSync, mkdirSync, readdirSync } from 'node:fs'
+import { copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { startPreviewServer } from './preview-server.mjs'
 
 copyFileSync(new URL('../public/trips/awaji-2026/public-bundle.json', import.meta.url), new URL('../dist/public-bundle.json', import.meta.url))
 mkdirSync(new URL('../dist/trips/awaji-2026/', import.meta.url), { recursive: true })
@@ -9,28 +9,31 @@ for (const item of readdirSync(new URL('../dist/', import.meta.url))) {
   if (item === 'trips') continue
   cpSync(new URL(`../dist/${item}`, import.meta.url), new URL(`../dist/trips/awaji-2026/${item}`, import.meta.url), { recursive: true })
 }
+const staleWorkerSource = "self.addEventListener('install', (event) => event.waitUntil(self.skipWaiting()))"
+writeFileSync(new URL('../dist/trips/awaji-2026/stale-worker.js', import.meta.url), staleWorkerSource)
+writeFileSync(new URL('../dist/unrelated-worker.js', import.meta.url), staleWorkerSource)
 
 const deploymentPath = '/ai-travel-planner/'
 const baseUrl = `http://127.0.0.1:4173${deploymentPath}trips/awaji-2026/`
 const dates = ['2026-08-27', '2026-08-28', '2026-08-29', '2026-08-30', '2026-08-31']
-const forbidden = /待補|未提供|未知|官方未公布|狀態正常|規劃估計|硬截止|硬離場|Sheet 指定|家庭／無障礙|聯絡[／/]參考|Canonical Trip|資料快照|熱中症|UTC|資料來源|旅行資訊|只提供出發前閱讀|不要求旅途中/
-const server = spawn('npm', ['run', 'preview', '--', '--base', deploymentPath, '--host', '127.0.0.1', '--port', '4173'], { stdio: 'inherit' })
-server.unref()
-const stop = () => server.kill('SIGTERM')
-process.on('exit', stop)
-
-async function waitForServer() {
-  for (let attempt = 0; attempt < 40; attempt += 1) {
-    try {
-      const response = await fetch(baseUrl)
-      if (response.ok) return
-    } catch {
-      // Preview server is still starting.
-    }
-    await new Promise((resolve) => setTimeout(resolve, 100))
-  }
-  throw new Error('preview server did not start')
+const forbidden = /待補|未提供|未知|官方未公布|狀態正常|規劃估計|硬截止|硬離場|Sheet 指定|家庭／無障礙|聯絡[／/]參考|Canonical Trip|Golden Trip|\bloading\b|資料快照|熱中症|UTC|資料來源|旅行資訊|只提供出發前閱讀|不要求旅途中/i
+const serviceWorkerSource = readFileSync(new URL('../public/sw.js', import.meta.url), 'utf8')
+if (!serviceWorkerSource.includes('registration.unregister()') || serviceWorkerSource.includes("addEventListener('fetch'")) throw new Error('舊版離線快取仍會攔截網頁請求')
+if (existsSync(new URL('../public/offline.html', import.meta.url))) throw new Error('舊版離線頁仍存在')
+const staticDescriptionMarker = '__TRIP_HERO_SUMMARY__'
+const builtIndexSource = readFileSync(new URL('../dist/index.html', import.meta.url), 'utf8')
+const markerCount = builtIndexSource.split(staticDescriptionMarker).length - 1
+if (markerCount !== 2) throw new Error(`靜態旅程描述標記應出現兩次，實際為 ${markerCount}`)
+const registry = JSON.parse(readFileSync(new URL('../public/trip-registry.json', import.meta.url), 'utf8'))
+const awajiSummary = registry.find((trip) => trip.slug === 'awaji-2026')?.hero_summary
+const deployedAwajiIndex = builtIndexSource.replaceAll(staticDescriptionMarker, awajiSummary)
+if (!awajiSummary || (deployedAwajiIndex.match(new RegExp(`content="${awajiSummary}"`, 'g')) || []).length !== 2) {
+  throw new Error('部署後的靜態 description 與 og:description 未換成淡路島旅程摘要')
 }
+const { stop, waitForServer } = startPreviewServer({
+  args: ['--base', deploymentPath, '--host', '127.0.0.1', '--port', '4173'],
+  baseUrl,
+})
 
 async function openRoute(page, route, readySelector) {
   await page.goto(`${baseUrl}#/${route}`, { waitUntil: 'domcontentloaded' })
@@ -54,6 +57,43 @@ async function assertNoOverlap(page, leftSelector, rightSelector, label) {
   const overlapWidth = Math.max(0, Math.min(left.x + left.width, right.x + right.width) - Math.max(left.x, right.x))
   const overlapHeight = Math.max(0, Math.min(left.y + left.height, right.y + right.height) - Math.max(left.y, right.y))
   if (overlapWidth > 0 && overlapHeight > 0) throw new Error(`${label} overlaps by ${overlapWidth}x${overlapHeight}`)
+}
+
+async function assertNoElementCollisions(page, selector, label) {
+  const rectangles = await page.locator(selector).evaluateAll((elements) => elements
+    .filter((element) => {
+      const style = getComputedStyle(element)
+      return style.display !== 'none' && style.visibility !== 'hidden'
+    })
+    .map((element) => {
+      const bounds = element.getBoundingClientRect()
+      return { left: bounds.left, right: bounds.right, top: bounds.top, bottom: bounds.bottom }
+    }))
+  for (let leftIndex = 0; leftIndex < rectangles.length; leftIndex += 1) {
+    for (let rightIndex = leftIndex + 1; rightIndex < rectangles.length; rightIndex += 1) {
+      const left = rectangles[leftIndex]
+      const right = rectangles[rightIndex]
+      const overlapWidth = Math.max(0, Math.min(left.right, right.right) - Math.max(left.left, right.left))
+      const overlapHeight = Math.max(0, Math.min(left.bottom, right.bottom) - Math.max(left.top, right.top))
+      if (overlapWidth > 0 && overlapHeight > 0) throw new Error(`${label} elements ${leftIndex + 1} and ${rightIndex + 1} overlap by ${overlapWidth}x${overlapHeight}`)
+    }
+  }
+}
+
+async function assertVerticalFlow(page, selectors, label) {
+  const sections = []
+  for (const selector of selectors) {
+    const element = page.locator(selector).first()
+    if (await element.count() && await element.isVisible()) {
+      const bounds = await element.boundingBox()
+      if (bounds) sections.push({ selector, top: bounds.y, bottom: bounds.y + bounds.height })
+    }
+  }
+  for (let index = 1; index < sections.length; index += 1) {
+    if (sections[index].top < sections[index - 1].bottom) {
+      throw new Error(`${label} ${sections[index].selector} overlaps ${sections[index - 1].selector}`)
+    }
+  }
 }
 
 async function assertViewportGutter(page, selector, label, minimum = 15) {
@@ -86,6 +126,32 @@ async function assertVerticalCardGap(page, selector, label, minimum = 14) {
   if (violation !== undefined) throw new Error(`${label} vertical card gap is ${violation}px`)
 }
 
+async function assertCompactConditionSummary(page, label) {
+  const conditionLayout = await page.locator('.day-condition-grid').evaluate((grid) => {
+    const bounds = grid.getBoundingClientRect()
+    const cards = [...grid.children].map((card) => {
+      const cardBounds = card.getBoundingClientRect()
+      const style = getComputedStyle(card)
+      return {
+        top: Math.round(cardBounds.top),
+        width: cardBounds.width,
+        paddingLeft: Number.parseFloat(style.paddingLeft),
+        paddingRight: Number.parseFloat(style.paddingRight),
+      }
+    })
+    return { height: bounds.height, width: bounds.width, cards }
+  })
+  const [weather, rain, heat, activity, driving, fixed] = conditionLayout.cards
+  if (
+    weather.top !== rain.top ||
+    heat.width < conditionLayout.width * 0.9 ||
+    activity.width < conditionLayout.width * 0.9 ||
+    driving.top !== fixed.top ||
+    conditionLayout.height > 760 ||
+    conditionLayout.cards.some((card) => card.paddingLeft > 14 || card.paddingRight > 14)
+  ) throw new Error(`${label} mobile condition summary is still oversized: ${JSON.stringify(conditionLayout)}`)
+}
+
 async function assertExternalLinksOpen(page, selector, label) {
   const links = page.locator(selector)
   const count = await links.count()
@@ -113,13 +179,46 @@ try {
   await waitForServer()
   browser = await chromium.launch()
 
+  const loadingContext = await browser.newContext({ viewport: { width: 1280, height: 800 } })
+  const loadingPage = await loadingContext.newPage()
+  await loadingPage.route('**/public-bundle.json', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 1_000))
+    await route.continue()
+  })
+  await loadingPage.goto(baseUrl, { waitUntil: 'domcontentloaded' })
+  await loadingPage.locator('.desktop-topbar').waitFor({ state: 'visible' })
+  await assertNoForbiddenText(loadingPage, '行程載入畫面')
+  await loadingContext.close()
+
+  // 從入口頁與行程頁模擬過期 Worker，確認只清除目前行程，不影響同網域其他網站。
+  const staleCacheCleanupContext = await browser.newContext()
+  const staleCacheCleanupPage = await staleCacheCleanupContext.newPage()
+  await staleCacheCleanupPage.goto(`http://127.0.0.1:4173${deploymentPath}`, { waitUntil: 'domcontentloaded' })
+  await staleCacheCleanupPage.evaluate(async () => {
+    await navigator.serviceWorker.register('trips/awaji-2026/stale-worker.js', { scope: 'trips/awaji-2026/' })
+    await navigator.serviceWorker.register('unrelated-worker.js', { scope: 'unrelated/' })
+  })
+  await staleCacheCleanupPage.waitForFunction(async () => (await navigator.serviceWorker.getRegistrations()).length === 2)
+  await staleCacheCleanupPage.reload({ waitUntil: 'domcontentloaded' })
+  await staleCacheCleanupPage.waitForFunction(async () => (await navigator.serviceWorker.getRegistrations()).length === 2)
+  await assertNoForbiddenText(staleCacheCleanupPage, '入口網站')
+  await staleCacheCleanupPage.goto(baseUrl, { waitUntil: 'domcontentloaded' })
+  await staleCacheCleanupPage.waitForFunction(async () => {
+    const registrations = await navigator.serviceWorker.getRegistrations()
+    return registrations.length === 1 && new URL(registrations[0].scope).pathname.endsWith('/ai-travel-planner/unrelated/')
+  })
+  await staleCacheCleanupPage.evaluate(async () => {
+    await Promise.all((await navigator.serviceWorker.getRegistrations()).map((registration) => registration.unregister()))
+  })
+  await staleCacheCleanupContext.close()
+
   const mobileContext = await browser.newContext({ viewport: { width: 390, height: 844 } })
   const mobile = await mobileContext.newPage()
   mobile.setDefaultTimeout(10000)
 
   const mobileRoutes = [
     ['overview', '.trip-overview-shell'],
-    ['today/2026-08-27', '.itinerary-workspace'],
+    ...dates.map((date) => [`today/${date}`, '.itinerary-workspace']),
     ['reservation', '.reservation-workspace'],
     ['food', '.food-workspace'],
     ['packing', '.packing-workspace'],
@@ -140,6 +239,14 @@ try {
     packing: '.packing-guide-card',
     japanese: '.phrase-list .subcard',
   }
+  const mobileCollisionSelectors = {
+    overview: '.overview-day-card',
+    today: '.day-tab, .day-condition-grid > div, .day-media figure, .timeline-card, .day-alternative-group article',
+    reservation: '.reservation-card',
+    food: '.food-card',
+    packing: '.packing-guide-card',
+    japanese: '.phrase-list .subcard',
+  }
   for (const width of [375, 390, 430]) {
     await mobile.setViewportSize({ width, height: 844 })
     for (const [route, selector] of mobileRoutes) {
@@ -150,6 +257,9 @@ try {
       await assertViewportGutter(mobile, selector, `${width}px ${route}`)
       await assertCardPadding(mobile, mobileCardSelectors[routeKind], `${width}px ${route}`)
       if (mobileGapSelectors[routeKind]) await assertVerticalCardGap(mobile, mobileGapSelectors[routeKind], `${width}px ${route}`)
+      await assertNoElementCollisions(mobile, mobileCollisionSelectors[routeKind], `${width}px ${route}`)
+      if (routeKind === 'today') await assertCompactConditionSummary(mobile, `${width}px ${route}`)
+      if (routeKind === 'today') await assertVerticalFlow(mobile, ['.itinerary-day-nav', '.day-hero', '.day-media', '.daily-route-map', '.itinerary-utility', '.timeline', '.day-alternatives'], `${width}px ${route}`)
       await assertNoForbiddenText(mobile, route)
     }
   }
@@ -237,7 +347,7 @@ try {
   await mobile.getByText('暈船藥或暈車用品', { exact: true }).waitFor()
 
   await openRoute(mobile, 'reservation', '.reservation-workspace')
-  if (await mobile.locator('.reservation-map-link, .map-icon-link').count()) throw new Error('reservation page still renders legacy map buttons')
+  if (await mobile.locator('.reservation-map-link, .map-icon-link').count()) throw new Error('預約頁仍顯示舊版地圖按鈕')
   if (await mobile.locator('.reservation-card .map-pin-link').count() !== 4) throw new Error('reservation page should render one map pin for each reservation')
   if (await mobile.locator('.reservation-card').count() !== 4) throw new Error('reservation count changed unexpectedly')
 
@@ -305,6 +415,8 @@ try {
   await desktop.setViewportSize({ width: 1440, height: 1000 })
   for (const date of dates) {
     await openRoute(desktop, `today/${date}`, '.itinerary-workspace')
+    await desktop.locator('.day-media').scrollIntoViewIfNeeded()
+    await desktop.waitForFunction(() => [...document.querySelectorAll('.day-media img')].every((image) => image.complete && image.naturalWidth > 0))
     await assertExternalLinksOpen(desktop, '.daily-route-links a, .timeline-place-heading > h3 a, .timeline-place-heading > .map-pin-link, .parking-fact-link', `${date} primary external`)
   }
   await openRoute(desktop, 'today/2026-08-27', '.itinerary-workspace')

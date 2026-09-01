@@ -197,6 +197,7 @@ export default function TripApp({ tripMeta = null, tripSlug }: TripAppProps) {
     return (
       <TripShell
         bundle={null}
+        fallbackTitle={tripMeta?.title}
         shellStatus="loading"
         pageTitleId={pageTitleId}
         sections={SECTION_DEFINITIONS}
@@ -204,11 +205,10 @@ export default function TripApp({ tripMeta = null, tripSlug }: TripAppProps) {
         onNavigateSection={gotoSection}
         isDrawerOpen={drawerOpen}
         setDrawerOpen={setDrawerOpen}
-      >
-        <section className="card">
-          <h2>讀取行程中…</h2>
-          <p className="muted">{bundleLoader.status}</p>
-        </section>
+        >
+          <section className="card">
+            <h2>讀取行程中…</h2>
+          </section>
       </TripShell>
     )
   }
@@ -216,6 +216,7 @@ export default function TripApp({ tripMeta = null, tripSlug }: TripAppProps) {
   return (
     <TripShell
       bundle={bundleLoader.bundle}
+      fallbackTitle={tripMeta?.title}
       shellStatus={shellStatus}
       pageTitleId={pageTitleId}
       sections={SECTION_DEFINITIONS}

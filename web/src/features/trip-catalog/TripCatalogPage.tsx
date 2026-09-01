@@ -51,22 +51,19 @@ function statusText(status: string): string {
   return '封存'
 }
 
-function readinessText(readiness: string): string {
-  if (readiness === 'ready') return '可出發'
-  if (readiness === 'incomplete') return '行前確認'
-  return '阻斷'
-}
-
 function statusClass(status: string): string {
   if (status === 'published') return 'status-pill status-published'
   if (status === 'preview') return 'status-pill status-preview'
   return 'status-pill status-archived'
 }
 
-function readinessClass(readiness: string): string {
-  if (readiness === 'ready') return 'status-pill status-ready'
-  if (readiness === 'incomplete') return 'status-pill status-incomplete'
-  return 'status-pill status-blocked'
+const tagLabels: Record<string, string> = {
+  family: '家庭旅行',
+  'self-drive': '自駕',
+  'child-friendly': '幼兒同行',
+  'elder-friendly': '長輩同行',
+  'recorded-example': '介面範例',
+  blocked: '暫停使用',
 }
 
 function renderCard(item: TripCatalogEntry, setRoute: RouteSetter) {
@@ -78,25 +75,22 @@ function renderCard(item: TripCatalogEntry, setRoute: RouteSetter) {
     <article className="trip-card" key={item.slug}>
       <div className="trip-card-media" style={{ background }}>
         <span className={statusClass(item.status)}>{statusText(item.status)}</span>
-        <span className={readinessClass(item.readiness)}>{readinessText(item.readiness)}</span>
       </div>
       <div className="trip-card-body">
-        <p className="trip-card-eyebrow">{item.short_title}</p>
         <h3>{item.title}</h3>
         <p className="muted">{item.destination_regions.join(' / ')}</p>
-        <p>{item.travelers_summary} • {item.duration_days} 天</p>
+        <p>{item.duration_days} 天</p>
         <p className="muted">日期：{item.date_range.start_date} ~ {item.date_range.end_date}</p>
         <p>{item.hero_summary}</p>
         <div className="chips">
-          {item.tags.map((tag) => (
+          {item.tags.filter((tag) => tagLabels[tag]).map((tag) => (
             <span key={`${item.slug}-${tag}`} className="tag">
-              {tag}
+              {tagLabels[tag]}
             </span>
           ))}
         </div>
-        <p className="meta-note">關鍵提醒 {item.critical_alert_count} 則</p>
         <button type="button" onClick={() => setRoute({ route: 'trip', slug: item.slug })}>
-          查看 trip
+          查看行程
         </button>
       </div>
     </article>
@@ -171,7 +165,7 @@ export default function TripCatalogPage({ catalog, sections, setRoute, searchPla
       )}
       {filteredPreview.length > 0 && (
         <section className="catalog-section">
-          <h2>預覽 / 未完成</h2>
+          <h2>預覽行程</h2>
           {filteredPreview.map((item) => renderCard(item, setRoute))}
         </section>
       )}
