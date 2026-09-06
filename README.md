@@ -33,6 +33,17 @@ Run the end-user entrypoint with a natural-language request:
 python -m src.cli plan --request '幫我規劃 5 天 4 夜德島＋神戶，2 大 1 個 2 歲小孩，台北出發，自駕，不要太累，預算 8 萬。'
 ```
 
+若要把已驗證的 Canonical Trip 加入 registry-driven React 行程網站，請以完整日期與站點 slug 執行 `plan-site`：
+
+```sh
+python3 -m src.cli plan-site \
+  --request '2027/10/20 到 2027/10/22，台北出發名古屋，2 大 1 小，賞楓、自駕、不要太累，預算 8 萬日圓' \
+  --trip-id nagoya-autumn-2027 \
+  --site-slug nagoya-autumn-2027
+```
+
+只有月份的需求會回傳尚缺的完整日期，不會自行虛構日期。詳見 [`request-to-site`](docs/request-to-site.md)。
+
 Missing credentials return an explicit `configuration_missing` result.  The
 command never silently replaces production providers with fixture data.  For a
 local recorded demonstration only, add `--demo`; it writes

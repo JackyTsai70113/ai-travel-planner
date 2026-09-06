@@ -14,6 +14,7 @@ from src.application.production import (
     missing_required_configuration,
 )
 from src.renderer.build_site import build_site
+from src.request_site import RequestNotReadyError, assert_request_ready, parse_site_request, publish_request_site
 from src.schemas.validate_trip import validate_trip
 
 def plan_command(args: argparse.Namespace) -> int:
@@ -57,6 +58,43 @@ def plan_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def plan_site_command(args: argparse.Namespace) -> int:
+    """執行 live pipeline，並把 Canonical Trip 加入 React 網站。"""
+    intent = parse_site_request(args.request)
+    try:
+        assert_request_ready(intent)
+    except RequestNotReadyError as exc:
+        print(json.dumps({"status": "needs_details", "intent": intent.as_dict(), "message": str(exc)}, ensure_ascii=False), file=sys.stderr)
+        return 2
+    missing = missing_required_configuration()
+    if missing:
+        print(json.dumps({"status": "configuration_missing", "missing": missing, "message": "Production planning requires real provider credentials; no fixture fallback was used."}, ensure_ascii=False), file=sys.stderr)
+        return 2
+    try:
+        result = create_production_orchestrator(
+            trip_id=args.trip_id,
+            trips_directory=Path(args.trips_directory),
+            site_directory=Path(args.site_directory),
+        ).run(intent)
+    except (ProductionConfigurationError, ProductionIncompleteError, ValueError) as exc:
+        print(json.dumps({"status": "incomplete", "intent": intent.as_dict(), "message": str(exc)}, ensure_ascii=False), file=sys.stderr)
+        return 1
+    if not result.succeeded or result.trip is None:
+        print(json.dumps({"status": "incomplete", "intent": intent.as_dict(), "message": "planning pipeline 未產生已驗證的 Canonical Trip"}, ensure_ascii=False), file=sys.stderr)
+        return 1
+    try:
+        published = publish_request_site(result.trip, slug=args.site_slug, public_root=Path(args.public_root))
+    except ValueError as exc:
+        print(json.dumps({"status": "incomplete", "intent": intent.as_dict(), "message": str(exc)}, ensure_ascii=False), file=sys.stderr)
+        return 1
+    print(json.dumps({
+        "status": "complete", "intent": intent.as_dict(), "trip": str(result.trip_path) if result.trip_path else None,
+        "site": str(published.bundle_path), "canonical_url": published.canonical_url,
+        "readiness": "preview", "warnings": [warning.as_dict() for warning in result.warnings],
+    }, ensure_ascii=False))
+    return 0
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Plan a trip from a natural-language request")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -67,6 +105,14 @@ def main() -> None:
     plan.add_argument("--site-directory", default="site")
     plan.add_argument("--demo", action="store_true", help="explicit recorded fixture demonstration; never used by production default")
     plan.set_defaults(handler=plan_command)
+    plan_site = commands.add_parser("plan-site", help="從 production request 建立 registry-backed 行程網站")
+    plan_site.add_argument("--request", required=True)
+    plan_site.add_argument("--trip-id", required=True)
+    plan_site.add_argument("--site-slug", required=True)
+    plan_site.add_argument("--trips-directory", default="trips")
+    plan_site.add_argument("--site-directory", default="site")
+    plan_site.add_argument("--public-root", default="web/public")
+    plan_site.set_defaults(handler=plan_site_command)
     args = parser.parse_args(); raise SystemExit(args.handler(args))
 
 
