@@ -366,6 +366,13 @@ try {
   const desktopContext = await browser.newContext({ viewport: { width: 1440, height: 900 } })
   const desktop = await desktopContext.newPage()
   desktop.setDefaultTimeout(10000)
+  await desktop.route('**/*', (route) => {
+    if (route.request().resourceType() !== 'image') return route.continue()
+    return route.fulfill({
+      contentType: 'image/png',
+      body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64'),
+    })
+  })
   let sidebarCollapsed = false
   for (const [route, selector] of mobileRoutes) {
     await openRoute(desktop, route, selector)

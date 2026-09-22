@@ -199,7 +199,14 @@ export interface Bundle {
     summary?: string | null
     decision_gate?: string | null
   }> | null
-  overview?: { critical_unknown_count?: number | null } | null
+  overview?: { critical_unknown_count?: number | null; trip_scope?: string[] } | null
+  source_ledger?: Array<{
+    authority?: string | null
+    last_checked?: string | null
+    source_url?: string | null
+    status?: OperationalStatus | null
+    supports?: string[] | string
+  }>
   reservations: BundleReservation[]
   preferences: {
     hard_constraints: Constraint[]

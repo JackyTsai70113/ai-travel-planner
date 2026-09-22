@@ -111,6 +111,9 @@ def _as_status(value: object) -> str:
         "stale",
         "conflict",
         "unknown",
+        "pass",
+        "passed",
+        "ok",
     }
     return normalized if normalized in known else "unknown"
 
@@ -594,8 +597,10 @@ def _bundle_operations(trip: dict) -> dict[str, Any]:
         "emergency": raw.get("emergency") or [],
         "handbook": raw.get("handbook") or [],
         "returns": raw.get("returns") or [],
-        # 公開網站是只讀的旅遊助手，不要求旅客在行程中勾選或填寫任務。
-        "pretrip_checklist": [],
+        # 預設維持既有公開契約；只有明確 opt-in 的旅程才呈現唯讀覆核事項。
+        "pretrip_checklist": _bundle_pretrip_checklist(trip)
+        if _override_value(trip, "/presentation/show_pretrip_checklist") is True
+        else [],
     }
 
 
@@ -732,12 +737,15 @@ def build_public_bundle(trip: dict, trip_path: Path) -> dict:
 
     selected_hotel_ids = _as_list(_as_dict(trip.get("selected")).get("hotel_place_ids"))
     selected_flight_ids = _as_list(_as_dict(trip.get("selected")).get("flight_ids"))
+    trip_scope = _as_list(_override_value(trip, "/presentation/trip_scope"))
+    if not trip_scope:
+        trip_scope = [_safe_str(trip.get("title")) or _safe_str(trip.get("id"))]
     return {
         "trip_id": trip.get("id"),
         "title": trip.get("title"),
-        "schema": "awaji-public-bundle-v1",
+        "schema": "trip-public-bundle-v1",
         "overview": {
-            "trip_scope": ["awaji", "naruto", "tokushima", "kobe"],
+            "trip_scope": trip_scope,
             "critical_unknown_count": len(_bundle_critical_alerts(validation_payload)),
             "next_recheck_at": _safe_str(
                 _as_dict(trip.get("operations")).get("next_recheck_at")

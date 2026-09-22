@@ -4,16 +4,15 @@ import { chromium } from 'playwright'
 import { copyFileSync, cpSync, mkdirSync, readdirSync } from 'node:fs'
 import { startPreviewServer } from './preview-server.mjs'
 
-for (const slug of ['awaji-2026', 'kansai-preview-2025', 'japan-archive-example', 'japan-blocked-example']) {
+for (const slug of ['wanhua-2026', 'awaji-2026', 'kansai-preview-2025', 'japan-archive-example', 'japan-blocked-example']) {
   mkdirSync(`dist/trips/${slug}`, { recursive: true })
   copyFileSync('dist/index.html', `dist/trips/${slug}/index.html`)
-  if (slug === 'japan-archive-example' || slug === 'japan-blocked-example') {
-    copyFileSync('dist/trips/kansai-preview-2025/public-bundle.json', `dist/trips/${slug}/public-bundle.json`)
-  }
   for (const item of readdirSync('dist')) {
     if (item === 'index.html' || item === 'trips') continue
     cpSync(`dist/${item}`, `dist/trips/${slug}/${item}`, { recursive: true })
   }
+  const sourceSlug = slug === 'japan-archive-example' || slug === 'japan-blocked-example' ? 'kansai-preview-2025' : slug
+  copyFileSync(`public/trips/${sourceSlug}/public-bundle.json`, `dist/trips/${slug}/public-bundle.json`)
 }
 
 const baseUrl = 'http://127.0.0.1:4174/'
@@ -83,7 +82,7 @@ try {
     layoutPage.setDefaultTimeout(10000)
     await layoutPage.goto(baseUrl, { waitUntil: 'domcontentloaded' })
     await layoutPage.locator('.trip-card').nth(1).waitFor({ state: 'visible' })
-    if (await layoutPage.locator('.trip-card').count() !== 4) throw new Error(`${width}px root catalog did not render all recorded trips`)
+    if (await layoutPage.locator('.trip-card').count() !== 5) throw new Error(`${width}px root catalog did not render all visible trips`)
     const portalText = await layoutPage.locator('body').innerText()
     if (/CANONICAL TRIP JOURNEYS|Kansai 2025|Archived example|Blocked example|family|self-drive|recorded-example|查看 trip/i.test(portalText)) throw new Error(`${width}px root catalog exposed internal English copy`)
     await assertPortalLayout(layoutPage, width)
@@ -95,9 +94,17 @@ try {
   page.setDefaultNavigationTimeout(10000)
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' })
   await page.locator('.trip-card').nth(1).waitFor({ state: 'visible' })
-  if (await page.locator('.trip-card').count() !== 4) throw new Error('root catalog did not render all recorded trips')
+  if (await page.locator('.trip-card').count() !== 5) throw new Error('root catalog did not render all visible trips')
   if (await page.locator('h1').filter({ hasText: 'AI Travel Planner' }).count() !== 1) throw new Error('root product identity missing')
-  await page.locator('.trip-card').filter({ hasText: '淡路島五日行' }).getByRole('button', { name: '查看行程' }).click()
+  await Promise.all([
+    page.waitForURL('**/trips/wanhua-2026/'),
+    page.locator('.trip-card').filter({ hasText: '萬華三天兩夜一人行' }).getByRole('button', { name: '查看行程' }).click(),
+  ])
+  await page.locator('.overview-day-grid').waitFor({ state: 'visible' })
+  if (!page.url().includes('/trips/wanhua-2026/')) throw new Error(`Wanhua URL was not canonical: ${page.url()}`)
+  if (!(await page.locator('body').innerText()).includes('西門文化散步與入住緩衝')) throw new Error('Wanhua day one summary did not render')
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded' })
+  await page.goto(`${baseUrl}trips/awaji-2026/`, { waitUntil: 'domcontentloaded' })
   await page.locator('.overview-day-grid').waitFor({ state: 'visible' })
   if (!page.url().includes('/trips/awaji-2026/')) throw new Error(`Awaji URL was not canonical: ${page.url()}`)
   if ((await page.title()).includes('Trip Planner')) throw new Error('trip metadata was not updated')

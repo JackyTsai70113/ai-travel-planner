@@ -1,0 +1,803 @@
+{
+  "alternatives": [],
+  "budget": {
+    "categories": {
+      "core-tickets": {
+        "amount": 0,
+        "currency": "TWD"
+      },
+      "metro": {
+        "amount": 40,
+        "currency": "TWD"
+      }
+    },
+    "currency": "TWD",
+    "total": {
+      "amount": 40,
+      "currency": "TWD"
+    }
+  },
+  "conditions": {
+    "closures": [],
+    "freshness": "unknown",
+    "tide": {
+      "status": "unknown",
+      "status_label": "官方未確認"
+    },
+    "weather": {
+      "status": "unknown",
+      "status_label": "官方未確認"
+    }
+  },
+  "critical_alerts": [
+    {
+      "id": "lodging-booking-required",
+      "level": "warning",
+      "message": "住宿僅為候選；尚未確認房價、房況、取消條款、入住與退房時間，不能視為已訂房。",
+      "path": "/selected/hotel_place_ids"
+    },
+    {
+      "id": "arrival-departure-required",
+      "level": "warning",
+      "message": "使用者未指定出發地與返程目的地；首末段交通、其票價與時間尚未規劃，請出發前補齊。",
+      "path": "/itinerary"
+    }
+  ],
+  "date_range": {
+    "end_date": "2026-10-02",
+    "start_date": "2026-09-30"
+  },
+  "days": [
+    {
+      "date": "2026-09-30",
+      "items": [
+        {
+          "alternative_place_ids": [],
+          "buffer_minutes": null,
+          "end_at": "2026-09-30T11:45:00+08:00",
+          "expected_stay_minutes": 75,
+          "id": "d1-hotel-bag-drop",
+          "kind": "free_time",
+          "notes": "抵達與寄放行李時間；住宿尚未訂房，先於官方訂房頁確認房價、取消條款與入住時段。",
+          "place_id": "westgate-hotel",
+          "start_at": "2026-09-30T10:30:00+08:00",
+          "transfer_minutes": null,
+          "transport_leg_id": null
+        },
+        {
+          "alternative_place_ids": [],
+          "buffer_minutes": 0,
+          "end_at": "2026-09-30T12:00:00+08:00",
+          "expected_stay_minutes": null,
+          "id": "d1-walk-red-house",
+          "kind": "transport",
+          "notes": null,
+          "place_id": "red-house",
+          "start_at": "2026-09-30T11:45:00+08:00",
+          "transfer_minutes": 15,
+          "transport_leg_id": "hotel-to-red-house"
+        },
+        {
+          "alternative_place_ids": [],
+          "buffer_minutes": null,
+          "end_at": "2026-09-30T13:30:00+08:00",
+          "expected_stay_minutes": 90,
+          "id": "d1-red-house",
+          "kind": "visit",
+          "notes": "常設空間不設固定門票；若選擇當日付費展演，請先以官網票務與開演時間覆核。",
+          "place_id": "red-house",
+          "start_at": "2026-09-30T12:00:00+08:00",
+          "transfer_minutes": null,
+          "transport_leg_id": null
+        },
+        {
+          "alternative_place_ids": [],
+          "buffer_minutes": null,
+          "end_at": "2026-09-30T15:30:00+08:00",
+          "expected_stay_minutes": 30,
+          "id": "d1-hotel-checkin",
+          "kind": "check_in",
+          "notes": "規劃入住窗口，不代表已確認的飯店入住時間。",
+          "place_id": "westgate-hotel",
+          "start_at": "2026-09-30T15:00:00+08:00",
+          "transfer_minutes": null,
+          "transport_leg_id": null
+        },
+        {
+          "alternative_place_ids": [],
+          "buffer_minutes": null,
+          "end_at": "2026-09-30T20:30:00+08:00",
+          "expected_stay_minutes": 150,
+          "id": "d1-ximen-evening",
+          "kind": "free_time",
+          "notes": "西門町自由晚餐與夜間散步；不綁定未查證的店家營業時間。",
+          "place_id": "red-house",
+          "start_at": "2026-09-30T18:00:00+08:00",
+          "transfer_minutes": null,
+          "transport_leg_id": null
+        }
+      ],
+      "summary": "西門文化散步與入住緩衝"
+    },
+    {
+      "date": "2026-10-01",
+      "items": [
+        {
+          "alternative_place_ids": [],
+          "buffer_minutes": 0,
+          "end_at": "2026-10-01T09:50:00+08:00",
+          "expected_stay_minutes": null,
+          "id": "d2-metro-longshan",
+          "kind": "transport",
+          "notes": null,
+          "place_id": "longshan-station",
+          "start_at": "2026-10-01T09:30:00+08:00",
+          "transfer_minutes": 20,
+          "transport_leg_id": "ximen-to-longshan"
+        },
+        {
+          "alternative_place_ids": [],
+          "buffer_minutes": null,
+          "end_at": "2026-10-01T11:15:00+08:00",
+          "expected_stay_minutes": 75,
+          "id": "d2-longshan-temple",
+          "kind": "visit",
+          "notes": "免費參拜；服裝、拍攝與法會動線請遵守現場規範。",
+          "place_id": "longshan-temple",
+          "start_at": "2026-10-01T10:00:00+08:00",
+          "transfer_minutes": null,
+          "transport_leg_id": null
+        },
+        {
+          "alternative_place_ids": [],
+          "buffer_minutes": null,
+          "end_at": "2026-10-01T13:30:00+08:00",
+          "expected_stay_minutes": 120,
+          "id": "d2-bopiliao",
+          "kind": "visit",
+          "notes": "免費入場；室內 18:00 關閉，本時段留有充足緩衝。",
+          "place_id": "bopiliao",
+          "start_at": "2026-10-01T11:30:00+08:00",
+          "transfer_minutes": null,
+          "transport_leg_id": null
+        },
+        {
+          "alternative_place_ids": [],
+          "buffer_minutes": null,
+          "end_at": "2026-10-01T15:00:00+08:00",
+          "expected_stay_minutes": 60,
+          "id": "d2-qingshan",
+          "kind": "visit",
+          "notes": "自由參拜備選；若現場公告限制入內，改為周邊街區步行。",
+          "place_id": "qingshan-temple",
+          "start_at": "2026-10-01T14:00:00+08:00",
+          "transfer_minutes": null,
+          "transport_leg_id": null
+        },
+        {
+          "alternative_place_ids": [],
+          "buffer_minutes": null,
+          "end_at": "2026-10-01T20:00:00+08:00",
+          "expected_stay_minutes": 120,
+          "id": "d2-huaxi-dinner",
+          "kind": "meal",
+          "notes": "彈性晚餐預留；攤商營業與售完狀況不同，抵達後依現場選擇。",
+          "place_id": "huaxi-night-market",
+          "start_at": "2026-10-01T18:00:00+08:00",
+          "transfer_minutes": null,
+          "transport_leg_id": null
+        },
+        {
+          "alternative_place_ids": [],
+          "buffer_minutes": 0,
+          "end_at": "2026-10-01T20:50:00+08:00",
+          "expected_stay_minutes": null,
+          "id": "d2-metro-ximen",
+          "kind": "transport",
+          "notes": null,
+          "place_id": "ximen-station",
+          "start_at": "2026-10-01T20:30:00+08:00",
+          "transfer_minutes": 20,
+          "transport_leg_id": "longshan-to-ximen"
+        }
+      ],
+      "summary": "艋舺古蹟、街區與夜市"
+    },
+    {
+      "date": "2026-10-02",
+      "items": [
+        {
+          "alternative_place_ids": [],
+          "buffer_minutes": null,
+          "end_at": "2026-10-02T11:30:00+08:00",
+          "expected_stay_minutes": 30,
+          "id": "d3-hotel-checkout",
+          "kind": "check_out",
+          "notes": "規劃退房窗口，不代表已確認的飯店退房時間。",
+          "place_id": "westgate-hotel",
+          "start_at": "2026-10-02T11:00:00+08:00",
+          "transfer_minutes": null,
+          "transport_leg_id": null
+        },
+        {
+          "alternative_place_ids": [],
+          "buffer_minutes": null,
+          "end_at": "2026-10-02T13:00:00+08:00",
+          "expected_stay_minutes": 90,
+          "id": "d3-ximen-buffer",
+          "kind": "free_time",
+          "notes": "採買、午餐與回程前緩衝；因出發地未指定，未虛構末段交通。",
+          "place_id": "red-house",
+          "start_at": "2026-10-02T11:30:00+08:00",
+          "transfer_minutes": null,
+          "transport_leg_id": null
+        }
+      ],
+      "summary": "退房、回程緩衝與西門收尾"
+    }
+  ],
+  "evidence_gate": {
+    "critical_issues": [],
+    "source_hygiene_failures": [],
+    "status": "ok"
+  },
+  "local_timezone": "Asia/Taipei",
+  "meta": {
+    "bundle_sha256": "3cdf587c1e0fbeb1743e037b0a2d81b9e3acceb35917050ca30e51613b57ad9e",
+    "generated_at": "2026-09-22T03:54:25+00:00",
+    "source_coverage": {
+      "days": 3,
+      "places": 8,
+      "selected_flights": 0,
+      "selected_hotels": 1
+    },
+    "source_path": "trips/wanhua-2026/trip.json",
+    "source_sha256": "f55b8f594b2154cd82d1df65f5834179f4e424c62603b0ef3c18fc4c7eab627a",
+    "trip_schema": "trip-v1"
+  },
+  "operations": {
+    "emergency": [],
+    "fuel": {},
+    "handbook": [],
+    "pretrip_checklist": [
+      {
+        "action": "在飯店官方網站以 1 成人、2026-09-30 至 2026-10-02 確認房價、取消條款與入住時間。",
+        "completed": false,
+        "contact": null,
+        "fallback": "若候選無房，改用西門站步行範圍飯店並保留相同的行李與捷運緩衝。",
+        "id": "hotel-confirmation",
+        "item": "完成住宿訂房",
+        "timing": "立即"
+      },
+      {
+        "action": "開啟剝皮寮、西門紅樓、龍山寺與臺北捷運官方頁面，確認臨時休館、活動與時刻。",
+        "completed": false,
+        "contact": null,
+        "fallback": "剝皮寮若因天候或公告關閉，將下午改為西門紅樓及西門步行區。",
+        "id": "official-recheck",
+        "item": "覆核場館與捷運",
+        "timing": "出發前 1 天"
+      }
+    ],
+    "returns": [],
+    "supplies": []
+  },
+  "overview": {
+    "critical_unknown_count": 2,
+    "next_recheck_at": null,
+    "trip_scope": [
+      "萬華",
+      "艋舺",
+      "西門"
+    ]
+  },
+  "places": [
+    {
+      "accessibility_notes": null,
+      "address": "臺北市萬華區康定路173巷",
+      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=%E5%89%9D%E7%9A%AE%E5%AF%AE%E6%AD%B7%E5%8F%B2%E8%A1%97%E5%8D%80",
+      "id": "bopiliao",
+      "image_alt": null,
+      "image_source_url": null,
+      "image_url": null,
+      "kind": "poi",
+      "maps_query": "臺北市萬華區康定路173巷",
+      "name": "剝皮寮歷史街區",
+      "official_url": "https://www.bopiliao.taipei/About/Story/01",
+      "opening_hours_note": "2026-10-01（週四）在常態開放日；街區免費入場，室內請於 18:00 前完成參觀。",
+      "provenance": {
+        "confidence": 0.98,
+        "note": "官方參觀資訊標示免費入場。",
+        "provider": "剝皮寮歷史街區",
+        "retrieved_at": "2026-09-22T10:00:00+08:00",
+        "source_type": "official",
+        "source_url": "https://www.bopiliao.taipei/JP/Information",
+        "status": "confirmed"
+      }
+    },
+    {
+      "accessibility_notes": null,
+      "address": "臺北市萬華區華西街",
+      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=%E8%8F%AF%E8%A5%BF%E8%A1%97%E8%A7%80%E5%85%89%E5%A4%9C%E5%B8%82",
+      "id": "huaxi-night-market",
+      "image_alt": null,
+      "image_source_url": null,
+      "image_url": null,
+      "kind": "poi",
+      "maps_query": "臺北市萬華區華西街",
+      "name": "華西街觀光夜市",
+      "official_url": null,
+      "opening_hours_note": "攤商營業日與售完時間不同；作為彈性晚餐區，不把個別店家營業時間當成保證。",
+      "provenance": {
+        "confidence": 0.88,
+        "note": null,
+        "provider": "臺北市觀光傳播局旅遊地圖",
+        "retrieved_at": "2026-09-22T10:00:00+08:00",
+        "source_type": "official",
+        "source_url": "https://www.travel.taipei/d_upload_ttn/cms/file/A0/B0/C0/D0/E1/F995/39f103f0-1f6d-4284-bf9c-1ced619bf020.pdf",
+        "status": "reported"
+      }
+    },
+    {
+      "accessibility_notes": null,
+      "address": "臺北市萬華區西園路一段",
+      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=%E6%8D%B7%E9%81%8B%E9%BE%8D%E5%B1%B1%E5%AF%BA%E7%AB%99",
+      "id": "longshan-station",
+      "image_alt": null,
+      "image_source_url": null,
+      "image_url": null,
+      "kind": "station",
+      "maps_query": "臺北市萬華區西園路一段",
+      "name": "捷運龍山寺站",
+      "official_url": null,
+      "opening_hours_note": null,
+      "provenance": {
+        "confidence": 0.98,
+        "note": "龍山寺站至西門站為板南線一站；以出發當日官方時刻表為準。",
+        "provider": "臺北捷運",
+        "retrieved_at": "2026-09-22T10:00:00+08:00",
+        "source_type": "official",
+        "source_url": "https://web.metro.taipei/pages2026/WebStation/085/8",
+        "status": "confirmed"
+      }
+    },
+    {
+      "accessibility_notes": null,
+      "address": "臺北市萬華區廣州街211號",
+      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=%E8%89%8B%E8%88%BA%E9%BE%8D%E5%B1%B1%E5%AF%BA",
+      "id": "longshan-temple",
+      "image_alt": null,
+      "image_source_url": null,
+      "image_url": null,
+      "kind": "poi",
+      "maps_query": "臺北市萬華區廣州街211號",
+      "name": "艋舺龍山寺",
+      "official_url": "https://www.lungshan.org.tw/tw/",
+      "opening_hours_note": "參拜不收門票；請在出發前一天以官方公告確認特殊法會、天候或動線調整。",
+      "provenance": {
+        "confidence": 0.92,
+        "note": null,
+        "provider": "艋舺龍山寺",
+        "retrieved_at": "2026-09-22T10:00:00+08:00",
+        "source_type": "official",
+        "source_url": "https://www.lungshan.org.tw/tw/",
+        "status": "confirmed"
+      }
+    },
+    {
+      "accessibility_notes": null,
+      "address": "臺北市萬華區貴陽街二段218號",
+      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=%E8%89%8B%E8%88%BA%E9%9D%92%E5%B1%B1%E5%AE%AE",
+      "id": "qingshan-temple",
+      "image_alt": null,
+      "image_source_url": null,
+      "image_url": null,
+      "kind": "poi",
+      "maps_query": "臺北市萬華區貴陽街二段218號",
+      "name": "艋舺青山宮",
+      "official_url": null,
+      "opening_hours_note": "自由參拜；不宣稱固定開放時段，抵達前請以現場公告為準。",
+      "provenance": {
+        "confidence": 0.85,
+        "note": "僅作地點與導航佐證；營運時段未當作已確認事實。",
+        "provider": "臺北市觀光傳播局旅遊地圖",
+        "retrieved_at": "2026-09-22T10:00:00+08:00",
+        "source_type": "official",
+        "source_url": "https://www.travel.taipei/d_upload_ttn/cms/file/A0/B0/C0/D0/E1/F995/39f103f0-1f6d-4284-bf9c-1ced619bf020.pdf",
+        "status": "reported"
+      }
+    },
+    {
+      "accessibility_notes": null,
+      "address": "臺北市萬華區成都路10號",
+      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=%E8%A5%BF%E9%96%80%E7%B4%85%E6%A8%93",
+      "id": "red-house",
+      "image_alt": null,
+      "image_source_url": null,
+      "image_url": null,
+      "kind": "poi",
+      "maps_query": "臺北市萬華區成都路10號",
+      "name": "西門紅樓",
+      "official_url": "https://www.redhouse.taipei/",
+      "opening_hours_note": "2026-09-30（週三）常態 11:00–21:30；本行程安排 12:00 入館。常設空間不設固定門票；付費展演另以官網為準。",
+      "provenance": {
+        "confidence": 0.95,
+        "note": null,
+        "provider": "西門紅樓",
+        "retrieved_at": "2026-09-22T10:00:00+08:00",
+        "source_type": "official",
+        "source_url": "https://www.redhouse.taipei/",
+        "status": "confirmed"
+      }
+    },
+    {
+      "accessibility_notes": null,
+      "address": "臺北市萬華區中華路一段150號",
+      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=WESTGATE%20Hotel%20%E6%B0%B8%E5%AE%89%E6%A3%A7",
+      "id": "westgate-hotel",
+      "image_alt": null,
+      "image_source_url": null,
+      "image_url": null,
+      "kind": "hotel",
+      "maps_query": "臺北市萬華區中華路一段150號",
+      "name": "WESTGATE Hotel 永安棧",
+      "official_url": "https://www.westgatehotel.com.tw/",
+      "opening_hours_note": "入住、退房與房價均以官方訂房流程的 2026-09-30 至 2026-10-02 搜尋結果為準；本行程未宣稱已完成訂房。",
+      "provenance": {
+        "confidence": 0.9,
+        "note": "住宿候選，不是訂房確認。",
+        "provider": "WESTGATE Hotel",
+        "retrieved_at": "2026-09-22T10:00:00+08:00",
+        "source_type": "official",
+        "source_url": "https://www.westgatehotel.com.tw/",
+        "status": "confirmed"
+      }
+    },
+    {
+      "accessibility_notes": null,
+      "address": "臺北市萬華區中華路一段",
+      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=%E6%8D%B7%E9%81%8B%E8%A5%BF%E9%96%80%E7%AB%99",
+      "id": "ximen-station",
+      "image_alt": null,
+      "image_source_url": null,
+      "image_url": null,
+      "kind": "station",
+      "maps_query": "臺北市萬華區中華路一段",
+      "name": "捷運西門站",
+      "official_url": null,
+      "opening_hours_note": null,
+      "provenance": {
+        "confidence": 0.98,
+        "note": "西門站至龍山寺站為板南線一站；以出發當日官方時刻表為準。",
+        "provider": "臺北捷運",
+        "retrieved_at": "2026-09-22T10:00:00+08:00",
+        "source_type": "official",
+        "source_url": "https://web.metro.taipei/pages2026/WebStation/086/8",
+        "status": "confirmed"
+      }
+    }
+  ],
+  "preferences": {
+    "hard_constraints": [
+      {
+        "description": "1 位成人；不假設同行者、包車或租車。",
+        "id": "one-adult"
+      },
+      {
+        "description": "以步行與大眾運輸為主；每段均保留轉場緩衝。",
+        "id": "public-transit"
+      }
+    ],
+    "soft_preferences": [
+      {
+        "description": "以艋舺歷史街區、寺廟與西門文化場館為主。",
+        "id": "heritage-walk"
+      }
+    ]
+  },
+  "reservations": [],
+  "schema": "trip-public-bundle-v1",
+  "selected": {
+    "flight_ids": [],
+    "hotel_place_ids": [
+      "westgate-hotel"
+    ]
+  },
+  "source_ledger": [
+    {
+      "authority": "Wanhua trip planner",
+      "confidence": 0.9,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-09-22T10:00:00+08:00",
+      "source_url": "https://www.travel.taipei/zh-tw/news",
+      "status": "estimated",
+      "supports": "trip.meta"
+    },
+    {
+      "authority": "WESTGATE Hotel",
+      "confidence": 0.9,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-09-22T10:00:00+08:00",
+      "source_url": "https://www.westgatehotel.com.tw/",
+      "status": "confirmed",
+      "supports": "place:westgate-hotel"
+    },
+    {
+      "authority": "臺北捷運",
+      "confidence": 0.98,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-09-22T10:00:00+08:00",
+      "source_url": "https://web.metro.taipei/pages2026/WebStation/086/8",
+      "status": "confirmed",
+      "supports": "place:ximen-station"
+    },
+    {
+      "authority": "臺北捷運",
+      "confidence": 0.98,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-09-22T10:00:00+08:00",
+      "source_url": "https://web.metro.taipei/pages2026/WebStation/085/8",
+      "status": "confirmed",
+      "supports": "place:longshan-station"
+    },
+    {
+      "authority": "西門紅樓",
+      "confidence": 0.95,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-09-22T10:00:00+08:00",
+      "source_url": "https://www.redhouse.taipei/",
+      "status": "confirmed",
+      "supports": "place:red-house"
+    },
+    {
+      "authority": "剝皮寮歷史街區",
+      "confidence": 0.98,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-09-22T10:00:00+08:00",
+      "source_url": "https://www.bopiliao.taipei/JP/Information",
+      "status": "confirmed",
+      "supports": "place:bopiliao"
+    },
+    {
+      "authority": "艋舺龍山寺",
+      "confidence": 0.92,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-09-22T10:00:00+08:00",
+      "source_url": "https://www.lungshan.org.tw/tw/",
+      "status": "confirmed",
+      "supports": "place:longshan-temple"
+    },
+    {
+      "authority": "臺北市觀光傳播局旅遊地圖",
+      "confidence": 0.85,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-09-22T10:00:00+08:00",
+      "source_url": "https://www.travel.taipei/d_upload_ttn/cms/file/A0/B0/C0/D0/E1/F995/39f103f0-1f6d-4284-bf9c-1ced619bf020.pdf",
+      "status": "reported",
+      "supports": "place:qingshan-temple"
+    },
+    {
+      "authority": "臺北市觀光傳播局旅遊地圖",
+      "confidence": 0.88,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-09-22T10:00:00+08:00",
+      "source_url": "https://www.travel.taipei/d_upload_ttn/cms/file/A0/B0/C0/D0/E1/F995/39f103f0-1f6d-4284-bf9c-1ced619bf020.pdf",
+      "status": "reported",
+      "supports": "place:huaxi-night-market"
+    },
+    {
+      "authority": "WESTGATE Hotel",
+      "confidence": 0.9,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-09-22T10:00:00+08:00",
+      "source_url": "https://www.westgatehotel.com.tw/",
+      "status": "unverified",
+      "supports": "hotel"
+    },
+    {
+      "authority": "步行路線估計",
+      "confidence": 0.7,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-09-22T10:00:00+08:00",
+      "source_url": null,
+      "status": "estimated",
+      "supports": "transport:hotel-to-red-house"
+    },
+    {
+      "authority": "臺北捷運",
+      "confidence": 0.95,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-09-22T10:00:00+08:00",
+      "source_url": "https://web.metro.taipei/pages2026/WebStation/086/8",
+      "status": "confirmed",
+      "supports": "transport:ximen-to-longshan"
+    },
+    {
+      "authority": "臺北捷運",
+      "confidence": 0.95,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-09-22T10:00:00+08:00",
+      "source_url": "https://web.metro.taipei/pages2026/WebStation/085/8",
+      "status": "confirmed",
+      "supports": "transport:longshan-to-ximen"
+    },
+    {
+      "authority": "未指定",
+      "confidence": null,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": null,
+      "source_url": null,
+      "status": "unknown",
+      "supports": "validation"
+    }
+  ],
+  "status": "warning",
+  "title": "萬華三天兩夜一人行",
+  "transport_legs": [
+    {
+      "arrival_at": "2026-09-30T12:00:00+08:00",
+      "buffer_minutes": 0,
+      "departure_at": "2026-09-30T11:45:00+08:00",
+      "estimated_duration_minutes": 15,
+      "from_label": "WESTGATE Hotel 永安棧",
+      "from_place": "westgate-hotel",
+      "google_maps_directions_url": "https://www.google.com/maps/dir/?api=1&origin=%E8%87%BA%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E4%B8%AD%E8%8F%AF%E8%B7%AF%E4%B8%80%E6%AE%B5150%E8%99%9F&destination=%E8%87%BA%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E6%88%90%E9%83%BD%E8%B7%AF10%E8%99%9F&travelmode=walking",
+      "id": "hotel-to-red-house",
+      "mode": "walk",
+      "note": "保留 15 分鐘步行與過街緩衝；出發時使用地圖導航。",
+      "provenance": {
+        "confidence": 0.7,
+        "note": "保留 15 分鐘步行與過街緩衝；出發時使用地圖導航。",
+        "provider": "步行路線估計",
+        "retrieved_at": "2026-09-22T10:00:00+08:00",
+        "source_type": "derived",
+        "source_url": null,
+        "status": "estimated"
+      },
+      "source_refs": [],
+      "source_url": null,
+      "status": "estimated",
+      "to_label": "西門紅樓",
+      "to_place": "red-house",
+      "transfer_minutes": 15
+    },
+    {
+      "arrival_at": "2026-10-01T09:50:00+08:00",
+      "buffer_minutes": 0,
+      "departure_at": "2026-10-01T09:30:00+08:00",
+      "estimated_duration_minutes": 20,
+      "from_label": "捷運西門站",
+      "from_place": "ximen-station",
+      "google_maps_directions_url": "https://www.google.com/maps/dir/?api=1&origin=%E8%87%BA%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E4%B8%AD%E8%8F%AF%E8%B7%AF%E4%B8%80%E6%AE%B5&destination=%E8%87%BA%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E8%A5%BF%E5%9C%92%E8%B7%AF%E4%B8%80%E6%AE%B5&travelmode=transit",
+      "id": "ximen-to-longshan",
+      "mode": "train",
+      "note": "官方站間資料列示西門至龍山寺一站、票價 20 元、行車約 2 分鐘；行程另留進出站與等車緩衝。",
+      "provenance": {
+        "confidence": 0.95,
+        "note": "官方站間資料列示西門至龍山寺一站、票價 20 元、行車約 2 分鐘；行程另留進出站與等車緩衝。",
+        "provider": "臺北捷運",
+        "retrieved_at": "2026-09-22T10:00:00+08:00",
+        "source_type": "official",
+        "source_url": "https://web.metro.taipei/pages2026/WebStation/086/8",
+        "status": "confirmed"
+      },
+      "source_refs": [
+        "https://web.metro.taipei/pages2026/WebStation/086/8"
+      ],
+      "source_url": "https://web.metro.taipei/pages2026/WebStation/086/8",
+      "status": "confirmed",
+      "to_label": "捷運龍山寺站",
+      "to_place": "longshan-station",
+      "transfer_minutes": 20
+    },
+    {
+      "arrival_at": "2026-10-01T20:50:00+08:00",
+      "buffer_minutes": 0,
+      "departure_at": "2026-10-01T20:30:00+08:00",
+      "estimated_duration_minutes": 20,
+      "from_label": "捷運龍山寺站",
+      "from_place": "longshan-station",
+      "google_maps_directions_url": "https://www.google.com/maps/dir/?api=1&origin=%E8%87%BA%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E8%A5%BF%E5%9C%92%E8%B7%AF%E4%B8%80%E6%AE%B5&destination=%E8%87%BA%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E4%B8%AD%E8%8F%AF%E8%B7%AF%E4%B8%80%E6%AE%B5&travelmode=transit",
+      "id": "longshan-to-ximen",
+      "mode": "train",
+      "note": "官方站間資料列示龍山寺至西門一站、票價 20 元、行車約 2 分鐘；行程另留進出站與等車緩衝。",
+      "provenance": {
+        "confidence": 0.95,
+        "note": "官方站間資料列示龍山寺至西門一站、票價 20 元、行車約 2 分鐘；行程另留進出站與等車緩衝。",
+        "provider": "臺北捷運",
+        "retrieved_at": "2026-09-22T10:00:00+08:00",
+        "source_type": "official",
+        "source_url": "https://web.metro.taipei/pages2026/WebStation/085/8",
+        "status": "confirmed"
+      },
+      "source_refs": [
+        "https://web.metro.taipei/pages2026/WebStation/085/8"
+      ],
+      "source_url": "https://web.metro.taipei/pages2026/WebStation/085/8",
+      "status": "confirmed",
+      "to_label": "捷運西門站",
+      "to_place": "ximen-station",
+      "transfer_minutes": 20
+    }
+  ],
+  "travel_assistant": {
+    "arrival_parking": {},
+    "daily_guides": {
+      "2026-09-30": {
+        "heatRisk": "室內外切換日；依當日氣溫補水並保留午後入住緩衝。"
+      },
+      "2026-10-01": {
+        "heatRisk": "街區步行日；雨具與飲水隨身，若遇豪雨或公告休館則啟用西門備案。"
+      },
+      "2026-10-02": {
+        "heatRisk": "退房後不安排硬性票券；保留回程交通彈性。"
+      }
+    },
+    "place_guides": {
+      "bopiliao": {
+        "highlights": [
+          "街區免費入場",
+          "室內 18:00 前完成參觀",
+          "週一休館，不影響本週四安排"
+        ]
+      },
+      "longshan-temple": {
+        "highlights": [
+          "免費參拜",
+          "遵守寺廟禮儀與現場動線",
+          "特殊法會以官方公告為準"
+        ]
+      },
+      "red-house": {
+        "highlights": [
+          "週三常態 11:00 開放",
+          "付費展演需另查票務",
+          "西門站步行可達"
+        ]
+      }
+    }
+  },
+  "traveler_profile": {
+    "adults": 1,
+    "children_ages": [],
+    "children_count": 0
+  },
+  "trip_id": "wanhua-2026",
+  "validation": [
+    {
+      "code": "lodging-booking-required",
+      "message": "住宿僅為候選；尚未確認房價、房況、取消條款、入住與退房時間，不能視為已訂房。",
+      "path": "/selected/hotel_place_ids",
+      "reference": null,
+      "severity": "warning"
+    },
+    {
+      "code": "arrival-departure-required",
+      "message": "使用者未指定出發地與返程目的地；首末段交通、其票價與時間尚未規劃，請出發前補齊。",
+      "path": "/itinerary",
+      "reference": null,
+      "severity": "warning"
+    },
+    {
+      "code": "canonical-trip-and-source-review",
+      "message": "2026-09-22 已完成 Canonical Trip 結構與核心景點、捷運官方來源檢查；各場館活動與付費展演仍需出發前覆核。",
+      "path": "/",
+      "reference": null,
+      "severity": "pass"
+    }
+  ]
+}

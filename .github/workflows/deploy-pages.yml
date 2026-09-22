@@ -25,11 +25,14 @@ jobs:
       - uses: actions/configure-pages@v5
         with:
           enablement: true
-      - name: Build public trip registry and Awaji bundle
+      - name: Build public trip bundles
         run: |
           python3 scripts/build_awaji_public_bundle.py \
             --trip-path trips/awaji-naruto-tokushima-kobe-2026/trip.json \
             --web-output web/public/trips/awaji-2026/public-bundle.json
+          python3 scripts/build_awaji_public_bundle.py \
+            --trip-path trips/wanhua-2026/trip.json \
+            --web-output web/public/trips/wanhua-2026/public-bundle.json
           npm --prefix web ci
           npm --prefix web run build
       - name: Publish registry-driven root and every recorded trip
@@ -75,6 +78,7 @@ jobs:
           test -s site/index.html
           ! grep -q 'http-equiv="refresh"' site/index.html
           test -s site/trips/awaji-2026/public-bundle.json
+          test -s site/trips/wanhua-2026/public-bundle.json
           test -s site/trips/kansai-preview-2025/public-bundle.json
           test -s site/trips/japan-archive-example/public-bundle.json
           test -s site/trips/japan-blocked-example/public-bundle.json

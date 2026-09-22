@@ -1469,8 +1469,8 @@
   },
   "local_timezone": "Asia/Tokyo",
   "meta": {
-    "bundle_sha256": "6b0c69d48ae875e3d15f32da4db42ac82fa5180263a35ad8519f002cdf99c9cb",
-    "generated_at": "2026-08-26T07:55:33+00:00",
+    "bundle_sha256": "ec5d638112095689b2790e2d904f2033cc168d0ad326f9fc6e259e34436aa331",
+    "generated_at": "2026-09-22T03:56:10+00:00",
     "source_coverage": {
       "days": 5,
       "places": 51,
@@ -1478,7 +1478,7 @@
       "selected_hotels": 3
     },
     "source_path": "trips/awaji-naruto-tokushima-kobe-2026/trip.json",
-    "source_sha256": "81cf2c2bd6c4ed00887f1f339eb6fe5b27cc30ef71c552f3417227bc9c0aa85c",
+    "source_sha256": "57f4c4d1c390403d9cda977e9c88390d5ece4b950d17cbe80c8602bdab254601",
     "trip_schema": "trip-v1"
   },
   "operations": {
@@ -2734,7 +2734,7 @@
       "unresolved": false
     }
   ],
-  "schema": "awaji-public-bundle-v1",
+  "schema": "trip-public-bundle-v1",
   "selected": {
     "flight_ids": [
       "xj-834-outbound",
@@ -5070,10 +5070,10 @@
         "source": {
           "provider": "設施或觀光單位官方網站",
           "retrieved_at": "2026-08-26T11:30:00+09:00",
-          "source_url": "https://awajihanasajiki.jp/5974/",
+          "source_url": "https://awajihanasajiki.jp/contact/",
           "status": "reported"
         },
-        "sourceUrl": "https://awajihanasajiki.jp/5974/"
+        "sourceUrl": "https://awajihanasajiki.jp/contact/"
       },
       "map-import-boulangerie-rural": {
         "cost": "朝麥套餐每人約 ¥500–900",

@@ -17,13 +17,14 @@ class WebPublisherTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "site"
             results = build_all(ROOT / "site-configs", output)
-            self.assertEqual({result.slug for result in results}, {"awaji-2026", "kyushu-2026"})
+            self.assertEqual({result.slug for result in results}, {"awaji-2026", "kyushu-2026", "wanhua-2026"})
             registry = json.loads((output / "registry.json").read_text())
             self.assertEqual(registry["schema_version"], "trip-registry-v1")
-            self.assertEqual({item["theme_id"] for item in registry["trips"]}, {"setouchi-awaji", "snow-kyushu"})
+            self.assertEqual({item["theme_id"] for item in registry["trips"]}, {"setouchi-awaji", "snow-kyushu", "heritage-night"})
             self.assertEqual({item["duration_days"] for item in registry["trips"]}, {3, 5})
             self.assertTrue((output / "trips/awaji-2026/index.html").exists())
             self.assertTrue((output / "trips/kyushu-2026/public-bundle.json").exists())
+            self.assertTrue((output / "trips/wanhua-2026/public-bundle.json").exists())
             for result in results:
                 report = json.loads(result.report_path.read_text())
                 self.assertEqual(report["outputs"]["bundle_sha256"], result.bundle_sha256)
@@ -59,6 +60,22 @@ class WebPublisherTests(unittest.TestCase):
             trip_path.write_text((ROOT / "site-configs/kyushu-2026/trip.json").read_text())
             with self.assertRaises(ValueError):
                 build_trip(trip_path, config_path, root / "out")
+
+    def test_published_trip_with_recorded_pass_is_buildable(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            config = json.loads((ROOT / "site-configs/kyushu-2026/site.json").read_text())
+            config["publication_status"] = "published"
+            config_path = root / "site.json"
+            media_path = root / "site-media.json"
+            trip_path = root / "trip.json"
+            trip = json.loads((ROOT / "site-configs/kyushu-2026/trip.json").read_text())
+            trip["validation"] = [{"code": "test-pass", "severity": "pass", "message": "recorded validation passed"}]
+            config_path.write_text(json.dumps(config))
+            media_path.write_text((ROOT / "site-configs/kyushu-2026/site-media.json").read_text())
+            trip_path.write_text(json.dumps(trip))
+            result = build_trip(trip_path, config_path, root / "out")
+            self.assertEqual(result.readiness, "ready")
 
     def test_invalid_slug_and_private_trip_field_are_rejected_or_redacted(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

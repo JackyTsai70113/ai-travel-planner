@@ -128,15 +128,16 @@ function routePointsForDay(bundle: Bundle, day: BundleDay): RoutePoint[] {
   return points
 }
 
-function routeUrls(points: RoutePoint[]): { chunks: ReturnType<typeof buildRouteDirectionChunks>; embed: string } | null {
+function routeUrls(bundle: Bundle, day: BundleDay, points: RoutePoint[]): { chunks: ReturnType<typeof buildRouteDirectionChunks>; embed?: string } | null {
   if (points.length < 2) return null
-  const origin = points[0].label
-  const destination = points.at(-1)?.label || points[1].label
-  const embedParams = new URLSearchParams({ output: 'embed', dirflg: 'd', saddr: origin, daddr: destination })
-  return {
-    chunks: buildRouteDirectionChunks(points.map((point) => ({ id: point.id, label: point.label, mapsQuery: point.query })), 'driving'),
-    embed: `https://maps.google.com/maps?${embedParams.toString()}`,
+  const modes = day.items.map((item) => transportLegForItem(bundle, item, day.date)?.mode).filter((mode): mode is string => Boolean(mode))
+  const mode = modes.some((value) => ['bus', 'train', 'transit'].includes(value)) ? 'transit' : modes.some((value) => ['walk', 'walking'].includes(value)) ? 'walking' : 'driving'
+  const result = {
+    chunks: buildRouteDirectionChunks(points.map((point) => ({ id: point.id, label: point.label, mapsQuery: point.query })), mode),
   }
+  if (mode !== 'driving') return result
+  const embedParams = new URLSearchParams({ output: 'embed', dirflg: 'd', saddr: points[0].label, daddr: points.at(-1)?.label || points[1].label })
+  return { ...result, embed: `https://maps.google.com/maps?${embedParams.toString()}` }
 }
 
 export function primaryRiskForDay(bundle: Bundle, day: BundleDay): string {
@@ -223,7 +224,7 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
   const guide = dailyGuides[selectedDay.date]
   const lodging = lodgingForDay(bundle, selectedDay.date)
   const dailyRoutePoints = routePointsForDay(bundle, selectedDay)
-  const dailyRoute = routeUrls(dailyRoutePoints)
+  const dailyRoute = routeUrls(bundle, selectedDay, dailyRoutePoints)
   const dailyMedia = (() => {
     const candidates = [
       ...(lodging ? [{ place: lodging, role: '當晚住宿' }] : []),
@@ -248,7 +249,7 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
   return (
     <section className={`itinerary-workspace ${showPrintView ? 'print-itinerary' : ''}`} aria-label="每日行程">
       <div className="itinerary-day-nav" role="tablist" aria-label="行程日程頁籤">
-        <div className="day-nav-label"><span /> 五日導覽</div>
+        <div className="day-nav-label"><span /> {bundle.days.length} 日導覽</div>
         <div className="day-tabs">{bundle.days.map((day, index) => <button key={day.date} className={`day-tab ${day.date === selectedDay.date ? 'active' : ''}`} role="tab" aria-selected={day.date === selectedDay.date} aria-label={`第 ${index + 1} 天，${shortDateLabel(day.date)}`} onClick={() => navigateTo(day.date)} type="button"><strong>D{index + 1}</strong><span>{shortDateLabel(day.date)}</span></button>)}</div>
         <button type="button" className="print-button" onClick={() => setShowPrintView((value) => !value)}>{showPrintView ? '返回行程' : '列印'}</button>
       </div>
@@ -256,7 +257,7 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
       <header className="day-hero">
         <div className="day-kicker"><span>第 {selectedDayIndex + 1} 天</span><span>{selectedDay.date}</span></div>
         <h2>{selectedDay.summary}</h2>
-        {guide ? <div className="day-condition-grid" aria-label="當日天候與體力負擔">
+        {guide && guide.temperature && guide.weather && guide.rain && guide.wind && guide.activity && guide.steps && guide.stairs && guide.slope && guide.driving && guide.fixedTimes ? <div className="day-condition-grid" aria-label="當日天候與體力負擔">
           <div><span>天氣與氣溫</span><strong>{guide.temperature}</strong><small>{guide.weather}</small></div>
           <div><span>降雨</span><strong>{guide.rain.split('｜')[0]}</strong><small>{guide.rain.split('｜')[1]}</small></div>
           <div><span>中暑與風浪</span><strong>{guide.heatRisk}</strong><small>{guide.wind}</small></div>
@@ -278,13 +279,13 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
         })}
       </section> : null}
 
-      {dailyRoute ? <section className="daily-route-map" aria-label="當日自駕路線">
-        <header><div><span>自駕路線</span><h3>今日行車與停靠順序</h3><p>地圖概覽首站到末站；分段路線依序涵蓋下列全部停靠點，實際時間由 Google Maps 依當下路況計算。</p></div><div className="daily-route-links">{dailyRoute.chunks.map((chunk) => <a key={chunk.id} href={chunk.href} target="_blank" rel="noreferrer">{dailyRoute.chunks.length === 1 ? '開啟路線' : `開啟${chunk.label}`}</a>)}</div></header>
-        <div className="daily-route-body"><iframe title={`${selectedDay.date} 自駕路線圖`} src={dailyRoute.embed} referrerPolicy="no-referrer-when-downgrade" /><ol>{dailyRoutePoints.map((point, index) => <li key={`${point.id}-${index}`}><span>{index + 1}</span><strong>{point.label}</strong></li>)}</ol></div>
+      {dailyRoute ? <section className="daily-route-map" aria-label="當日移動路線">
+        <header><div><span>移動路線</span><h3>今日移動與停靠順序</h3><p>下列連結會在你點擊後開啟 Google Maps；實際時間與路線以當下交通資訊為準。</p></div><div className="daily-route-links">{dailyRoute.chunks.map((chunk) => <a key={chunk.id} href={chunk.href} target="_blank" rel="noreferrer">{dailyRoute.chunks.length === 1 ? '開啟路線' : `開啟${chunk.label}`}</a>)}</div></header>
+        <div className="daily-route-body">{dailyRoute.embed ? <iframe title={`${selectedDay.date} 自駕路線圖`} src={dailyRoute.embed} referrerPolicy="no-referrer-when-downgrade" /> : null}<ol>{dailyRoutePoints.map((point, index) => <li key={`${point.id}-${index}`}><span>{index + 1}</span><strong>{point.label}</strong></li>)}</ol></div>
       </section> : null}
 
       {!showPrintView ? <div className="itinerary-utility">
-        <label className="itinerary-search" htmlFor="itinerary-search"><span>搜尋五日行程</span><input id="itinerary-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜尋景點、餐廳或玩法" /></label>
+        <label className="itinerary-search" htmlFor="itinerary-search"><span>搜尋 {bundle.days.length} 日行程</span><input id="itinerary-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜尋景點、餐廳或玩法" /></label>
         <div className="quick-mode" aria-label="行程顯示"><span>顯示：</span>{(['all', 'now', 'next'] as const).map((mode) => <button key={mode} type="button" className={quickMode === mode ? 'active-pill' : ''} aria-pressed={quickMode === mode} onClick={() => setQuickMode(mode)}>{mode === 'all' ? '全部' : mode === 'now' ? '現在' : '下一站'}</button>)}</div>
       </div> : null}
 

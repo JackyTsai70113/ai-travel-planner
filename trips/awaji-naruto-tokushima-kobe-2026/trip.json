@@ -1793,6 +1793,19 @@
   ],
   "overrides": [
     {
+      "id": "trip-scope",
+      "path": "/presentation/trip_scope",
+      "value": ["awaji", "naruto", "tokushima", "kobe"],
+      "preserve_on_replan": true,
+      "provenance": {
+        "source_type": "derived",
+        "provider": "Awaji trip planner",
+        "retrieved_at": "2026-08-26T11:30:00+09:00",
+        "confidence": 1.0,
+        "status": "confirmed"
+      }
+    },
+    {
       "id": "keep-trip-scope",
       "path": "/selected/hotel_place_ids",
       "value": [
@@ -2359,11 +2372,11 @@
               "天空花園：向日葵與克萊奧梅在 8 月下旬仍有花況，適合在展望動線一次觀看。",
               "丘陵展望景觀：約 15 公頃花田可眺望明石海峽與大阪灣，即使部分花況轉弱仍有廣角景色。"
             ],
-            "sourceUrl": "https://awajihanasajiki.jp/5974/",
+            "sourceUrl": "https://awajihanasajiki.jp/contact/",
             "hours": "8/28 09:00–17:00，最後入園 16:30",
             "source": {
               "provider": "設施或觀光單位官方網站",
-              "source_url": "https://awajihanasajiki.jp/5974/",
+              "source_url": "https://awajihanasajiki.jp/contact/",
               "retrieved_at": "2026-08-26T11:30:00+09:00",
               "status": "reported"
             }

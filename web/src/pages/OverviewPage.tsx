@@ -16,14 +16,14 @@ function resolveHeroImage(trip: TripCatalogEntry | null): string {
   return trip?.cover_media.gradient || 'linear-gradient(125deg, #0b2638 0%, #0c6574 72%, #3ea69c 140%)'
 }
 
-function formatDay(date: string): string {
+function formatDay(date: string, timeZone: string): string {
   try {
     return new Intl.DateTimeFormat('zh-TW', {
       month: 'numeric',
       day: 'numeric',
       weekday: 'short',
-      timeZone: 'Asia/Tokyo',
-    }).format(new Date(`${date}T00:00:00+09:00`))
+      timeZone,
+    }).format(new Date(`${date}T12:00:00Z`))
   } catch {
     return date
   }
@@ -31,6 +31,11 @@ function formatDay(date: string): string {
 
 function timeLabel(value: string | null): string {
   return value?.match(/T(\d{2}:\d{2})/)?.[1] || '—'
+}
+
+function dayCountLabel(days: number): string {
+  const numerals = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十']
+  return `${numerals[days] || String(days)}日`
 }
 
 function fixedLabel(item: { kind: string; notes?: string }, fallback: string): string {
@@ -41,11 +46,11 @@ function fixedLabel(item: { kind: string; notes?: string }, fallback: string): s
 export function OverviewPage({ bundle, trip }: OverviewPageProps) {
   const heroImage = resolveHeroImage(trip)
 
-  const title = trip?.title || bundle?.title || '淡路島五日行'
+  const title = trip?.title || bundle?.title || '旅行行程'
   const routeStops = trip?.destination_regions.length
     ? trip.destination_regions
-    : ['淡路島', '鳴門', '德島', '神戶']
-  const heroEyebrow = routeStops.length > 0 ? `${routeStops[0]}旅行` : '日本旅行'
+    : bundle?.overview?.trip_scope || []
+  const heroEyebrow = routeStops.length > 0 ? `${routeStops[0]}旅行` : '旅行行程'
   const heroSummary = trip?.hero_summary || `${routeStops.join('、')}的每日行程、餐飲、住宿與導航資訊。`
   const dateText = trip
     ? `${trip.date_range.start_date} — ${trip.date_range.end_date} · ${trip.duration_days} 天`
@@ -78,6 +83,9 @@ export function OverviewPage({ bundle, trip }: OverviewPageProps) {
   const fixedEntries = bundle.days.flatMap((day) => day.items
     .filter((item) => item.fixed || item.kind === 'reservation' || item.kind === 'flight' || bundle.reservations.some((reservation) => reservation.id === item.id || reservation.itinerary_item_id === item.id))
     .map((item) => ({ day: day.date, item, label: fixedLabel(item, findPlaceLabel(bundle.places, item.place_id)) })))
+  const dayCount = bundle.days.length
+  const pretripChecklist = bundle.operations?.pretrip_checklist || []
+  const sourceLedger = (bundle.source_ledger || []).filter((source) => source.source_url).slice(0, 8)
   return (
     <section className="trip-overview-shell">
       <article className="trip-overview-hero" style={{ background: heroImage }}>
@@ -85,17 +93,18 @@ export function OverviewPage({ bundle, trip }: OverviewPageProps) {
           <p className="trip-hero-eyebrow">{heroEyebrow}</p>
           <h1>{title}</h1>
           <div className="trip-hero-meta"><span>{dateText}</span></div>
+          {trip?.status === 'preview' || trip?.readiness === 'incomplete' ? <p className="status-pill">預覽行程：住宿訂房與首末段交通尚未確認，請完成下方覆核後再出發。</p> : null}
           <p className="hero-summary">{heroSummary}</p>
         </div>
-        <aside className="hero-route-map" aria-label={`五日移動路線：${routeStops.join('、')}`}>
-          <p>五日移動路線</p>
+        <aside className="hero-route-map" aria-label={`${dayCountLabel(dayCount)}移動路線：${routeStops.join('、')}`}>
+          <p>{dayCountLabel(dayCount)}移動路線</p>
           <ol>{routeStops.map((stop, index) => <li key={stop}><span>{index + 1}</span><strong>{stop}</strong></li>)}</ol>
         </aside>
       </article>
 
       <section className="overview-section">
         <div className="section-heading">
-          <div><p className="eyebrow">五日行程</p><h2>每天去哪裡，一眼掌握</h2></div>
+          <div><p className="eyebrow">{dayCountLabel(dayCount)}行程</p><h2>每天去哪裡，一眼掌握</h2></div>
         </div>
         <div className="overview-day-grid">
           {bundle.days.map((day, index) => {
@@ -105,7 +114,7 @@ export function OverviewPage({ bundle, trip }: OverviewPageProps) {
               <a className="overview-day-card" href={buildRoutePath({ section: 'today', day: day.date })} key={day.date}>
                 <div className="overview-day-number"><span>DAY</span><strong>{String(index + 1).padStart(2, '0')}</strong></div>
                 <div className="overview-day-copy">
-                  <p>{formatDay(day.date)} · {day.items.length} 個停靠</p>
+                  <p>{formatDay(day.date, bundle.local_timezone)} · {day.items.length} 個停靠</p>
                   <h3>{day.summary}</h3>
                   <div className="overview-day-route"><span>{first ? findPlaceLabel(bundle.places, first.place_id) : '—'}</span><i>→</i><span>{last ? findPlaceLabel(bundle.places, last.place_id) : '—'}</span></div>
                 </div>
@@ -122,7 +131,7 @@ export function OverviewPage({ bundle, trip }: OverviewPageProps) {
             {lodgingCards.map(({ placeId, place, checkIn, checkOut }, index) => (
               <article key={placeId}>
                 <span className="stay-sequence">{index + 1}</span>
-                <div><p>{checkIn || '—'} → {checkOut || '—'}</p><h3>{place?.name || placeId}</h3></div>
+                <div><p>{checkIn || '—'} → {checkOut || '—'}</p><h3>{place?.name || placeId}</h3>{place?.opening_hours_note ? <small>{place.opening_hours_note}</small> : null}{place?.official_url ? <a href={place.official_url} target="_blank" rel="noreferrer">官方訂房／資訊</a> : null}</div>
               </article>
             ))}
           </div>
@@ -133,13 +142,24 @@ export function OverviewPage({ bundle, trip }: OverviewPageProps) {
           <div className="overview-alert-list">
             {fixedEntries.slice(0, 4).map(({ day, item, label }) => (
               <a href={buildRoutePath({ section: 'today', day, item: item.id })} key={item.id}>
-                <strong>{timeLabel(item.start_at)}</strong><span>{label}</span><small>{formatDay(day)}</small>
+                <strong>{timeLabel(item.start_at)}</strong><span>{label}</span><small>{formatDay(day, bundle.local_timezone)}</small>
               </a>
             ))}
             {fixedEntries.length === 0 ? <p className="honest-inline">這趟旅程沒有固定時間。</p> : null}
           </div>
         </section>
       </div>
+
+      {(pretripChecklist.length > 0 || sourceLedger.length > 0) ? <div className="overview-columns">
+        {pretripChecklist.length > 0 ? <section className="overview-section">
+          <div className="section-heading"><div><p className="eyebrow">出發前覆核</p><h2>尚未代你完成的事項</h2></div></div>
+          <div className="overview-alert-list">{pretripChecklist.map((item) => <article key={item.id}><strong>{item.timing || '出發前'}</strong><span>{item.item}</span><small>{item.action}{item.fallback ? `；備案：${item.fallback}` : ''}</small></article>)}</div>
+        </section> : null}
+        {sourceLedger.length > 0 ? <section className="overview-section">
+          <div className="section-heading"><div><p className="eyebrow">來源與更新</p><h2>開放與交通以官方資訊為準</h2></div></div>
+          <div className="overview-alert-list">{sourceLedger.map((source, index) => <a href={source.source_url || '#'} target="_blank" rel="noreferrer" key={`${source.source_url}-${index}`}><strong>{source.authority || '來源'}</strong><span>{Array.isArray(source.supports) ? source.supports.join('、') : source.supports || '行程資訊'}</span><small>{source.last_checked ? `最後查核：${source.last_checked}` : '出發前請再覆核'}</small></a>)}</div>
+        </section> : null}
+      </div> : null}
 
     </section>
   )
