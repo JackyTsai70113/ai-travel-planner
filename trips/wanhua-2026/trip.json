@@ -98,6 +98,18 @@
         "provenance": {"source_type": "provider", "provider": "Booking.com", "source_url": "https://www.booking.com/hotel/tw/wonstar-chonghua.html", "retrieved_at": "2026-09-22T10:00:00+08:00", "confidence": 0.85, "status": "reported", "note": "住宿候選，不是訂房確認。"}
       },
       {
+        "id": "huazhong-riverside-park",
+        "name": "華中河濱公園",
+        "kind": "poi",
+        "address": "臺北市萬華區萬大路底、華中橋旁",
+        "timezone": "Asia/Taipei",
+        "google_maps_url": "https://www.google.com/maps/search/?api=1&query=%E8%8F%AF%E4%B8%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92",
+        "identifiers": [{"type": "official_url", "value": "https://travel.taipei/en/attraction/details/581", "provenance": {"source_type": "official", "provider": "臺北市政府觀光傳播局", "source_url": "https://travel.taipei/en/attraction/details/581", "retrieved_at": "2026-09-22T14:10:00+08:00", "confidence": 0.95, "status": "confirmed", "note": "官方景點頁列為萬華區河濱公園，並顯示 24 小時開放。"}}],
+        "opening_hours_note": "官方資料列 24 小時開放；本行程限定 19:40–20:50 有照明時段，單人不走偏僻河堤，抵達前以官方公告、現場水門與天候狀況覆核。",
+        "resolution": {"state": "resolved", "confidence": 0.95},
+        "provenance": {"source_type": "official", "provider": "臺北市政府觀光傳播局", "source_url": "https://travel.taipei/en/attraction/details/581", "retrieved_at": "2026-09-22T14:10:00+08:00", "confidence": 0.95, "status": "confirmed", "note": "夜景安排的地點與開放資訊；不保證特定燈光活動或治安狀態。"}
+      },
+      {
         "id": "hotel-monka",
         "name": "文舺行旅 Monka Hotel",
         "kind": "hotel",
@@ -434,6 +446,24 @@
           "note": "官方站間資料列示龍山寺至西門一站、票價 20 元、行車約 2 分鐘；行程另留進出站與等車緩衝。"
         }
       }
+      ,{
+        "id": "hotel-to-huazhong-riverside",
+        "mode": "taxi",
+        "from_place_id": "hotel-riverview",
+        "to_place_id": "huazhong-riverside-park",
+        "departure_at": "2026-09-30T19:20:00+08:00",
+        "arrival_at": "2026-09-30T19:40:00+08:00",
+        "provenance": {"source_type": "derived", "provider": "市區夜間短程轉乘規劃", "retrieved_at": "2026-09-22T14:10:00+08:00", "confidence": 0.7, "status": "estimated", "note": "單人夜間以計程車或叫車前往，避免河堤外圍獨走；車資與實際行車時間未查證，出發時以叫車 App 與導航為準。"}
+      },
+      {
+        "id": "huazhong-riverside-to-hotel",
+        "mode": "taxi",
+        "from_place_id": "huazhong-riverside-park",
+        "to_place_id": "hotel-riverview",
+        "departure_at": "2026-09-30T20:50:00+08:00",
+        "arrival_at": "2026-09-30T21:10:00+08:00",
+        "provenance": {"source_type": "derived", "provider": "市區夜間短程轉乘規劃", "retrieved_at": "2026-09-22T14:10:00+08:00", "confidence": 0.7, "status": "estimated", "note": "同去程以計程車或叫車返回；若下雨、河川警戒、照明異常或人流過少，取消河濱段，直接回飯店。"}
+      }
     ]
   },
   "selected": {
@@ -443,7 +473,7 @@
   "days": [
     {
       "date": "2026-09-30",
-      "summary": "西門文化散步與入住緩衝",
+      "summary": "西門文化散步、入住與華中河濱夜景",
       "items": [
         {
           "id": "d1-hotel-bag-drop",
@@ -482,13 +512,49 @@
           "notes": "規劃入住窗口，不代表已確認的飯店入住時間。"
         },
         {
-          "id": "d1-ximen-evening",
+          "id": "d1-ximen-dinner",
           "kind": "free_time",
           "place_id": "red-house",
           "start_at": "2026-09-30T18:00:00+08:00",
-          "end_at": "2026-09-30T20:30:00+08:00",
+          "end_at": "2026-09-30T19:00:00+08:00",
           "selection_status": "selected",
-          "notes": "西門町自由晚餐與夜間散步；不綁定未查證的店家營業時間。"
+          "notes": "西門町自由晚餐；不綁定未查證的店家營業時間，19:00 前回飯店取外套、行動電源與飲水。"
+        },
+        {
+          "id": "d1-return-hotel-before-riverside",
+          "kind": "free_time",
+          "place_id": "hotel-riverview",
+          "start_at": "2026-09-30T19:00:00+08:00",
+          "end_at": "2026-09-30T19:20:00+08:00",
+          "selection_status": "selected",
+          "notes": "回飯店短暫整備後再出發；單人夜間不帶大件行李。"
+        },
+        {
+          "id": "d1-taxi-huazhong-riverside",
+          "kind": "transport",
+          "place_id": "huazhong-riverside-park",
+          "transport_leg_id": "hotel-to-huazhong-riverside",
+          "start_at": "2026-09-30T19:20:00+08:00",
+          "end_at": "2026-09-30T19:40:00+08:00",
+          "selection_status": "selected"
+        },
+        {
+          "id": "d1-huazhong-riverside-night-view",
+          "kind": "visit",
+          "place_id": "huazhong-riverside-park",
+          "start_at": "2026-09-30T19:40:00+08:00",
+          "end_at": "2026-09-30T20:50:00+08:00",
+          "selection_status": "selected",
+          "notes": "河岸夜景主行程：僅在下車點附近步道照明正常且現場有人流時，步行看河面、華中橋與對岸燈光；20:35 開始往叫車點回走。若下雨、河川警戒、照明不足或現場人流過少，取消本段，直接回飯店。"
+        },
+        {
+          "id": "d1-taxi-return-hotel",
+          "kind": "transport",
+          "place_id": "hotel-riverview",
+          "transport_leg_id": "huazhong-riverside-to-hotel",
+          "start_at": "2026-09-30T20:50:00+08:00",
+          "end_at": "2026-09-30T21:10:00+08:00",
+          "selection_status": "selected"
         }
       ]
     },
@@ -608,6 +674,12 @@
       "path": "/itinerary"
     },
     {
+      "code": "riverside-ride-fare-required",
+      "severity": "warning",
+      "message": "9/30 華中河濱夜景需要兩段叫車或計程車；費用尚未取得，NT$40 僅為已確認的兩段捷運票價，不是本趟交通總額。出發前請在叫車 App 確認去回費用後再決定是否前往。",
+      "path": "/candidate_sets/transport_legs"
+    },
+    {
       "code": "canonical-trip-and-source-review",
       "severity": "pass",
       "message": "2026-09-22 已完成 Canonical Trip 結構與核心景點、捷運官方來源檢查；各場館活動與付費展演仍需出發前覆核。",
@@ -658,6 +730,13 @@
           "timing": "出發前 1 天",
           "action": "開啟剝皮寮、西門紅樓、龍山寺與臺北捷運官方頁面，確認臨時休館、活動與時刻。",
           "fallback": "剝皮寮若因天候或公告關閉，將下午改為西門紅樓及西門步行區。"
+        },
+        {
+          "id": "riverside-ride-and-safety-check",
+          "item": "確認河濱去回費與夜間條件",
+          "timing": "9/30 傍晚出發前",
+          "action": "在叫車 App 查看飯店往返華中河濱公園的即時去回費；NT$40 只含兩段捷運，未含這兩段叫車。確認未發布河川警戒、現場照明正常且有人流後才前往。",
+          "fallback": "若費用不合預期、下雨、河川警戒、照明不足或人流過少，取消河濱段並由西門直接回飯店。"
         }
       ],
       "preserve_on_replan": true,
@@ -694,6 +773,9 @@
           },
           "longshan-temple": {
             "highlights": ["免費參拜", "遵守寺廟禮儀與現場動線", "特殊法會以官方公告為準"]
+          },
+          "huazhong-riverside-park": {
+            "highlights": ["官方資料列萬華區萬大路底、華中橋旁", "官方旅遊頁顯示 24 小時開放", "夜間僅在照明與人流條件適合時短暫停留"]
           }
         }
       },

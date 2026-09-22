@@ -102,7 +102,9 @@ try {
   ])
   await page.locator('.overview-day-grid').waitFor({ state: 'visible' })
   if (!page.url().includes('/trips/wanhua-2026/')) throw new Error(`Wanhua URL was not canonical: ${page.url()}`)
-  if (!(await page.locator('body').innerText()).includes('西門文化散步與入住緩衝')) throw new Error('Wanhua day one summary did not render')
+  const wanhuaOverviewText = await page.locator('body').innerText()
+  if (!wanhuaOverviewText.includes('西門文化散步、入住與華中河濱夜景')) throw new Error('Wanhua day one summary did not render')
+  if (!wanhuaOverviewText.includes('NT$40 只含兩段捷運')) throw new Error('Wanhua riverside transport budget disclosure did not render')
   const wanhuaErrors = []
   page.on('pageerror', (error) => wanhuaErrors.push(error.message))
   const wanhuaRoutes = [
@@ -117,6 +119,10 @@ try {
   for (const [route, selector] of wanhuaRoutes) {
     await page.goto(`${baseUrl}trips/wanhua-2026/#/${route}`, { waitUntil: 'domcontentloaded' })
     await page.locator(selector).waitFor({ state: 'visible' })
+    if (route === 'today/2026-09-30') {
+      const dayOneText = await page.locator('.itinerary-workspace').innerText()
+      if (!dayOneText.includes('華中河濱公園') || !dayOneText.includes('夜間僅在照明與人流條件適合時短暫停留')) throw new Error('Wanhua riverside night view or safety condition did not render')
+    }
     if (wanhuaErrors.length) throw new Error(`Wanhua ${route} raised a runtime error: ${wanhuaErrors.join(' | ')}`)
   }
 
