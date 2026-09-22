@@ -152,14 +152,15 @@ export function OverviewPage({ bundle, trip }: OverviewPageProps) {
       </div>
 
       {hotelCandidates.length > 0 ? <section className="overview-section" aria-labelledby="hotel-candidates-title">
-        <div className="section-heading"><div><p className="eyebrow">住宿候選</p><h2 id="hotel-candidates-title">一人一房，每晚上限 NT$3,000</h2></div></div>
-        <p className="overview-candidate-intro">所有方案都是 2026/09/30 入住、10/02 退房的研究候選，尚未代訂。部分比價來源以一間房、兩人顯示，不能當作一人最終成交價；請在結帳頁選擇「1 位成人」並確認兩晚含稅總額不超過 NT$6,000。</p>
+          <div className="section-heading"><div><p className="eyebrow">住宿評估</p><h2 id="hotel-candidates-title">河景房必須符合：兩晚含稅不超過 NT$6,000</h2></div></div>
+        <p className="overview-candidate-intro">所有方案都是 2026/09/30 入住、10/02 退房、1 位成人的研究候選，尚未代訂。只有結帳頁明列「河景／河畔景觀」房型，且兩晚含稅總額不超過 NT$6,000，才可選為住宿；飯店位於河邊或比價較低都不等於符合條件。</p>
         <div className="overview-candidate-grid">
           {hotelCandidates.map((candidate, index) => <article className="overview-candidate-card" key={candidate.place_id}>
-            <div className="overview-candidate-topline"><span>候選 {index + 1}</span>{candidate.selected_candidate ? <strong>步行夜景首選</strong> : <strong>備選</strong>}</div>
+            <div className="overview-candidate-topline"><span>候選 {index + 1}</span>{candidate.selected_candidate ? <strong>已符合條件</strong> : candidate.price_status === 'unverified' ? <strong>條件待確認</strong> : <strong>備選</strong>}</div>
             <h3>{candidate.name}</h3>
             {candidate.room_type ? <p className="overview-candidate-room">房型線索：{candidate.room_type}</p> : null}
             <p>{candidate.decision_note || '請以訂房頁的房型、取消條款與入住規則為準。'}</p>
+            {candidate.distance_notes?.length ? <div className="overview-candidate-distance"><strong>距離與夜景判斷：</strong><ul>{candidate.distance_notes.map((note) => <li key={note}>{note}</li>)}</ul></div> : null}
             {candidate.price_note ? <p className="overview-candidate-price"><strong>價格／查核：</strong>{candidate.price_note}</p> : null}
             <p className="overview-candidate-status">價格狀態：{candidate.price_status === 'unverified' ? '需以一成人結帳頁確認' : candidate.price_status || '未確認'}</p>
             <div className="overview-candidate-actions">

@@ -24,14 +24,26 @@
         "kind": "transport",
         "description": "以步行與大眾運輸為主；每段均保留轉場緩衝。",
         "value": "walk-and-metro"
+      },
+      {
+        "id": "night-only-activities",
+        "kind": "schedule",
+        "description": "遊玩行程僅安排在 18:00 後；上午與下午只保留必要入住、退房與返程物流，不排景點、逛街或餐飲行程。",
+        "value": "activities-after-18:00"
+      },
+      {
+        "id": "river-view-stay-budget",
+        "kind": "lodging",
+        "description": "必須選到明列河景／河畔景觀的房型，且 1 位成人兩晚含稅總額不超過 NT$6,000；任一條件不符即不選。",
+        "value": "river-view-and-total-tax-included-lte-twd-6000"
       }
     ],
     "soft_preferences": [
       {
-        "id": "heritage-walk",
+        "id": "nearby-river-night-view",
         "kind": "theme",
-        "description": "以艋舺歷史街區、寺廟與西門文化場館為主。",
-        "value": "heritage"
+        "description": "夜間以飯店河景與距離最近、照明及人流條件合適的河岸景色為優先。",
+        "value": "nearby-river-night-view"
       }
     ]
   },
@@ -59,7 +71,7 @@
             }
           }
         ],
-        "opening_hours_note": "首選原因：位於環河南路河岸，夜景散步後最容易步行回飯店。入住、退房與一成人房價均須在訂房頁確認；本行程未宣稱已完成訂房。",
+        "opening_hours_note": "首選僅限可訂到明列河景／河畔景觀的房型：飯店位於環河南路河岸，但地址不保證每一房都有河景。1 位成人兩晚含稅總額必須不超過 NT$6,000，且入住、退房與房型均須在結帳頁確認；本行程未宣稱已完成訂房。",
         "resolution": {
           "state": "resolved",
           "confidence": 0.9
@@ -105,7 +117,7 @@
         "timezone": "Asia/Taipei",
         "google_maps_url": "https://www.google.com/maps/search/?api=1&query=%E8%8F%AF%E4%B8%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92",
         "identifiers": [{"type": "official_url", "value": "https://travel.taipei/en/attraction/details/581", "provenance": {"source_type": "official", "provider": "臺北市政府觀光傳播局", "source_url": "https://travel.taipei/en/attraction/details/581", "retrieved_at": "2026-09-22T14:10:00+08:00", "confidence": 0.95, "status": "confirmed", "note": "官方景點頁列為萬華區河濱公園，並顯示 24 小時開放。"}}],
-        "opening_hours_note": "官方資料列 24 小時開放；本行程安排 19:35–20:45 的夜景時段，單人不走偏僻河堤，抵達前以官方公告、現場水門與天候狀況覆核。",
+        "opening_hours_note": "官方資料列 24 小時開放；本行程僅在 18:50–20:00 安排夜景備選，單人不走偏僻河堤，抵達前以官方公告、現場水門、天候、照明與人流狀況覆核。",
         "resolution": {"state": "resolved", "confidence": 0.95},
         "provenance": {"source_type": "official", "provider": "臺北市政府觀光傳播局", "source_url": "https://travel.taipei/en/attraction/details/581", "retrieved_at": "2026-09-22T14:10:00+08:00", "confidence": 0.95, "status": "confirmed", "note": "夜景安排的地點與開放資訊；不保證特定燈光活動或治安狀態。"}
       },
@@ -377,9 +389,17 @@
           "adults": 1,
           "child_ages": []
         },
-        "room_type": "私人房；以一成人、可取消房型為優先",
+        "room_type": "明列河景／河畔景觀的私人房；1 位成人、可取消房型優先",
+        "river_view_eligible": true,
         "search_url": "https://group.riverview.com.tw/",
         "price_status": "unverified",
+        "distance_notes": [
+          "淡水河景：飯店位於河岸；0 km，但必須在訂房頁選擇明列河景／河畔景觀的房型，不能只選一般房。",
+          "華西街觀光夜市：約 0.7 km；步行約 10 分鐘，是第二晚最近的夜間用餐／逛街點，但不是河景。",
+          "西門紅樓：約 0.8 km；步行約 10–12 分鐘，已不排入白天行程。",
+          "龍山寺：約 1.25 km；步行約 15–20 分鐘，已不排入白天行程。",
+          "華中河濱公園：約 4.0 km、夜間約 20 分鐘車程；河景較完整，但不是最近選項，僅在照明、人流、天候與河川警戒均適合時前往。"
+        ],
         "provenance": {
           "source_type": "provider",
           "provider": "Vio 比價與飯店官方資訊",
@@ -387,13 +407,14 @@
           "retrieved_at": "2026-09-22T10:00:00+08:00",
           "confidence": 0.7,
           "status": "unverified",
-          "note": "比價頁顯示 9/30 US$44、10/1 US$66（含稅費、一房兩人資料）；僅作房價參考。請以 1 成人結帳頁確認，兩晚含稅須不超過 NT$6,000；未建立訂單。"
+          "note": "即日比價顯示 9/30 US$44、10/1 US$66（含稅費、一房兩人資料），兩晚合計約 US$110，僅作低於 NT$6,000 的參考，不能當作 1 成人成交價。結帳頁必須同時確認 1 成人、河景／河畔景觀房型與兩晚含稅總額不超過 NT$6,000；未建立訂單。"
         }
       },
       {
         "place": {"id": "hotel-papa-whale", "name": "Hotel PaPa Whale", "kind": "hotel"},
         "check_in": "2026-09-30", "check_out": "2026-10-02", "occupancy": {"adults": 1, "child_ages": []},
         "room_type": "舒適單人房 SOHO Single Room",
+        "river_view_eligible": false,
         "search_url": "https://www.papawhale.com/zh-tw/%E5%8F%B0%E5%8C%97%2BPaPa%2BWhale", "price_status": "unverified",
         "provenance": {"source_type": "provider", "provider": "Vio 比價與飯店官方資訊", "source_url": "https://www.vio.com/Hotel/3006908/en-GB", "retrieved_at": "2026-09-22T10:00:00+08:00", "confidence": 0.7, "status": "unverified", "note": "比價頁顯示 9/30 約 US$36、10/1 約 US$58（含稅費、一房兩人資料）；官方頁列有單人房。請以 1 成人結帳頁確認兩晚總額；未建立訂單。"}
       },
@@ -401,6 +422,7 @@
         "place": {"id": "hotel-wonstar", "name": "萬事達行旅 Wonstar Hotel", "kind": "hotel"},
         "check_in": "2026-09-30", "check_out": "2026-10-02", "occupancy": {"adults": 1, "child_ages": []},
         "room_type": "經濟單人房（公開房型資料）",
+        "river_view_eligible": false,
         "search_url": "https://www.booking.com/hotel/tw/wonstar-chonghua.html", "price_status": "unverified",
         "provenance": {"source_type": "provider", "provider": "Vio 比價與 Booking.com", "source_url": "https://www.vio.com/Hotel/1259214/en", "retrieved_at": "2026-09-22T10:00:00+08:00", "confidence": 0.7, "status": "unverified", "note": "比價頁顯示 9/30 約 US$49、10/1 約 US$61（含稅費、一房兩人資料）。單人房型與最終價格須以一成人結帳頁確認；未建立訂單。"}
       },
@@ -408,6 +430,7 @@
         "place": {"id": "hotel-monka", "name": "文舺行旅 Monka Hotel", "kind": "hotel"},
         "check_in": "2026-09-30", "check_out": "2026-10-02", "occupancy": {"adults": 1, "child_ages": []},
         "room_type": "私人房（房型與價格待確認）",
+        "river_view_eligible": false,
         "search_url": "https://www.booking.com/hotel/tw/wen-jia-xing-lu.html", "price_status": "unverified",
         "provenance": {"source_type": "provider", "provider": "Booking.com", "source_url": "https://www.booking.com/hotel/tw/wen-jia-xing-lu.html", "retrieved_at": "2026-09-22T10:00:00+08:00", "confidence": 0.75, "status": "unverified", "note": "尚未取得這兩晚的一成人動態報價；請先查房，只有兩晚含稅不超過 NT$6,000 時才列入比較。未建立訂單。"}
       },
@@ -415,6 +438,7 @@
         "place": {"id": "hotel-hz", "name": "宏洲旅社 HZ Hotel", "kind": "hotel"},
         "check_in": "2026-09-30", "check_out": "2026-10-02", "occupancy": {"adults": 1, "child_ages": []},
         "room_type": "私人雙人房供一人入住（以實際房型為準）",
+        "river_view_eligible": false,
         "search_url": "https://www.booking.com/hotel/tw/hong-zhou-lu-she-hz-wan-hua-qu.html", "price_status": "unverified",
         "provenance": {"source_type": "provider", "provider": "Booking.com", "source_url": "https://www.booking.com/hotel/tw/hong-zhou-lu-she-hz-wan-hua-qu.html", "retrieved_at": "2026-09-22T10:00:00+08:00", "confidence": 0.7, "status": "unverified", "note": "比價區間曾低於每晚 NT$3,000，但不是你的單人最終報價；請以 1 成人、含稅兩晚總額覆核。未建立訂單。"}
       }
@@ -456,18 +480,20 @@
         "mode": "taxi",
         "from_place_id": "hotel-riverview",
         "to_place_id": "huazhong-riverside-park",
-        "departure_at": "2026-09-30T19:15:00+08:00",
-        "arrival_at": "2026-09-30T19:35:00+08:00",
-        "provenance": {"source_type": "derived", "provider": "市區夜間短程轉乘規劃", "retrieved_at": "2026-09-22T14:10:00+08:00", "confidence": 0.7, "status": "estimated", "note": "單人夜間以計程車或叫車前往，避免河堤外圍獨走；車資與實際行車時間未查證，出發時以叫車 App 與導航為準。"}
+        "departure_at": "2026-09-30T18:30:00+08:00",
+        "arrival_at": "2026-09-30T18:50:00+08:00",
+        "distance_km": 4.0,
+        "provenance": {"source_type": "derived", "provider": "市區夜間短程轉乘規劃", "retrieved_at": "2026-09-22T16:45:00+08:00", "confidence": 0.7, "status": "estimated", "note": "約 20 分鐘車程；不是最近河景。單人夜間不走偏僻河堤，出發時以叫車 App、導航、河川警戒、照明與人流為準。"}
       },
       {
         "id": "huazhong-riverside-to-hotel",
         "mode": "taxi",
         "from_place_id": "huazhong-riverside-park",
         "to_place_id": "hotel-riverview",
-        "departure_at": "2026-09-30T20:45:00+08:00",
-        "arrival_at": "2026-09-30T21:05:00+08:00",
-        "provenance": {"source_type": "derived", "provider": "市區夜間短程轉乘規劃", "retrieved_at": "2026-09-22T14:10:00+08:00", "confidence": 0.7, "status": "estimated", "note": "同去程以計程車或叫車返回；若下雨、河川警戒、照明異常或人流過少，取消河濱段，直接回飯店。"}
+        "departure_at": "2026-09-30T20:00:00+08:00",
+        "arrival_at": "2026-09-30T20:20:00+08:00",
+        "distance_km": 4.0,
+        "provenance": {"source_type": "derived", "provider": "市區夜間短程轉乘規劃", "retrieved_at": "2026-09-22T16:45:00+08:00", "confidence": 0.7, "status": "estimated", "note": "同去程叫車返回；若下雨、河川警戒、照明異常或人流過少，取消河濱段，直接留在飯店河景房。"}
       },
       {
         "id": "hotel-to-longshan",
@@ -500,31 +526,34 @@
         "provenance": {"source_type": "derived", "provider": "步行路線估計", "retrieved_at": "2026-09-22T16:00:00+08:00", "confidence": 0.8, "status": "estimated", "note": "相鄰艋舺街區，留 15 分鐘含過街緩衝。"}
       },
       {
-        "id": "qingshan-to-huaxi",
+        "id": "hotel-to-huaxi",
         "mode": "walk",
-        "from_place_id": "qingshan-temple",
+        "from_place_id": "hotel-riverview",
         "to_place_id": "huaxi-night-market",
-        "departure_at": "2026-10-01T15:00:00+08:00",
-        "arrival_at": "2026-10-01T15:15:00+08:00",
+        "departure_at": "2026-10-01T18:00:00+08:00",
+        "arrival_at": "2026-10-01T18:12:00+08:00",
+        "distance_km": 0.7,
         "cost": {"amount": 0, "currency": "TWD"},
-        "provenance": {"source_type": "derived", "provider": "步行路線估計", "retrieved_at": "2026-09-22T16:00:00+08:00", "confidence": 0.8, "status": "estimated", "note": "沿艋舺街區步行；抵達後保留午後休息與彈性用餐。"}
+        "provenance": {"source_type": "derived", "provider": "步行路線估計", "retrieved_at": "2026-09-22T16:45:00+08:00", "confidence": 0.8, "status": "estimated", "note": "最近的夜間用餐／逛街點，約 0.7 公里；不是河景。"}
       },
       {
         "id": "huaxi-to-hotel",
-        "mode": "taxi",
+        "mode": "walk",
         "from_place_id": "huaxi-night-market",
         "to_place_id": "hotel-riverview",
-        "departure_at": "2026-10-01T19:30:00+08:00",
-        "arrival_at": "2026-10-01T19:50:00+08:00",
-        "provenance": {"source_type": "derived", "provider": "夜間短程轉乘規劃", "retrieved_at": "2026-09-22T16:00:00+08:00", "confidence": 0.7, "status": "estimated", "note": "單人晚間以計程車或叫車返回；車資與實際行車時間未查證，出發時以叫車 App 為準。"}
+        "departure_at": "2026-10-01T20:00:00+08:00",
+        "arrival_at": "2026-10-01T20:12:00+08:00",
+        "distance_km": 0.7,
+        "provenance": {"source_type": "derived", "provider": "步行路線估計", "retrieved_at": "2026-09-22T16:45:00+08:00", "confidence": 0.8, "status": "estimated", "note": "只在沿途照明正常、持續有人流且本人狀況良好時步行；任一條件不符，留在夜市入口叫車直接回飯店。"}
       },
       {
         "id": "hotel-to-ximen",
         "mode": "walk",
         "from_place_id": "hotel-riverview",
-        "to_place_id": "ximen-pedestrian-area",
+        "to_place_id": "ximen-station",
         "departure_at": "2026-10-02T11:30:00+08:00",
-        "arrival_at": "2026-10-02T12:00:00+08:00",
+        "arrival_at": "2026-10-02T11:42:00+08:00",
+        "distance_km": 0.7,
         "cost": {"amount": 0, "currency": "TWD"},
         "provenance": {"source_type": "derived", "provider": "步行路線估計", "retrieved_at": "2026-09-22T16:00:00+08:00", "confidence": 0.7, "status": "estimated", "note": "保留 30 分鐘步行與過街緩衝；攜帶行李或雨天時改以短程叫車。"}
       },
@@ -533,85 +562,22 @@
         "mode": "train",
         "from_place_id": "ximen-station",
         "to_place_id": "qizhang-station",
-        "departure_at": "2026-10-02T13:30:00+08:00",
-        "arrival_at": "2026-10-02T14:10:00+08:00",
+        "departure_at": "2026-10-02T11:45:00+08:00",
+        "arrival_at": "2026-10-02T12:25:00+08:00",
         "cost": {"amount": 30, "currency": "TWD"},
         "provenance": {"source_type": "official", "provider": "臺北捷運", "source_url": "https://web.metro.taipei/pages2026/WebStation/086/8", "retrieved_at": "2026-09-22T16:00:00+08:00", "confidence": 0.98, "status": "confirmed", "note": "依使用者指定七張站作返程終點；官方站間資料列票價 30 元，行程含轉乘、等車與出站緩衝。"}
       }
     ]
   },
   "selected": {
-    "hotel_place_ids": ["hotel-riverview"],
+    "hotel_place_ids": [],
     "flight_ids": []
   },
   "days": [
     {
       "date": "2026-09-30",
-      "summary": "七張出發、西門紅樓、入住與華中河濱夜景",
+      "summary": "下午入住，18:00 後才出發看河景夜色",
       "items": [
-        {
-          "id": "d1-qizhang-to-ximen",
-          "kind": "transport",
-          "place_id": "ximen-station",
-          "transport_leg_id": "qizhang-to-ximen",
-          "start_at": "2026-09-30T09:35:00+08:00",
-          "end_at": "2026-09-30T10:15:00+08:00",
-          "selection_status": "selected"
-        },
-        {
-          "id": "d1-ximen-station-to-red-house",
-          "kind": "transport",
-          "place_id": "red-house",
-          "transport_leg_id": "ximen-station-to-red-house",
-          "start_at": "2026-09-30T10:15:00+08:00",
-          "end_at": "2026-09-30T10:30:00+08:00",
-          "selection_status": "selected"
-        },
-        {
-          "id": "d1-red-house-opening-buffer",
-          "kind": "free_time",
-          "place_id": "red-house",
-          "start_at": "2026-09-30T10:30:00+08:00",
-          "end_at": "2026-09-30T11:00:00+08:00",
-          "selection_status": "selected",
-          "notes": "開館前緩衝；若提早抵達，於紅樓周邊短暫休息，不另插入無目的景點。"
-        },
-        {
-          "id": "d1-red-house",
-          "kind": "visit",
-          "place_id": "red-house",
-          "start_at": "2026-09-30T11:00:00+08:00",
-          "end_at": "2026-09-30T12:15:00+08:00",
-          "selection_status": "selected",
-          "notes": "常設空間不設固定門票；若選擇當日付費展演，請先以官網票務與開演時間覆核。"
-        },
-        {
-          "id": "d1-ximen-lunch",
-          "kind": "meal",
-          "place_id": "ximen-pedestrian-area",
-          "start_at": "2026-09-30T12:15:00+08:00",
-          "end_at": "2026-09-30T13:30:00+08:00",
-          "selection_status": "selected",
-          "notes": "西門步行範圍內自行選擇午餐；不把未查證店家的營業時間或評價寫成既定行程。"
-        },
-        {
-          "id": "d1-ximen-to-hotel",
-          "kind": "transport",
-          "place_id": "hotel-riverview",
-          "transport_leg_id": "ximen-to-hotel",
-          "start_at": "2026-09-30T13:30:00+08:00",
-          "end_at": "2026-09-30T14:00:00+08:00",
-          "selection_status": "selected"
-        },
-        {
-          "id": "d1-hotel-arrival-buffer",
-          "kind": "free_time",
-          "place_id": "hotel-riverview",
-          "start_at": "2026-09-30T14:00:00+08:00",
-          "end_at": "2026-09-30T15:00:00+08:00",
-          "selection_status": "selected",
-          "notes": "寄放行李與入住前等候；飯店入住時間尚待訂房時確認，若無法寄放行李則在西門多保留一小時。"
-        },
         {
           "id": "d1-hotel-checkin",
           "kind": "check_in",
@@ -619,145 +585,103 @@
           "start_at": "2026-09-30T15:00:00+08:00",
           "end_at": "2026-09-30T15:30:00+08:00",
           "selection_status": "selected",
-          "notes": "規劃入住窗口，不代表已確認的飯店入住時間。"
+          "optional": true,
+          "unresolved": true,
+          "notes": "條件式入住窗口：只有結帳頁確認 1 成人、明列河景／河畔景觀房型且兩晚含稅不超過 NT$6,000 時才成立；目前尚未選定或訂房。"
         },
         {
-          "id": "d1-rest-and-dinner",
+          "id": "d1-rest-before-night",
           "kind": "free_time",
           "place_id": "hotel-riverview",
           "start_at": "2026-09-30T15:30:00+08:00",
-          "end_at": "2026-09-30T19:15:00+08:00",
+          "end_at": "2026-09-30T18:00:00+08:00",
           "selection_status": "selected",
-          "notes": "入住後休息、附近自行用餐與夜景前整備；19:15 帶外套、行動電源與飲水出發，不帶大件行李。"
+          "optional": true,
+          "unresolved": true,
+          "notes": "白天不排行程；入住後只休息、整理與自行用餐，18:00 後才出發。"
+        },
+        {
+          "id": "d1-hotel-river-view-check",
+          "kind": "visit",
+          "place_id": "hotel-riverview",
+          "start_at": "2026-09-30T18:00:00+08:00",
+          "end_at": "2026-09-30T18:30:00+08:00",
+          "selection_status": "selected",
+          "optional": true,
+          "unresolved": true,
+          "notes": "先確認房間確實為明列河景／河畔景觀；若不是，該住宿不符合硬條件，勿把飯店地址當作河景保證。"
         },
         {
           "id": "d1-taxi-huazhong-riverside",
           "kind": "transport",
           "place_id": "huazhong-riverside-park",
           "transport_leg_id": "hotel-to-huazhong-riverside",
-          "start_at": "2026-09-30T19:15:00+08:00",
-          "end_at": "2026-09-30T19:35:00+08:00",
+          "start_at": "2026-09-30T18:30:00+08:00",
+          "end_at": "2026-09-30T18:50:00+08:00",
           "selection_status": "selected"
+          ,"optional": true,
+          "unresolved": true
         },
         {
           "id": "d1-huazhong-riverside-night-view",
           "kind": "visit",
           "place_id": "huazhong-riverside-park",
-          "start_at": "2026-09-30T19:35:00+08:00",
-          "end_at": "2026-09-30T20:45:00+08:00",
+          "start_at": "2026-09-30T18:50:00+08:00",
+          "end_at": "2026-09-30T20:00:00+08:00",
           "selection_status": "selected",
-          "notes": "河岸夜景主行程：僅在下車點附近步道照明正常且現場有人流時，步行看河面、華中橋與對岸燈光；20:35 開始往叫車點回走。若下雨、河川警戒、照明不足或現場人流過少，取消本段，直接回飯店。"
+          "optional": true,
+          "unresolved": true,
+          "notes": "18:50 後的河岸夜景備選：華中距飯店約 20 分鐘車程，不是最近選項。僅在下車點附近步道照明正常且現場有人流時短暫看河面、華中橋與對岸燈光；若下雨、河川警戒、照明不足或人流過少，取消本段，直接回飯店河景房。"
         },
         {
           "id": "d1-taxi-return-hotel",
           "kind": "transport",
           "place_id": "hotel-riverview",
           "transport_leg_id": "huazhong-riverside-to-hotel",
-          "start_at": "2026-09-30T20:45:00+08:00",
-          "end_at": "2026-09-30T21:05:00+08:00",
-          "selection_status": "selected"
+          "start_at": "2026-09-30T20:00:00+08:00",
+          "end_at": "2026-09-30T20:20:00+08:00",
+          "selection_status": "selected",
+          "optional": true,
+          "unresolved": true
         }
       ]
     },
     {
       "date": "2026-10-01",
-      "summary": "艋舺古蹟、街區步行與華西街晚餐",
+      "summary": "白天完全留白，18:00 後才到華西街夜市",
       "items": [
         {
-          "id": "d2-hotel-to-longshan",
-          "kind": "transport",
-          "place_id": "longshan-temple",
-          "transport_leg_id": "hotel-to-longshan",
-          "start_at": "2026-10-01T09:30:00+08:00",
-          "end_at": "2026-10-01T09:50:00+08:00",
-          "selection_status": "selected"
-        },
-        {
-          "id": "d2-longshan-temple",
-          "kind": "visit",
-          "place_id": "longshan-temple",
-          "start_at": "2026-10-01T10:00:00+08:00",
-          "end_at": "2026-10-01T11:15:00+08:00",
-          "selection_status": "selected",
-          "notes": "免費參拜；服裝、拍攝與法會動線請遵守現場規範。"
-        },
-        {
-          "id": "d2-longshan-to-bopiliao",
-          "kind": "transport",
-          "place_id": "bopiliao",
-          "transport_leg_id": "longshan-to-bopiliao",
-          "start_at": "2026-10-01T11:15:00+08:00",
-          "end_at": "2026-10-01T11:30:00+08:00",
-          "selection_status": "selected"
-        },
-        {
-          "id": "d2-bopiliao",
-          "kind": "visit",
-          "place_id": "bopiliao",
-          "start_at": "2026-10-01T11:30:00+08:00",
-          "end_at": "2026-10-01T13:30:00+08:00",
-          "selection_status": "selected",
-          "notes": "免費入場；室內 18:00 關閉，本時段留有充足緩衝。"
-        },
-        {
-          "id": "d2-bopiliao-to-qingshan",
-          "kind": "transport",
-          "place_id": "qingshan-temple",
-          "transport_leg_id": "bopiliao-to-qingshan",
-          "start_at": "2026-10-01T13:30:00+08:00",
-          "end_at": "2026-10-01T13:45:00+08:00",
-          "selection_status": "selected"
-        },
-        {
-          "id": "d2-qingshan",
-          "kind": "visit",
-          "place_id": "qingshan-temple",
-          "start_at": "2026-10-01T14:00:00+08:00",
-          "end_at": "2026-10-01T15:00:00+08:00",
-          "selection_status": "selected",
-          "notes": "自由參拜備選；若現場公告限制入內，改為周邊街區步行。"
-        },
-        {
-          "id": "d2-qingshan-to-huaxi",
+          "id": "d2-hotel-to-huaxi",
           "kind": "transport",
           "place_id": "huaxi-night-market",
-          "transport_leg_id": "qingshan-to-huaxi",
-          "start_at": "2026-10-01T15:00:00+08:00",
-          "end_at": "2026-10-01T15:15:00+08:00",
+          "transport_leg_id": "hotel-to-huaxi",
+          "start_at": "2026-10-01T18:00:00+08:00",
+          "end_at": "2026-10-01T18:12:00+08:00",
           "selection_status": "selected"
-        },
-        {
-          "id": "d2-huaxi-afternoon-buffer",
-          "kind": "free_time",
-          "place_id": "huaxi-night-market",
-          "start_at": "2026-10-01T15:15:00+08:00",
-          "end_at": "2026-10-01T17:00:00+08:00",
-          "selection_status": "selected",
-          "notes": "華西與廣州街一帶低強度步行、休息與補水；17:00 後再依現場攤商選擇晚餐。"
         },
         {
           "id": "d2-huaxi-dinner",
           "kind": "meal",
           "place_id": "huaxi-night-market",
-          "start_at": "2026-10-01T17:00:00+08:00",
-          "end_at": "2026-10-01T19:30:00+08:00",
+          "start_at": "2026-10-01T18:12:00+08:00",
+          "end_at": "2026-10-01T20:00:00+08:00",
           "selection_status": "selected",
-          "notes": "17:00 後依現場攤商營業與排隊狀況選擇晚餐；售完或人潮過多則改選廣州街周邊店家。"
+          "notes": "僅安排 18:00 後的夜市晚餐與短距離散步；依現場攤商營業與排隊狀況選擇。20:00 回程只在沿途照明正常、持續有人流且本人狀況良好時步行；任一條件不符，留在夜市入口叫車直接回飯店。"
         },
         {
           "id": "d2-huaxi-to-hotel",
           "kind": "transport",
           "place_id": "hotel-riverview",
           "transport_leg_id": "huaxi-to-hotel",
-          "start_at": "2026-10-01T19:30:00+08:00",
-          "end_at": "2026-10-01T19:50:00+08:00",
+          "start_at": "2026-10-01T20:00:00+08:00",
+          "end_at": "2026-10-01T20:12:00+08:00",
           "selection_status": "selected"
         }
       ]
     },
     {
       "date": "2026-10-02",
-      "summary": "退房、西門午餐與返回七張",
+      "summary": "退房後直接返回七張，不安排白天景點或午餐",
       "items": [
         {
           "id": "d3-hotel-checkout",
@@ -771,28 +695,19 @@
         {
           "id": "d3-hotel-to-ximen",
           "kind": "transport",
-          "place_id": "ximen-pedestrian-area",
+          "place_id": "ximen-station",
           "transport_leg_id": "hotel-to-ximen",
           "start_at": "2026-10-02T11:30:00+08:00",
-          "end_at": "2026-10-02T12:00:00+08:00",
+          "end_at": "2026-10-02T11:42:00+08:00",
           "selection_status": "selected"
-        },
-        {
-          "id": "d3-ximen-lunch",
-          "kind": "free_time",
-          "place_id": "ximen-pedestrian-area",
-          "start_at": "2026-10-02T12:00:00+08:00",
-          "end_at": "2026-10-02T13:30:00+08:00",
-          "selection_status": "selected",
-          "notes": "午餐、採買與返程前緩衝；以七張站作返程終點，沒有另行假設後續目的地。"
         },
         {
           "id": "d3-ximen-to-qizhang",
           "kind": "transport",
           "place_id": "qizhang-station",
           "transport_leg_id": "ximen-to-qizhang",
-          "start_at": "2026-10-02T13:30:00+08:00",
-          "end_at": "2026-10-02T14:10:00+08:00",
+          "start_at": "2026-10-02T11:45:00+08:00",
+          "end_at": "2026-10-02T12:25:00+08:00",
           "selection_status": "selected"
         }
       ]
@@ -819,19 +734,19 @@
     {
       "code": "lodging-booking-required",
       "severity": "warning",
-      "message": "住宿僅為候選；尚未確認房價、房況、取消條款、入住與退房時間，不能視為已訂房。",
+      "message": "沒有符合硬條件的已選住宿：必須由結帳頁確認 1 成人、明列河景／河畔景觀房型與兩晚含稅總額不超過 NT$6,000，否則不能選定或視為已訂房。",
       "path": "/selected/hotel_place_ids"
     },
     {
       "code": "night-ride-fare-required",
       "severity": "warning",
-      "message": "9/30 華中河濱與 10/1 華西街返程各需要叫車或計程車；費用尚未取得。NT$60 只含七張與西門往返捷運票價，不是本趟交通總額。",
+      "message": "9/30 華中河濱往返需要叫車或計程車，費用尚未取得；10/1 華西街回程約 0.7 公里，僅在照明與人流條件適合時步行，否則在夜市入口叫車。NT$60 只含返程捷運票價，不是本趟交通總額。",
       "path": "/candidate_sets/transport_legs"
     },
     {
       "code": "canonical-trip-and-source-review",
       "severity": "pass",
-      "message": "2026-09-22 已完成 Canonical Trip 結構與核心景點、捷運官方來源檢查；各場館活動與付費展演仍需出發前覆核。",
+      "message": "2026-09-22 已完成 Canonical Trip 結構與核心河濱、捷運官方來源檢查；夜間照明、人流、河川警戒與動態房價仍需出發前覆核。",
       "path": "/"
     }
   ],

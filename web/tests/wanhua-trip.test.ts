@@ -24,34 +24,37 @@ describe('萬華 2026 公開旅程', () => {
     expect(bundle.places.find((place: { id?: string }) => place.id === 'hotel-riverview')?.opening_hours_note).toContain('未宣稱已完成訂房')
   })
 
-  it('uses seven-zhang as a continuous public-transit start and return, without synthetic hotel loops', () => {
+  it('keeps leisure activities after 18:00 and leaves the daytime free', () => {
     const firstDay = bundle.days[0]
-    const finalDay = bundle.days.at(-1)
-    expect(firstDay.items[0]).toMatchObject({ id: 'd1-qizhang-to-ximen', place_id: 'ximen-station' })
-    const stopSequence = firstDay.items
-      .map((item: { place_id: string }) => item.place_id)
-      .filter((placeId: string, index: number, all: string[]) => index === 0 || placeId !== all[index - 1])
-    expect(stopSequence).toEqual(['ximen-station', 'red-house', 'ximen-pedestrian-area', 'hotel-riverview', 'huazhong-riverside-park', 'hotel-riverview'])
-    expect(finalDay.items.at(-1)).toMatchObject({ id: 'd3-ximen-to-qizhang', place_id: 'qizhang-station' })
-    expect(bundle.transport_legs.find((leg: { id: string }) => leg.id === 'qizhang-to-ximen')).toMatchObject({
-      from_place: 'qizhang-station', to_place: 'ximen-station', source_url: 'https://web.metro.taipei/pages2026/WebStation/035/8',
-    })
+    const secondDay = bundle.days[1]
+    const leisureItems = [firstDay, secondDay].flatMap((day: { items: Array<{ kind: string, start_at: string }> }) => day.items)
+      .filter((item: { kind: string }) => item.kind === 'visit' || item.kind === 'meal')
+    expect(leisureItems).not.toHaveLength(0)
+    expect(leisureItems.every((item: { start_at: string }) => item.start_at.slice(11, 16) >= '18:00')).toBe(true)
+    expect(firstDay.items).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'd1-hotel-river-view-check', start_at: '2026-09-30T18:00:00+08:00' }),
+      expect.objectContaining({ id: 'd1-huazhong-riverside-night-view', start_at: '2026-09-30T18:50:00+08:00' }),
+    ]))
+    expect(secondDay.items[0]).toMatchObject({ id: 'd2-hotel-to-huaxi', start_at: '2026-10-01T18:00:00+08:00' })
+    expect(bundle.days.at(-1).items.at(-1)).toMatchObject({ id: 'd3-ximen-to-qizhang', place_id: 'qizhang-station' })
   })
 
-  it('shows five researched lodging candidates without claiming a booking or a solo final price', () => {
-    expect(bundle.hotel_candidates).toHaveLength(5)
+  it('shows only the river-view-eligible lodging assessment', () => {
+    expect(bundle.hotel_candidates).toHaveLength(1)
     expect(bundle.hotel_candidates[0]).toMatchObject({
       place_id: 'hotel-riverview',
-      selected_candidate: true,
+      selected_candidate: false,
       price_status: 'unverified',
     })
-    expect(bundle.hotel_candidates.map((candidate: { place_id: string }) => candidate.place_id)).toEqual([
-      'hotel-riverview',
-      'hotel-papa-whale',
-      'hotel-wonstar',
-      'hotel-monka',
-      'hotel-hz',
-    ])
+    expect(bundle.hotel_candidates[0].room_type).toContain('河景')
+    expect(bundle.hotel_candidates[0].price_note).toContain('NT$6,000')
+    expect(bundle.hotel_candidates[0].distance_notes).toEqual(expect.arrayContaining([
+      expect.stringContaining('華中河濱公園'),
+      expect.stringContaining('華西街觀光夜市'),
+      expect.stringContaining('西門紅樓'),
+      expect.stringContaining('龍山寺'),
+    ]))
+    expect(bundle.hotel_candidates.map((candidate: { place_id: string }) => candidate.place_id)).toEqual(['hotel-riverview'])
     expect(bundle.hotel_candidates.every((candidate: { price_note?: string }) => candidate.price_note?.includes('一房兩人資料') || candidate.price_note?.includes('一成人') || candidate.price_note?.includes('1 成人'))).toBe(true)
     expect(bundle.hotel_candidates.every((candidate: { search_url?: string }) => Boolean(candidate.search_url))).toBe(true)
   })

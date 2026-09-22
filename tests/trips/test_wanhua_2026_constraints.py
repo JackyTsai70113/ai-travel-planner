@@ -26,7 +26,9 @@ class Wanhua2026ConstraintsTests(unittest.TestCase):
         self.assertEqual(hotel["price_status"], "unverified")
         self.assertIn("未建立訂單", hotel["provenance"]["note"])
         self.assertEqual(self.trip["budget"]["categories"]["core-tickets"], {"amount": 0, "currency": "TWD"})
-        self.assertTrue(any("付費展演" in item.get("notes", "") for day in self.trip["days"] for item in day["items"]))
+        self.assertEqual(self.trip["selected"]["hotel_place_ids"], [])
+        self.assertIn("河景", hotel["room_type"])
+        self.assertIn("NT$6,000", hotel["provenance"]["note"])
 
     def test_core_official_sources_and_metro_cost_are_recorded(self) -> None:
         places = {place["id"]: place for place in self.trip["candidate_sets"]["places"]}
@@ -37,15 +39,21 @@ class Wanhua2026ConstraintsTests(unittest.TestCase):
         self.assertEqual(sum(leg["cost"]["amount"] for leg in legs if leg["mode"] == "train"), 60)
         self.assertEqual(self.trip["budget"]["categories"]["metro"], {"amount": 60, "currency": "TWD"})
 
-    def test_day_one_timing_and_visible_place_notes_agree(self) -> None:
+    def test_only_evening_leisure_is_scheduled_and_night_safety_is_visible(self) -> None:
         places = {place["id"]: place for place in self.trip["candidate_sets"]["places"]}
         day_one = {item["id"]: item for item in self.trip["days"][0]["items"]}
-        self.assertEqual(day_one["d1-red-house"]["start_at"], "2026-09-30T11:00:00+08:00")
-        self.assertIn("安排 11:00 入館", places["red-house"]["opening_hours_note"])
-        self.assertEqual(day_one["d1-huazhong-riverside-night-view"]["start_at"], "2026-09-30T19:35:00+08:00")
-        self.assertEqual(day_one["d1-huazhong-riverside-night-view"]["end_at"], "2026-09-30T20:45:00+08:00")
-        self.assertIn("安排 19:35–20:45", places["huazhong-riverside-park"]["opening_hours_note"])
-        self.assertEqual(day_one["d1-ximen-station-to-red-house"]["transport_leg_id"], "ximen-station-to-red-house")
+        leisure = [
+            item for day in self.trip["days"][:2] for item in day["items"]
+            if item["kind"] in {"visit", "meal"}
+        ]
+        self.assertTrue(leisure)
+        self.assertTrue(all(item["start_at"][11:16] >= "18:00" for item in leisure))
+        self.assertEqual(day_one["d1-huazhong-riverside-night-view"]["start_at"], "2026-09-30T18:50:00+08:00")
+        self.assertEqual(day_one["d1-huazhong-riverside-night-view"]["end_at"], "2026-09-30T20:00:00+08:00")
+        self.assertIn("18:50–20:00", places["huazhong-riverside-park"]["opening_hours_note"])
+        self.assertIn("4.0 km", self.trip["candidate_sets"]["hotels"][0]["distance_notes"][-1])
+        return_leg = next(leg for leg in self.trip["candidate_sets"]["transport_legs"] if leg["id"] == "huaxi-to-hotel")
+        self.assertIn("照明正常", return_leg["provenance"]["note"])
 
 
 if __name__ == "__main__":

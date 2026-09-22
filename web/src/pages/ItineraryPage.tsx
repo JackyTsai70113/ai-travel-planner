@@ -97,6 +97,29 @@ function legDirectionsLink(bundle: Bundle, leg: BundleTransportLeg): string {
   ], legTravelMode(leg.mode))
 }
 
+function timelineTitle(bundle: Bundle, item: BundleDayItem, leg?: BundleTransportLeg): string {
+  const isHotel = (placeId: string) => bundle.places?.find((place) => place.id === placeId)?.kind === 'hotel'
+  if (leg) {
+    if ((isHotel(leg.from_place) && !bundle.selected.hotel_place_ids.includes(leg.from_place)) || (isHotel(leg.to_place) && !bundle.selected.hotel_place_ids.includes(leg.to_place))) {
+      return `${isHotel(leg.from_place) ? '河景住宿待確認' : leg.from_label} → ${isHotel(leg.to_place) ? '河景住宿待確認' : leg.to_label}`
+    }
+    return `${leg.from_label} → ${leg.to_label}`
+  }
+  const placeName = findPlaceLabel(bundle.places, item.place_id)
+  const isHotelStay = isHotel(item.place_id)
+  const isSelectedHotel = bundle.selected.hotel_place_ids.includes(item.place_id)
+  if (isHotelStay && (!isSelectedHotel || item.unresolved)) {
+    if (item.kind === 'check_in') return '確認河景房與含稅總額'
+    if (item.kind === 'check_out') return '河景住宿退房待確認'
+    if (item.kind === 'free_time') return '等待符合河景房門檻'
+    return '河景住宿條件確認'
+  }
+  if (item.kind === 'check_in') return `入住：${placeName}`
+  if (item.kind === 'check_out') return `退房：${placeName}`
+  if (isSelectedHotel && item.kind === 'free_time') return '飯店休息／自由時間'
+  return placeName
+}
+
 export function primaryRiskForDay(bundle: Bundle, day: BundleDay): string {
   return bundle.travel_assistant?.daily_guides[day.date]?.heatRisk || '依當日氣溫安排補水與休息'
 }
@@ -247,7 +270,7 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
           const reservation = reservationFor(item)
           const visualKind = itemVisualKind(item, !!reservation)
           const leg = transportLegForItem(bundle, item, selectedDay.date)
-          const title = leg ? `${leg.from_label} → ${leg.to_label}` : findPlaceLabel(bundle.places, item.place_id)
+          const title = timelineTitle(bundle, item, leg)
           const mapHref = leg ? legDirectionsLink(bundle, leg) : googleMapsHrefForPlace(place, item.place_id)
           const placeGuide = !leg ? placeGuides[item.place_id] : undefined
           const parkingMapsQuery = (placeGuide as typeof placeGuide & { parkingMapsQuery?: string } | undefined)?.parkingMapsQuery

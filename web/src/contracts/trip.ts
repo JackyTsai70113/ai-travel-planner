@@ -190,6 +190,7 @@ export interface Bundle {
     price_status?: OperationalStatus | null
     price_note?: string | null
     decision_note?: string | null
+    distance_notes?: string[]
     selected_candidate?: boolean
     provenance?: BundleProvenance | null
   }>

@@ -230,6 +230,8 @@ def _normalize_item(item: dict, legs: dict[str, dict[str, Any]]) -> dict:
         "transport_leg_id": leg_id,
         "alternative_place_ids": _as_list(item.get("alternative_place_ids")),
         "notes": item.get("notes"),
+        "optional": item.get("optional") is True,
+        "unresolved": item.get("unresolved") is True,
         "expected_stay_minutes": expected_stay_minutes,
         "transfer_minutes": transfer_minutes,
         "buffer_minutes": buffer_minutes,
@@ -687,6 +689,8 @@ def _bundle_hotel_candidates(trip: dict, places: dict[str, dict[str, object]]) -
     for candidate in _as_list(_as_dict(trip.get("candidate_sets")).get("hotels")):
         if not isinstance(candidate, dict):
             continue
+        if candidate.get("river_view_eligible") is False:
+            continue
         candidate_place = _as_dict(candidate.get("place"))
         place_id = _safe_str(candidate_place.get("id"))
         if not place_id:
@@ -705,6 +709,7 @@ def _bundle_hotel_candidates(trip: dict, places: dict[str, dict[str, object]]) -
             "price_status": _as_status(candidate.get("price_status")),
             "price_note": _safe_str(_as_dict(candidate.get("provenance")).get("note")),
             "decision_note": _safe_str(place.get("opening_hours_note")),
+            "distance_notes": [note for note in _as_list(candidate.get("distance_notes")) if isinstance(note, str) and note.strip()],
             "selected_candidate": place_id in selected_ids,
             "provenance": _public_provenance(candidate.get("provenance")),
         })
