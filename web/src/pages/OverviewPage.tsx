@@ -161,7 +161,7 @@ export function OverviewPage({ bundle, trip }: OverviewPageProps) {
             {candidate.room_type ? <p className="overview-candidate-room">房型線索：{candidate.room_type}</p> : null}
             <p>{candidate.decision_note || '請以訂房頁的房型、取消條款與入住規則為準。'}</p>
             {candidate.distance_notes?.length ? <div className="overview-candidate-distance"><strong>距離與夜景判斷：</strong><ul>{candidate.distance_notes.map((note) => <li key={note}>{note}</li>)}</ul></div> : null}
-            {candidate.distance_provenance?.source_url ? <p className="overview-candidate-status">距離估算：<a href={candidate.distance_provenance.source_url} target="_blank" rel="noreferrer">{candidate.distance_provenance.provider || '地圖導航'}</a>（出發前請以即時導航覆核）</p> : null}
+            {candidate.distance_sources?.length ? <p className="overview-candidate-status">距離估算：{candidate.distance_sources.map((source, index) => source.source_url ? <span key={source.source_url}>{index > 0 ? '、' : ''}<a href={source.source_url} target="_blank" rel="noreferrer">{source.note || source.provider || '地圖導航'}</a></span> : null)}（出發前請以即時導航覆核）</p> : null}
             {candidate.price_note ? <p className="overview-candidate-price"><strong>價格／查核：</strong>{candidate.price_note}</p> : null}
             <p className="overview-candidate-status">價格狀態：{candidate.price_status === 'unverified' ? '需以一成人結帳頁確認' : candidate.price_status || '未確認'}</p>
             <div className="overview-candidate-actions">

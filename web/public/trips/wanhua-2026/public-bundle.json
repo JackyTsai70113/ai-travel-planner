@@ -248,15 +248,44 @@
         "龍山寺：約 1.25 km；步行約 15–20 分鐘，夜間只作外圍經過的距離參考。",
         "華中河濱公園：約 4.0 km、夜間約 20 分鐘車程；河景較完整，但不是最近選項，僅在照明、人流、天候與河川警戒均適合時前往。"
       ],
-      "distance_provenance": {
-        "confidence": 0.7,
-        "note": "華中、華西、紅樓與龍山寺的距離為飯店地址至各地點的導航估算；路況與實際下車點會改變結果。",
-        "provider": "Google Maps 路線規劃",
-        "retrieved_at": "2026-09-22T16:30:00+08:00",
-        "source_type": "derived",
-        "source_url": "https://www.google.com/maps/dir/?api=1&origin=Hotel+Riverview+Taipei&destination=%E8%8F%AF%E4%B8%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92&travelmode=driving",
-        "status": "estimated"
-      },
+      "distance_sources": [
+        {
+          "confidence": 0.7,
+          "note": "華中河濱公園",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Hotel+Riverview+Taipei&destination=%E8%8F%AF%E4%B8%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92&travelmode=driving",
+          "status": "estimated"
+        },
+        {
+          "confidence": 0.7,
+          "note": "華西街觀光夜市",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Hotel+Riverview+Taipei&destination=%E8%8F%AF%E8%A5%BF%E8%A1%97%E8%A7%80%E5%85%89%E5%A4%9C%E5%B8%82&travelmode=walking",
+          "status": "estimated"
+        },
+        {
+          "confidence": 0.7,
+          "note": "西門紅樓",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Hotel+Riverview+Taipei&destination=%E8%A5%BF%E9%96%80%E7%B4%85%E6%A8%93&travelmode=walking",
+          "status": "estimated"
+        },
+        {
+          "confidence": 0.7,
+          "note": "龍山寺",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Hotel+Riverview+Taipei&destination=%E9%BE%8D%E5%B1%B1%E5%AF%BA&travelmode=walking",
+          "status": "estimated"
+        }
+      ],
       "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Hotel%20Riverview%20Taipei",
       "itinerary_compatible": true,
       "name": "台北豪景大酒店 Hotel Riverview Taipei",
@@ -287,15 +316,44 @@
         "西門紅樓：約 4 km 車程；夜景以市區街景為主，不是河景。",
         "龍山寺：約 5 km 車程；不建議把它當河景夜景。"
       ],
-      "distance_provenance": {
-        "confidence": 0.65,
-        "note": "華中、華西、紅樓與龍山寺的距離為飯店地址至各地點的導航估算；路況與實際下車點會改變結果。",
-        "provider": "Google Maps 路線規劃",
-        "retrieved_at": "2026-09-22T16:30:00+08:00",
-        "source_type": "derived",
-        "source_url": "https://www.google.com/maps/dir/?api=1&origin=CHECK+inn+Select+New+Taipei+Sanchong+Waterfront&destination=%E8%8F%AF%E4%B8%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92&travelmode=driving",
-        "status": "estimated"
-      },
+      "distance_sources": [
+        {
+          "confidence": 0.65,
+          "note": "華中河濱公園",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=CHECK+inn+Select+New+Taipei+Sanchong+Waterfront&destination=%E8%8F%AF%E4%B8%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92&travelmode=driving",
+          "status": "estimated"
+        },
+        {
+          "confidence": 0.65,
+          "note": "華西街觀光夜市",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=CHECK+inn+Select+New+Taipei+Sanchong+Waterfront&destination=%E8%8F%AF%E8%A5%BF%E8%A1%97%E8%A7%80%E5%85%89%E5%A4%9C%E5%B8%82&travelmode=driving",
+          "status": "estimated"
+        },
+        {
+          "confidence": 0.65,
+          "note": "西門紅樓",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=CHECK+inn+Select+New+Taipei+Sanchong+Waterfront&destination=%E8%A5%BF%E9%96%80%E7%B4%85%E6%A8%93&travelmode=driving",
+          "status": "estimated"
+        },
+        {
+          "confidence": 0.65,
+          "note": "龍山寺",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=CHECK+inn+Select+New+Taipei+Sanchong+Waterfront&destination=%E9%BE%8D%E5%B1%B1%E5%AF%BA&travelmode=driving",
+          "status": "estimated"
+        }
+      ],
       "google_maps_url": "https://www.google.com/maps/search/?api=1&query=CHECK%20inn%20Select%20New%20Taipei%20Sanchong%20Waterfront",
       "itinerary_compatible": false,
       "name": "雀客藏居新北三重水漾 CHECK inn Select New Taipei Sanchong Waterfront",
@@ -326,15 +384,44 @@
         "西門紅樓：約 11 km 車程。",
         "龍山寺：約 10 km 車程。"
       ],
-      "distance_provenance": {
-        "confidence": 0.65,
-        "note": "華中、華西、紅樓與龍山寺的距離為飯店地址至各地點的導航估算；路況與實際下車點會改變結果。",
-        "provider": "Google Maps 路線規劃",
-        "retrieved_at": "2026-09-22T16:30:00+08:00",
-        "source_type": "derived",
-        "source_url": "https://www.google.com/maps/dir/?api=1&origin=Bitan+Hotel+Taipei&destination=%E8%8F%AF%E4%B8%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92&travelmode=driving",
-        "status": "estimated"
-      },
+      "distance_sources": [
+        {
+          "confidence": 0.65,
+          "note": "華中河濱公園",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Bitan+Hotel+Taipei&destination=%E8%8F%AF%E4%B8%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92&travelmode=driving",
+          "status": "estimated"
+        },
+        {
+          "confidence": 0.65,
+          "note": "華西街觀光夜市",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Bitan+Hotel+Taipei&destination=%E8%8F%AF%E8%A5%BF%E8%A1%97%E8%A7%80%E5%85%89%E5%A4%9C%E5%B8%82&travelmode=driving",
+          "status": "estimated"
+        },
+        {
+          "confidence": 0.65,
+          "note": "西門紅樓",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Bitan+Hotel+Taipei&destination=%E8%A5%BF%E9%96%80%E7%B4%85%E6%A8%93&travelmode=driving",
+          "status": "estimated"
+        },
+        {
+          "confidence": 0.65,
+          "note": "龍山寺",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Bitan+Hotel+Taipei&destination=%E9%BE%8D%E5%B1%B1%E5%AF%BA&travelmode=driving",
+          "status": "estimated"
+        }
+      ],
       "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Bitan%20Hotel%20Taipei",
       "itinerary_compatible": false,
       "name": "碧潭飯店 Bitan Hotel",
@@ -365,15 +452,44 @@
         "西門紅樓：約 24 km 車程。",
         "龍山寺：約 25 km 車程。"
       ],
-      "distance_provenance": {
-        "confidence": 0.65,
-        "note": "華中、華西、紅樓與龍山寺的距離為飯店地址至各地點的導航估算；路況與實際下車點會改變結果。",
-        "provider": "Google Maps 路線規劃",
-        "retrieved_at": "2026-09-22T16:30:00+08:00",
-        "source_type": "derived",
-        "source_url": "https://www.google.com/maps/dir/?api=1&origin=Hotel+Cloud+Riverside+Tamsui&destination=%E8%8F%AF%E4%B8%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92&travelmode=driving",
-        "status": "estimated"
-      },
+      "distance_sources": [
+        {
+          "confidence": 0.65,
+          "note": "華中河濱公園",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Hotel+Cloud+Riverside+Tamsui&destination=%E8%8F%AF%E4%B8%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92&travelmode=driving",
+          "status": "estimated"
+        },
+        {
+          "confidence": 0.65,
+          "note": "華西街觀光夜市",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Hotel+Cloud+Riverside+Tamsui&destination=%E8%8F%AF%E8%A5%BF%E8%A1%97%E8%A7%80%E5%85%89%E5%A4%9C%E5%B8%82&travelmode=driving",
+          "status": "estimated"
+        },
+        {
+          "confidence": 0.65,
+          "note": "西門紅樓",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Hotel+Cloud+Riverside+Tamsui&destination=%E8%A5%BF%E9%96%80%E7%B4%85%E6%A8%93&travelmode=driving",
+          "status": "estimated"
+        },
+        {
+          "confidence": 0.65,
+          "note": "龍山寺",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Hotel+Cloud+Riverside+Tamsui&destination=%E9%BE%8D%E5%B1%B1%E5%AF%BA&travelmode=driving",
+          "status": "estimated"
+        }
+      ],
       "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Hotel%20Cloud%20Riverside%20Tamsui",
       "itinerary_compatible": false,
       "name": "承億文旅淡水吹風 Hotel Cloud Riverside",
@@ -404,15 +520,44 @@
         "西門紅樓：約 27 km 車程。",
         "龍山寺：約 28 km 車程。"
       ],
-      "distance_provenance": {
-        "confidence": 0.65,
-        "note": "華中、華西、紅樓與龍山寺的距離為飯店地址至各地點的導航估算；路況與實際下車點會改變結果。",
-        "provider": "Google Maps 路線規劃",
-        "retrieved_at": "2026-09-22T16:30:00+08:00",
-        "source_type": "derived",
-        "source_url": "https://www.google.com/maps/dir/?api=1&origin=Golden+Tulip+FAB+Hotel+New+Taipei&destination=%E8%8F%AF%E4%B8%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92&travelmode=driving",
-        "status": "estimated"
-      },
+      "distance_sources": [
+        {
+          "confidence": 0.65,
+          "note": "華中河濱公園",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Golden+Tulip+FAB+Hotel+New+Taipei&destination=%E8%8F%AF%E4%B8%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92&travelmode=driving",
+          "status": "estimated"
+        },
+        {
+          "confidence": 0.65,
+          "note": "華西街觀光夜市",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Golden+Tulip+FAB+Hotel+New+Taipei&destination=%E8%8F%AF%E8%A5%BF%E8%A1%97%E8%A7%80%E5%85%89%E5%A4%9C%E5%B8%82&travelmode=driving",
+          "status": "estimated"
+        },
+        {
+          "confidence": 0.65,
+          "note": "西門紅樓",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Golden+Tulip+FAB+Hotel+New+Taipei&destination=%E8%A5%BF%E9%96%80%E7%B4%85%E6%A8%93&travelmode=driving",
+          "status": "estimated"
+        },
+        {
+          "confidence": 0.65,
+          "note": "龍山寺",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Golden+Tulip+FAB+Hotel+New+Taipei&destination=%E9%BE%8D%E5%B1%B1%E5%AF%BA&travelmode=driving",
+          "status": "estimated"
+        }
+      ],
       "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Golden%20Tulip%20FAB%20Hotel%20New%20Taipei",
       "itinerary_compatible": false,
       "name": "淡水將捷金鬱金香酒店 Golden Tulip FAB Hotel New Taipei",
@@ -436,8 +581,8 @@
   ],
   "local_timezone": "Asia/Taipei",
   "meta": {
-    "bundle_sha256": "d2124b53b01a3e2c55497410e460cdd89af2109de734b45cb176f08a712378a6",
-    "generated_at": "2026-09-22T08:35:30+00:00",
+    "bundle_sha256": "fc64fa6deb4c957e62fd3fd07b6d3dbce445d17fb6743ad398939c717429fa3c",
+    "generated_at": "2026-09-22T08:37:34+00:00",
     "source_coverage": {
       "days": 3,
       "places": 15,
@@ -445,7 +590,7 @@
       "selected_hotels": 0
     },
     "source_path": "trips/wanhua-2026/trip.json",
-    "source_sha256": "f55de5835909b87289ca427d11326781799df5053cfc9789051b1b6d71f3b4b8",
+    "source_sha256": "a05260a929148bb752779305f1c60a3607915e28a1adc299b9e384b4feba7729",
     "trip_schema": "trip-v1"
   },
   "operations": {
