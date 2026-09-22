@@ -9,5 +9,8 @@
 | `investigation` | 需要目前狀態、完整呼叫盤點或工具證據時。 |
 | `planning` | 行為變更需要拆解範圍、依賴與驗收證據時。 |
 | `platform-impact-analysis` | 變更可能影響 Web、契約、資料或營運時。 |
+| `taiwan-official-events` | 以官方公告確認台灣活動、休園與入場限制。 |
+| `taiwan-travel-trends` | 將近期旅遊熱度與社群線索轉為待驗證的候選偏好。 |
+| `taiwan-hospitality-reviews` | 比較飯店與餐廳評價，並分離品質訊號與營運事實。 |
 
 這些文件是儲存庫內的使用指引，不是個人全域技能的同步副本；完整交付流程仍以根目錄 `AGENTS.md` 與固定版本的 vendor 框架為準。

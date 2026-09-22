@@ -18,6 +18,9 @@
 - `investigation`：以工具證據回答目前狀態、使用者與呼叫關係問題。
 - `planning`：把已核准任務整理成可執行、可驗證的計畫。
 - `platform-impact-analysis`：先分類 Web、契約、資料與營運影響，再決定路由。
+- `taiwan-official-events`：以官方來源確認台灣活動、休園與入場限制。
+- `taiwan-travel-trends`：將近期熱度轉成待驗證的旅遊候選偏好。
+- `taiwan-hospitality-reviews`：比較住宿與餐飲評價，並分離品質與營運訊號。
 
 ## 刻意不納入的內容
 
