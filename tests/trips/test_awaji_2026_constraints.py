@@ -372,6 +372,12 @@ class AwajiTripFixtureTests(unittest.TestCase):
         self.assertEqual(web_bundle, trip_bundle)
         self.assertEqual(example_bundle, trip_bundle)
 
+    def test_public_bundle_keeps_declared_multi_region_scope(self):
+        self.assertEqual(
+            self.bundle["overview"]["trip_scope"],
+            ["awaji", "naruto", "tokushima", "kobe"],
+        )
+
     def test_no_removed_child_elders_constraints(self):
         serialized = self.trip["preferences"]["hard_constraints"] + self.trip["preferences"]["soft_preferences"]
         payload = " ".join(block["description"] for block in serialized)

@@ -1,0 +1,24 @@
+{
+  "features": {
+    "conditions": false,
+    "driving": false,
+    "itinerary": true,
+    "local_planner": false
+  },
+  "media_manifest": "site-media.json",
+  "output_path": "trips/wanhua-2026/",
+  "publication_status": "preview",
+  "pwa": {
+    "name": "萬華三天兩夜一人行",
+    "scope": "/trips/wanhua-2026/"
+  },
+  "schema_version": "trip-site-v1",
+  "seo": {
+    "description": "2026 年 9 月 30 日至 10 月 2 日，萬華一人行的交通、住宿候選、免費門票與出發前覆核資訊。",
+    "title": "萬華三天兩夜一人行"
+  },
+  "slug": "wanhua-2026",
+  "theme_id": "heritage-night",
+  "trip_file": "../../../trips/wanhua-2026/trip.json",
+  "trip_id": "wanhua-2026"
+}

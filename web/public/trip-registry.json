@@ -1,5 +1,32 @@
 [
   {
+    "slug": "wanhua-2026",
+    "canonical_url": "trips/wanhua-2026",
+    "title": "萬華三天兩夜一人行",
+    "short_title": "萬華三日一人行",
+    "destination_regions": ["萬華", "艋舺", "西門"],
+    "date_range": {
+      "start_date": "2026-09-30",
+      "end_date": "2026-10-02"
+    },
+    "duration_days": 3,
+    "travelers_summary": "1 位大人",
+    "theme_id": "heritage-night",
+    "status": "preview",
+    "readiness": "incomplete",
+    "last_generated": "2026-09-22",
+    "last_verified": "2026-09-22",
+    "tags": ["solo", "taipei", "heritage", "public-transit"],
+    "cover_media": {
+      "kind": "gradient",
+      "gradient": "linear-gradient(130deg, #3b1d11 0%, #9a4d24 52%, #e8b86b 100%)",
+      "fallback": "艋舺紅磚街區與西門夜色"
+    },
+    "hero_summary": "以步行與捷運串起西門、艋舺龍山寺、剝皮寮與華西街；住宿候選與免費門票規則均附官方確認入口。",
+    "key_messages": ["核心景點的常態開放與免費入場規則已附官方來源。", "住宿尚未訂房，請先以官方頁面確認價格、房況與取消條款。"],
+    "critical_alert_count": 0
+  },
+  {
     "slug": "awaji-2026",
     "canonical_url": "trips/awaji-2026",
     "title": "2026 淡路島五日行",
