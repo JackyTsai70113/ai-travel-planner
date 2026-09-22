@@ -97,6 +97,16 @@ function legDirectionsLink(bundle: Bundle, leg: BundleTransportLeg): string {
   ], legTravelMode(leg.mode))
 }
 
+function timelineTitle(bundle: Bundle, item: BundleDayItem, leg?: BundleTransportLeg): string {
+  if (leg) return `${leg.from_label} → ${leg.to_label}`
+  const placeName = findPlaceLabel(bundle.places, item.place_id)
+  const isSelectedHotel = bundle.selected.hotel_place_ids.includes(item.place_id)
+  if (item.kind === 'check_in') return `入住：${placeName}`
+  if (item.kind === 'check_out') return `退房：${placeName}`
+  if (isSelectedHotel && item.kind === 'free_time') return '飯店休息／自由時間'
+  return placeName
+}
+
 export function primaryRiskForDay(bundle: Bundle, day: BundleDay): string {
   return bundle.travel_assistant?.daily_guides[day.date]?.heatRisk || '依當日氣溫安排補水與休息'
 }
@@ -247,7 +257,7 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
           const reservation = reservationFor(item)
           const visualKind = itemVisualKind(item, !!reservation)
           const leg = transportLegForItem(bundle, item, selectedDay.date)
-          const title = leg ? `${leg.from_label} → ${leg.to_label}` : findPlaceLabel(bundle.places, item.place_id)
+          const title = timelineTitle(bundle, item, leg)
           const mapHref = leg ? legDirectionsLink(bundle, leg) : googleMapsHrefForPlace(place, item.place_id)
           const placeGuide = !leg ? placeGuides[item.place_id] : undefined
           const parkingMapsQuery = (placeGuide as typeof placeGuide & { parkingMapsQuery?: string } | undefined)?.parkingMapsQuery
