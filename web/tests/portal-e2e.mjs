@@ -103,6 +103,115 @@ try {
   await page.locator('.overview-day-grid').waitFor({ state: 'visible' })
   if (!page.url().includes('/trips/wanhua-2026/')) throw new Error(`Wanhua URL was not canonical: ${page.url()}`)
   if (!(await page.locator('body').innerText()).includes('西門文化散步與入住緩衝')) throw new Error('Wanhua day one summary did not render')
+  const wanhuaErrors = []
+  page.on('pageerror', (error) => wanhuaErrors.push(error.message))
+  const wanhuaRoutes = [
+    ['today/2026-09-30', '.itinerary-workspace'],
+    ['today/2026-10-01', '.itinerary-workspace'],
+    ['today/2026-10-02', '.itinerary-workspace'],
+    ['reservation', '.reservation-workspace'],
+    ['food', '.food-workspace'],
+    ['packing', '.packing-workspace'],
+    ['japanese', 'section.card[aria-label="實用日文"]'],
+  ]
+  for (const [route, selector] of wanhuaRoutes) {
+    await page.goto(`${baseUrl}trips/wanhua-2026/#/${route}`, { waitUntil: 'domcontentloaded' })
+    await page.locator(selector).waitFor({ state: 'visible' })
+    if (wanhuaErrors.length) throw new Error(`Wanhua ${route} raised a runtime error: ${wanhuaErrors.join(' | ')}`)
+  }
+
+  const interactionPage = await browser.newPage({ viewport: { width: 1440, height: 900 } })
+  interactionPage.setDefaultTimeout(10000)
+  const interactionErrors = []
+  interactionPage.on('pageerror', (error) => interactionErrors.push(error.message))
+  const assertNoInteractionErrors = (step) => {
+    if (interactionErrors.length) throw new Error(`Wanhua interaction ${step} raised a runtime error: ${interactionErrors.join(' | ')}`)
+  }
+  await interactionPage.goto(`${baseUrl}trips/wanhua-2026/`, { waitUntil: 'domcontentloaded' })
+  await interactionPage.locator('.overview-day-grid').waitFor({ state: 'visible' })
+
+  const desktopNavigation = [
+    ['旅行總覽', '#/overview', '.overview-day-grid'],
+    ['每日行程', '#/today/2026-09-30', '.itinerary-workspace'],
+    ['預約時間', '#/reservation', '.reservation-workspace'],
+    ['餐飲與補給', '#/food', '.food-workspace'],
+    ['攜帶物品', '#/packing', '.packing-workspace'],
+    ['實用日文', '#/japanese', 'section.card[aria-label="實用日文"]'],
+  ]
+  for (const [label, hash, selector] of desktopNavigation) {
+    await interactionPage.locator('.trip-nav-item').filter({ hasText: label }).click()
+    await interactionPage.waitForURL(`**/${hash}`)
+    await interactionPage.locator(selector).waitFor({ state: 'visible' })
+    assertNoInteractionErrors(`desktop navigation: ${label}`)
+  }
+
+  await interactionPage.locator('.sidebar-collapse').click()
+  if (!(await interactionPage.locator('.trip-sidebar').evaluate((element) => element.classList.contains('is-collapsed')))) throw new Error('Wanhua sidebar did not collapse')
+  await interactionPage.locator('.sidebar-collapse').click()
+  if (await interactionPage.locator('.trip-sidebar').evaluate((element) => element.classList.contains('is-collapsed'))) throw new Error('Wanhua sidebar did not expand')
+
+  await interactionPage.locator('.trip-nav-item').filter({ hasText: '每日行程' }).click()
+  await interactionPage.locator('.itinerary-workspace').waitFor({ state: 'visible' })
+  for (const [index, date] of ['2026-09-30', '2026-10-01', '2026-10-02'].entries()) {
+    await interactionPage.locator(`.day-tab[aria-label^="第 ${index + 1} 天"]`).click()
+    await interactionPage.waitForURL(`**/#/today/${date}`)
+    await interactionPage.locator('.day-kicker').filter({ hasText: date }).waitFor({ state: 'visible' })
+    assertNoInteractionErrors(`day tab ${index + 1}`)
+  }
+  const alternativeNotice = await interactionPage.locator('.day-alternatives').innerText()
+  if (!alternativeNotice.includes('尚未提供此日的雨天備案') || !alternativeNotice.includes('尚未提供額外時間備案')) throw new Error('Wanhua missing alternatives were not disclosed')
+  if (!(await interactionPage.locator('.day-guide-notice').innerText()).includes('完整天候、活動量與交通負擔資料尚未提供')) throw new Error('Wanhua partial daily guide was not disclosed')
+  if (!(await interactionPage.locator('.place-guide-notice').first().innerText()).includes('目前僅提供重點提示')) throw new Error('Wanhua partial place guide was not disclosed')
+  await interactionPage.locator('.print-button').click()
+  if (!(await interactionPage.locator('.itinerary-workspace').evaluate((element) => element.classList.contains('print-itinerary')))) throw new Error('Wanhua print view did not open')
+  await interactionPage.getByRole('button', { name: '返回行程' }).click()
+  if (await interactionPage.locator('.itinerary-workspace').evaluate((element) => element.classList.contains('print-itinerary'))) throw new Error('Wanhua print view did not close')
+  for (const label of ['現在', '下一站', '全部']) {
+    await interactionPage.getByRole('button', { name: label, exact: true }).click()
+    if ((await interactionPage.getByRole('button', { name: label, exact: true }).getAttribute('aria-pressed')) !== 'true') throw new Error(`Wanhua quick filter ${label} was not selected`)
+    assertNoInteractionErrors(`quick filter ${label}`)
+  }
+
+  await interactionPage.locator('.trip-nav-item').filter({ hasText: '實用日文' }).click()
+  await interactionPage.locator('section.card[aria-label="實用日文"]').waitFor({ state: 'visible' })
+  const phraseCount = await interactionPage.locator('.phrase-list article').count()
+  await interactionPage.getByLabel('搜尋日文').fill('謝謝')
+  if (await interactionPage.locator('.phrase-list article').count() >= phraseCount) throw new Error('Wanhua Japanese search did not filter phrases')
+  await interactionPage.getByLabel('搜尋日文').fill('')
+  await interactionPage.getByLabel('日文分類').selectOption({ index: 1 })
+  if (await interactionPage.locator('.phrase-list article').count() === 0) throw new Error('Wanhua Japanese category filter removed every phrase')
+  await interactionPage.getByLabel('日文分類').selectOption('all')
+  await interactionPage.getByRole('button', { name: '複製日文' }).first().click()
+  await interactionPage.locator('[role="status"]').waitFor({ state: 'visible' })
+  await interactionPage.getByRole('button', { name: '播放發音' }).first().click()
+  assertNoInteractionErrors('Japanese tools')
+  await interactionPage.close()
+
+  const mobilePage = await browser.newPage({ viewport: { width: 390, height: 844 } })
+  mobilePage.setDefaultTimeout(10000)
+  const mobileErrors = []
+  mobilePage.on('pageerror', (error) => mobileErrors.push(error.message))
+  await mobilePage.goto(`${baseUrl}trips/wanhua-2026/`, { waitUntil: 'domcontentloaded' })
+  const mobileNavigation = [
+    ['旅行總覽', '.overview-day-grid'],
+    ['每日行程', '.itinerary-workspace'],
+    ['預約時間', '.reservation-workspace'],
+    ['餐飲與補給', '.food-workspace'],
+    ['攜帶物品', '.packing-workspace'],
+    ['實用日文', 'section.card[aria-label="實用日文"]'],
+  ]
+  for (const [label, selector] of mobileNavigation) {
+    await mobilePage.getByRole('button', { name: '展開導覽選單' }).click()
+    await mobilePage.locator('.mobile-drawer').waitFor({ state: 'visible' })
+    await mobilePage.locator('.drawer-nav-item').filter({ hasText: label }).click()
+    await mobilePage.locator(selector).waitFor({ state: 'visible' })
+    if (await mobilePage.locator('.mobile-drawer').count()) throw new Error(`Wanhua mobile drawer did not close after ${label}`)
+  }
+  await mobilePage.getByRole('button', { name: '展開導覽選單' }).click()
+  await mobilePage.getByRole('button', { name: '關閉導覽' }).click()
+  if (await mobilePage.locator('.mobile-drawer').count()) throw new Error('Wanhua mobile drawer close button did not work')
+  if (mobileErrors.length) throw new Error(`Wanhua mobile interactions raised a runtime error: ${mobileErrors.join(' | ')}`)
+  await mobilePage.close()
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' })
   await page.goto(`${baseUrl}trips/awaji-2026/`, { waitUntil: 'domcontentloaded' })
   await page.locator('.overview-day-grid').waitFor({ state: 'visible' })

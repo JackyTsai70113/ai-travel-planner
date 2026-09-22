@@ -57,6 +57,7 @@ export function FoodPage({ bundle }: FoodPageProps) {
               <div className="food-place-heading"><h3>{officialHref ? <a className="official-title-link" href={officialHref} target="_blank" rel="noreferrer">{name}</a> : name}</h3><MapPinLink href={mapHref} label={`在 Google Maps 開啟 ${name}`} /></div>
               <>
                 {facts.length > 0 ? <dl>{facts.map((fact) => <div key={fact.label}><dt>{fact.label}</dt><dd>{fact.href ? <a className="parking-fact-link" href={fact.href} target="_blank" rel="noreferrer" aria-label={`在 Google Maps 開啟 ${parkingMapsQuery}`}>{fact.value}</a> : fact.value}</dd></div>)}</dl> : null}
+                {!(guide.duration && guide.cost && guide.queue && guide.parking && guide.sourceUrl && guide.source) ? <p className="place-guide-notice">此餐飲目前僅提供推薦內容；時間、費用、排隊、停車與來源資料尚未完整提供，出發前請以店家官方資訊覆核。</p> : null}
                 <div className="food-picks"><strong>推薦餐點與飲品</strong><ol>{guide.highlights.map((highlight) => { const parts = highlightParts(highlight); return <li key={highlight}><strong>{parts.title}</strong>{parts.reason ? <span>{parts.reason}</span> : null}</li> })}</ol></div>
               </>
             </article>

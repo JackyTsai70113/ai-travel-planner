@@ -265,6 +265,7 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
           <div><span>開車時間</span><strong>{guide.driving}</strong><small>不含景點停留與用餐</small></div>
           <div><span>固定時間</span><strong>{guide.fixedTimes}</strong><small>其餘停留可依體力調整</small></div>
         </div> : null}
+        {guide && !(guide.temperature && guide.weather && guide.rain && guide.wind && guide.activity && guide.steps && guide.stairs && guide.slope && guide.driving && guide.fixedTimes) ? <p className="day-guide-notice">本日僅提供基本提醒：{guide.heatRisk} 完整天候、活動量與交通負擔資料尚未提供；出發前請以官方公告、即時天氣與交通資訊覆核。</p> : null}
         {guide?.tide ? <div className="day-tide-card"><span>鳴門潮流與海況</span><p>{guide.tide}</p><a href="https://www.uzunomichi.jp/tide-calendar/" target="_blank" rel="noreferrer">官方潮見表</a></div> : null}
       </header>
 
@@ -316,6 +317,7 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
               {detail ? <p className="timeline-detail">{detail}</p> : null}
               {placeGuide ? <>
                 {facts.length > 0 ? <dl className="place-facts">{facts.map((fact) => <div key={fact.label}><dt>{fact.label}</dt><dd>{fact.href ? <a className="parking-fact-link" href={fact.href} target="_blank" rel="noreferrer" aria-label={`在 Google Maps 開啟 ${parkingMapsQuery}`}>{fact.value}</a> : fact.value}</dd></div>)}</dl> : null}
+                {!(placeGuide.duration && placeGuide.cost && placeGuide.queue && placeGuide.parking && placeGuide.sourceUrl && placeGuide.source) ? <p className="place-guide-notice">此地點目前僅提供重點提示；停留時間、費用、排隊、停車與來源資料尚未完整提供，出發前請以官方資訊覆核。</p> : null}
                 <div className="place-highlights"><strong>{visualKind === 'meal' ? '推薦餐點與飲品' : '值得看與值得玩'}</strong><ul>{placeGuide.highlights.map((highlight) => { const parts = highlightParts(highlight); return <li key={highlight}><strong>{parts.title}</strong>{parts.reason ? <span>{parts.reason}</span> : null}</li> })}</ul></div>
               </> : null}
             </div>
@@ -324,7 +326,10 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
         {quickMode !== 'all' && visibleItems.length === 0 ? <p className="timeline-empty">此日期不是今天，請切回「全部」查看完整行程。</p> : null}
       </div>}
 
-      {guide ? <section className="day-alternatives" aria-label="雨天與額外時間推薦"><Alternatives title="下雨時這樣玩" items={guide.rainOptions} /><Alternatives title="有多的時間，或臨時跳過一站" items={guide.extraTimeOptions} /></section> : null}
+      {guide ? <section className="day-alternatives" aria-label="雨天與額外時間推薦">
+        {guide.rainOptions ? <Alternatives title="下雨時這樣玩" items={guide.rainOptions} /> : <section className="day-alternative-group"><h3>下雨時這樣玩</h3><p>尚未提供此日的雨天備案；出發前請依官方公告與即時天氣調整。</p></section>}
+        {guide.extraTimeOptions ? <Alternatives title="有多的時間，或臨時跳過一站" items={guide.extraTimeOptions} /> : <section className="day-alternative-group"><h3>有多的時間，或臨時跳過一站</h3><p>尚未提供額外時間備案；請保留彈性，並以現場交通與營業資訊為準。</p></section>}
+      </section> : null}
     </section>
   )
 }

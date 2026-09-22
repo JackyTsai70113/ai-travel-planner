@@ -6,21 +6,21 @@ export interface DailyAlternative {
 }
 
 export interface DailyGuide {
-  weather: string
-  temperature: string
-  rain: string
+  weather?: string
+  temperature?: string
+  rain?: string
   heatRisk: string
-  wind: string
-  activity: string
-  steps: string
-  stairs: string
-  slope: string
-  driving: string
-  fixedTimes: string
+  wind?: string
+  activity?: string
+  steps?: string
+  stairs?: string
+  slope?: string
+  driving?: string
+  fixedTimes?: string
   tide?: string
-  rainOptions: DailyAlternative[]
-  extraTimeOptions: DailyAlternative[]
-  source: BundleProvenance & {
+  rainOptions?: DailyAlternative[]
+  extraTimeOptions?: DailyAlternative[]
+  source?: BundleProvenance & {
     source_refs?: string[]
     valid_from?: string
     valid_until?: string
@@ -29,14 +29,14 @@ export interface DailyGuide {
 }
 
 export interface PlaceGuide {
-  duration: string
-  cost: string
-  queue: string
-  parking: string
+  duration?: string
+  cost?: string
+  queue?: string
+  parking?: string
   highlights: string[]
-  sourceUrl: string
+  sourceUrl?: string
   hours?: string
-  source: BundleProvenance
+  source?: BundleProvenance
 }
 
 export interface ArrivalParkingGuide {
