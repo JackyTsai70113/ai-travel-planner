@@ -324,7 +324,7 @@
           "expected_stay_minutes": 150,
           "id": "d2-huaxi-dinner",
           "kind": "meal",
-          "notes": "午後街區緩衝與晚餐預留；攤商營業與售完狀況不同，抵達後依現場選擇。",
+          "notes": "17:00 後依現場攤商營業與排隊狀況選擇晚餐；售完或人潮過多則改選廣州街周邊店家。",
           "place_id": "huaxi-night-market",
           "start_at": "2026-10-01T17:00:00+08:00",
           "transfer_minutes": null,
@@ -524,8 +524,8 @@
   ],
   "local_timezone": "Asia/Taipei",
   "meta": {
-    "bundle_sha256": "79193404b67a5acbec27d063166638c97a1574fa5fcf2cc2a3134f8df57253ec",
-    "generated_at": "2026-09-22T06:54:06+00:00",
+    "bundle_sha256": "128d0faaa3ac360371d084c4a4c3e6bcd3089b1423cfec57eba3811200a75681",
+    "generated_at": "2026-09-22T06:55:22+00:00",
     "source_coverage": {
       "days": 3,
       "places": 15,
@@ -533,7 +533,7 @@
       "selected_hotels": 1
     },
     "source_path": "trips/wanhua-2026/trip.json",
-    "source_sha256": "ea838365b4fc535a3d9bca9ff7166116668c75830387e8bd00270d9f8a61ebcc",
+    "source_sha256": "158ea148762ab07b5f131883ad7aa2832b651707d3e9924415df526c98397088",
     "trip_schema": "trip-v1"
   },
   "operations": {
