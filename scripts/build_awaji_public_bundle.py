@@ -230,6 +230,8 @@ def _normalize_item(item: dict, legs: dict[str, dict[str, Any]]) -> dict:
         "transport_leg_id": leg_id,
         "alternative_place_ids": _as_list(item.get("alternative_place_ids")),
         "notes": item.get("notes"),
+        "optional": item.get("optional") is True,
+        "unresolved": item.get("unresolved") is True,
         "expected_stay_minutes": expected_stay_minutes,
         "transfer_minutes": transfer_minutes,
         "buffer_minutes": buffer_minutes,

@@ -98,13 +98,19 @@ function legDirectionsLink(bundle: Bundle, leg: BundleTransportLeg): string {
 }
 
 function timelineTitle(bundle: Bundle, item: BundleDayItem, leg?: BundleTransportLeg): string {
-  if (leg) return `${leg.from_label} → ${leg.to_label}`
+  const isHotel = (placeId: string) => bundle.places?.find((place) => place.id === placeId)?.kind === 'hotel'
+  if (leg) {
+    if (item.unresolved && (isHotel(leg.from_place) || isHotel(leg.to_place))) {
+      return `${isHotel(leg.from_place) ? '河景住宿待確認' : leg.from_label} → ${isHotel(leg.to_place) ? '河景住宿待確認' : leg.to_label}`
+    }
+    return `${leg.from_label} → ${leg.to_label}`
+  }
   const placeName = findPlaceLabel(bundle.places, item.place_id)
-  const isHotelStay = item.kind === 'check_in' || item.kind === 'check_out' || item.notes?.includes('住宿條件')
+  const isHotelStay = isHotel(item.place_id)
   const isSelectedHotel = bundle.selected.hotel_place_ids.includes(item.place_id)
+  if (isHotelStay && (!isSelectedHotel || item.unresolved)) return '河景住宿待確認'
   if (item.kind === 'check_in') return `入住：${placeName}`
   if (item.kind === 'check_out') return `退房：${placeName}`
-  if (isHotelStay && !isSelectedHotel) return '河景住宿待確認'
   if (isSelectedHotel && item.kind === 'free_time') return '飯店休息／自由時間'
   return placeName
 }

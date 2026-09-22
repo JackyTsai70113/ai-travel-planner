@@ -59,10 +59,12 @@
           "id": "d1-hotel-checkin",
           "kind": "check_in",
           "notes": "條件式入住窗口：只有結帳頁確認 1 成人、明列河景／河畔景觀房型且兩晚含稅不超過 NT$6,000 時才成立；目前尚未選定或訂房。",
+          "optional": true,
           "place_id": "hotel-riverview",
           "start_at": "2026-09-30T15:00:00+08:00",
           "transfer_minutes": null,
-          "transport_leg_id": null
+          "transport_leg_id": null,
+          "unresolved": true
         },
         {
           "alternative_place_ids": [],
@@ -72,10 +74,12 @@
           "id": "d1-rest-before-night",
           "kind": "free_time",
           "notes": "白天不排行程；入住後只休息、整理與自行用餐，18:00 後才出發。",
+          "optional": true,
           "place_id": "hotel-riverview",
           "start_at": "2026-09-30T15:30:00+08:00",
           "transfer_minutes": null,
-          "transport_leg_id": null
+          "transport_leg_id": null,
+          "unresolved": true
         },
         {
           "alternative_place_ids": [],
@@ -85,10 +89,12 @@
           "id": "d1-hotel-river-view-check",
           "kind": "visit",
           "notes": "先確認房間確實為明列河景／河畔景觀；若不是，該住宿不符合硬條件，勿把飯店地址當作河景保證。",
+          "optional": true,
           "place_id": "hotel-riverview",
           "start_at": "2026-09-30T18:00:00+08:00",
           "transfer_minutes": null,
-          "transport_leg_id": null
+          "transport_leg_id": null,
+          "unresolved": true
         },
         {
           "alternative_place_ids": [],
@@ -98,10 +104,12 @@
           "id": "d1-taxi-huazhong-riverside",
           "kind": "transport",
           "notes": null,
+          "optional": true,
           "place_id": "huazhong-riverside-park",
           "start_at": "2026-09-30T18:30:00+08:00",
           "transfer_minutes": 20,
-          "transport_leg_id": "hotel-to-huazhong-riverside"
+          "transport_leg_id": "hotel-to-huazhong-riverside",
+          "unresolved": true
         },
         {
           "alternative_place_ids": [],
@@ -111,10 +119,12 @@
           "id": "d1-huazhong-riverside-night-view",
           "kind": "visit",
           "notes": "18:50 後的河岸夜景備選：華中距飯店約 20 分鐘車程，不是最近選項。僅在下車點附近步道照明正常且現場有人流時短暫看河面、華中橋與對岸燈光；若下雨、河川警戒、照明不足或人流過少，取消本段，直接回飯店河景房。",
+          "optional": true,
           "place_id": "huazhong-riverside-park",
           "start_at": "2026-09-30T18:50:00+08:00",
           "transfer_minutes": null,
-          "transport_leg_id": null
+          "transport_leg_id": null,
+          "unresolved": true
         },
         {
           "alternative_place_ids": [],
@@ -124,10 +134,12 @@
           "id": "d1-taxi-return-hotel",
           "kind": "transport",
           "notes": null,
+          "optional": true,
           "place_id": "hotel-riverview",
           "start_at": "2026-09-30T20:00:00+08:00",
           "transfer_minutes": 20,
-          "transport_leg_id": "huazhong-riverside-to-hotel"
+          "transport_leg_id": "huazhong-riverside-to-hotel",
+          "unresolved": true
         }
       ],
       "summary": "下午入住，18:00 後才出發看河景夜色"
@@ -143,10 +155,12 @@
           "id": "d2-hotel-to-huaxi",
           "kind": "transport",
           "notes": null,
+          "optional": false,
           "place_id": "huaxi-night-market",
           "start_at": "2026-10-01T18:00:00+08:00",
           "transfer_minutes": 12,
-          "transport_leg_id": "hotel-to-huaxi"
+          "transport_leg_id": "hotel-to-huaxi",
+          "unresolved": false
         },
         {
           "alternative_place_ids": [],
@@ -156,10 +170,12 @@
           "id": "d2-huaxi-dinner",
           "kind": "meal",
           "notes": "僅安排 18:00 後的夜市晚餐與短距離散步；依現場攤商營業與排隊狀況選擇。20:00 回程只在沿途照明正常、持續有人流且本人狀況良好時步行；任一條件不符，留在夜市入口叫車直接回飯店。",
+          "optional": false,
           "place_id": "huaxi-night-market",
           "start_at": "2026-10-01T18:12:00+08:00",
           "transfer_minutes": null,
-          "transport_leg_id": null
+          "transport_leg_id": null,
+          "unresolved": false
         },
         {
           "alternative_place_ids": [],
@@ -169,10 +185,12 @@
           "id": "d2-huaxi-to-hotel",
           "kind": "transport",
           "notes": null,
+          "optional": false,
           "place_id": "hotel-riverview",
           "start_at": "2026-10-01T20:00:00+08:00",
           "transfer_minutes": 12,
-          "transport_leg_id": "huaxi-to-hotel"
+          "transport_leg_id": "huaxi-to-hotel",
+          "unresolved": false
         }
       ],
       "summary": "白天完全留白，18:00 後才到華西街夜市"
@@ -188,10 +206,12 @@
           "id": "d3-hotel-checkout",
           "kind": "check_out",
           "notes": "規劃退房窗口，不代表已確認的飯店退房時間。",
+          "optional": false,
           "place_id": "hotel-riverview",
           "start_at": "2026-10-02T11:00:00+08:00",
           "transfer_minutes": null,
-          "transport_leg_id": null
+          "transport_leg_id": null,
+          "unresolved": false
         },
         {
           "alternative_place_ids": [],
@@ -201,10 +221,12 @@
           "id": "d3-hotel-to-ximen",
           "kind": "transport",
           "notes": null,
+          "optional": false,
           "place_id": "ximen-station",
           "start_at": "2026-10-02T11:30:00+08:00",
           "transfer_minutes": 12,
-          "transport_leg_id": "hotel-to-ximen"
+          "transport_leg_id": "hotel-to-ximen",
+          "unresolved": false
         },
         {
           "alternative_place_ids": [],
@@ -214,10 +236,12 @@
           "id": "d3-ximen-to-qizhang",
           "kind": "transport",
           "notes": null,
+          "optional": false,
           "place_id": "qizhang-station",
           "start_at": "2026-10-02T11:45:00+08:00",
           "transfer_minutes": 40,
-          "transport_leg_id": "ximen-to-qizhang"
+          "transport_leg_id": "ximen-to-qizhang",
+          "unresolved": false
         }
       ],
       "summary": "退房後直接返回七張，不安排白天景點或午餐"
@@ -261,8 +285,8 @@
   ],
   "local_timezone": "Asia/Taipei",
   "meta": {
-    "bundle_sha256": "fef827168569ed9de08830cdff9bfc7c4dda4b56216b4844ec583cf3872a1c84",
-    "generated_at": "2026-09-22T08:09:24+00:00",
+    "bundle_sha256": "8579e34944d0abf8233b9f275d8860a8d96bfe1710c186976135241b8ef01c4a",
+    "generated_at": "2026-09-22T08:11:01+00:00",
     "source_coverage": {
       "days": 3,
       "places": 15,
