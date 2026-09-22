@@ -100,7 +100,7 @@ function legDirectionsLink(bundle: Bundle, leg: BundleTransportLeg): string {
 function timelineTitle(bundle: Bundle, item: BundleDayItem, leg?: BundleTransportLeg): string {
   const isHotel = (placeId: string) => bundle.places?.find((place) => place.id === placeId)?.kind === 'hotel'
   if (leg) {
-    if (item.unresolved && (isHotel(leg.from_place) || isHotel(leg.to_place))) {
+    if ((isHotel(leg.from_place) && !bundle.selected.hotel_place_ids.includes(leg.from_place)) || (isHotel(leg.to_place) && !bundle.selected.hotel_place_ids.includes(leg.to_place))) {
       return `${isHotel(leg.from_place) ? '河景住宿待確認' : leg.from_label} → ${isHotel(leg.to_place) ? '河景住宿待確認' : leg.to_label}`
     }
     return `${leg.from_label} → ${leg.to_label}`
@@ -108,7 +108,12 @@ function timelineTitle(bundle: Bundle, item: BundleDayItem, leg?: BundleTranspor
   const placeName = findPlaceLabel(bundle.places, item.place_id)
   const isHotelStay = isHotel(item.place_id)
   const isSelectedHotel = bundle.selected.hotel_place_ids.includes(item.place_id)
-  if (isHotelStay && (!isSelectedHotel || item.unresolved)) return '河景住宿待確認'
+  if (isHotelStay && (!isSelectedHotel || item.unresolved)) {
+    if (item.kind === 'check_in') return '確認河景房與含稅總額'
+    if (item.kind === 'check_out') return '河景住宿退房待確認'
+    if (item.kind === 'free_time') return '等待符合河景房門檻'
+    return '河景住宿條件確認'
+  }
   if (item.kind === 'check_in') return `入住：${placeName}`
   if (item.kind === 'check_out') return `退房：${placeName}`
   if (isSelectedHotel && item.kind === 'free_time') return '飯店休息／自由時間'
