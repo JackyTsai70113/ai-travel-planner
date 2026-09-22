@@ -39,12 +39,12 @@ describe('萬華 2026 公開旅程', () => {
     expect(bundle.days.at(-1).items.at(-1)).toMatchObject({ id: 'd3-ximen-to-qizhang', place_id: 'qizhang-station' })
   })
 
-  it('shows five Agoda river-view lodging assessments with a fail-closed price gate', () => {
+  it('shows five nearby Agoda candidates as rejected when none passes the river-view gate', () => {
     expect(bundle.hotel_candidates).toHaveLength(5)
     expect(bundle.hotel_candidates[0]).toMatchObject({
       place_id: 'hotel-riverview',
       selected_candidate: false,
-      price_status: 'unverified',
+      price_status: 'warning',
     })
     expect(bundle.hotel_candidates[0].room_type).toContain('河景')
     expect(bundle.hotel_candidates[0].price_note).toContain('NT$6,000')
@@ -61,8 +61,8 @@ describe('萬華 2026 公開旅程', () => {
       'hotel-i-play-inn',
       'hotel-citizenm-north-gate',
     ])
-    expect(bundle.hotel_candidates.filter((candidate: { itinerary_compatible?: boolean }) => candidate.itinerary_compatible !== false)
-      .every((candidate: { price_note?: string }) => candidate.price_note?.includes('NT$6,000'))).toBe(true)
+    expect(bundle.hotel_candidates.every((candidate: { price_status?: string }) => candidate.price_status === 'warning')).toBe(true)
+    expect(bundle.hotel_candidates.every((candidate: { price_note?: string }) => candidate.price_note?.includes('已淘汰'))).toBe(true)
     expect(bundle.hotel_candidates.every((candidate: { search_url?: string }) => candidate.search_url?.includes('agoda.com'))).toBe(true)
     expect(bundle.hotel_candidates.filter((candidate: { itinerary_compatible?: boolean }) => candidate.itinerary_compatible !== false)).toHaveLength(5)
   })

@@ -23,12 +23,13 @@ class Wanhua2026ConstraintsTests(unittest.TestCase):
 
     def test_lodging_and_ticket_claims_remain_honest(self) -> None:
         hotel = self.trip["candidate_sets"]["hotels"][0]
-        self.assertEqual(hotel["price_status"], "unverified")
+        self.assertEqual(hotel["price_status"], "warning")
         self.assertIn("未建立訂單", hotel["provenance"]["note"])
         self.assertEqual(self.trip["budget"]["categories"]["core-tickets"], {"amount": 0, "currency": "TWD"})
         self.assertEqual(self.trip["selected"]["hotel_place_ids"], [])
         self.assertIn("河景", hotel["room_type"])
         self.assertIn("NT$6,000", hotel["provenance"]["note"])
+        self.assertIn("已淘汰", hotel["provenance"]["note"])
 
     def test_core_official_sources_and_metro_cost_are_recorded(self) -> None:
         places = {place["id"]: place for place in self.trip["candidate_sets"]["places"]}

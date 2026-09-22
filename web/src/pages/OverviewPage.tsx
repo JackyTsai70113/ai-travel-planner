@@ -152,18 +152,18 @@ export function OverviewPage({ bundle, trip }: OverviewPageProps) {
       </div>
 
       {hotelCandidates.length > 0 ? <section className="overview-section" aria-labelledby="hotel-candidates-title">
-          <div className="section-heading"><div><p className="eyebrow">住宿評估</p><h2 id="hotel-candidates-title">河景房必須符合：兩晚含稅不超過 NT$6,000</h2></div></div>
-        <p className="overview-candidate-intro">只列萬華／北門河岸、能實際叫車前往華中河濱公園的 5 間飯店，依華中距離列出；CP 值只能以河景房的兩晚含稅成交總額比較，不能拿一般房起價代替。以下皆為 Agoda 的 2026/09/30 入住、10/02 退房、1 位成人查房連結；只有結帳頁明列河景房、可取消條款，且兩晚含稅總額不超過 NT$6,000 時才可選。</p>
+          <div className="section-heading"><div><p className="eyebrow">住宿評估</p><h2 id="hotel-candidates-title">符合河景房門檻：0 間</h2></div></div>
+        <p className="overview-candidate-intro">已依 Agoda 的 2026/09/30 入住、10/02 退房、1 位成人、1 房實際房型查核：近華中的河景房沒有一間同時符合可取消且兩晚含稅不超過 NT$6,000。下列 5 間按華中距離列出，都是最接近條件但已淘汰的候補；CP 值只能以河景房的兩晚含稅成交總額比較，不能拿一般房起價代替。</p>
         <div className="overview-candidate-grid">
           {hotelCandidates.map((candidate, index) => <article className="overview-candidate-card" key={candidate.place_id}>
-            <div className="overview-candidate-topline"><span>候選 {index + 1}</span>{candidate.itinerary_compatible === false ? <strong>不適用本萬華路線</strong> : candidate.selected_candidate ? <strong>已符合條件</strong> : candidate.price_status === 'unverified' ? <strong>條件待確認</strong> : <strong>備選</strong>}</div>
+            <div className="overview-candidate-topline"><span>候補 {index + 1}</span>{candidate.itinerary_compatible === false ? <strong>不適用本萬華路線</strong> : candidate.selected_candidate ? <strong>已符合條件</strong> : candidate.price_status === 'warning' ? <strong>已淘汰</strong> : candidate.price_status === 'unverified' ? <strong>條件待確認</strong> : <strong>備選</strong>}</div>
             <h3>{candidate.name}</h3>
             {candidate.room_type ? <p className="overview-candidate-room">房型線索：{candidate.room_type}</p> : null}
             <p>{candidate.decision_note || '請以訂房頁的房型、取消條款與入住規則為準。'}</p>
             {candidate.distance_notes?.length ? <div className="overview-candidate-distance"><strong>距離與夜景判斷：</strong><ul>{candidate.distance_notes.map((note) => <li key={note}>{note}</li>)}</ul></div> : null}
             {candidate.distance_sources?.length ? <p className="overview-candidate-status">距離估算：{candidate.distance_sources.map((source, index) => source.source_url ? <span key={source.source_url}>{index > 0 ? '、' : ''}<a href={source.source_url} target="_blank" rel="noreferrer">{source.note || source.provider || '地圖導航'}</a></span> : null)}（出發前請以即時導航覆核）</p> : null}
             {candidate.price_note ? <p className="overview-candidate-price"><strong>價格／查核：</strong>{candidate.price_note}</p> : null}
-            <p className="overview-candidate-status">價格狀態：{candidate.price_status === 'unverified' ? '需以一成人結帳頁確認' : candidate.price_status || '未確認'}</p>
+            <p className="overview-candidate-status">價格狀態：{candidate.price_status === 'warning' ? '未通過河景、可取消與兩晚含稅門檻' : candidate.price_status === 'unverified' ? '需以一成人結帳頁確認' : candidate.price_status || '未確認'}</p>
             <div className="overview-candidate-actions">
               {candidate.search_url ? <a href={candidate.search_url} target="_blank" rel="noreferrer">查房／訂房</a> : null}
               {candidate.official_url ? <a href={candidate.official_url} target="_blank" rel="noreferrer">官方資訊</a> : null}

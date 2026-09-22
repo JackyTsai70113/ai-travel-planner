@@ -104,7 +104,7 @@ try {
   if (!page.url().includes('/trips/wanhua-2026/')) throw new Error(`Wanhua URL was not canonical: ${page.url()}`)
   const wanhuaOverviewText = await page.locator('body').innerText()
   if (!wanhuaOverviewText.includes('18:00 後：河景夜色與華中河濱備選')) throw new Error('Wanhua night-only day one summary did not render')
-  if (!wanhuaOverviewText.includes('河景房必須符合：兩晚含稅不超過 NT$6,000')) throw new Error('Wanhua river-view lodging gate did not render')
+  if (!wanhuaOverviewText.includes('符合河景房門檻：0 間')) throw new Error('Wanhua verified river-view lodging result did not render')
   const wanhuaErrors = []
   page.on('pageerror', (error) => wanhuaErrors.push(error.message))
   const wanhuaRoutes = [
