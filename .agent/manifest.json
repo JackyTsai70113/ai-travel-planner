@@ -11,7 +11,8 @@
     "platform-impact-analysis",
     "taiwan-hospitality-reviews",
     "taiwan-official-events",
-    "taiwan-travel-trends"
+    "taiwan-travel-trends",
+    "taiwan-trip-site-delivery"
   ],
   "hooks": {
     "policy": ".agent/hooks/README.md",

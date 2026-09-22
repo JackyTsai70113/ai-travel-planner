@@ -21,6 +21,7 @@
 - `taiwan-official-events`：以官方來源確認台灣活動、休園與入場限制。
 - `taiwan-travel-trends`：將近期熱度轉成待驗證的旅遊候選偏好。
 - `taiwan-hospitality-reviews`：比較住宿與餐飲評價，並分離品質與營運訊號。
+- `taiwan-trip-site-delivery`：把已驗證研究收斂為公開安全的行程網站。
 
 ## 刻意不納入的內容
 
