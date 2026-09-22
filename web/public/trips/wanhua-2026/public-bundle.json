@@ -434,8 +434,8 @@
   ],
   "local_timezone": "Asia/Taipei",
   "meta": {
-    "bundle_sha256": "d7a59ad9c323dd45c9bdb87efff065b902ebba246a536672f87415145cbdbcab",
-    "generated_at": "2026-09-22T08:50:10+00:00",
+    "bundle_sha256": "e7ae10a00c9a2f0bc3784418bbe5d79b1d8fd1b7e52628181fbd88578ea6caa4",
+    "generated_at": "2026-09-22T08:52:42+00:00",
     "source_coverage": {
       "days": 3,
       "places": 15,
@@ -443,7 +443,7 @@
       "selected_hotels": 0
     },
     "source_path": "trips/wanhua-2026/trip.json",
-    "source_sha256": "c9a6628b8db35ab0b7cc6b891c5cf28c2410b9bee3aa9f725b61946a41da2e2d",
+    "source_sha256": "c8ed420e57e1c634fea4fca26ba10ebf94078643ccd8f3733d2373ea3270e4c2",
     "trip_schema": "trip-v1"
   },
   "operations": {
