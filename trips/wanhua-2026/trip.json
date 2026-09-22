@@ -390,6 +390,7 @@
           "child_ages": []
         },
         "room_type": "明列河景／河畔景觀的私人房；1 位成人、可取消房型優先",
+        "river_view_eligible": true,
         "search_url": "https://group.riverview.com.tw/",
         "price_status": "unverified",
         "distance_notes": [
@@ -413,6 +414,7 @@
         "place": {"id": "hotel-papa-whale", "name": "Hotel PaPa Whale", "kind": "hotel"},
         "check_in": "2026-09-30", "check_out": "2026-10-02", "occupancy": {"adults": 1, "child_ages": []},
         "room_type": "舒適單人房 SOHO Single Room",
+        "river_view_eligible": false,
         "search_url": "https://www.papawhale.com/zh-tw/%E5%8F%B0%E5%8C%97%2BPaPa%2BWhale", "price_status": "unverified",
         "provenance": {"source_type": "provider", "provider": "Vio 比價與飯店官方資訊", "source_url": "https://www.vio.com/Hotel/3006908/en-GB", "retrieved_at": "2026-09-22T10:00:00+08:00", "confidence": 0.7, "status": "unverified", "note": "比價頁顯示 9/30 約 US$36、10/1 約 US$58（含稅費、一房兩人資料）；官方頁列有單人房。請以 1 成人結帳頁確認兩晚總額；未建立訂單。"}
       },
@@ -420,6 +422,7 @@
         "place": {"id": "hotel-wonstar", "name": "萬事達行旅 Wonstar Hotel", "kind": "hotel"},
         "check_in": "2026-09-30", "check_out": "2026-10-02", "occupancy": {"adults": 1, "child_ages": []},
         "room_type": "經濟單人房（公開房型資料）",
+        "river_view_eligible": false,
         "search_url": "https://www.booking.com/hotel/tw/wonstar-chonghua.html", "price_status": "unverified",
         "provenance": {"source_type": "provider", "provider": "Vio 比價與 Booking.com", "source_url": "https://www.vio.com/Hotel/1259214/en", "retrieved_at": "2026-09-22T10:00:00+08:00", "confidence": 0.7, "status": "unverified", "note": "比價頁顯示 9/30 約 US$49、10/1 約 US$61（含稅費、一房兩人資料）。單人房型與最終價格須以一成人結帳頁確認；未建立訂單。"}
       },
@@ -427,6 +430,7 @@
         "place": {"id": "hotel-monka", "name": "文舺行旅 Monka Hotel", "kind": "hotel"},
         "check_in": "2026-09-30", "check_out": "2026-10-02", "occupancy": {"adults": 1, "child_ages": []},
         "room_type": "私人房（房型與價格待確認）",
+        "river_view_eligible": false,
         "search_url": "https://www.booking.com/hotel/tw/wen-jia-xing-lu.html", "price_status": "unverified",
         "provenance": {"source_type": "provider", "provider": "Booking.com", "source_url": "https://www.booking.com/hotel/tw/wen-jia-xing-lu.html", "retrieved_at": "2026-09-22T10:00:00+08:00", "confidence": 0.75, "status": "unverified", "note": "尚未取得這兩晚的一成人動態報價；請先查房，只有兩晚含稅不超過 NT$6,000 時才列入比較。未建立訂單。"}
       },
@@ -434,6 +438,7 @@
         "place": {"id": "hotel-hz", "name": "宏洲旅社 HZ Hotel", "kind": "hotel"},
         "check_in": "2026-09-30", "check_out": "2026-10-02", "occupancy": {"adults": 1, "child_ages": []},
         "room_type": "私人雙人房供一人入住（以實際房型為準）",
+        "river_view_eligible": false,
         "search_url": "https://www.booking.com/hotel/tw/hong-zhou-lu-she-hz-wan-hua-qu.html", "price_status": "unverified",
         "provenance": {"source_type": "provider", "provider": "Booking.com", "source_url": "https://www.booking.com/hotel/tw/hong-zhou-lu-she-hz-wan-hua-qu.html", "retrieved_at": "2026-09-22T10:00:00+08:00", "confidence": 0.7, "status": "unverified", "note": "比價區間曾低於每晚 NT$3,000，但不是你的單人最終報價；請以 1 成人、含稅兩晚總額覆核。未建立訂單。"}
       }
@@ -580,6 +585,8 @@
           "start_at": "2026-09-30T15:00:00+08:00",
           "end_at": "2026-09-30T15:30:00+08:00",
           "selection_status": "selected",
+          "optional": true,
+          "unresolved": true,
           "notes": "條件式入住窗口：只有結帳頁確認 1 成人、明列河景／河畔景觀房型且兩晚含稅不超過 NT$6,000 時才成立；目前尚未選定或訂房。"
         },
         {
@@ -589,6 +596,8 @@
           "start_at": "2026-09-30T15:30:00+08:00",
           "end_at": "2026-09-30T18:00:00+08:00",
           "selection_status": "selected",
+          "optional": true,
+          "unresolved": true,
           "notes": "白天不排行程；入住後只休息、整理與自行用餐，18:00 後才出發。"
         },
         {
@@ -598,6 +607,8 @@
           "start_at": "2026-09-30T18:00:00+08:00",
           "end_at": "2026-09-30T18:30:00+08:00",
           "selection_status": "selected",
+          "optional": true,
+          "unresolved": true,
           "notes": "先確認房間確實為明列河景／河畔景觀；若不是，該住宿不符合硬條件，勿把飯店地址當作河景保證。"
         },
         {
@@ -608,6 +619,8 @@
           "start_at": "2026-09-30T18:30:00+08:00",
           "end_at": "2026-09-30T18:50:00+08:00",
           "selection_status": "selected"
+          ,"optional": true,
+          "unresolved": true
         },
         {
           "id": "d1-huazhong-riverside-night-view",
@@ -616,6 +629,8 @@
           "start_at": "2026-09-30T18:50:00+08:00",
           "end_at": "2026-09-30T20:00:00+08:00",
           "selection_status": "selected",
+          "optional": true,
+          "unresolved": true,
           "notes": "18:50 後的河岸夜景備選：華中距飯店約 20 分鐘車程，不是最近選項。僅在下車點附近步道照明正常且現場有人流時短暫看河面、華中橋與對岸燈光；若下雨、河川警戒、照明不足或人流過少，取消本段，直接回飯店河景房。"
         },
         {
@@ -625,7 +640,9 @@
           "transport_leg_id": "huazhong-riverside-to-hotel",
           "start_at": "2026-09-30T20:00:00+08:00",
           "end_at": "2026-09-30T20:20:00+08:00",
-          "selection_status": "selected"
+          "selection_status": "selected",
+          "optional": true,
+          "unresolved": true
         }
       ]
     },

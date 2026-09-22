@@ -257,104 +257,12 @@
       "room_type": "明列河景／河畔景觀的私人房；1 位成人、可取消房型優先",
       "search_url": "https://group.riverview.com.tw/",
       "selected_candidate": false
-    },
-    {
-      "address": "臺北市萬華區昆明街46號",
-      "decision_note": "預算優先備選：有明列單人房型，適合西門步行；河岸夜景後回程比豪景遠。",
-      "distance_notes": [],
-      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Hotel%20PaPa%20Whale",
-      "name": "Hotel PaPa Whale",
-      "official_url": "https://www.papawhale.com/zh-tw/%E5%8F%B0%E5%8C%97%2BPaPa%2BWhale",
-      "place_id": "hotel-papa-whale",
-      "price_note": "比價頁顯示 9/30 約 US$36、10/1 約 US$58（含稅費、一房兩人資料）；官方頁列有單人房。請以 1 成人結帳頁確認兩晚總額；未建立訂單。",
-      "price_status": "unverified",
-      "provenance": {
-        "confidence": 0.7,
-        "note": "比價頁顯示 9/30 約 US$36、10/1 約 US$58（含稅費、一房兩人資料）；官方頁列有單人房。請以 1 成人結帳頁確認兩晚總額；未建立訂單。",
-        "provider": "Vio 比價與飯店官方資訊",
-        "retrieved_at": "2026-09-22T10:00:00+08:00",
-        "source_type": "provider",
-        "source_url": "https://www.vio.com/Hotel/3006908/en-GB",
-        "status": "unverified"
-      },
-      "room_type": "舒適單人房 SOHO Single Room",
-      "search_url": "https://www.papawhale.com/zh-tw/%E5%8F%B0%E5%8C%97%2BPaPa%2BWhale",
-      "selected_candidate": false
-    },
-    {
-      "address": "臺北市萬華區中華路一段82號",
-      "decision_note": "西門站步行便利，公開房型資料列有經濟單人房；不是河景位置。",
-      "distance_notes": [],
-      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Wonstar%20Hotel%20Taipei",
-      "name": "萬事達行旅 Wonstar Hotel",
-      "official_url": null,
-      "place_id": "hotel-wonstar",
-      "price_note": "比價頁顯示 9/30 約 US$49、10/1 約 US$61（含稅費、一房兩人資料）。單人房型與最終價格須以一成人結帳頁確認；未建立訂單。",
-      "price_status": "unverified",
-      "provenance": {
-        "confidence": 0.7,
-        "note": "比價頁顯示 9/30 約 US$49、10/1 約 US$61（含稅費、一房兩人資料）。單人房型與最終價格須以一成人結帳頁確認；未建立訂單。",
-        "provider": "Vio 比價與 Booking.com",
-        "retrieved_at": "2026-09-22T10:00:00+08:00",
-        "source_type": "provider",
-        "source_url": "https://www.vio.com/Hotel/1259214/en",
-        "status": "unverified"
-      },
-      "room_type": "經濟單人房（公開房型資料）",
-      "search_url": "https://www.booking.com/hotel/tw/wonstar-chonghua.html",
-      "selected_candidate": false
-    },
-    {
-      "address": "臺北市萬華區西園路一段139號",
-      "decision_note": "龍山寺與剝皮寮步行便利；公開評價的地點與整體分數佳，但尚未取得本日期的一成人報價。",
-      "distance_notes": [],
-      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Monka%20Hotel%20Taipei",
-      "name": "文舺行旅 Monka Hotel",
-      "official_url": null,
-      "place_id": "hotel-monka",
-      "price_note": "尚未取得這兩晚的一成人動態報價；請先查房，只有兩晚含稅不超過 NT$6,000 時才列入比較。未建立訂單。",
-      "price_status": "unverified",
-      "provenance": {
-        "confidence": 0.75,
-        "note": "尚未取得這兩晚的一成人動態報價；請先查房，只有兩晚含稅不超過 NT$6,000 時才列入比較。未建立訂單。",
-        "provider": "Booking.com",
-        "retrieved_at": "2026-09-22T10:00:00+08:00",
-        "source_type": "provider",
-        "source_url": "https://www.booking.com/hotel/tw/wen-jia-xing-lu.html",
-        "status": "unverified"
-      },
-      "room_type": "私人房（房型與價格待確認）",
-      "search_url": "https://www.booking.com/hotel/tw/wen-jia-xing-lu.html",
-      "selected_candidate": false
-    },
-    {
-      "address": "臺北市萬華區漢中街4號",
-      "decision_note": "預算安全牌，靠近西門；不在河岸，適合價格優先而非夜景優先的選擇。",
-      "distance_notes": [],
-      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=HZ%20Hotel%20Taipei",
-      "name": "宏洲旅社 HZ Hotel",
-      "official_url": null,
-      "place_id": "hotel-hz",
-      "price_note": "比價區間曾低於每晚 NT$3,000，但不是你的單人最終報價；請以 1 成人、含稅兩晚總額覆核。未建立訂單。",
-      "price_status": "unverified",
-      "provenance": {
-        "confidence": 0.7,
-        "note": "比價區間曾低於每晚 NT$3,000，但不是你的單人最終報價；請以 1 成人、含稅兩晚總額覆核。未建立訂單。",
-        "provider": "Booking.com",
-        "retrieved_at": "2026-09-22T10:00:00+08:00",
-        "source_type": "provider",
-        "source_url": "https://www.booking.com/hotel/tw/hong-zhou-lu-she-hz-wan-hua-qu.html",
-        "status": "unverified"
-      },
-      "room_type": "私人雙人房供一人入住（以實際房型為準）",
-      "search_url": "https://www.booking.com/hotel/tw/hong-zhou-lu-she-hz-wan-hua-qu.html",
-      "selected_candidate": false
     }
   ],
   "local_timezone": "Asia/Taipei",
   "meta": {
-    "bundle_sha256": "c4107fadede2266fe4c6538038fd8bc0e287aca71bd16b34ed52f7e3a65c10a2",
-    "generated_at": "2026-09-22T08:05:56+00:00",
+    "bundle_sha256": "fef827168569ed9de08830cdff9bfc7c4dda4b56216b4844ec583cf3872a1c84",
+    "generated_at": "2026-09-22T08:09:24+00:00",
     "source_coverage": {
       "days": 3,
       "places": 15,
@@ -362,7 +270,7 @@
       "selected_hotels": 0
     },
     "source_path": "trips/wanhua-2026/trip.json",
-    "source_sha256": "93e95287baaf5342dbea6f36dbb91bde177db926a42c28ce5c656a519840181a",
+    "source_sha256": "66f3fd2568a5071d84db03de215f199f114db68b0b8818bac93dca0a934d1396",
     "trip_schema": "trip-v1"
   },
   "operations": {

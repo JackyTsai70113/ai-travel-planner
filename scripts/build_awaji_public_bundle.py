@@ -687,6 +687,8 @@ def _bundle_hotel_candidates(trip: dict, places: dict[str, dict[str, object]]) -
     for candidate in _as_list(_as_dict(trip.get("candidate_sets")).get("hotels")):
         if not isinstance(candidate, dict):
             continue
+        if candidate.get("river_view_eligible") is False:
+            continue
         candidate_place = _as_dict(candidate.get("place"))
         place_id = _safe_str(candidate_place.get("id"))
         if not place_id:

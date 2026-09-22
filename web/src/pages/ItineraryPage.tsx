@@ -100,9 +100,11 @@ function legDirectionsLink(bundle: Bundle, leg: BundleTransportLeg): string {
 function timelineTitle(bundle: Bundle, item: BundleDayItem, leg?: BundleTransportLeg): string {
   if (leg) return `${leg.from_label} → ${leg.to_label}`
   const placeName = findPlaceLabel(bundle.places, item.place_id)
+  const isHotelStay = item.kind === 'check_in' || item.kind === 'check_out' || item.notes?.includes('住宿條件')
   const isSelectedHotel = bundle.selected.hotel_place_ids.includes(item.place_id)
   if (item.kind === 'check_in') return `入住：${placeName}`
   if (item.kind === 'check_out') return `退房：${placeName}`
+  if (isHotelStay && !isSelectedHotel) return '河景住宿待確認'
   if (isSelectedHotel && item.kind === 'free_time') return '飯店休息／自由時間'
   return placeName
 }

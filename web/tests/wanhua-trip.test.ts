@@ -39,8 +39,8 @@ describe('萬華 2026 公開旅程', () => {
     expect(bundle.days.at(-1).items.at(-1)).toMatchObject({ id: 'd3-ximen-to-qizhang', place_id: 'qizhang-station' })
   })
 
-  it('makes river view and the all-in two-night ceiling an explicit lodging gate', () => {
-    expect(bundle.hotel_candidates).toHaveLength(5)
+  it('shows only the river-view-eligible lodging assessment', () => {
+    expect(bundle.hotel_candidates).toHaveLength(1)
     expect(bundle.hotel_candidates[0]).toMatchObject({
       place_id: 'hotel-riverview',
       selected_candidate: false,
@@ -54,13 +54,7 @@ describe('萬華 2026 公開旅程', () => {
       expect.stringContaining('西門紅樓'),
       expect.stringContaining('龍山寺'),
     ]))
-    expect(bundle.hotel_candidates.map((candidate: { place_id: string }) => candidate.place_id)).toEqual([
-      'hotel-riverview',
-      'hotel-papa-whale',
-      'hotel-wonstar',
-      'hotel-monka',
-      'hotel-hz',
-    ])
+    expect(bundle.hotel_candidates.map((candidate: { place_id: string }) => candidate.place_id)).toEqual(['hotel-riverview'])
     expect(bundle.hotel_candidates.every((candidate: { price_note?: string }) => candidate.price_note?.includes('一房兩人資料') || candidate.price_note?.includes('一成人') || candidate.price_note?.includes('1 成人'))).toBe(true)
     expect(bundle.hotel_candidates.every((candidate: { search_url?: string }) => Boolean(candidate.search_url))).toBe(true)
   })
