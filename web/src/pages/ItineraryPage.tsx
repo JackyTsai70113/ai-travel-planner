@@ -122,6 +122,7 @@ function categoryLabel(kind: ReturnType<typeof itemVisualKind>, item: BundleDayI
 function movementLabel(mode: string): string {
   if (mode === 'walk' || mode === 'walking') return '步行'
   if (mode === 'bus' || mode === 'train' || mode === 'transit') return '大眾運輸'
+  if (mode === 'taxi') return '計程車／叫車'
   return '開車'
 }
 

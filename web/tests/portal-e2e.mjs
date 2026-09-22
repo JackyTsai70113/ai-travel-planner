@@ -103,8 +103,8 @@ try {
   await page.locator('.overview-day-grid').waitFor({ state: 'visible' })
   if (!page.url().includes('/trips/wanhua-2026/')) throw new Error(`Wanhua URL was not canonical: ${page.url()}`)
   const wanhuaOverviewText = await page.locator('body').innerText()
-  if (!wanhuaOverviewText.includes('西門文化散步、入住與華中河濱夜景')) throw new Error('Wanhua day one summary did not render')
-  if (!wanhuaOverviewText.includes('NT$40 只含兩段捷運')) throw new Error('Wanhua riverside transport budget disclosure did not render')
+  if (!wanhuaOverviewText.includes('七張出發、西門紅樓、入住與華中河濱夜景')) throw new Error('Wanhua day one summary did not render')
+  if (!wanhuaOverviewText.includes('NT$60 只含七張與西門往返捷運')) throw new Error('Wanhua transport budget disclosure did not render')
   const wanhuaErrors = []
   page.on('pageerror', (error) => wanhuaErrors.push(error.message))
   const wanhuaRoutes = [

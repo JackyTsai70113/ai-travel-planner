@@ -7,13 +7,13 @@
         "currency": "TWD"
       },
       "metro": {
-        "amount": 40,
+        "amount": 60,
         "currency": "TWD"
       }
     },
     "currency": "TWD",
     "total": {
-      "amount": 40,
+      "amount": 60,
       "currency": "TWD"
     }
   },
@@ -37,15 +37,9 @@
       "path": "/selected/hotel_place_ids"
     },
     {
-      "id": "arrival-departure-required",
+      "id": "night-ride-fare-required",
       "level": "warning",
-      "message": "使用者未指定出發地與返程目的地；首末段交通、其票價與時間尚未規劃，請出發前補齊。",
-      "path": "/itinerary"
-    },
-    {
-      "id": "riverside-ride-fare-required",
-      "level": "warning",
-      "message": "9/30 華中河濱夜景需要兩段叫車或計程車；費用尚未取得，NT$40 僅為已確認的兩段捷運票價，不是本趟交通總額。出發前請在叫車 App 確認去回費用後再決定是否前往。",
+      "message": "9/30 華中河濱與 10/1 華西街返程各需要叫車或計程車；費用尚未取得。NT$60 只含七張與西門往返捷運票價，不是本趟交通總額。",
       "path": "/candidate_sets/transport_legs"
     }
   ],
@@ -59,42 +53,55 @@
       "items": [
         {
           "alternative_place_ids": [],
+          "buffer_minutes": 0,
+          "end_at": "2026-09-30T10:15:00+08:00",
+          "expected_stay_minutes": null,
+          "id": "d1-qizhang-to-ximen",
+          "kind": "transport",
+          "notes": null,
+          "place_id": "ximen-station",
+          "start_at": "2026-09-30T09:35:00+08:00",
+          "transfer_minutes": 40,
+          "transport_leg_id": "qizhang-to-ximen"
+        },
+        {
+          "alternative_place_ids": [],
           "buffer_minutes": null,
-          "end_at": "2026-09-30T11:45:00+08:00",
+          "end_at": "2026-09-30T12:15:00+08:00",
           "expected_stay_minutes": 75,
-          "id": "d1-hotel-bag-drop",
-          "kind": "free_time",
-          "notes": "抵達與寄放行李時間；住宿尚未訂房，先於官方訂房頁確認房價、取消條款與入住時段。",
-          "place_id": "hotel-riverview",
-          "start_at": "2026-09-30T10:30:00+08:00",
+          "id": "d1-red-house",
+          "kind": "visit",
+          "notes": "常設空間不設固定門票；若選擇當日付費展演，請先以官網票務與開演時間覆核。",
+          "place_id": "red-house",
+          "start_at": "2026-09-30T11:00:00+08:00",
+          "transfer_minutes": null,
+          "transport_leg_id": null
+        },
+        {
+          "alternative_place_ids": [],
+          "buffer_minutes": null,
+          "end_at": "2026-09-30T13:30:00+08:00",
+          "expected_stay_minutes": 75,
+          "id": "d1-ximen-lunch",
+          "kind": "meal",
+          "notes": "西門步行範圍內自行選擇午餐；不把未查證店家的營業時間或評價寫成既定行程。",
+          "place_id": "ximen-pedestrian-area",
+          "start_at": "2026-09-30T12:15:00+08:00",
           "transfer_minutes": null,
           "transport_leg_id": null
         },
         {
           "alternative_place_ids": [],
           "buffer_minutes": 0,
-          "end_at": "2026-09-30T12:00:00+08:00",
+          "end_at": "2026-09-30T14:00:00+08:00",
           "expected_stay_minutes": null,
-          "id": "d1-walk-red-house",
+          "id": "d1-ximen-to-hotel",
           "kind": "transport",
           "notes": null,
-          "place_id": "red-house",
-          "start_at": "2026-09-30T11:45:00+08:00",
-          "transfer_minutes": 15,
-          "transport_leg_id": "hotel-to-red-house"
-        },
-        {
-          "alternative_place_ids": [],
-          "buffer_minutes": null,
-          "end_at": "2026-09-30T13:30:00+08:00",
-          "expected_stay_minutes": 90,
-          "id": "d1-red-house",
-          "kind": "visit",
-          "notes": "常設空間不設固定門票；若選擇當日付費展演，請先以官網票務與開演時間覆核。",
-          "place_id": "red-house",
-          "start_at": "2026-09-30T12:00:00+08:00",
-          "transfer_minutes": null,
-          "transport_leg_id": null
+          "place_id": "hotel-riverview",
+          "start_at": "2026-09-30T13:30:00+08:00",
+          "transfer_minutes": 30,
+          "transport_leg_id": "ximen-to-hotel"
         },
         {
           "alternative_place_ids": [],
@@ -112,70 +119,57 @@
         {
           "alternative_place_ids": [],
           "buffer_minutes": null,
-          "end_at": "2026-09-30T19:00:00+08:00",
-          "expected_stay_minutes": 60,
-          "id": "d1-ximen-dinner",
+          "end_at": "2026-09-30T19:15:00+08:00",
+          "expected_stay_minutes": 225,
+          "id": "d1-rest-and-dinner",
           "kind": "free_time",
-          "notes": "西門町自由晚餐；不綁定未查證的店家營業時間，19:00 前回飯店取外套、行動電源與飲水。",
-          "place_id": "red-house",
-          "start_at": "2026-09-30T18:00:00+08:00",
-          "transfer_minutes": null,
-          "transport_leg_id": null
-        },
-        {
-          "alternative_place_ids": [],
-          "buffer_minutes": null,
-          "end_at": "2026-09-30T19:20:00+08:00",
-          "expected_stay_minutes": 20,
-          "id": "d1-return-hotel-before-riverside",
-          "kind": "free_time",
-          "notes": "回飯店短暫整備後再出發；單人夜間不帶大件行李。",
+          "notes": "入住後休息、附近自行用餐與夜景前整備；19:15 帶外套、行動電源與飲水出發，不帶大件行李。",
           "place_id": "hotel-riverview",
-          "start_at": "2026-09-30T19:00:00+08:00",
+          "start_at": "2026-09-30T15:30:00+08:00",
           "transfer_minutes": null,
           "transport_leg_id": null
         },
         {
           "alternative_place_ids": [],
           "buffer_minutes": 0,
-          "end_at": "2026-09-30T19:40:00+08:00",
+          "end_at": "2026-09-30T19:35:00+08:00",
           "expected_stay_minutes": null,
           "id": "d1-taxi-huazhong-riverside",
           "kind": "transport",
           "notes": null,
           "place_id": "huazhong-riverside-park",
-          "start_at": "2026-09-30T19:20:00+08:00",
+          "start_at": "2026-09-30T19:15:00+08:00",
           "transfer_minutes": 20,
           "transport_leg_id": "hotel-to-huazhong-riverside"
         },
         {
           "alternative_place_ids": [],
           "buffer_minutes": null,
-          "end_at": "2026-09-30T20:50:00+08:00",
+          "end_at": "2026-09-30T20:45:00+08:00",
           "expected_stay_minutes": 70,
           "id": "d1-huazhong-riverside-night-view",
           "kind": "visit",
           "notes": "河岸夜景主行程：僅在下車點附近步道照明正常且現場有人流時，步行看河面、華中橋與對岸燈光；20:35 開始往叫車點回走。若下雨、河川警戒、照明不足或現場人流過少，取消本段，直接回飯店。",
           "place_id": "huazhong-riverside-park",
-          "start_at": "2026-09-30T19:40:00+08:00",
+          "start_at": "2026-09-30T19:35:00+08:00",
           "transfer_minutes": null,
           "transport_leg_id": null
         },
         {
           "alternative_place_ids": [],
           "buffer_minutes": 0,
-          "end_at": "2026-09-30T21:10:00+08:00",
+          "end_at": "2026-09-30T21:05:00+08:00",
           "expected_stay_minutes": null,
           "id": "d1-taxi-return-hotel",
           "kind": "transport",
           "notes": null,
           "place_id": "hotel-riverview",
-          "start_at": "2026-09-30T20:50:00+08:00",
+          "start_at": "2026-09-30T20:45:00+08:00",
           "transfer_minutes": 20,
           "transport_leg_id": "huazhong-riverside-to-hotel"
         }
       ],
-      "summary": "西門文化散步、入住與華中河濱夜景"
+      "summary": "七張出發、西門紅樓、入住與華中河濱夜景"
     },
     {
       "date": "2026-10-01",
@@ -185,13 +179,13 @@
           "buffer_minutes": 0,
           "end_at": "2026-10-01T09:50:00+08:00",
           "expected_stay_minutes": null,
-          "id": "d2-metro-longshan",
+          "id": "d2-hotel-to-longshan",
           "kind": "transport",
           "notes": null,
-          "place_id": "longshan-station",
+          "place_id": "longshan-temple",
           "start_at": "2026-10-01T09:30:00+08:00",
-          "transfer_minutes": 20,
-          "transport_leg_id": "ximen-to-longshan"
+          "transfer_minutes": 30,
+          "transport_leg_id": "hotel-to-longshan"
         },
         {
           "alternative_place_ids": [],
@@ -208,6 +202,19 @@
         },
         {
           "alternative_place_ids": [],
+          "buffer_minutes": 0,
+          "end_at": "2026-10-01T11:30:00+08:00",
+          "expected_stay_minutes": null,
+          "id": "d2-longshan-to-bopiliao",
+          "kind": "transport",
+          "notes": null,
+          "place_id": "bopiliao",
+          "start_at": "2026-10-01T11:15:00+08:00",
+          "transfer_minutes": 15,
+          "transport_leg_id": "longshan-to-bopiliao"
+        },
+        {
+          "alternative_place_ids": [],
           "buffer_minutes": null,
           "end_at": "2026-10-01T13:30:00+08:00",
           "expected_stay_minutes": 120,
@@ -218,6 +225,19 @@
           "start_at": "2026-10-01T11:30:00+08:00",
           "transfer_minutes": null,
           "transport_leg_id": null
+        },
+        {
+          "alternative_place_ids": [],
+          "buffer_minutes": 0,
+          "end_at": "2026-10-01T13:45:00+08:00",
+          "expected_stay_minutes": null,
+          "id": "d2-bopiliao-to-qingshan",
+          "kind": "transport",
+          "notes": null,
+          "place_id": "qingshan-temple",
+          "start_at": "2026-10-01T13:30:00+08:00",
+          "transfer_minutes": 15,
+          "transport_leg_id": "bopiliao-to-qingshan"
         },
         {
           "alternative_place_ids": [],
@@ -234,32 +254,45 @@
         },
         {
           "alternative_place_ids": [],
+          "buffer_minutes": 0,
+          "end_at": "2026-10-01T15:15:00+08:00",
+          "expected_stay_minutes": null,
+          "id": "d2-qingshan-to-huaxi",
+          "kind": "transport",
+          "notes": null,
+          "place_id": "huaxi-night-market",
+          "start_at": "2026-10-01T15:00:00+08:00",
+          "transfer_minutes": 15,
+          "transport_leg_id": "qingshan-to-huaxi"
+        },
+        {
+          "alternative_place_ids": [],
           "buffer_minutes": null,
-          "end_at": "2026-10-01T20:00:00+08:00",
-          "expected_stay_minutes": 120,
+          "end_at": "2026-10-01T19:30:00+08:00",
+          "expected_stay_minutes": 255,
           "id": "d2-huaxi-dinner",
           "kind": "meal",
-          "notes": "彈性晚餐預留；攤商營業與售完狀況不同，抵達後依現場選擇。",
+          "notes": "午後街區緩衝與晚餐預留；攤商營業與售完狀況不同，抵達後依現場選擇。",
           "place_id": "huaxi-night-market",
-          "start_at": "2026-10-01T18:00:00+08:00",
+          "start_at": "2026-10-01T15:15:00+08:00",
           "transfer_minutes": null,
           "transport_leg_id": null
         },
         {
           "alternative_place_ids": [],
           "buffer_minutes": 0,
-          "end_at": "2026-10-01T20:50:00+08:00",
+          "end_at": "2026-10-01T19:50:00+08:00",
           "expected_stay_minutes": null,
-          "id": "d2-metro-ximen",
+          "id": "d2-huaxi-to-hotel",
           "kind": "transport",
           "notes": null,
-          "place_id": "ximen-station",
-          "start_at": "2026-10-01T20:30:00+08:00",
+          "place_id": "hotel-riverview",
+          "start_at": "2026-10-01T19:30:00+08:00",
           "transfer_minutes": 20,
-          "transport_leg_id": "longshan-to-ximen"
+          "transport_leg_id": "huaxi-to-hotel"
         }
       ],
-      "summary": "艋舺古蹟、街區與夜市"
+      "summary": "艋舺古蹟、街區步行與華西街晚餐"
     },
     {
       "date": "2026-10-02",
@@ -279,19 +312,45 @@
         },
         {
           "alternative_place_ids": [],
-          "buffer_minutes": null,
-          "end_at": "2026-10-02T13:00:00+08:00",
-          "expected_stay_minutes": 90,
-          "id": "d3-ximen-buffer",
-          "kind": "free_time",
-          "notes": "採買、午餐與回程前緩衝；因出發地未指定，未虛構末段交通。",
-          "place_id": "red-house",
+          "buffer_minutes": 0,
+          "end_at": "2026-10-02T12:00:00+08:00",
+          "expected_stay_minutes": null,
+          "id": "d3-hotel-to-ximen",
+          "kind": "transport",
+          "notes": null,
+          "place_id": "ximen-pedestrian-area",
           "start_at": "2026-10-02T11:30:00+08:00",
+          "transfer_minutes": 30,
+          "transport_leg_id": "hotel-to-ximen"
+        },
+        {
+          "alternative_place_ids": [],
+          "buffer_minutes": null,
+          "end_at": "2026-10-02T13:30:00+08:00",
+          "expected_stay_minutes": 90,
+          "id": "d3-ximen-lunch",
+          "kind": "free_time",
+          "notes": "午餐、採買與返程前緩衝；以七張站作返程終點，沒有另行假設後續目的地。",
+          "place_id": "ximen-pedestrian-area",
+          "start_at": "2026-10-02T12:00:00+08:00",
           "transfer_minutes": null,
           "transport_leg_id": null
+        },
+        {
+          "alternative_place_ids": [],
+          "buffer_minutes": 0,
+          "end_at": "2026-10-02T14:10:00+08:00",
+          "expected_stay_minutes": null,
+          "id": "d3-ximen-to-qizhang",
+          "kind": "transport",
+          "notes": null,
+          "place_id": "qizhang-station",
+          "start_at": "2026-10-02T13:30:00+08:00",
+          "transfer_minutes": 40,
+          "transport_leg_id": "ximen-to-qizhang"
         }
       ],
-      "summary": "退房、回程緩衝與西門收尾"
+      "summary": "退房、西門午餐與返回七張"
     }
   ],
   "evidence_gate": {
@@ -413,16 +472,16 @@
   ],
   "local_timezone": "Asia/Taipei",
   "meta": {
-    "bundle_sha256": "3f823325b2db9d26237bb27c7f6103843925aee5acdbbeefe4cfc6100035611e",
-    "generated_at": "2026-09-22T06:43:52+00:00",
+    "bundle_sha256": "4a2538389753dd89ee8a082dbb3a02738d727f92b8806d8ca8fb58c9b3dd735b",
+    "generated_at": "2026-09-22T06:49:11+00:00",
     "source_coverage": {
       "days": 3,
-      "places": 13,
+      "places": 15,
       "selected_flights": 0,
       "selected_hotels": 1
     },
     "source_path": "trips/wanhua-2026/trip.json",
-    "source_sha256": "ab39954623101ffadcd85723bcc3e0ab10e0fede392ed58fbc303f1d8a58b5b9",
+    "source_sha256": "e8bb23d9cfd9fa08414969dd5a8972427440b6b3cac42d584571880e4e7569d3",
     "trip_schema": "trip-v1"
   },
   "operations": {
@@ -449,7 +508,7 @@
         "timing": "出發前 1 天"
       },
       {
-        "action": "在叫車 App 查看飯店往返華中河濱公園的即時去回費；NT$40 只含兩段捷運，未含這兩段叫車。確認未發布河川警戒、現場照明正常且有人流後才前往。",
+        "action": "在叫車 App 查看飯店往返華中河濱公園的即時去回費；NT$60 只含七張與西門往返捷運，未含兩晚的叫車。確認未發布河川警戒、現場照明正常且有人流後才前往。",
         "completed": false,
         "contact": null,
         "fallback": "若費用不合預期、下雨、河川警戒、照明不足或人流過少，取消河濱段並由西門直接回飯店。",
@@ -462,7 +521,7 @@
     "supplies": []
   },
   "overview": {
-    "critical_unknown_count": 3,
+    "critical_unknown_count": 2,
     "next_recheck_at": null,
     "trip_scope": [
       "萬華",
@@ -726,6 +785,29 @@
     },
     {
       "accessibility_notes": null,
+      "address": "新北市新店區北新路二段150號",
+      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=%E6%8D%B7%E9%81%8B%E4%B8%83%E5%BC%B5%E7%AB%99",
+      "id": "qizhang-station",
+      "image_alt": null,
+      "image_source_url": null,
+      "image_url": null,
+      "kind": "station",
+      "maps_query": "新北市新店區北新路二段150號",
+      "name": "捷運七張站",
+      "official_url": null,
+      "opening_hours_note": null,
+      "provenance": {
+        "confidence": 0.98,
+        "note": "使用者指定的出發與返程捷運站；七張至西門票價 30 元，實際班距以當日官方資訊為準。",
+        "provider": "臺北捷運",
+        "retrieved_at": "2026-09-22T16:00:00+08:00",
+        "source_type": "official",
+        "source_url": "https://web.metro.taipei/pages2026/WebStation/035/8",
+        "status": "confirmed"
+      }
+    },
+    {
+      "accessibility_notes": null,
       "address": "臺北市萬華區成都路10號",
       "google_maps_url": "https://www.google.com/maps/search/?api=1&query=%E8%A5%BF%E9%96%80%E7%B4%85%E6%A8%93",
       "id": "red-house",
@@ -744,6 +826,29 @@
         "retrieved_at": "2026-09-22T10:00:00+08:00",
         "source_type": "official",
         "source_url": "https://www.redhouse.taipei/",
+        "status": "confirmed"
+      }
+    },
+    {
+      "accessibility_notes": null,
+      "address": "臺北市萬華區成都路、漢中街一帶",
+      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=%E8%A5%BF%E9%96%80%E7%94%BA",
+      "id": "ximen-pedestrian-area",
+      "image_alt": null,
+      "image_source_url": null,
+      "image_url": null,
+      "kind": "poi",
+      "maps_query": "臺北市萬華區成都路、漢中街一帶",
+      "name": "西門徒步區",
+      "official_url": null,
+      "opening_hours_note": "安排午餐與自由逛街的範圍，不指定未查證的單一店家；依當日人流與營業狀況選擇。",
+      "provenance": {
+        "confidence": 0.9,
+        "note": "僅用於界定西門步行與用餐範圍，不將個別店家營業時間視為已確認。",
+        "provider": "臺北市政府觀光傳播局",
+        "retrieved_at": "2026-09-22T16:00:00+08:00",
+        "source_type": "official",
+        "source_url": "https://www.travel.taipei/zh-tw/attraction/details/169",
         "status": "confirmed"
       }
     },
@@ -879,10 +984,30 @@
       "confidence": 0.98,
       "conflicts": false,
       "freshness": "unknown",
+      "last_checked": "2026-09-22T16:00:00+08:00",
+      "source_url": "https://web.metro.taipei/pages2026/WebStation/035/8",
+      "status": "confirmed",
+      "supports": "place:qizhang-station"
+    },
+    {
+      "authority": "臺北捷運",
+      "confidence": 0.98,
+      "conflicts": false,
+      "freshness": "unknown",
       "last_checked": "2026-09-22T10:00:00+08:00",
       "source_url": "https://web.metro.taipei/pages2026/WebStation/086/8",
       "status": "confirmed",
       "supports": "place:ximen-station"
+    },
+    {
+      "authority": "臺北市政府觀光傳播局",
+      "confidence": 0.9,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-09-22T16:00:00+08:00",
+      "source_url": "https://www.travel.taipei/zh-tw/attraction/details/169",
+      "status": "confirmed",
+      "supports": "place:ximen-pedestrian-area"
     },
     {
       "authority": "臺北捷運",
@@ -995,34 +1120,24 @@
       "supports": "hotel"
     },
     {
+      "authority": "臺北捷運",
+      "confidence": 0.98,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-09-22T16:00:00+08:00",
+      "source_url": "https://web.metro.taipei/pages2026/WebStation/035/8",
+      "status": "confirmed",
+      "supports": "transport:qizhang-to-ximen"
+    },
+    {
       "authority": "步行路線估計",
       "confidence": 0.7,
       "conflicts": false,
       "freshness": "unknown",
-      "last_checked": "2026-09-22T10:00:00+08:00",
+      "last_checked": "2026-09-22T16:00:00+08:00",
       "source_url": null,
       "status": "estimated",
-      "supports": "transport:hotel-to-red-house"
-    },
-    {
-      "authority": "臺北捷運",
-      "confidence": 0.95,
-      "conflicts": false,
-      "freshness": "unknown",
-      "last_checked": "2026-09-22T10:00:00+08:00",
-      "source_url": "https://web.metro.taipei/pages2026/WebStation/086/8",
-      "status": "confirmed",
-      "supports": "transport:ximen-to-longshan"
-    },
-    {
-      "authority": "臺北捷運",
-      "confidence": 0.95,
-      "conflicts": false,
-      "freshness": "unknown",
-      "last_checked": "2026-09-22T10:00:00+08:00",
-      "source_url": "https://web.metro.taipei/pages2026/WebStation/085/8",
-      "status": "confirmed",
-      "supports": "transport:longshan-to-ximen"
+      "supports": "transport:ximen-to-hotel"
     },
     {
       "authority": "市區夜間短程轉乘規劃",
@@ -1045,6 +1160,76 @@
       "supports": "transport:huazhong-riverside-to-hotel"
     },
     {
+      "authority": "步行路線估計",
+      "confidence": 0.7,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-09-22T16:00:00+08:00",
+      "source_url": null,
+      "status": "estimated",
+      "supports": "transport:hotel-to-longshan"
+    },
+    {
+      "authority": "步行路線估計",
+      "confidence": 0.8,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-09-22T16:00:00+08:00",
+      "source_url": null,
+      "status": "estimated",
+      "supports": "transport:longshan-to-bopiliao"
+    },
+    {
+      "authority": "步行路線估計",
+      "confidence": 0.8,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-09-22T16:00:00+08:00",
+      "source_url": null,
+      "status": "estimated",
+      "supports": "transport:bopiliao-to-qingshan"
+    },
+    {
+      "authority": "步行路線估計",
+      "confidence": 0.8,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-09-22T16:00:00+08:00",
+      "source_url": null,
+      "status": "estimated",
+      "supports": "transport:qingshan-to-huaxi"
+    },
+    {
+      "authority": "夜間短程轉乘規劃",
+      "confidence": 0.7,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-09-22T16:00:00+08:00",
+      "source_url": null,
+      "status": "estimated",
+      "supports": "transport:huaxi-to-hotel"
+    },
+    {
+      "authority": "步行路線估計",
+      "confidence": 0.7,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-09-22T16:00:00+08:00",
+      "source_url": null,
+      "status": "estimated",
+      "supports": "transport:hotel-to-ximen"
+    },
+    {
+      "authority": "臺北捷運",
+      "confidence": 0.98,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-09-22T16:00:00+08:00",
+      "source_url": "https://web.metro.taipei/pages2026/WebStation/086/8",
+      "status": "confirmed",
+      "supports": "transport:ximen-to-qizhang"
+    },
+    {
       "authority": "未指定",
       "confidence": null,
       "conflicts": false,
@@ -1059,21 +1244,50 @@
   "title": "萬華三天兩夜一人行",
   "transport_legs": [
     {
-      "arrival_at": "2026-09-30T12:00:00+08:00",
+      "arrival_at": "2026-09-30T10:15:00+08:00",
       "buffer_minutes": 0,
-      "departure_at": "2026-09-30T11:45:00+08:00",
-      "estimated_duration_minutes": 15,
-      "from_label": "台北豪景大酒店 Hotel Riverview Taipei",
-      "from_place": "hotel-riverview",
-      "google_maps_directions_url": "https://www.google.com/maps/dir/?api=1&origin=%E8%87%BA%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E7%92%B0%E6%B2%B3%E5%8D%97%E8%B7%AF%E4%B8%80%E6%AE%B577%E8%99%9F&destination=%E8%87%BA%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E6%88%90%E9%83%BD%E8%B7%AF10%E8%99%9F&travelmode=walking",
-      "id": "hotel-to-red-house",
+      "departure_at": "2026-09-30T09:35:00+08:00",
+      "estimated_duration_minutes": 40,
+      "from_label": "捷運七張站",
+      "from_place": "qizhang-station",
+      "google_maps_directions_url": "https://www.google.com/maps/dir/?api=1&origin=%E6%96%B0%E5%8C%97%E5%B8%82%E6%96%B0%E5%BA%97%E5%8D%80%E5%8C%97%E6%96%B0%E8%B7%AF%E4%BA%8C%E6%AE%B5150%E8%99%9F&destination=%E8%87%BA%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E4%B8%AD%E8%8F%AF%E8%B7%AF%E4%B8%80%E6%AE%B5&travelmode=transit",
+      "id": "qizhang-to-ximen",
+      "mode": "train",
+      "note": "官方站間資料列七張至西門票價 30 元；行程含轉乘、等車與出站緩衝，實際班距以當日官方資訊為準。",
+      "provenance": {
+        "confidence": 0.98,
+        "note": "官方站間資料列七張至西門票價 30 元；行程含轉乘、等車與出站緩衝，實際班距以當日官方資訊為準。",
+        "provider": "臺北捷運",
+        "retrieved_at": "2026-09-22T16:00:00+08:00",
+        "source_type": "official",
+        "source_url": "https://web.metro.taipei/pages2026/WebStation/035/8",
+        "status": "confirmed"
+      },
+      "source_refs": [
+        "https://web.metro.taipei/pages2026/WebStation/035/8"
+      ],
+      "source_url": "https://web.metro.taipei/pages2026/WebStation/035/8",
+      "status": "confirmed",
+      "to_label": "捷運西門站",
+      "to_place": "ximen-station",
+      "transfer_minutes": 40
+    },
+    {
+      "arrival_at": "2026-09-30T14:00:00+08:00",
+      "buffer_minutes": 0,
+      "departure_at": "2026-09-30T13:30:00+08:00",
+      "estimated_duration_minutes": 30,
+      "from_label": "西門徒步區",
+      "from_place": "ximen-pedestrian-area",
+      "google_maps_directions_url": "https://www.google.com/maps/dir/?api=1&origin=%E8%87%BA%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E6%88%90%E9%83%BD%E8%B7%AF%E3%80%81%E6%BC%A2%E4%B8%AD%E8%A1%97%E4%B8%80%E5%B8%B6&destination=%E8%87%BA%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E7%92%B0%E6%B2%B3%E5%8D%97%E8%B7%AF%E4%B8%80%E6%AE%B577%E8%99%9F&travelmode=walking",
+      "id": "ximen-to-hotel",
       "mode": "walk",
-      "note": "保留 15 分鐘步行與過街緩衝；出發時使用地圖導航。",
+      "note": "保留 30 分鐘步行與過街緩衝；攜帶行李或雨天時改以短程叫車。",
       "provenance": {
         "confidence": 0.7,
-        "note": "保留 15 分鐘步行與過街緩衝；出發時使用地圖導航。",
+        "note": "保留 30 分鐘步行與過街緩衝；攜帶行李或雨天時改以短程叫車。",
         "provider": "步行路線估計",
-        "retrieved_at": "2026-09-22T10:00:00+08:00",
+        "retrieved_at": "2026-09-22T16:00:00+08:00",
         "source_type": "derived",
         "source_url": null,
         "status": "estimated"
@@ -1081,72 +1295,14 @@
       "source_refs": [],
       "source_url": null,
       "status": "estimated",
-      "to_label": "西門紅樓",
-      "to_place": "red-house",
-      "transfer_minutes": 15
+      "to_label": "台北豪景大酒店 Hotel Riverview Taipei",
+      "to_place": "hotel-riverview",
+      "transfer_minutes": 30
     },
     {
-      "arrival_at": "2026-10-01T09:50:00+08:00",
+      "arrival_at": "2026-09-30T19:35:00+08:00",
       "buffer_minutes": 0,
-      "departure_at": "2026-10-01T09:30:00+08:00",
-      "estimated_duration_minutes": 20,
-      "from_label": "捷運西門站",
-      "from_place": "ximen-station",
-      "google_maps_directions_url": "https://www.google.com/maps/dir/?api=1&origin=%E8%87%BA%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E4%B8%AD%E8%8F%AF%E8%B7%AF%E4%B8%80%E6%AE%B5&destination=%E8%87%BA%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E8%A5%BF%E5%9C%92%E8%B7%AF%E4%B8%80%E6%AE%B5&travelmode=transit",
-      "id": "ximen-to-longshan",
-      "mode": "train",
-      "note": "官方站間資料列示西門至龍山寺一站、票價 20 元、行車約 2 分鐘；行程另留進出站與等車緩衝。",
-      "provenance": {
-        "confidence": 0.95,
-        "note": "官方站間資料列示西門至龍山寺一站、票價 20 元、行車約 2 分鐘；行程另留進出站與等車緩衝。",
-        "provider": "臺北捷運",
-        "retrieved_at": "2026-09-22T10:00:00+08:00",
-        "source_type": "official",
-        "source_url": "https://web.metro.taipei/pages2026/WebStation/086/8",
-        "status": "confirmed"
-      },
-      "source_refs": [
-        "https://web.metro.taipei/pages2026/WebStation/086/8"
-      ],
-      "source_url": "https://web.metro.taipei/pages2026/WebStation/086/8",
-      "status": "confirmed",
-      "to_label": "捷運龍山寺站",
-      "to_place": "longshan-station",
-      "transfer_minutes": 20
-    },
-    {
-      "arrival_at": "2026-10-01T20:50:00+08:00",
-      "buffer_minutes": 0,
-      "departure_at": "2026-10-01T20:30:00+08:00",
-      "estimated_duration_minutes": 20,
-      "from_label": "捷運龍山寺站",
-      "from_place": "longshan-station",
-      "google_maps_directions_url": "https://www.google.com/maps/dir/?api=1&origin=%E8%87%BA%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E8%A5%BF%E5%9C%92%E8%B7%AF%E4%B8%80%E6%AE%B5&destination=%E8%87%BA%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E4%B8%AD%E8%8F%AF%E8%B7%AF%E4%B8%80%E6%AE%B5&travelmode=transit",
-      "id": "longshan-to-ximen",
-      "mode": "train",
-      "note": "官方站間資料列示龍山寺至西門一站、票價 20 元、行車約 2 分鐘；行程另留進出站與等車緩衝。",
-      "provenance": {
-        "confidence": 0.95,
-        "note": "官方站間資料列示龍山寺至西門一站、票價 20 元、行車約 2 分鐘；行程另留進出站與等車緩衝。",
-        "provider": "臺北捷運",
-        "retrieved_at": "2026-09-22T10:00:00+08:00",
-        "source_type": "official",
-        "source_url": "https://web.metro.taipei/pages2026/WebStation/085/8",
-        "status": "confirmed"
-      },
-      "source_refs": [
-        "https://web.metro.taipei/pages2026/WebStation/085/8"
-      ],
-      "source_url": "https://web.metro.taipei/pages2026/WebStation/085/8",
-      "status": "confirmed",
-      "to_label": "捷運西門站",
-      "to_place": "ximen-station",
-      "transfer_minutes": 20
-    },
-    {
-      "arrival_at": "2026-09-30T19:40:00+08:00",
-      "buffer_minutes": 0,
-      "departure_at": "2026-09-30T19:20:00+08:00",
+      "departure_at": "2026-09-30T19:15:00+08:00",
       "estimated_duration_minutes": 20,
       "from_label": "台北豪景大酒店 Hotel Riverview Taipei",
       "from_place": "hotel-riverview",
@@ -1171,9 +1327,9 @@
       "transfer_minutes": 20
     },
     {
-      "arrival_at": "2026-09-30T21:10:00+08:00",
+      "arrival_at": "2026-09-30T21:05:00+08:00",
       "buffer_minutes": 0,
-      "departure_at": "2026-09-30T20:50:00+08:00",
+      "departure_at": "2026-09-30T20:45:00+08:00",
       "estimated_duration_minutes": 20,
       "from_label": "華中河濱公園",
       "from_place": "huazhong-riverside-park",
@@ -1196,6 +1352,197 @@
       "to_label": "台北豪景大酒店 Hotel Riverview Taipei",
       "to_place": "hotel-riverview",
       "transfer_minutes": 20
+    },
+    {
+      "arrival_at": "2026-10-01T10:00:00+08:00",
+      "buffer_minutes": 0,
+      "departure_at": "2026-10-01T09:30:00+08:00",
+      "estimated_duration_minutes": 30,
+      "from_label": "台北豪景大酒店 Hotel Riverview Taipei",
+      "from_place": "hotel-riverview",
+      "google_maps_directions_url": "https://www.google.com/maps/dir/?api=1&origin=%E8%87%BA%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E7%92%B0%E6%B2%B3%E5%8D%97%E8%B7%AF%E4%B8%80%E6%AE%B577%E8%99%9F&destination=%E8%87%BA%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E5%BB%A3%E5%B7%9E%E8%A1%97211%E8%99%9F&travelmode=walking",
+      "id": "hotel-to-longshan",
+      "mode": "walk",
+      "note": "河岸至艋舺街區約留 30 分鐘；雨天或體力不適改以短程叫車。",
+      "provenance": {
+        "confidence": 0.7,
+        "note": "河岸至艋舺街區約留 30 分鐘；雨天或體力不適改以短程叫車。",
+        "provider": "步行路線估計",
+        "retrieved_at": "2026-09-22T16:00:00+08:00",
+        "source_type": "derived",
+        "source_url": null,
+        "status": "estimated"
+      },
+      "source_refs": [],
+      "source_url": null,
+      "status": "estimated",
+      "to_label": "艋舺龍山寺",
+      "to_place": "longshan-temple",
+      "transfer_minutes": 30
+    },
+    {
+      "arrival_at": "2026-10-01T11:30:00+08:00",
+      "buffer_minutes": 0,
+      "departure_at": "2026-10-01T11:15:00+08:00",
+      "estimated_duration_minutes": 15,
+      "from_label": "艋舺龍山寺",
+      "from_place": "longshan-temple",
+      "google_maps_directions_url": "https://www.google.com/maps/dir/?api=1&origin=%E8%87%BA%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E5%BB%A3%E5%B7%9E%E8%A1%97211%E8%99%9F&destination=%E8%87%BA%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E5%BA%B7%E5%AE%9A%E8%B7%AF173%E5%B7%B7&travelmode=walking",
+      "id": "longshan-to-bopiliao",
+      "mode": "walk",
+      "note": "相鄰街區，留 15 分鐘含過街與拍照緩衝。",
+      "provenance": {
+        "confidence": 0.8,
+        "note": "相鄰街區，留 15 分鐘含過街與拍照緩衝。",
+        "provider": "步行路線估計",
+        "retrieved_at": "2026-09-22T16:00:00+08:00",
+        "source_type": "derived",
+        "source_url": null,
+        "status": "estimated"
+      },
+      "source_refs": [],
+      "source_url": null,
+      "status": "estimated",
+      "to_label": "剝皮寮歷史街區",
+      "to_place": "bopiliao",
+      "transfer_minutes": 15
+    },
+    {
+      "arrival_at": "2026-10-01T13:45:00+08:00",
+      "buffer_minutes": 0,
+      "departure_at": "2026-10-01T13:30:00+08:00",
+      "estimated_duration_minutes": 15,
+      "from_label": "剝皮寮歷史街區",
+      "from_place": "bopiliao",
+      "google_maps_directions_url": "https://www.google.com/maps/dir/?api=1&origin=%E8%87%BA%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E5%BA%B7%E5%AE%9A%E8%B7%AF173%E5%B7%B7&destination=%E8%87%BA%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E8%B2%B4%E9%99%BD%E8%A1%97%E4%BA%8C%E6%AE%B5218%E8%99%9F&travelmode=walking",
+      "id": "bopiliao-to-qingshan",
+      "mode": "walk",
+      "note": "相鄰艋舺街區，留 15 分鐘含過街緩衝。",
+      "provenance": {
+        "confidence": 0.8,
+        "note": "相鄰艋舺街區，留 15 分鐘含過街緩衝。",
+        "provider": "步行路線估計",
+        "retrieved_at": "2026-09-22T16:00:00+08:00",
+        "source_type": "derived",
+        "source_url": null,
+        "status": "estimated"
+      },
+      "source_refs": [],
+      "source_url": null,
+      "status": "estimated",
+      "to_label": "艋舺青山宮",
+      "to_place": "qingshan-temple",
+      "transfer_minutes": 15
+    },
+    {
+      "arrival_at": "2026-10-01T15:15:00+08:00",
+      "buffer_minutes": 0,
+      "departure_at": "2026-10-01T15:00:00+08:00",
+      "estimated_duration_minutes": 15,
+      "from_label": "艋舺青山宮",
+      "from_place": "qingshan-temple",
+      "google_maps_directions_url": "https://www.google.com/maps/dir/?api=1&origin=%E8%87%BA%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E8%B2%B4%E9%99%BD%E8%A1%97%E4%BA%8C%E6%AE%B5218%E8%99%9F&destination=%E8%87%BA%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E8%8F%AF%E8%A5%BF%E8%A1%97&travelmode=walking",
+      "id": "qingshan-to-huaxi",
+      "mode": "walk",
+      "note": "沿艋舺街區步行；抵達後保留午後休息與彈性用餐。",
+      "provenance": {
+        "confidence": 0.8,
+        "note": "沿艋舺街區步行；抵達後保留午後休息與彈性用餐。",
+        "provider": "步行路線估計",
+        "retrieved_at": "2026-09-22T16:00:00+08:00",
+        "source_type": "derived",
+        "source_url": null,
+        "status": "estimated"
+      },
+      "source_refs": [],
+      "source_url": null,
+      "status": "estimated",
+      "to_label": "華西街觀光夜市",
+      "to_place": "huaxi-night-market",
+      "transfer_minutes": 15
+    },
+    {
+      "arrival_at": "2026-10-01T19:50:00+08:00",
+      "buffer_minutes": 0,
+      "departure_at": "2026-10-01T19:30:00+08:00",
+      "estimated_duration_minutes": 20,
+      "from_label": "華西街觀光夜市",
+      "from_place": "huaxi-night-market",
+      "google_maps_directions_url": "https://www.google.com/maps/dir/?api=1&origin=%E8%87%BA%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E8%8F%AF%E8%A5%BF%E8%A1%97&destination=%E8%87%BA%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E7%92%B0%E6%B2%B3%E5%8D%97%E8%B7%AF%E4%B8%80%E6%AE%B577%E8%99%9F&travelmode=driving",
+      "id": "huaxi-to-hotel",
+      "mode": "taxi",
+      "note": "單人晚間以計程車或叫車返回；車資與實際行車時間未查證，出發時以叫車 App 為準。",
+      "provenance": {
+        "confidence": 0.7,
+        "note": "單人晚間以計程車或叫車返回；車資與實際行車時間未查證，出發時以叫車 App 為準。",
+        "provider": "夜間短程轉乘規劃",
+        "retrieved_at": "2026-09-22T16:00:00+08:00",
+        "source_type": "derived",
+        "source_url": null,
+        "status": "estimated"
+      },
+      "source_refs": [],
+      "source_url": null,
+      "status": "estimated",
+      "to_label": "台北豪景大酒店 Hotel Riverview Taipei",
+      "to_place": "hotel-riverview",
+      "transfer_minutes": 20
+    },
+    {
+      "arrival_at": "2026-10-02T12:00:00+08:00",
+      "buffer_minutes": 0,
+      "departure_at": "2026-10-02T11:30:00+08:00",
+      "estimated_duration_minutes": 30,
+      "from_label": "台北豪景大酒店 Hotel Riverview Taipei",
+      "from_place": "hotel-riverview",
+      "google_maps_directions_url": "https://www.google.com/maps/dir/?api=1&origin=%E8%87%BA%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E7%92%B0%E6%B2%B3%E5%8D%97%E8%B7%AF%E4%B8%80%E6%AE%B577%E8%99%9F&destination=%E8%87%BA%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E6%88%90%E9%83%BD%E8%B7%AF%E3%80%81%E6%BC%A2%E4%B8%AD%E8%A1%97%E4%B8%80%E5%B8%B6&travelmode=walking",
+      "id": "hotel-to-ximen",
+      "mode": "walk",
+      "note": "保留 30 分鐘步行與過街緩衝；攜帶行李或雨天時改以短程叫車。",
+      "provenance": {
+        "confidence": 0.7,
+        "note": "保留 30 分鐘步行與過街緩衝；攜帶行李或雨天時改以短程叫車。",
+        "provider": "步行路線估計",
+        "retrieved_at": "2026-09-22T16:00:00+08:00",
+        "source_type": "derived",
+        "source_url": null,
+        "status": "estimated"
+      },
+      "source_refs": [],
+      "source_url": null,
+      "status": "estimated",
+      "to_label": "西門徒步區",
+      "to_place": "ximen-pedestrian-area",
+      "transfer_minutes": 30
+    },
+    {
+      "arrival_at": "2026-10-02T14:10:00+08:00",
+      "buffer_minutes": 0,
+      "departure_at": "2026-10-02T13:30:00+08:00",
+      "estimated_duration_minutes": 40,
+      "from_label": "捷運西門站",
+      "from_place": "ximen-station",
+      "google_maps_directions_url": "https://www.google.com/maps/dir/?api=1&origin=%E8%87%BA%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E4%B8%AD%E8%8F%AF%E8%B7%AF%E4%B8%80%E6%AE%B5&destination=%E6%96%B0%E5%8C%97%E5%B8%82%E6%96%B0%E5%BA%97%E5%8D%80%E5%8C%97%E6%96%B0%E8%B7%AF%E4%BA%8C%E6%AE%B5150%E8%99%9F&travelmode=transit",
+      "id": "ximen-to-qizhang",
+      "mode": "train",
+      "note": "依使用者指定七張站作返程終點；官方站間資料列票價 30 元，行程含轉乘、等車與出站緩衝。",
+      "provenance": {
+        "confidence": 0.98,
+        "note": "依使用者指定七張站作返程終點；官方站間資料列票價 30 元，行程含轉乘、等車與出站緩衝。",
+        "provider": "臺北捷運",
+        "retrieved_at": "2026-09-22T16:00:00+08:00",
+        "source_type": "official",
+        "source_url": "https://web.metro.taipei/pages2026/WebStation/086/8",
+        "status": "confirmed"
+      },
+      "source_refs": [
+        "https://web.metro.taipei/pages2026/WebStation/086/8"
+      ],
+      "source_url": "https://web.metro.taipei/pages2026/WebStation/086/8",
+      "status": "confirmed",
+      "to_label": "捷運七張站",
+      "to_place": "qizhang-station",
+      "transfer_minutes": 40
     }
   ],
   "travel_assistant": {
@@ -1257,15 +1604,8 @@
       "severity": "warning"
     },
     {
-      "code": "arrival-departure-required",
-      "message": "使用者未指定出發地與返程目的地；首末段交通、其票價與時間尚未規劃，請出發前補齊。",
-      "path": "/itinerary",
-      "reference": null,
-      "severity": "warning"
-    },
-    {
-      "code": "riverside-ride-fare-required",
-      "message": "9/30 華中河濱夜景需要兩段叫車或計程車；費用尚未取得，NT$40 僅為已確認的兩段捷運票價，不是本趟交通總額。出發前請在叫車 App 確認去回費用後再決定是否前往。",
+      "code": "night-ride-fare-required",
+      "message": "9/30 華中河濱與 10/1 華西街返程各需要叫車或計程車；費用尚未取得。NT$60 只含七張與西門往返捷運票價，不是本趟交通總額。",
       "path": "/candidate_sets/transport_legs",
       "reference": null,
       "severity": "warning"
