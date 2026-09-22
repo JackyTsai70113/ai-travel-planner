@@ -68,6 +68,7 @@ export function ReservationsPage({ bundle }: ReservationsPageProps) {
                     <div className="reservation-main">
                       <div className="reservation-title-row"><h2>{officialHref ? <a className="official-title-link" href={officialHref} target="_blank" rel="noreferrer">{reservation.name || placeName}</a> : reservation.name || placeName}</h2><MapPinLink href={mapHref} label={`在 Google Maps 開啟 ${placeName}`} /></div>
                       {summary ? <p className="reservation-summary">{summary}</p> : null}
+                      {guide && !(guide.duration && guide.cost && guide.queue && guide.parking && guide.sourceUrl && guide.source) ? <p className="place-guide-notice">此地點目前僅提供部分重點；費用、排隊、停車與來源資料尚未完整提供，出發前請以官方資訊覆核。</p> : null}
                       {guide ? <ul className="reservation-highlights">{guide.highlights.slice(0, 3).map((highlight) => <li key={highlight}>{highlight}</li>)}</ul> : null}
                     </div>
                   </article>
