@@ -63,5 +63,6 @@ describe('萬華 2026 公開旅程', () => {
     ])
     expect(bundle.hotel_candidates.every((candidate: { price_note?: string }) => candidate.price_note?.includes('NT$6,000'))).toBe(true)
     expect(bundle.hotel_candidates.every((candidate: { search_url?: string }) => candidate.search_url?.includes('agoda.com'))).toBe(true)
+    expect(bundle.hotel_candidates.filter((candidate: { itinerary_compatible?: boolean }) => candidate.itinerary_compatible !== false)).toHaveLength(1)
   })
 })

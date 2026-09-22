@@ -248,7 +248,17 @@
         "龍山寺：約 1.25 km；步行約 15–20 分鐘，夜間只作外圍經過的距離參考。",
         "華中河濱公園：約 4.0 km、夜間約 20 分鐘車程；河景較完整，但不是最近選項，僅在照明、人流、天候與河川警戒均適合時前往。"
       ],
+      "distance_provenance": {
+        "confidence": 0.7,
+        "note": "華中、華西、紅樓與龍山寺的距離為飯店地址至各地點的導航估算；路況與實際下車點會改變結果。",
+        "provider": "Google Maps 路線規劃",
+        "retrieved_at": "2026-09-22T16:30:00+08:00",
+        "source_type": "derived",
+        "source_url": "https://www.google.com/maps/dir/?api=1&origin=Hotel+Riverview+Taipei&destination=%E8%8F%AF%E4%B8%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92&travelmode=driving",
+        "status": "estimated"
+      },
       "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Hotel%20Riverview%20Taipei",
+      "itinerary_compatible": true,
       "name": "台北豪景大酒店 Hotel Riverview Taipei",
       "official_url": "https://group.riverview.com.tw/",
       "place_id": "hotel-riverview",
@@ -277,15 +287,25 @@
         "西門紅樓：約 4 km 車程；夜景以市區街景為主，不是河景。",
         "龍山寺：約 5 km 車程；不建議把它當河景夜景。"
       ],
+      "distance_provenance": {
+        "confidence": 0.65,
+        "note": "華中、華西、紅樓與龍山寺的距離為飯店地址至各地點的導航估算；路況與實際下車點會改變結果。",
+        "provider": "Google Maps 路線規劃",
+        "retrieved_at": "2026-09-22T16:30:00+08:00",
+        "source_type": "derived",
+        "source_url": "https://www.google.com/maps/dir/?api=1&origin=CHECK+inn+Select+New+Taipei+Sanchong+Waterfront&destination=%E8%8F%AF%E4%B8%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92&travelmode=driving",
+        "status": "estimated"
+      },
       "google_maps_url": "https://www.google.com/maps/search/?api=1&query=CHECK%20inn%20Select%20New%20Taipei%20Sanchong%20Waterfront",
+      "itinerary_compatible": false,
       "name": "雀客藏居新北三重水漾 CHECK inn Select New Taipei Sanchong Waterfront",
       "official_url": null,
       "place_id": "hotel-check-inn-sanchong-waterfront",
-      "price_note": "已用 Agoda 的指定日期與 1 成人查房連結；公開頁沒有回傳這組條件的含稅總價。僅在明列河景房、可取消條款與兩晚含稅總額不超過 NT$6,000 同時成立時才可選；未建立訂單。",
+      "price_note": "此飯店不適用既有萬華夜間與退房交通，僅作河景／價格比較。已用 Agoda 的指定日期與 1 成人查房連結；公開頁沒有回傳這組條件的含稅總價。",
       "price_status": "unverified",
       "provenance": {
         "confidence": 0.82,
-        "note": "已用 Agoda 的指定日期與 1 成人查房連結；公開頁沒有回傳這組條件的含稅總價。僅在明列河景房、可取消條款與兩晚含稅總額不超過 NT$6,000 同時成立時才可選；未建立訂單。",
+        "note": "此飯店不適用既有萬華夜間與退房交通，僅作河景／價格比較。已用 Agoda 的指定日期與 1 成人查房連結；公開頁沒有回傳這組條件的含稅總價。",
         "provider": "Agoda",
         "retrieved_at": "2026-09-22T16:30:00+08:00",
         "source_type": "provider",
@@ -306,15 +326,25 @@
         "西門紅樓：約 11 km 車程。",
         "龍山寺：約 10 km 車程。"
       ],
+      "distance_provenance": {
+        "confidence": 0.65,
+        "note": "華中、華西、紅樓與龍山寺的距離為飯店地址至各地點的導航估算；路況與實際下車點會改變結果。",
+        "provider": "Google Maps 路線規劃",
+        "retrieved_at": "2026-09-22T16:30:00+08:00",
+        "source_type": "derived",
+        "source_url": "https://www.google.com/maps/dir/?api=1&origin=Bitan+Hotel+Taipei&destination=%E8%8F%AF%E4%B8%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92&travelmode=driving",
+        "status": "estimated"
+      },
       "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Bitan%20Hotel%20Taipei",
+      "itinerary_compatible": false,
       "name": "碧潭飯店 Bitan Hotel",
       "official_url": null,
       "place_id": "hotel-bitan",
-      "price_note": "已用 Agoda 的指定日期與 1 成人查房連結；公開頁沒有回傳這組條件的含稅總價。僅在 River View、可取消條款與兩晚含稅總額不超過 NT$6,000 同時成立時才可選；未建立訂單。",
+      "price_note": "此飯店不適用既有萬華夜間與退房交通，僅作河景／價格比較。已用 Agoda 的指定日期與 1 成人查房連結；公開頁沒有回傳這組條件的含稅總價。",
       "price_status": "unverified",
       "provenance": {
         "confidence": 0.86,
-        "note": "已用 Agoda 的指定日期與 1 成人查房連結；公開頁沒有回傳這組條件的含稅總價。僅在 River View、可取消條款與兩晚含稅總額不超過 NT$6,000 同時成立時才可選；未建立訂單。",
+        "note": "此飯店不適用既有萬華夜間與退房交通，僅作河景／價格比較。已用 Agoda 的指定日期與 1 成人查房連結；公開頁沒有回傳這組條件的含稅總價。",
         "provider": "Agoda",
         "retrieved_at": "2026-09-22T16:30:00+08:00",
         "source_type": "provider",
@@ -335,15 +365,25 @@
         "西門紅樓：約 24 km 車程。",
         "龍山寺：約 25 km 車程。"
       ],
+      "distance_provenance": {
+        "confidence": 0.65,
+        "note": "華中、華西、紅樓與龍山寺的距離為飯店地址至各地點的導航估算；路況與實際下車點會改變結果。",
+        "provider": "Google Maps 路線規劃",
+        "retrieved_at": "2026-09-22T16:30:00+08:00",
+        "source_type": "derived",
+        "source_url": "https://www.google.com/maps/dir/?api=1&origin=Hotel+Cloud+Riverside+Tamsui&destination=%E8%8F%AF%E4%B8%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92&travelmode=driving",
+        "status": "estimated"
+      },
       "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Hotel%20Cloud%20Riverside%20Tamsui",
+      "itinerary_compatible": false,
       "name": "承億文旅淡水吹風 Hotel Cloud Riverside",
       "official_url": null,
       "place_id": "hotel-cloud-riverside",
-      "price_note": "已用 Agoda 的指定日期與 1 成人查房連結；公開頁沒有回傳這組條件的含稅總價。僅在河景房、可取消條款與兩晚含稅總額不超過 NT$6,000 同時成立時才可選；未建立訂單。",
+      "price_note": "此飯店不適用既有萬華夜間與退房交通，僅作河景／價格比較。已用 Agoda 的指定日期與 1 成人查房連結；公開頁沒有回傳這組條件的含稅總價。",
       "price_status": "unverified",
       "provenance": {
         "confidence": 0.86,
-        "note": "已用 Agoda 的指定日期與 1 成人查房連結；公開頁沒有回傳這組條件的含稅總價。僅在河景房、可取消條款與兩晚含稅總額不超過 NT$6,000 同時成立時才可選；未建立訂單。",
+        "note": "此飯店不適用既有萬華夜間與退房交通，僅作河景／價格比較。已用 Agoda 的指定日期與 1 成人查房連結；公開頁沒有回傳這組條件的含稅總價。",
         "provider": "Agoda",
         "retrieved_at": "2026-09-22T16:30:00+08:00",
         "source_type": "provider",
@@ -364,15 +404,25 @@
         "西門紅樓：約 27 km 車程。",
         "龍山寺：約 28 km 車程。"
       ],
+      "distance_provenance": {
+        "confidence": 0.65,
+        "note": "華中、華西、紅樓與龍山寺的距離為飯店地址至各地點的導航估算；路況與實際下車點會改變結果。",
+        "provider": "Google Maps 路線規劃",
+        "retrieved_at": "2026-09-22T16:30:00+08:00",
+        "source_type": "derived",
+        "source_url": "https://www.google.com/maps/dir/?api=1&origin=Golden+Tulip+FAB+Hotel+New+Taipei&destination=%E8%8F%AF%E4%B8%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92&travelmode=driving",
+        "status": "estimated"
+      },
       "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Golden%20Tulip%20FAB%20Hotel%20New%20Taipei",
+      "itinerary_compatible": false,
       "name": "淡水將捷金鬱金香酒店 Golden Tulip FAB Hotel New Taipei",
       "official_url": null,
       "place_id": "hotel-golden-tulip-fab",
-      "price_note": "已用 Agoda 的指定日期與 1 成人查房連結；公開頁沒有回傳這組條件的含稅總價。僅在 River View Twin、可取消條款與兩晚含稅總額不超過 NT$6,000 同時成立時才可選；未建立訂單。",
+      "price_note": "此飯店不適用既有萬華夜間與退房交通，僅作河景／價格比較。已用 Agoda 的指定日期與 1 成人查房連結；公開頁沒有回傳這組條件的含稅總價。",
       "price_status": "unverified",
       "provenance": {
         "confidence": 0.88,
-        "note": "已用 Agoda 的指定日期與 1 成人查房連結；公開頁沒有回傳這組條件的含稅總價。僅在 River View Twin、可取消條款與兩晚含稅總額不超過 NT$6,000 同時成立時才可選；未建立訂單。",
+        "note": "此飯店不適用既有萬華夜間與退房交通，僅作河景／價格比較。已用 Agoda 的指定日期與 1 成人查房連結；公開頁沒有回傳這組條件的含稅總價。",
         "provider": "Agoda",
         "retrieved_at": "2026-09-22T16:30:00+08:00",
         "source_type": "provider",
@@ -386,8 +436,8 @@
   ],
   "local_timezone": "Asia/Taipei",
   "meta": {
-    "bundle_sha256": "9abd95cbea75dc2bb144639dc90e054be10a48b94df4b29330b6635b629c2ac7",
-    "generated_at": "2026-09-22T08:32:28+00:00",
+    "bundle_sha256": "d2124b53b01a3e2c55497410e460cdd89af2109de734b45cb176f08a712378a6",
+    "generated_at": "2026-09-22T08:35:30+00:00",
     "source_coverage": {
       "days": 3,
       "places": 15,
@@ -395,7 +445,7 @@
       "selected_hotels": 0
     },
     "source_path": "trips/wanhua-2026/trip.json",
-    "source_sha256": "b019e6b1c18d3f40d7e9af40a5e1793492c1d004914e2fbe4c25efdca54adced",
+    "source_sha256": "f55de5835909b87289ca427d11326781799df5053cfc9789051b1b6d71f3b4b8",
     "trip_schema": "trip-v1"
   },
   "operations": {

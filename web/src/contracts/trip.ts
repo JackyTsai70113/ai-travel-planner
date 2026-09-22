@@ -191,6 +191,8 @@ export interface Bundle {
     price_note?: string | null
     decision_note?: string | null
     distance_notes?: string[]
+    distance_provenance?: BundleProvenance | null
+    itinerary_compatible?: boolean
     selected_candidate?: boolean
     provenance?: BundleProvenance | null
   }>
