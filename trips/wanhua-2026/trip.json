@@ -109,6 +109,50 @@
         "provenance": {"source_type": "provider", "provider": "Agoda", "source_url": "https://www.agoda.com/new-riverview-suites/hotel/taipei-tw.html", "retrieved_at": "2026-09-22T16:55:00+08:00", "confidence": 0.82, "status": "reported", "note": "Agoda 指出部分客房有河景；未建立訂單。"}
       },
       {
+        "id": "hotel-wholesome",
+        "name": "禾順行旅 Wholesome Hotel",
+        "kind": "hotel",
+        "address": "臺北市萬華區廣州街247號",
+        "timezone": "Asia/Taipei",
+        "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Wholesome%20Hotel%20Taipei",
+        "identifiers": [{"type": "official_url", "value": "https://www.wholesomehotel.com/", "provenance": {"source_type": "official", "provider": "禾順行旅", "source_url": "https://www.wholesomehotel.com/", "retrieved_at": "2026-09-22T18:00:00+08:00", "confidence": 0.9, "status": "confirmed", "note": "官方網站確認廣州街地址，並標示緊鄰龍山寺與華西街夜市。"}}],
+        "opening_hours_note": "雙園／龍山寺鄰近備選；非河景保證房，僅在改採地點便利性時比較。",
+        "resolution": {"state": "resolved", "confidence": 0.9},
+        "provenance": {"source_type": "official", "provider": "禾順行旅", "source_url": "https://www.wholesomehotel.com/", "retrieved_at": "2026-09-22T18:00:00+08:00", "confidence": 0.9, "status": "confirmed", "note": "官方來源僅確認地址與街區位置；未建立訂單。"}
+      },
+      {
+        "id": "hotel-caesar-metro",
+        "name": "台北凱達大飯店 Caesar Metro Taipei",
+        "kind": "hotel",
+        "address": "臺北市萬華區艋舺大道167號",
+        "timezone": "Asia/Taipei",
+        "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Caesar%20Metro%20Taipei",
+        "identifiers": [{"type": "official_url", "value": "https://www.caesarmetro.com/contact/", "provenance": {"source_type": "official", "provider": "台北凱達大飯店", "source_url": "https://www.caesarmetro.com/contact/", "retrieved_at": "2026-09-22T18:00:00+08:00", "confidence": 0.92, "status": "confirmed", "note": "官方聯絡頁確認艋舺大道地址。"}}],
+        "opening_hours_note": "雙園／龍山寺鄰近備選；著重飯店設施與萬華車站交通，非河景保證房。",
+        "resolution": {"state": "resolved", "confidence": 0.92},
+        "provenance": {"source_type": "official", "provider": "台北凱達大飯店", "source_url": "https://www.caesarmetro.com/contact/", "retrieved_at": "2026-09-22T18:00:00+08:00", "confidence": 0.92, "status": "confirmed", "note": "官方來源確認地址；未建立訂單。"}
+      },
+      {
+        "id": "hotel-manka",
+        "name": "文舺行旅",
+        "kind": "hotel",
+        "timezone": "Asia/Taipei",
+        "google_maps_url": "https://www.google.com/maps/search/?api=1&query=%E6%96%87%E8%88%BA%E8%A1%8C%E6%97%85",
+        "opening_hours_note": "使用者提供的龍山寺周邊小型旅店線索；尚未取得可核對的直接官方頁面與訂房條件。",
+        "resolution": {"state": "clarification_required", "confidence": 0.45, "clarification": "訂房前需以飯店或供應商頁確認地址、房型、價格與取消條款。"},
+        "provenance": {"source_type": "user_input", "provider": "使用者提供的萬華住宿研究摘要", "retrieved_at": "2026-09-22T18:00:00+08:00", "confidence": 0.45, "status": "unverified", "note": "保留為後續查核線索；不作為已驗證的公開比較或訂房建議。"}
+      },
+      {
+        "id": "hotel-longshan-business",
+        "name": "龍山商旅",
+        "kind": "hotel",
+        "timezone": "Asia/Taipei",
+        "google_maps_url": "https://www.google.com/maps/search/?api=1&query=%E9%BE%8D%E5%B1%B1%E5%95%86%E6%97%85",
+        "opening_hours_note": "使用者提供的龍山寺周邊預算備選線索；尚未取得可核對的直接官方頁面與訂房條件。",
+        "resolution": {"state": "clarification_required", "confidence": 0.45, "clarification": "訂房前需以飯店或供應商頁確認地址、房型、價格與取消條款。"},
+        "provenance": {"source_type": "user_input", "provider": "使用者提供的萬華住宿研究摘要", "retrieved_at": "2026-09-22T18:00:00+08:00", "confidence": 0.45, "status": "unverified", "note": "保留為後續查核線索；不作為已驗證的公開比較或訂房建議。"}
+      },
+      {
         "id": "huazhong-riverside-park",
         "name": "華中河濱公園",
         "kind": "poi",
@@ -460,6 +504,42 @@
         "distance_notes": ["淡水河景：Agoda 明列 High Floor River View King Room，房內高樓河景。", "華中河濱公園：約 6 km、夜間叫車約 25 分鐘；五間中最遠，但仍在北門市中心範圍。"],
         "primary_distance_source": {"source_type":"derived","provider":"Google Maps 路線規劃","source_url":"https://www.google.com/maps/dir/?api=1&origin=citizenM+Taipei+North+Gate&destination=%E8%8F%AF%E4%B8%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92&travelmode=driving","retrieved_at":"2026-09-22T16:55:00+08:00","confidence":0.7,"status":"estimated","note":"到華中河濱公園"},
         "provenance": {"source_type": "provider", "provider": "Agoda", "source_url": "https://www.agoda.com/citizenm-taipei-north-gate/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1", "retrieved_at": "2026-09-22T17:20:00+08:00", "confidence": 0.9, "status": "reported", "note": "實際房型：Guest room, Double, Premium River view，明列河景；可取消。最低兩晚含稅總額約 NT$8,900，超過 NT$6,000，已淘汰；未建立訂單。"}
+      },
+      {
+        "place": {"id": "hotel-wholesome", "name": "禾順行旅 Wholesome Hotel", "kind": "hotel"},
+        "check_in": "2026-09-30", "check_out": "2026-10-02", "occupancy": {"adults": 1, "child_ages": []},
+        "room_type": "單人入住雙人房或雙人房；實際可售房型與取消條款待訂房頁確認",
+        "river_view_eligible": false,
+        "itinerary_compatible": true,
+        "price_status": "unverified",
+        "distance_notes": ["位於龍山寺與華西街周邊，適合以雙園、艋舺街區與夜間回程便利性為優先的比較。"],
+        "provenance": {"source_type": "official", "provider": "禾順行旅", "source_url": "https://www.wholesomehotel.com/", "retrieved_at": "2026-09-22T18:00:00+08:00", "confidence": 0.9, "status": "confirmed", "note": "非河景門檻候選；未建立訂單，價格與取消條款待查。"}
+      },
+      {
+        "place": {"id": "hotel-caesar-metro", "name": "台北凱達大飯店 Caesar Metro Taipei", "kind": "hotel"},
+        "check_in": "2026-09-30", "check_out": "2026-10-02", "occupancy": {"adults": 1, "child_ages": []},
+        "room_type": "單人入住雙人床或雙床房；實際可售房型與取消條款待訂房頁確認",
+        "river_view_eligible": false,
+        "itinerary_compatible": true,
+        "price_status": "unverified",
+        "distance_notes": ["位於萬華車站與龍山寺周邊，適合以飯店設施與大眾運輸便利性為優先的比較。"],
+        "provenance": {"source_type": "official", "provider": "台北凱達大飯店", "source_url": "https://www.caesarmetro.com/contact/", "retrieved_at": "2026-09-22T18:00:00+08:00", "confidence": 0.92, "status": "confirmed", "note": "非河景門檻候選；未建立訂單，價格與取消條款待查。"}
+      },
+      {
+        "place": {"id": "hotel-manka", "name": "文舺行旅", "kind": "hotel"},
+        "check_in": "2026-09-30", "check_out": "2026-10-02", "occupancy": {"adults": 1, "child_ages": []},
+        "river_view_eligible": false,
+        "itinerary_compatible": true,
+        "price_status": "unverified",
+        "provenance": {"source_type": "user_input", "provider": "使用者提供的萬華住宿研究摘要", "retrieved_at": "2026-09-22T18:00:00+08:00", "confidence": 0.45, "status": "unverified", "note": "待取得直接來源後再比較；未建立訂單。"}
+      },
+      {
+        "place": {"id": "hotel-longshan-business", "name": "龍山商旅", "kind": "hotel"},
+        "check_in": "2026-09-30", "check_out": "2026-10-02", "occupancy": {"adults": 1, "child_ages": []},
+        "river_view_eligible": false,
+        "itinerary_compatible": true,
+        "price_status": "unverified",
+        "provenance": {"source_type": "user_input", "provider": "使用者提供的萬華住宿研究摘要", "retrieved_at": "2026-09-22T18:00:00+08:00", "confidence": 0.45, "status": "unverified", "note": "待取得直接來源後再比較；未建立訂單。"}
       }
     ],
     "flights": [],

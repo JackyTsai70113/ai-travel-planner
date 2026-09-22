@@ -434,16 +434,16 @@
   ],
   "local_timezone": "Asia/Taipei",
   "meta": {
-    "bundle_sha256": "0fe415999973ab7c2c03b997d2bc0e3cd896b00c9d9b991658f4d454425cd6ea",
-    "generated_at": "2026-09-22T09:10:42+00:00",
+    "bundle_sha256": "638eb374e8d45ae3e53bf6e0a2c50b6c2f20d88bb70a082d451b936fd4158775",
+    "generated_at": "2026-09-22T10:38:12+00:00",
     "source_coverage": {
       "days": 3,
-      "places": 15,
+      "places": 19,
       "selected_flights": 0,
       "selected_hotels": 0
     },
     "source_path": "trips/wanhua-2026/trip.json",
-    "source_sha256": "4d1ed2b6a070fbf7bb6b7a4505293bfdb562eddb89f6bf50923790c0cd9c0f6d",
+    "source_sha256": "ccb164af93c0f9d16e9deba57c28f829a9a948f1d3b990df71cfe2155cb82dc7",
     "trip_schema": "trip-v1"
   },
   "operations": {
@@ -517,6 +517,29 @@
     },
     {
       "accessibility_notes": null,
+      "address": "臺北市萬華區艋舺大道167號",
+      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Caesar%20Metro%20Taipei",
+      "id": "hotel-caesar-metro",
+      "image_alt": null,
+      "image_source_url": null,
+      "image_url": null,
+      "kind": "hotel",
+      "maps_query": "臺北市萬華區艋舺大道167號",
+      "name": "台北凱達大飯店 Caesar Metro Taipei",
+      "official_url": "https://www.caesarmetro.com/contact/",
+      "opening_hours_note": "雙園／龍山寺鄰近備選；著重飯店設施與萬華車站交通，非河景保證房。",
+      "provenance": {
+        "confidence": 0.92,
+        "note": "官方來源確認地址；未建立訂單。",
+        "provider": "台北凱達大飯店",
+        "retrieved_at": "2026-09-22T18:00:00+08:00",
+        "source_type": "official",
+        "source_url": "https://www.caesarmetro.com/contact/",
+        "status": "confirmed"
+      }
+    },
+    {
+      "accessibility_notes": null,
       "address": "臺北市中正區中華路一段3號",
       "google_maps_url": "https://www.google.com/maps/search/?api=1&query=citizenM%20Taipei%20North%20Gate",
       "id": "hotel-citizenm-north-gate",
@@ -559,6 +582,52 @@
         "source_type": "provider",
         "source_url": "https://www.agoda.com/i-play-inn/hotel/taipei-tw.html",
         "status": "reported"
+      }
+    },
+    {
+      "accessibility_notes": null,
+      "address": null,
+      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=%E9%BE%8D%E5%B1%B1%E5%95%86%E6%97%85",
+      "id": "hotel-longshan-business",
+      "image_alt": null,
+      "image_source_url": null,
+      "image_url": null,
+      "kind": "hotel",
+      "maps_query": "龍山商旅",
+      "name": "龍山商旅",
+      "official_url": null,
+      "opening_hours_note": "使用者提供的龍山寺周邊預算備選線索；尚未取得可核對的直接官方頁面與訂房條件。",
+      "provenance": {
+        "confidence": 0.45,
+        "note": "保留為後續查核線索；不作為已驗證的公開比較或訂房建議。",
+        "provider": "使用者提供的萬華住宿研究摘要",
+        "retrieved_at": "2026-09-22T18:00:00+08:00",
+        "source_type": "user_input",
+        "source_url": null,
+        "status": "unverified"
+      }
+    },
+    {
+      "accessibility_notes": null,
+      "address": null,
+      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=%E6%96%87%E8%88%BA%E8%A1%8C%E6%97%85",
+      "id": "hotel-manka",
+      "image_alt": null,
+      "image_source_url": null,
+      "image_url": null,
+      "kind": "hotel",
+      "maps_query": "文舺行旅",
+      "name": "文舺行旅",
+      "official_url": null,
+      "opening_hours_note": "使用者提供的龍山寺周邊小型旅店線索；尚未取得可核對的直接官方頁面與訂房條件。",
+      "provenance": {
+        "confidence": 0.45,
+        "note": "保留為後續查核線索；不作為已驗證的公開比較或訂房建議。",
+        "provider": "使用者提供的萬華住宿研究摘要",
+        "retrieved_at": "2026-09-22T18:00:00+08:00",
+        "source_type": "user_input",
+        "source_url": null,
+        "status": "unverified"
       }
     },
     {
@@ -628,6 +697,29 @@
         "source_type": "provider",
         "source_url": "https://www.agoda.com/suz-hotel/hotel/taipei-tw.html",
         "status": "reported"
+      }
+    },
+    {
+      "accessibility_notes": null,
+      "address": "臺北市萬華區廣州街247號",
+      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Wholesome%20Hotel%20Taipei",
+      "id": "hotel-wholesome",
+      "image_alt": null,
+      "image_source_url": null,
+      "image_url": null,
+      "kind": "hotel",
+      "maps_query": "臺北市萬華區廣州街247號",
+      "name": "禾順行旅 Wholesome Hotel",
+      "official_url": "https://www.wholesomehotel.com/",
+      "opening_hours_note": "雙園／龍山寺鄰近備選；非河景保證房，僅在改採地點便利性時比較。",
+      "provenance": {
+        "confidence": 0.9,
+        "note": "官方來源僅確認地址與街區位置；未建立訂單。",
+        "provider": "禾順行旅",
+        "retrieved_at": "2026-09-22T18:00:00+08:00",
+        "source_type": "official",
+        "source_url": "https://www.wholesomehotel.com/",
+        "status": "confirmed"
       }
     },
     {
@@ -919,6 +1011,46 @@
       "supports": "place:hotel-new-riverview-suites"
     },
     {
+      "authority": "禾順行旅",
+      "confidence": 0.9,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-09-22T18:00:00+08:00",
+      "source_url": "https://www.wholesomehotel.com/",
+      "status": "confirmed",
+      "supports": "place:hotel-wholesome"
+    },
+    {
+      "authority": "台北凱達大飯店",
+      "confidence": 0.92,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-09-22T18:00:00+08:00",
+      "source_url": "https://www.caesarmetro.com/contact/",
+      "status": "confirmed",
+      "supports": "place:hotel-caesar-metro"
+    },
+    {
+      "authority": "使用者提供的萬華住宿研究摘要",
+      "confidence": 0.45,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-09-22T18:00:00+08:00",
+      "source_url": null,
+      "status": "unverified",
+      "supports": "place:hotel-manka"
+    },
+    {
+      "authority": "使用者提供的萬華住宿研究摘要",
+      "confidence": 0.45,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-09-22T18:00:00+08:00",
+      "source_url": null,
+      "status": "unverified",
+      "supports": "place:hotel-longshan-business"
+    },
+    {
       "authority": "臺北市政府觀光傳播局",
       "confidence": 0.95,
       "conflicts": false,
@@ -1086,6 +1218,36 @@
       "last_checked": "2026-09-22T17:20:00+08:00",
       "source_url": "https://www.agoda.com/citizenm-taipei-north-gate/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1",
       "status": "reported",
+      "supports": "hotel"
+    },
+    {
+      "authority": "禾順行旅",
+      "confidence": 0.9,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-09-22T18:00:00+08:00",
+      "source_url": "https://www.wholesomehotel.com/",
+      "status": "confirmed",
+      "supports": "hotel"
+    },
+    {
+      "authority": "台北凱達大飯店",
+      "confidence": 0.92,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-09-22T18:00:00+08:00",
+      "source_url": "https://www.caesarmetro.com/contact/",
+      "status": "confirmed",
+      "supports": "hotel"
+    },
+    {
+      "authority": "使用者提供的萬華住宿研究摘要",
+      "confidence": 0.45,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-09-22T18:00:00+08:00",
+      "source_url": null,
+      "status": "unverified",
       "supports": "hotel"
     },
     {
