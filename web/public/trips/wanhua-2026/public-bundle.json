@@ -66,6 +66,32 @@
         },
         {
           "alternative_place_ids": [],
+          "buffer_minutes": 0,
+          "end_at": "2026-09-30T10:30:00+08:00",
+          "expected_stay_minutes": null,
+          "id": "d1-ximen-station-to-red-house",
+          "kind": "transport",
+          "notes": null,
+          "place_id": "red-house",
+          "start_at": "2026-09-30T10:15:00+08:00",
+          "transfer_minutes": 15,
+          "transport_leg_id": "ximen-station-to-red-house"
+        },
+        {
+          "alternative_place_ids": [],
+          "buffer_minutes": null,
+          "end_at": "2026-09-30T11:00:00+08:00",
+          "expected_stay_minutes": 30,
+          "id": "d1-red-house-opening-buffer",
+          "kind": "free_time",
+          "notes": "開館前緩衝；若提早抵達，於紅樓周邊短暫休息，不另插入無目的景點。",
+          "place_id": "red-house",
+          "start_at": "2026-09-30T10:30:00+08:00",
+          "transfer_minutes": null,
+          "transport_leg_id": null
+        },
+        {
+          "alternative_place_ids": [],
           "buffer_minutes": null,
           "end_at": "2026-09-30T12:15:00+08:00",
           "expected_stay_minutes": 75,
@@ -102,6 +128,19 @@
           "start_at": "2026-09-30T13:30:00+08:00",
           "transfer_minutes": 30,
           "transport_leg_id": "ximen-to-hotel"
+        },
+        {
+          "alternative_place_ids": [],
+          "buffer_minutes": null,
+          "end_at": "2026-09-30T15:00:00+08:00",
+          "expected_stay_minutes": 60,
+          "id": "d1-hotel-arrival-buffer",
+          "kind": "free_time",
+          "notes": "寄放行李與入住前等候；飯店入住時間尚待訂房時確認，若無法寄放行李則在西門多保留一小時。",
+          "place_id": "hotel-riverview",
+          "start_at": "2026-09-30T14:00:00+08:00",
+          "transfer_minutes": null,
+          "transport_leg_id": null
         },
         {
           "alternative_place_ids": [],
@@ -268,13 +307,26 @@
         {
           "alternative_place_ids": [],
           "buffer_minutes": null,
+          "end_at": "2026-10-01T17:00:00+08:00",
+          "expected_stay_minutes": 105,
+          "id": "d2-huaxi-afternoon-buffer",
+          "kind": "free_time",
+          "notes": "華西與廣州街一帶低強度步行、休息與補水；17:00 後再依現場攤商選擇晚餐。",
+          "place_id": "huaxi-night-market",
+          "start_at": "2026-10-01T15:15:00+08:00",
+          "transfer_minutes": null,
+          "transport_leg_id": null
+        },
+        {
+          "alternative_place_ids": [],
+          "buffer_minutes": null,
           "end_at": "2026-10-01T19:30:00+08:00",
-          "expected_stay_minutes": 255,
+          "expected_stay_minutes": 150,
           "id": "d2-huaxi-dinner",
           "kind": "meal",
           "notes": "午後街區緩衝與晚餐預留；攤商營業與售完狀況不同，抵達後依現場選擇。",
           "place_id": "huaxi-night-market",
-          "start_at": "2026-10-01T15:15:00+08:00",
+          "start_at": "2026-10-01T17:00:00+08:00",
           "transfer_minutes": null,
           "transport_leg_id": null
         },
@@ -472,8 +524,8 @@
   ],
   "local_timezone": "Asia/Taipei",
   "meta": {
-    "bundle_sha256": "4a2538389753dd89ee8a082dbb3a02738d727f92b8806d8ca8fb58c9b3dd735b",
-    "generated_at": "2026-09-22T06:49:11+00:00",
+    "bundle_sha256": "79193404b67a5acbec27d063166638c97a1574fa5fcf2cc2a3134f8df57253ec",
+    "generated_at": "2026-09-22T06:54:06+00:00",
     "source_coverage": {
       "days": 3,
       "places": 15,
@@ -481,7 +533,7 @@
       "selected_hotels": 1
     },
     "source_path": "trips/wanhua-2026/trip.json",
-    "source_sha256": "e8bb23d9cfd9fa08414969dd5a8972427440b6b3cac42d584571880e4e7569d3",
+    "source_sha256": "ea838365b4fc535a3d9bca9ff7166116668c75830387e8bd00270d9f8a61ebcc",
     "trip_schema": "trip-v1"
   },
   "operations": {
@@ -703,7 +755,7 @@
       "maps_query": "臺北市萬華區萬大路底、華中橋旁",
       "name": "華中河濱公園",
       "official_url": "https://travel.taipei/en/attraction/details/581",
-      "opening_hours_note": "官方資料列 24 小時開放；本行程限定 19:40–20:50 有照明時段，單人不走偏僻河堤，抵達前以官方公告、現場水門與天候狀況覆核。",
+      "opening_hours_note": "官方資料列 24 小時開放；本行程安排 19:35–20:45 的夜景時段，單人不走偏僻河堤，抵達前以官方公告、現場水門與天候狀況覆核。",
       "provenance": {
         "confidence": 0.95,
         "note": "夜景安排的地點與開放資訊；不保證特定燈光活動或治安狀態。",
@@ -818,7 +870,7 @@
       "maps_query": "臺北市萬華區成都路10號",
       "name": "西門紅樓",
       "official_url": "https://www.redhouse.taipei/",
-      "opening_hours_note": "2026-09-30（週三）常態 11:00–21:30；本行程安排 12:00 入館。常設空間不設固定門票；付費展演另以官網為準。",
+      "opening_hours_note": "2026-09-30（週三）常態 11:00–21:30；本行程安排 11:00 入館。常設空間不設固定門票；付費展演另以官網為準。",
       "provenance": {
         "confidence": 0.95,
         "note": null,
@@ -898,7 +950,8 @@
     "available_sections": [
       "overview",
       "today"
-    ]
+    ],
+    "preview_notice": "預覽行程：住宿尚未訂房；華中河濱與華西街返程叫車費待出發當日確認。"
   },
   "reservations": [],
   "schema": "trip-public-bundle-v1",
@@ -1140,6 +1193,16 @@
       "supports": "transport:ximen-to-hotel"
     },
     {
+      "authority": "步行路線估計",
+      "confidence": 0.85,
+      "conflicts": false,
+      "freshness": "unknown",
+      "last_checked": "2026-09-22T16:30:00+08:00",
+      "source_url": null,
+      "status": "estimated",
+      "supports": "transport:ximen-station-to-red-house"
+    },
+    {
       "authority": "市區夜間短程轉乘規劃",
       "confidence": 0.7,
       "conflicts": false,
@@ -1298,6 +1361,33 @@
       "to_label": "台北豪景大酒店 Hotel Riverview Taipei",
       "to_place": "hotel-riverview",
       "transfer_minutes": 30
+    },
+    {
+      "arrival_at": "2026-09-30T10:30:00+08:00",
+      "buffer_minutes": 0,
+      "departure_at": "2026-09-30T10:15:00+08:00",
+      "estimated_duration_minutes": 15,
+      "from_label": "捷運西門站",
+      "from_place": "ximen-station",
+      "google_maps_directions_url": "https://www.google.com/maps/dir/?api=1&origin=%E8%87%BA%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E4%B8%AD%E8%8F%AF%E8%B7%AF%E4%B8%80%E6%AE%B5&destination=%E8%87%BA%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E6%88%90%E9%83%BD%E8%B7%AF10%E8%99%9F&travelmode=walking",
+      "id": "ximen-station-to-red-house",
+      "mode": "walk",
+      "note": "西門站至紅樓步行並預留出站與過街緩衝；10:30 抵達後等待 11:00 開館。",
+      "provenance": {
+        "confidence": 0.85,
+        "note": "西門站至紅樓步行並預留出站與過街緩衝；10:30 抵達後等待 11:00 開館。",
+        "provider": "步行路線估計",
+        "retrieved_at": "2026-09-22T16:30:00+08:00",
+        "source_type": "derived",
+        "source_url": null,
+        "status": "estimated"
+      },
+      "source_refs": [],
+      "source_url": null,
+      "status": "estimated",
+      "to_label": "西門紅樓",
+      "to_place": "red-house",
+      "transfer_minutes": 15
     },
     {
       "arrival_at": "2026-09-30T19:35:00+08:00",

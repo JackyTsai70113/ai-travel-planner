@@ -214,7 +214,7 @@ export interface Bundle {
     decision_gate?: string | null
   }> | null
   overview?: { critical_unknown_count?: number | null; trip_scope?: string[] } | null
-  presentation?: { available_sections?: string[] } | null
+  presentation?: { available_sections?: string[]; preview_notice?: string } | null
   source_ledger?: Array<{
     authority?: string | null
     last_checked?: string | null

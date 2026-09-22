@@ -105,7 +105,7 @@
         "timezone": "Asia/Taipei",
         "google_maps_url": "https://www.google.com/maps/search/?api=1&query=%E8%8F%AF%E4%B8%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92",
         "identifiers": [{"type": "official_url", "value": "https://travel.taipei/en/attraction/details/581", "provenance": {"source_type": "official", "provider": "臺北市政府觀光傳播局", "source_url": "https://travel.taipei/en/attraction/details/581", "retrieved_at": "2026-09-22T14:10:00+08:00", "confidence": 0.95, "status": "confirmed", "note": "官方景點頁列為萬華區河濱公園，並顯示 24 小時開放。"}}],
-        "opening_hours_note": "官方資料列 24 小時開放；本行程限定 19:40–20:50 有照明時段，單人不走偏僻河堤，抵達前以官方公告、現場水門與天候狀況覆核。",
+        "opening_hours_note": "官方資料列 24 小時開放；本行程安排 19:35–20:45 的夜景時段，單人不走偏僻河堤，抵達前以官方公告、現場水門與天候狀況覆核。",
         "resolution": {"state": "resolved", "confidence": 0.95},
         "provenance": {"source_type": "official", "provider": "臺北市政府觀光傳播局", "source_url": "https://travel.taipei/en/attraction/details/581", "retrieved_at": "2026-09-22T14:10:00+08:00", "confidence": 0.95, "status": "confirmed", "note": "夜景安排的地點與開放資訊；不保證特定燈光活動或治安狀態。"}
       },
@@ -232,7 +232,7 @@
             }
           }
         ],
-        "opening_hours_note": "2026-09-30（週三）常態 11:00–21:30；本行程安排 12:00 入館。常設空間不設固定門票；付費展演另以官網為準。",
+        "opening_hours_note": "2026-09-30（週三）常態 11:00–21:30；本行程安排 11:00 入館。常設空間不設固定門票；付費展演另以官網為準。",
         "resolution": {
           "state": "resolved",
           "confidence": 0.95
@@ -442,6 +442,16 @@
         "provenance": {"source_type": "derived", "provider": "步行路線估計", "retrieved_at": "2026-09-22T16:00:00+08:00", "confidence": 0.7, "status": "estimated", "note": "保留 30 分鐘步行與過街緩衝；攜帶行李或雨天時改以短程叫車。"}
       },
       {
+        "id": "ximen-station-to-red-house",
+        "mode": "walk",
+        "from_place_id": "ximen-station",
+        "to_place_id": "red-house",
+        "departure_at": "2026-09-30T10:15:00+08:00",
+        "arrival_at": "2026-09-30T10:30:00+08:00",
+        "cost": {"amount": 0, "currency": "TWD"},
+        "provenance": {"source_type": "derived", "provider": "步行路線估計", "retrieved_at": "2026-09-22T16:30:00+08:00", "confidence": 0.85, "status": "estimated", "note": "西門站至紅樓步行並預留出站與過街緩衝；10:30 抵達後等待 11:00 開館。"}
+      },
+      {
         "id": "hotel-to-huazhong-riverside",
         "mode": "taxi",
         "from_place_id": "hotel-riverview",
@@ -549,6 +559,24 @@
           "selection_status": "selected"
         },
         {
+          "id": "d1-ximen-station-to-red-house",
+          "kind": "transport",
+          "place_id": "red-house",
+          "transport_leg_id": "ximen-station-to-red-house",
+          "start_at": "2026-09-30T10:15:00+08:00",
+          "end_at": "2026-09-30T10:30:00+08:00",
+          "selection_status": "selected"
+        },
+        {
+          "id": "d1-red-house-opening-buffer",
+          "kind": "free_time",
+          "place_id": "red-house",
+          "start_at": "2026-09-30T10:30:00+08:00",
+          "end_at": "2026-09-30T11:00:00+08:00",
+          "selection_status": "selected",
+          "notes": "開館前緩衝；若提早抵達，於紅樓周邊短暫休息，不另插入無目的景點。"
+        },
+        {
           "id": "d1-red-house",
           "kind": "visit",
           "place_id": "red-house",
@@ -574,6 +602,15 @@
           "start_at": "2026-09-30T13:30:00+08:00",
           "end_at": "2026-09-30T14:00:00+08:00",
           "selection_status": "selected"
+        },
+        {
+          "id": "d1-hotel-arrival-buffer",
+          "kind": "free_time",
+          "place_id": "hotel-riverview",
+          "start_at": "2026-09-30T14:00:00+08:00",
+          "end_at": "2026-09-30T15:00:00+08:00",
+          "selection_status": "selected",
+          "notes": "寄放行李與入住前等候；飯店入住時間尚待訂房時確認，若無法寄放行李則在西門多保留一小時。"
         },
         {
           "id": "d1-hotel-checkin",
@@ -690,10 +727,19 @@
           "selection_status": "selected"
         },
         {
+          "id": "d2-huaxi-afternoon-buffer",
+          "kind": "free_time",
+          "place_id": "huaxi-night-market",
+          "start_at": "2026-10-01T15:15:00+08:00",
+          "end_at": "2026-10-01T17:00:00+08:00",
+          "selection_status": "selected",
+          "notes": "華西與廣州街一帶低強度步行、休息與補水；17:00 後再依現場攤商選擇晚餐。"
+        },
+        {
           "id": "d2-huaxi-dinner",
           "kind": "meal",
           "place_id": "huaxi-night-market",
-          "start_at": "2026-10-01T15:15:00+08:00",
+          "start_at": "2026-10-01T17:00:00+08:00",
           "end_at": "2026-10-01T19:30:00+08:00",
           "selection_status": "selected",
           "notes": "午後街區緩衝與晚餐預留；攤商營業與售完狀況不同，抵達後依現場選擇。"
@@ -822,6 +868,13 @@
       "value": ["overview", "today"],
       "preserve_on_replan": true,
       "provenance": {"source_type": "derived", "provider": "Wanhua trip planner", "retrieved_at": "2026-09-22T15:00:00+08:00", "confidence": 1.0, "status": "confirmed", "note": "台灣單人行不顯示日本模板或空白 hub。"}
+    },
+    {
+      "id": "wanhua-preview-notice",
+      "path": "/presentation/preview_notice",
+      "value": "預覽行程：住宿尚未訂房；華中河濱與華西街返程叫車費待出發當日確認。",
+      "preserve_on_replan": true,
+      "provenance": {"source_type": "derived", "provider": "Wanhua trip planner", "retrieved_at": "2026-09-22T16:30:00+08:00", "confidence": 1.0, "status": "confirmed"}
     },
     {
       "id": "pretrip-refresh",

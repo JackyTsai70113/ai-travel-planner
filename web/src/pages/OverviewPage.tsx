@@ -94,7 +94,7 @@ export function OverviewPage({ bundle, trip }: OverviewPageProps) {
           <p className="trip-hero-eyebrow">{heroEyebrow}</p>
           <h1>{title}</h1>
           <div className="trip-hero-meta"><span>{dateText}</span></div>
-          {trip?.status === 'preview' || trip?.readiness === 'incomplete' ? <p className="status-pill">預覽行程：住宿訂房與首末段交通尚未確認，請完成下方覆核後再出發。</p> : null}
+          {trip?.status === 'preview' || trip?.readiness === 'incomplete' ? <p className="status-pill">{bundle?.presentation?.preview_notice || '預覽行程：住宿訂房與必要交通仍待確認，請完成下方覆核後再出發。'}</p> : null}
           <p className="hero-summary">{heroSummary}</p>
         </div>
         <aside className="hero-route-map" aria-label={`${dayCountLabel(dayCount)}移動路線：${routeStops.join('、')}`}>
