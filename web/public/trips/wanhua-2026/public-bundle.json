@@ -264,13 +264,13 @@
       "name": "台北豪景大酒店 Hotel Riverview Taipei",
       "official_url": "https://group.riverview.com.tw/",
       "place_id": "hotel-riverview",
-      "price_note": "已改用 Agoda 的 2026/09/30–10/02、1 成人、1 房查房連結。Agoda 公開頁可確認飯店與河景資訊，但未回傳這組日期／人數的含稅總價；因此不把平均價或其他房型價格冒充成交價。只有選到明列河景／河畔景觀的房型、可取消條款符合需求，且結帳頁兩晚含稅總額不超過 NT$6,000 時才可選；未建立訂單。",
+      "price_note": "Agoda 指定日期、1 成人、1 房公開頁顯示「自 NT$2,415」，並提示所選日期有 2 種房型售罄；此為起價，未標示為河景房或兩晚含稅成交總額，不能當作符合預算。只有結帳頁同時明列河景／河畔景觀、可取消，且兩晚含稅總額不超過 NT$6,000 時才可選；未建立訂單。",
       "price_status": "unverified",
       "provenance": {
         "confidence": 0.82,
-        "note": "已改用 Agoda 的 2026/09/30–10/02、1 成人、1 房查房連結。Agoda 公開頁可確認飯店與河景資訊，但未回傳這組日期／人數的含稅總價；因此不把平均價或其他房型價格冒充成交價。只有選到明列河景／河畔景觀的房型、可取消條款符合需求，且結帳頁兩晚含稅總額不超過 NT$6,000 時才可選；未建立訂單。",
+        "note": "Agoda 指定日期、1 成人、1 房公開頁顯示「自 NT$2,415」，並提示所選日期有 2 種房型售罄；此為起價，未標示為河景房或兩晚含稅成交總額，不能當作符合預算。只有結帳頁同時明列河景／河畔景觀、可取消，且兩晚含稅總額不超過 NT$6,000 時才可選；未建立訂單。",
         "provider": "Agoda",
-        "retrieved_at": "2026-09-22T16:30:00+08:00",
+        "retrieved_at": "2026-09-22T17:10:00+08:00",
         "source_type": "provider",
         "source_url": "https://www.agoda.com/hotel-riverview/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1",
         "status": "unverified"
@@ -302,13 +302,13 @@
       "name": "Suz & Catorze Taipei 宿之酒店",
       "official_url": null,
       "place_id": "hotel-suz-catorze",
-      "price_note": "Agoda 的指定日期與 1 成人查房連結。只有河景房型、可取消條款與兩晚含稅總額不超過 NT$6,000 同時成立時才可選；未建立訂單。",
+      "price_note": "Agoda 指定日期、1 成人、1 房公開頁顯示「自 NT$4,650」，且有 4 種房型售罄。起價未連結到 River Studio 的兩晚含稅成交總額，不能當作符合預算；須在結帳頁同時確認河景、可取消與兩晚含稅不超過 NT$6,000；未建立訂單。",
       "price_status": "unverified",
       "provenance": {
         "confidence": 0.9,
-        "note": "Agoda 的指定日期與 1 成人查房連結。只有河景房型、可取消條款與兩晚含稅總額不超過 NT$6,000 同時成立時才可選；未建立訂單。",
+        "note": "Agoda 指定日期、1 成人、1 房公開頁顯示「自 NT$4,650」，且有 4 種房型售罄。起價未連結到 River Studio 的兩晚含稅成交總額，不能當作符合預算；須在結帳頁同時確認河景、可取消與兩晚含稅不超過 NT$6,000；未建立訂單。",
         "provider": "Agoda",
-        "retrieved_at": "2026-09-22T16:55:00+08:00",
+        "retrieved_at": "2026-09-22T17:10:00+08:00",
         "source_type": "provider",
         "source_url": "https://www.agoda.com/suz-hotel/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1",
         "status": "unverified"
@@ -340,13 +340,13 @@
       "name": "豪景大酒店新館 New Riverview Suites Hotel",
       "official_url": null,
       "place_id": "hotel-new-riverview-suites",
-      "price_note": "Agoda 的指定日期與 1 成人查房連結。只有朝河窗戶、可取消條款與兩晚含稅總額不超過 NT$6,000 同時成立時才可選；未建立訂單。",
+      "price_note": "Agoda 指定日期、1 成人、1 房公開頁顯示「自 NT$3,090」，且有 3 種房型售罄。起價未連結到朝河房型的兩晚含稅成交總額，不能當作符合預算；須在結帳頁同時確認朝河窗戶、可取消與兩晚含稅不超過 NT$6,000；未建立訂單。",
       "price_status": "unverified",
       "provenance": {
         "confidence": 0.82,
-        "note": "Agoda 的指定日期與 1 成人查房連結。只有朝河窗戶、可取消條款與兩晚含稅總額不超過 NT$6,000 同時成立時才可選；未建立訂單。",
+        "note": "Agoda 指定日期、1 成人、1 房公開頁顯示「自 NT$3,090」，且有 3 種房型售罄。起價未連結到朝河房型的兩晚含稅成交總額，不能當作符合預算；須在結帳頁同時確認朝河窗戶、可取消與兩晚含稅不超過 NT$6,000；未建立訂單。",
         "provider": "Agoda",
-        "retrieved_at": "2026-09-22T16:55:00+08:00",
+        "retrieved_at": "2026-09-22T17:10:00+08:00",
         "source_type": "provider",
         "source_url": "https://www.agoda.com/new-riverview-suites/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1",
         "status": "unverified"
@@ -378,13 +378,13 @@
       "name": "I PLAY Inn 玩客棧",
       "official_url": null,
       "place_id": "hotel-i-play-inn",
-      "price_note": "Agoda 的指定日期與 1 成人查房連結。只有河景房、可取消條款與兩晚含稅總額不超過 NT$6,000 同時成立時才可選；未建立訂單。",
+      "price_note": "Agoda 指定日期、1 成人、1 房公開頁顯示「自 NT$384」，但該起價未連結到 Landscape with River View Quadruple；不能當作河景私人房兩晚含稅成交總額。須在結帳頁同時確認河景、可取消與兩晚含稅不超過 NT$6,000；未建立訂單。",
       "price_status": "unverified",
       "provenance": {
         "confidence": 0.9,
-        "note": "Agoda 的指定日期與 1 成人查房連結。只有河景房、可取消條款與兩晚含稅總額不超過 NT$6,000 同時成立時才可選；未建立訂單。",
+        "note": "Agoda 指定日期、1 成人、1 房公開頁顯示「自 NT$384」，但該起價未連結到 Landscape with River View Quadruple；不能當作河景私人房兩晚含稅成交總額。須在結帳頁同時確認河景、可取消與兩晚含稅不超過 NT$6,000；未建立訂單。",
         "provider": "Agoda",
-        "retrieved_at": "2026-09-22T16:55:00+08:00",
+        "retrieved_at": "2026-09-22T17:10:00+08:00",
         "source_type": "provider",
         "source_url": "https://www.agoda.com/i-play-inn/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1",
         "status": "unverified"
@@ -416,13 +416,13 @@
       "name": "citizenM 台北北門酒店",
       "official_url": null,
       "place_id": "hotel-citizenm-north-gate",
-      "price_note": "Agoda 的指定日期與 1 成人查房連結。只有高樓河景房、可取消條款與兩晚含稅總額不超過 NT$6,000 同時成立時才可選；未建立訂單。",
+      "price_note": "Agoda 指定日期、1 成人、1 房公開頁顯示「自 NT$3,476」，且有 1 種房型售罄。起價未連結到 High Floor River View King Room 的兩晚含稅成交總額，不能當作符合預算；須在結帳頁同時確認河景、可取消與兩晚含稅不超過 NT$6,000；未建立訂單。",
       "price_status": "unverified",
       "provenance": {
         "confidence": 0.9,
-        "note": "Agoda 的指定日期與 1 成人查房連結。只有高樓河景房、可取消條款與兩晚含稅總額不超過 NT$6,000 同時成立時才可選；未建立訂單。",
+        "note": "Agoda 指定日期、1 成人、1 房公開頁顯示「自 NT$3,476」，且有 1 種房型售罄。起價未連結到 High Floor River View King Room 的兩晚含稅成交總額，不能當作符合預算；須在結帳頁同時確認河景、可取消與兩晚含稅不超過 NT$6,000；未建立訂單。",
         "provider": "Agoda",
-        "retrieved_at": "2026-09-22T16:55:00+08:00",
+        "retrieved_at": "2026-09-22T17:10:00+08:00",
         "source_type": "provider",
         "source_url": "https://www.agoda.com/citizenm-taipei-north-gate/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1",
         "status": "unverified"
@@ -434,8 +434,8 @@
   ],
   "local_timezone": "Asia/Taipei",
   "meta": {
-    "bundle_sha256": "e7ae10a00c9a2f0bc3784418bbe5d79b1d8fd1b7e52628181fbd88578ea6caa4",
-    "generated_at": "2026-09-22T08:52:42+00:00",
+    "bundle_sha256": "93055c516d6c24e324dc456060b4c03636cd89c7668ccb9f5e930cc88a92621b",
+    "generated_at": "2026-09-22T09:01:24+00:00",
     "source_coverage": {
       "days": 3,
       "places": 15,
@@ -443,7 +443,7 @@
       "selected_hotels": 0
     },
     "source_path": "trips/wanhua-2026/trip.json",
-    "source_sha256": "c8ed420e57e1c634fea4fca26ba10ebf94078643ccd8f3733d2373ea3270e4c2",
+    "source_sha256": "d2b7bcefba257c1d34ecf95644a1755d46b03d5037266a918919ef4246811844",
     "trip_schema": "trip-v1"
   },
   "operations": {
@@ -1043,7 +1043,7 @@
       "confidence": 0.82,
       "conflicts": false,
       "freshness": "unknown",
-      "last_checked": "2026-09-22T16:30:00+08:00",
+      "last_checked": "2026-09-22T17:10:00+08:00",
       "source_url": "https://www.agoda.com/hotel-riverview/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1",
       "status": "unverified",
       "supports": "hotel"
@@ -1053,7 +1053,7 @@
       "confidence": 0.9,
       "conflicts": false,
       "freshness": "unknown",
-      "last_checked": "2026-09-22T16:55:00+08:00",
+      "last_checked": "2026-09-22T17:10:00+08:00",
       "source_url": "https://www.agoda.com/suz-hotel/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1",
       "status": "unverified",
       "supports": "hotel"
@@ -1063,7 +1063,7 @@
       "confidence": 0.82,
       "conflicts": false,
       "freshness": "unknown",
-      "last_checked": "2026-09-22T16:55:00+08:00",
+      "last_checked": "2026-09-22T17:10:00+08:00",
       "source_url": "https://www.agoda.com/new-riverview-suites/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1",
       "status": "unverified",
       "supports": "hotel"
@@ -1073,7 +1073,7 @@
       "confidence": 0.9,
       "conflicts": false,
       "freshness": "unknown",
-      "last_checked": "2026-09-22T16:55:00+08:00",
+      "last_checked": "2026-09-22T17:10:00+08:00",
       "source_url": "https://www.agoda.com/i-play-inn/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1",
       "status": "unverified",
       "supports": "hotel"
@@ -1083,7 +1083,7 @@
       "confidence": 0.9,
       "conflicts": false,
       "freshness": "unknown",
-      "last_checked": "2026-09-22T16:55:00+08:00",
+      "last_checked": "2026-09-22T17:10:00+08:00",
       "source_url": "https://www.agoda.com/citizenm-taipei-north-gate/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1",
       "status": "unverified",
       "supports": "hotel"
