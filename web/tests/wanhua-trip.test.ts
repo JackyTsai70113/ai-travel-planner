@@ -56,16 +56,14 @@ describe('萬華 2026 公開旅程', () => {
     ]))
     expect(bundle.hotel_candidates.map((candidate: { place_id: string }) => candidate.place_id)).toEqual([
       'hotel-riverview',
-      'hotel-check-inn-sanchong-waterfront',
-      'hotel-bitan',
-      'hotel-cloud-riverside',
-      'hotel-golden-tulip-fab',
+      'hotel-suz-catorze',
+      'hotel-new-riverview-suites',
+      'hotel-i-play-inn',
+      'hotel-citizenm-north-gate',
     ])
     expect(bundle.hotel_candidates.filter((candidate: { itinerary_compatible?: boolean }) => candidate.itinerary_compatible !== false)
       .every((candidate: { price_note?: string }) => candidate.price_note?.includes('NT$6,000'))).toBe(true)
-    expect(bundle.hotel_candidates.filter((candidate: { itinerary_compatible?: boolean }) => candidate.itinerary_compatible === false)
-      .every((candidate: { price_note?: string }) => candidate.price_note?.includes('不適用既有萬華夜間與退房交通'))).toBe(true)
     expect(bundle.hotel_candidates.every((candidate: { search_url?: string }) => candidate.search_url?.includes('agoda.com'))).toBe(true)
-    expect(bundle.hotel_candidates.filter((candidate: { itinerary_compatible?: boolean }) => candidate.itinerary_compatible !== false)).toHaveLength(1)
+    expect(bundle.hotel_candidates.filter((candidate: { itinerary_compatible?: boolean }) => candidate.itinerary_compatible !== false)).toHaveLength(5)
   })
 })
