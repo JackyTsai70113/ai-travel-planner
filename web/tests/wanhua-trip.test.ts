@@ -24,7 +24,7 @@ describe('萬華 2026 公開旅程', () => {
     expect(bundle.places.find((place: { id?: string }) => place.id === 'hotel-riverview')?.opening_hours_note).toContain('未宣稱已完成訂房')
   })
 
-  it('keeps leisure activities after 18:00 and leaves the daytime free', () => {
+  it('keeps leisure activities after 18:00', () => {
     const firstDay = bundle.days[0]
     const secondDay = bundle.days[1]
     const leisureItems = [firstDay, secondDay].flatMap((day: { items: Array<{ kind: string, start_at: string }> }) => day.items)
@@ -39,8 +39,8 @@ describe('萬華 2026 公開旅程', () => {
     expect(bundle.days.at(-1).items.at(-1)).toMatchObject({ id: 'd3-ximen-to-qizhang', place_id: 'qizhang-station' })
   })
 
-  it('shows only the river-view-eligible lodging assessment', () => {
-    expect(bundle.hotel_candidates).toHaveLength(1)
+  it('shows five Agoda river-view lodging assessments with a fail-closed price gate', () => {
+    expect(bundle.hotel_candidates).toHaveLength(5)
     expect(bundle.hotel_candidates[0]).toMatchObject({
       place_id: 'hotel-riverview',
       selected_candidate: false,
@@ -54,8 +54,18 @@ describe('萬華 2026 公開旅程', () => {
       expect.stringContaining('西門紅樓'),
       expect.stringContaining('龍山寺'),
     ]))
-    expect(bundle.hotel_candidates.map((candidate: { place_id: string }) => candidate.place_id)).toEqual(['hotel-riverview'])
-    expect(bundle.hotel_candidates.every((candidate: { price_note?: string }) => candidate.price_note?.includes('一房兩人資料') || candidate.price_note?.includes('一成人') || candidate.price_note?.includes('1 成人'))).toBe(true)
-    expect(bundle.hotel_candidates.every((candidate: { search_url?: string }) => Boolean(candidate.search_url))).toBe(true)
+    expect(bundle.hotel_candidates.map((candidate: { place_id: string }) => candidate.place_id)).toEqual([
+      'hotel-riverview',
+      'hotel-check-inn-sanchong-waterfront',
+      'hotel-bitan',
+      'hotel-cloud-riverside',
+      'hotel-golden-tulip-fab',
+    ])
+    expect(bundle.hotel_candidates.filter((candidate: { itinerary_compatible?: boolean }) => candidate.itinerary_compatible !== false)
+      .every((candidate: { price_note?: string }) => candidate.price_note?.includes('NT$6,000'))).toBe(true)
+    expect(bundle.hotel_candidates.filter((candidate: { itinerary_compatible?: boolean }) => candidate.itinerary_compatible === false)
+      .every((candidate: { price_note?: string }) => candidate.price_note?.includes('不適用既有萬華夜間與退房交通'))).toBe(true)
+    expect(bundle.hotel_candidates.every((candidate: { search_url?: string }) => candidate.search_url?.includes('agoda.com'))).toBe(true)
+    expect(bundle.hotel_candidates.filter((candidate: { itinerary_compatible?: boolean }) => candidate.itinerary_compatible !== false)).toHaveLength(1)
   })
 })

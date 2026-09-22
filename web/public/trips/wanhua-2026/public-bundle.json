@@ -69,21 +69,6 @@
         {
           "alternative_place_ids": [],
           "buffer_minutes": null,
-          "end_at": "2026-09-30T18:00:00+08:00",
-          "expected_stay_minutes": 150,
-          "id": "d1-rest-before-night",
-          "kind": "free_time",
-          "notes": "白天不排行程；入住後只休息、整理與自行用餐，18:00 後才出發。",
-          "optional": true,
-          "place_id": "hotel-riverview",
-          "start_at": "2026-09-30T15:30:00+08:00",
-          "transfer_minutes": null,
-          "transport_leg_id": null,
-          "unresolved": true
-        },
-        {
-          "alternative_place_ids": [],
-          "buffer_minutes": null,
           "end_at": "2026-09-30T18:30:00+08:00",
           "expected_stay_minutes": 30,
           "id": "d1-hotel-river-view-check",
@@ -142,7 +127,7 @@
           "unresolved": true
         }
       ],
-      "summary": "下午入住，18:00 後才出發看河景夜色"
+      "summary": "18:00 後：河景夜色與華中河濱備選"
     },
     {
       "date": "2026-10-01",
@@ -193,7 +178,7 @@
           "unresolved": false
         }
       ],
-      "summary": "白天完全留白，18:00 後才到華西街夜市"
+      "summary": "18:00 後：華西街夜市"
     },
     {
       "date": "2026-10-02",
@@ -244,7 +229,7 @@
           "unresolved": false
         }
       ],
-      "summary": "退房後直接返回七張，不安排白天景點或午餐"
+      "summary": "退房並返回七張"
     }
   ],
   "evidence_gate": {
@@ -259,34 +244,345 @@
       "distance_notes": [
         "淡水河景：飯店位於河岸；0 km，但必須在訂房頁選擇明列河景／河畔景觀的房型，不能只選一般房。",
         "華西街觀光夜市：約 0.7 km；步行約 10 分鐘，是第二晚最近的夜間用餐／逛街點，但不是河景。",
-        "西門紅樓：約 0.8 km；步行約 10–12 分鐘，已不排入白天行程。",
-        "龍山寺：約 1.25 km；步行約 15–20 分鐘，已不排入白天行程。",
+        "西門紅樓：約 0.8 km；步行約 10–12 分鐘，夜間可順路看紅磚建築與西門街景。",
+        "龍山寺：約 1.25 km；步行約 15–20 分鐘，夜間只作外圍經過的距離參考。",
         "華中河濱公園：約 4.0 km、夜間約 20 分鐘車程；河景較完整，但不是最近選項，僅在照明、人流、天候與河川警戒均適合時前往。"
       ],
+      "distance_sources": [
+        {
+          "confidence": 0.7,
+          "note": "華中河濱公園",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Hotel+Riverview+Taipei&destination=%E8%8F%AF%E4%B8%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92&travelmode=driving",
+          "status": "estimated"
+        },
+        {
+          "confidence": 0.7,
+          "note": "華西街觀光夜市",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Hotel+Riverview+Taipei&destination=%E8%8F%AF%E8%A5%BF%E8%A1%97%E8%A7%80%E5%85%89%E5%A4%9C%E5%B8%82&travelmode=walking",
+          "status": "estimated"
+        },
+        {
+          "confidence": 0.7,
+          "note": "西門紅樓",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Hotel+Riverview+Taipei&destination=%E8%A5%BF%E9%96%80%E7%B4%85%E6%A8%93&travelmode=walking",
+          "status": "estimated"
+        },
+        {
+          "confidence": 0.7,
+          "note": "龍山寺",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Hotel+Riverview+Taipei&destination=%E9%BE%8D%E5%B1%B1%E5%AF%BA&travelmode=walking",
+          "status": "estimated"
+        }
+      ],
       "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Hotel%20Riverview%20Taipei",
+      "itinerary_compatible": true,
       "name": "台北豪景大酒店 Hotel Riverview Taipei",
       "official_url": "https://group.riverview.com.tw/",
       "place_id": "hotel-riverview",
-      "price_note": "即日比價顯示 9/30 US$44、10/1 US$66（含稅費、一房兩人資料），兩晚合計約 US$110，僅作低於 NT$6,000 的參考，不能當作 1 成人成交價。結帳頁必須同時確認 1 成人、河景／河畔景觀房型與兩晚含稅總額不超過 NT$6,000；未建立訂單。",
+      "price_note": "已改用 Agoda 的 2026/09/30–10/02、1 成人、1 房查房連結。Agoda 公開頁可確認飯店與河景資訊，但未回傳這組日期／人數的含稅總價；因此不把平均價或其他房型價格冒充成交價。只有選到明列河景／河畔景觀的房型、可取消條款符合需求，且結帳頁兩晚含稅總額不超過 NT$6,000 時才可選；未建立訂單。",
       "price_status": "unverified",
       "provenance": {
-        "confidence": 0.7,
-        "note": "即日比價顯示 9/30 US$44、10/1 US$66（含稅費、一房兩人資料），兩晚合計約 US$110，僅作低於 NT$6,000 的參考，不能當作 1 成人成交價。結帳頁必須同時確認 1 成人、河景／河畔景觀房型與兩晚含稅總額不超過 NT$6,000；未建立訂單。",
-        "provider": "Vio 比價與飯店官方資訊",
-        "retrieved_at": "2026-09-22T10:00:00+08:00",
+        "confidence": 0.82,
+        "note": "已改用 Agoda 的 2026/09/30–10/02、1 成人、1 房查房連結。Agoda 公開頁可確認飯店與河景資訊，但未回傳這組日期／人數的含稅總價；因此不把平均價或其他房型價格冒充成交價。只有選到明列河景／河畔景觀的房型、可取消條款符合需求，且結帳頁兩晚含稅總額不超過 NT$6,000 時才可選；未建立訂單。",
+        "provider": "Agoda",
+        "retrieved_at": "2026-09-22T16:30:00+08:00",
         "source_type": "provider",
-        "source_url": "https://www.vio.com/Hotel/1269872/en",
+        "source_url": "https://www.agoda.com/hotel-riverview/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1",
         "status": "unverified"
       },
       "room_type": "明列河景／河畔景觀的私人房；1 位成人、可取消房型優先",
-      "search_url": "https://group.riverview.com.tw/",
+      "search_url": "https://www.agoda.com/hotel-riverview/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1",
+      "selected_candidate": false
+    },
+    {
+      "address": "新北市三重區捷運路77號",
+      "decision_note": "Agoda 列出部分房型有河景；距萬華夜間景點較遠，只有在 Agoda 的 1 成人、兩晚含稅總額不超過 NT$6,000 時才可比較。",
+      "distance_notes": [
+        "淡水河景：飯店鄰近河岸，Agoda 指出部分房型可看河景；必須在房型頁明列河景。",
+        "華中河濱公園：約 6 km 車程；不是萬華最近選擇。",
+        "華西街觀光夜市：約 5 km 車程；夜間需叫車或搭捷運。",
+        "西門紅樓：約 4 km 車程；夜景以市區街景為主，不是河景。",
+        "龍山寺：約 5 km 車程；不建議把它當河景夜景。"
+      ],
+      "distance_sources": [
+        {
+          "confidence": 0.65,
+          "note": "華中河濱公園",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=CHECK+inn+Select+New+Taipei+Sanchong+Waterfront&destination=%E8%8F%AF%E4%B8%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92&travelmode=driving",
+          "status": "estimated"
+        },
+        {
+          "confidence": 0.65,
+          "note": "華西街觀光夜市",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=CHECK+inn+Select+New+Taipei+Sanchong+Waterfront&destination=%E8%8F%AF%E8%A5%BF%E8%A1%97%E8%A7%80%E5%85%89%E5%A4%9C%E5%B8%82&travelmode=driving",
+          "status": "estimated"
+        },
+        {
+          "confidence": 0.65,
+          "note": "西門紅樓",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=CHECK+inn+Select+New+Taipei+Sanchong+Waterfront&destination=%E8%A5%BF%E9%96%80%E7%B4%85%E6%A8%93&travelmode=driving",
+          "status": "estimated"
+        },
+        {
+          "confidence": 0.65,
+          "note": "龍山寺",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=CHECK+inn+Select+New+Taipei+Sanchong+Waterfront&destination=%E9%BE%8D%E5%B1%B1%E5%AF%BA&travelmode=driving",
+          "status": "estimated"
+        }
+      ],
+      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=CHECK%20inn%20Select%20New%20Taipei%20Sanchong%20Waterfront",
+      "itinerary_compatible": false,
+      "name": "雀客藏居新北三重水漾 CHECK inn Select New Taipei Sanchong Waterfront",
+      "official_url": null,
+      "place_id": "hotel-check-inn-sanchong-waterfront",
+      "price_note": "此飯店不適用既有萬華夜間與退房交通，僅作河景／價格比較。已用 Agoda 的指定日期與 1 成人查房連結；公開頁沒有回傳這組條件的含稅總價。",
+      "price_status": "unverified",
+      "provenance": {
+        "confidence": 0.82,
+        "note": "此飯店不適用既有萬華夜間與退房交通，僅作河景／價格比較。已用 Agoda 的指定日期與 1 成人查房連結；公開頁沒有回傳這組條件的含稅總價。",
+        "provider": "Agoda",
+        "retrieved_at": "2026-09-22T16:30:00+08:00",
+        "source_type": "provider",
+        "source_url": "https://www.agoda.com/check-inn-select-new-taipei-sanchong-waterfront/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1",
+        "status": "unverified"
+      },
+      "room_type": "Agoda 明列部分河景房；1 位成人、可取消房型優先",
+      "search_url": "https://www.agoda.com/check-inn-select-new-taipei-sanchong-waterfront/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1",
+      "selected_candidate": false
+    },
+    {
+      "address": "新北市新店區碧潭路121號",
+      "decision_note": "Agoda 明列 River View 房型；碧潭夜景本身完整，但不適合把萬華夜間行程當成近距離步行。",
+      "distance_notes": [
+        "碧潭河景：Agoda 明列 River View 房型，可看新店溪與碧潭橋夜景。",
+        "華中河濱公園：約 12 km 車程；與萬華夜景不是同一個近距離落點。",
+        "華西街觀光夜市：約 11 km 車程。",
+        "西門紅樓：約 11 km 車程。",
+        "龍山寺：約 10 km 車程。"
+      ],
+      "distance_sources": [
+        {
+          "confidence": 0.65,
+          "note": "華中河濱公園",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Bitan+Hotel+Taipei&destination=%E8%8F%AF%E4%B8%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92&travelmode=driving",
+          "status": "estimated"
+        },
+        {
+          "confidence": 0.65,
+          "note": "華西街觀光夜市",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Bitan+Hotel+Taipei&destination=%E8%8F%AF%E8%A5%BF%E8%A1%97%E8%A7%80%E5%85%89%E5%A4%9C%E5%B8%82&travelmode=driving",
+          "status": "estimated"
+        },
+        {
+          "confidence": 0.65,
+          "note": "西門紅樓",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Bitan+Hotel+Taipei&destination=%E8%A5%BF%E9%96%80%E7%B4%85%E6%A8%93&travelmode=driving",
+          "status": "estimated"
+        },
+        {
+          "confidence": 0.65,
+          "note": "龍山寺",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Bitan+Hotel+Taipei&destination=%E9%BE%8D%E5%B1%B1%E5%AF%BA&travelmode=driving",
+          "status": "estimated"
+        }
+      ],
+      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Bitan%20Hotel%20Taipei",
+      "itinerary_compatible": false,
+      "name": "碧潭飯店 Bitan Hotel",
+      "official_url": null,
+      "place_id": "hotel-bitan",
+      "price_note": "此飯店不適用既有萬華夜間與退房交通，僅作河景／價格比較。已用 Agoda 的指定日期與 1 成人查房連結；公開頁沒有回傳這組條件的含稅總價。",
+      "price_status": "unverified",
+      "provenance": {
+        "confidence": 0.86,
+        "note": "此飯店不適用既有萬華夜間與退房交通，僅作河景／價格比較。已用 Agoda 的指定日期與 1 成人查房連結；公開頁沒有回傳這組條件的含稅總價。",
+        "provider": "Agoda",
+        "retrieved_at": "2026-09-22T16:30:00+08:00",
+        "source_type": "provider",
+        "source_url": "https://www.agoda.com/bitan-hotel/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1",
+        "status": "unverified"
+      },
+      "room_type": "Agoda 明列 River View；1 位成人、可取消房型優先",
+      "search_url": "https://www.agoda.com/bitan-hotel/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1",
+      "selected_candidate": false
+    },
+    {
+      "address": "新北市淡水區中正東路一段129號",
+      "decision_note": "Agoda 列出河景房；淡水河日落、河面與山景完整，但距萬華非常遠，僅保留作河景優先的比較基準。",
+      "distance_notes": [
+        "淡水河景：Agoda 將 Deluxe Double Ocean View 列為河景，夜間可看河面、山景與淡水岸邊燈光。",
+        "華中河濱公園：約 25 km 車程；不適合萬華夜間往返。",
+        "華西街觀光夜市：約 24 km 車程。",
+        "西門紅樓：約 24 km 車程。",
+        "龍山寺：約 25 km 車程。"
+      ],
+      "distance_sources": [
+        {
+          "confidence": 0.65,
+          "note": "華中河濱公園",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Hotel+Cloud+Riverside+Tamsui&destination=%E8%8F%AF%E4%B8%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92&travelmode=driving",
+          "status": "estimated"
+        },
+        {
+          "confidence": 0.65,
+          "note": "華西街觀光夜市",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Hotel+Cloud+Riverside+Tamsui&destination=%E8%8F%AF%E8%A5%BF%E8%A1%97%E8%A7%80%E5%85%89%E5%A4%9C%E5%B8%82&travelmode=driving",
+          "status": "estimated"
+        },
+        {
+          "confidence": 0.65,
+          "note": "西門紅樓",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Hotel+Cloud+Riverside+Tamsui&destination=%E8%A5%BF%E9%96%80%E7%B4%85%E6%A8%93&travelmode=driving",
+          "status": "estimated"
+        },
+        {
+          "confidence": 0.65,
+          "note": "龍山寺",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Hotel+Cloud+Riverside+Tamsui&destination=%E9%BE%8D%E5%B1%B1%E5%AF%BA&travelmode=driving",
+          "status": "estimated"
+        }
+      ],
+      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Hotel%20Cloud%20Riverside%20Tamsui",
+      "itinerary_compatible": false,
+      "name": "承億文旅淡水吹風 Hotel Cloud Riverside",
+      "official_url": null,
+      "place_id": "hotel-cloud-riverside",
+      "price_note": "此飯店不適用既有萬華夜間與退房交通，僅作河景／價格比較。已用 Agoda 的指定日期與 1 成人查房連結；公開頁沒有回傳這組條件的含稅總價。",
+      "price_status": "unverified",
+      "provenance": {
+        "confidence": 0.86,
+        "note": "此飯店不適用既有萬華夜間與退房交通，僅作河景／價格比較。已用 Agoda 的指定日期與 1 成人查房連結；公開頁沒有回傳這組條件的含稅總價。",
+        "provider": "Agoda",
+        "retrieved_at": "2026-09-22T16:30:00+08:00",
+        "source_type": "provider",
+        "source_url": "https://www.agoda.com/hotel-cloud-riverside/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1",
+        "status": "unverified"
+      },
+      "room_type": "Deluxe Double Ocean View（Agoda 列為河景）；1 位成人、可取消房型優先",
+      "search_url": "https://www.agoda.com/hotel-cloud-riverside/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1",
+      "selected_candidate": false
+    },
+    {
+      "address": "新北市淡水區中正路一段2號",
+      "decision_note": "Agoda 明列河景雙床／河景四人等房型；河景與夜景品質強，但距萬華最遠，價格通常也應優先覆核。",
+      "distance_notes": [
+        "淡水河景：Agoda 明列 River View Twin，飯店屋頂與房間可看淡水河夜景。",
+        "華中河濱公園：約 28 km 車程；不適合萬華夜間往返。",
+        "華西街觀光夜市：約 27 km 車程。",
+        "西門紅樓：約 27 km 車程。",
+        "龍山寺：約 28 km 車程。"
+      ],
+      "distance_sources": [
+        {
+          "confidence": 0.65,
+          "note": "華中河濱公園",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Golden+Tulip+FAB+Hotel+New+Taipei&destination=%E8%8F%AF%E4%B8%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92&travelmode=driving",
+          "status": "estimated"
+        },
+        {
+          "confidence": 0.65,
+          "note": "華西街觀光夜市",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Golden+Tulip+FAB+Hotel+New+Taipei&destination=%E8%8F%AF%E8%A5%BF%E8%A1%97%E8%A7%80%E5%85%89%E5%A4%9C%E5%B8%82&travelmode=driving",
+          "status": "estimated"
+        },
+        {
+          "confidence": 0.65,
+          "note": "西門紅樓",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Golden+Tulip+FAB+Hotel+New+Taipei&destination=%E8%A5%BF%E9%96%80%E7%B4%85%E6%A8%93&travelmode=driving",
+          "status": "estimated"
+        },
+        {
+          "confidence": 0.65,
+          "note": "龍山寺",
+          "provider": "Google Maps 路線規劃",
+          "retrieved_at": "2026-09-22T16:30:00+08:00",
+          "source_type": "derived",
+          "source_url": "https://www.google.com/maps/dir/?api=1&origin=Golden+Tulip+FAB+Hotel+New+Taipei&destination=%E9%BE%8D%E5%B1%B1%E5%AF%BA&travelmode=driving",
+          "status": "estimated"
+        }
+      ],
+      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Golden%20Tulip%20FAB%20Hotel%20New%20Taipei",
+      "itinerary_compatible": false,
+      "name": "淡水將捷金鬱金香酒店 Golden Tulip FAB Hotel New Taipei",
+      "official_url": null,
+      "place_id": "hotel-golden-tulip-fab",
+      "price_note": "此飯店不適用既有萬華夜間與退房交通，僅作河景／價格比較。已用 Agoda 的指定日期與 1 成人查房連結；公開頁沒有回傳這組條件的含稅總價。",
+      "price_status": "unverified",
+      "provenance": {
+        "confidence": 0.88,
+        "note": "此飯店不適用既有萬華夜間與退房交通，僅作河景／價格比較。已用 Agoda 的指定日期與 1 成人查房連結；公開頁沒有回傳這組條件的含稅總價。",
+        "provider": "Agoda",
+        "retrieved_at": "2026-09-22T16:30:00+08:00",
+        "source_type": "provider",
+        "source_url": "https://www.agoda.com/golden-tulip-fab-hotel/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1",
+        "status": "unverified"
+      },
+      "room_type": "River View Twin；1 位成人、可取消房型優先",
+      "search_url": "https://www.agoda.com/golden-tulip-fab-hotel/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1",
       "selected_candidate": false
     }
   ],
   "local_timezone": "Asia/Taipei",
   "meta": {
-    "bundle_sha256": "8579e34944d0abf8233b9f275d8860a8d96bfe1710c186976135241b8ef01c4a",
-    "generated_at": "2026-09-22T08:11:01+00:00",
+    "bundle_sha256": "fc64fa6deb4c957e62fd3fd07b6d3dbce445d17fb6743ad398939c717429fa3c",
+    "generated_at": "2026-09-22T08:37:34+00:00",
     "source_coverage": {
       "days": 3,
       "places": 15,
@@ -294,7 +590,7 @@
       "selected_hotels": 0
     },
     "source_path": "trips/wanhua-2026/trip.json",
-    "source_sha256": "66f3fd2568a5071d84db03de215f199f114db68b0b8818bac93dca0a934d1396",
+    "source_sha256": "a05260a929148bb752779305f1c60a3607915e28a1adc299b9e384b4feba7729",
     "trip_schema": "trip-v1"
   },
   "operations": {
@@ -368,71 +664,94 @@
     },
     {
       "accessibility_notes": null,
-      "address": "臺北市萬華區漢中街4號",
-      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=HZ%20Hotel%20Taipei",
-      "id": "hotel-hz",
+      "address": "新北市新店區碧潭路121號",
+      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Bitan%20Hotel%20Taipei",
+      "id": "hotel-bitan",
       "image_alt": null,
       "image_source_url": null,
       "image_url": null,
       "kind": "hotel",
-      "maps_query": "臺北市萬華區漢中街4號",
-      "name": "宏洲旅社 HZ Hotel",
+      "maps_query": "新北市新店區碧潭路121號",
+      "name": "碧潭飯店 Bitan Hotel",
       "official_url": null,
-      "opening_hours_note": "預算安全牌，靠近西門；不在河岸，適合價格優先而非夜景優先的選擇。",
+      "opening_hours_note": "Agoda 明列 River View 房型；碧潭夜景本身完整，但不適合把萬華夜間行程當成近距離步行。",
       "provenance": {
-        "confidence": 0.85,
-        "note": "住宿候選，不是訂房確認。",
-        "provider": "Booking.com",
-        "retrieved_at": "2026-09-22T10:00:00+08:00",
+        "confidence": 0.86,
+        "note": "Agoda 列出 River View 房型；未建立訂單。",
+        "provider": "Agoda",
+        "retrieved_at": "2026-09-22T16:30:00+08:00",
         "source_type": "provider",
-        "source_url": "https://www.booking.com/hotel/tw/hong-zhou-lu-she-hz-wan-hua-qu.html",
+        "source_url": "https://www.agoda.com/bitan-hotel/hotel/taipei-tw.html",
         "status": "reported"
       }
     },
     {
       "accessibility_notes": null,
-      "address": "臺北市萬華區西園路一段139號",
-      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Monka%20Hotel%20Taipei",
-      "id": "hotel-monka",
+      "address": "新北市三重區捷運路77號",
+      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=CHECK%20inn%20Select%20New%20Taipei%20Sanchong%20Waterfront",
+      "id": "hotel-check-inn-sanchong-waterfront",
       "image_alt": null,
       "image_source_url": null,
       "image_url": null,
       "kind": "hotel",
-      "maps_query": "臺北市萬華區西園路一段139號",
-      "name": "文舺行旅 Monka Hotel",
+      "maps_query": "新北市三重區捷運路77號",
+      "name": "雀客藏居新北三重水漾 CHECK inn Select New Taipei Sanchong Waterfront",
       "official_url": null,
-      "opening_hours_note": "龍山寺與剝皮寮步行便利；公開評價的地點與整體分數佳，但尚未取得本日期的一成人報價。",
+      "opening_hours_note": "Agoda 列出部分房型有河景；距萬華夜間景點較遠，只有在 Agoda 的 1 成人、兩晚含稅總額不超過 NT$6,000 時才可比較。",
       "provenance": {
-        "confidence": 0.85,
-        "note": "住宿候選，不是訂房確認。",
-        "provider": "Booking.com",
-        "retrieved_at": "2026-09-22T10:00:00+08:00",
+        "confidence": 0.82,
+        "note": "Agoda 列出部分客房可看河景；未建立訂單。",
+        "provider": "Agoda",
+        "retrieved_at": "2026-09-22T16:30:00+08:00",
         "source_type": "provider",
-        "source_url": "https://www.booking.com/hotel/tw/wen-jia-xing-lu.html",
+        "source_url": "https://www.agoda.com/check-inn-select-new-taipei-sanchong-waterfront/hotel/taipei-tw.html",
         "status": "reported"
       }
     },
     {
       "accessibility_notes": null,
-      "address": "臺北市萬華區昆明街46號",
-      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Hotel%20PaPa%20Whale",
-      "id": "hotel-papa-whale",
+      "address": "新北市淡水區中正東路一段129號",
+      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Hotel%20Cloud%20Riverside%20Tamsui",
+      "id": "hotel-cloud-riverside",
       "image_alt": null,
       "image_source_url": null,
       "image_url": null,
       "kind": "hotel",
-      "maps_query": "臺北市萬華區昆明街46號",
-      "name": "Hotel PaPa Whale",
-      "official_url": "https://www.papawhale.com/zh-tw/%E5%8F%B0%E5%8C%97%2BPaPa%2BWhale",
-      "opening_hours_note": "預算優先備選：有明列單人房型，適合西門步行；河岸夜景後回程比豪景遠。",
+      "maps_query": "新北市淡水區中正東路一段129號",
+      "name": "承億文旅淡水吹風 Hotel Cloud Riverside",
+      "official_url": null,
+      "opening_hours_note": "Agoda 列出河景房；淡水河日落、河面與山景完整，但距萬華非常遠，僅保留作河景優先的比較基準。",
       "provenance": {
-        "confidence": 0.9,
-        "note": "住宿候選，不是訂房確認。",
-        "provider": "Hotel PaPa Whale",
-        "retrieved_at": "2026-09-22T10:00:00+08:00",
-        "source_type": "official",
-        "source_url": "https://www.papawhale.com/zh-tw/%E5%8F%B0%E5%8C%97%2BPaPa%2BWhale",
-        "status": "confirmed"
+        "confidence": 0.86,
+        "note": "Agoda 列出 Deluxe Double Ocean View 房型的河景；未建立訂單。",
+        "provider": "Agoda",
+        "retrieved_at": "2026-09-22T16:30:00+08:00",
+        "source_type": "provider",
+        "source_url": "https://www.agoda.com/hotel-cloud-riverside/hotel/taipei-tw.html",
+        "status": "reported"
+      }
+    },
+    {
+      "accessibility_notes": null,
+      "address": "新北市淡水區中正路一段2號",
+      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Golden%20Tulip%20FAB%20Hotel%20New%20Taipei",
+      "id": "hotel-golden-tulip-fab",
+      "image_alt": null,
+      "image_source_url": null,
+      "image_url": null,
+      "kind": "hotel",
+      "maps_query": "新北市淡水區中正路一段2號",
+      "name": "淡水將捷金鬱金香酒店 Golden Tulip FAB Hotel New Taipei",
+      "official_url": null,
+      "opening_hours_note": "Agoda 明列河景雙床／河景四人等房型；河景與夜景品質強，但距萬華最遠，價格通常也應優先覆核。",
+      "provenance": {
+        "confidence": 0.88,
+        "note": "Agoda 明列 River View Twin 與 River View Quad；未建立訂單。",
+        "provider": "Agoda",
+        "retrieved_at": "2026-09-22T16:30:00+08:00",
+        "source_type": "provider",
+        "source_url": "https://www.agoda.com/golden-tulip-fab-hotel/hotel/taipei-tw.html",
+        "status": "reported"
       }
     },
     {
@@ -456,29 +775,6 @@
         "source_type": "official",
         "source_url": "https://group.riverview.com.tw/",
         "status": "confirmed"
-      }
-    },
-    {
-      "accessibility_notes": null,
-      "address": "臺北市萬華區中華路一段82號",
-      "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Wonstar%20Hotel%20Taipei",
-      "id": "hotel-wonstar",
-      "image_alt": null,
-      "image_source_url": null,
-      "image_url": null,
-      "kind": "hotel",
-      "maps_query": "臺北市萬華區中華路一段82號",
-      "name": "萬事達行旅 Wonstar Hotel",
-      "official_url": null,
-      "opening_hours_note": "西門站步行便利，公開房型資料列有經濟單人房；不是河景位置。",
-      "provenance": {
-        "confidence": 0.85,
-        "note": "住宿候選，不是訂房確認。",
-        "provider": "Booking.com",
-        "retrieved_at": "2026-09-22T10:00:00+08:00",
-        "source_type": "provider",
-        "source_url": "https://www.booking.com/hotel/tw/wonstar-chonghua.html",
-        "status": "reported"
       }
     },
     {
@@ -700,7 +996,7 @@
         "id": "public-transit"
       },
       {
-        "description": "遊玩行程僅安排在 18:00 後；上午與下午只保留必要入住、退房與返程物流，不排景點、逛街或餐飲行程。",
+        "description": "遊玩行程安排在 18:00 後。",
         "id": "night-only-activities"
       },
       {
@@ -750,24 +1046,24 @@
       "supports": "place:hotel-riverview"
     },
     {
-      "authority": "Hotel PaPa Whale",
-      "confidence": 0.9,
+      "authority": "Agoda",
+      "confidence": 0.82,
       "conflicts": false,
       "freshness": "unknown",
-      "last_checked": "2026-09-22T10:00:00+08:00",
-      "source_url": "https://www.papawhale.com/zh-tw/%E5%8F%B0%E5%8C%97%2BPaPa%2BWhale",
-      "status": "confirmed",
-      "supports": "place:hotel-papa-whale"
+      "last_checked": "2026-09-22T16:30:00+08:00",
+      "source_url": "https://www.agoda.com/check-inn-select-new-taipei-sanchong-waterfront/hotel/taipei-tw.html",
+      "status": "reported",
+      "supports": "place:hotel-check-inn-sanchong-waterfront"
     },
     {
-      "authority": "Booking.com",
-      "confidence": 0.85,
+      "authority": "Agoda",
+      "confidence": 0.86,
       "conflicts": false,
       "freshness": "unknown",
-      "last_checked": "2026-09-22T10:00:00+08:00",
-      "source_url": "https://www.booking.com/hotel/tw/wonstar-chonghua.html",
+      "last_checked": "2026-09-22T16:30:00+08:00",
+      "source_url": "https://www.agoda.com/bitan-hotel/hotel/taipei-tw.html",
       "status": "reported",
-      "supports": "place:hotel-wonstar"
+      "supports": "place:hotel-bitan"
     },
     {
       "authority": "臺北市政府觀光傳播局",
@@ -780,24 +1076,24 @@
       "supports": "place:huazhong-riverside-park"
     },
     {
-      "authority": "Booking.com",
-      "confidence": 0.85,
+      "authority": "Agoda",
+      "confidence": 0.86,
       "conflicts": false,
       "freshness": "unknown",
-      "last_checked": "2026-09-22T10:00:00+08:00",
-      "source_url": "https://www.booking.com/hotel/tw/wen-jia-xing-lu.html",
+      "last_checked": "2026-09-22T16:30:00+08:00",
+      "source_url": "https://www.agoda.com/hotel-cloud-riverside/hotel/taipei-tw.html",
       "status": "reported",
-      "supports": "place:hotel-monka"
+      "supports": "place:hotel-cloud-riverside"
     },
     {
-      "authority": "Booking.com",
-      "confidence": 0.85,
+      "authority": "Agoda",
+      "confidence": 0.88,
       "conflicts": false,
       "freshness": "unknown",
-      "last_checked": "2026-09-22T10:00:00+08:00",
-      "source_url": "https://www.booking.com/hotel/tw/hong-zhou-lu-she-hz-wan-hua-qu.html",
+      "last_checked": "2026-09-22T16:30:00+08:00",
+      "source_url": "https://www.agoda.com/golden-tulip-fab-hotel/hotel/taipei-tw.html",
       "status": "reported",
-      "supports": "place:hotel-hz"
+      "supports": "place:hotel-golden-tulip-fab"
     },
     {
       "authority": "臺北捷運",
@@ -890,52 +1186,52 @@
       "supports": "place:huaxi-night-market"
     },
     {
-      "authority": "Vio 比價與飯店官方資訊",
-      "confidence": 0.7,
+      "authority": "Agoda",
+      "confidence": 0.82,
       "conflicts": false,
       "freshness": "unknown",
-      "last_checked": "2026-09-22T10:00:00+08:00",
-      "source_url": "https://www.vio.com/Hotel/1269872/en",
+      "last_checked": "2026-09-22T16:30:00+08:00",
+      "source_url": "https://www.agoda.com/hotel-riverview/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1",
       "status": "unverified",
       "supports": "hotel"
     },
     {
-      "authority": "Vio 比價與飯店官方資訊",
-      "confidence": 0.7,
+      "authority": "Agoda",
+      "confidence": 0.82,
       "conflicts": false,
       "freshness": "unknown",
-      "last_checked": "2026-09-22T10:00:00+08:00",
-      "source_url": "https://www.vio.com/Hotel/3006908/en-GB",
+      "last_checked": "2026-09-22T16:30:00+08:00",
+      "source_url": "https://www.agoda.com/check-inn-select-new-taipei-sanchong-waterfront/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1",
       "status": "unverified",
       "supports": "hotel"
     },
     {
-      "authority": "Vio 比價與 Booking.com",
-      "confidence": 0.7,
+      "authority": "Agoda",
+      "confidence": 0.86,
       "conflicts": false,
       "freshness": "unknown",
-      "last_checked": "2026-09-22T10:00:00+08:00",
-      "source_url": "https://www.vio.com/Hotel/1259214/en",
+      "last_checked": "2026-09-22T16:30:00+08:00",
+      "source_url": "https://www.agoda.com/bitan-hotel/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1",
       "status": "unverified",
       "supports": "hotel"
     },
     {
-      "authority": "Booking.com",
-      "confidence": 0.75,
+      "authority": "Agoda",
+      "confidence": 0.86,
       "conflicts": false,
       "freshness": "unknown",
-      "last_checked": "2026-09-22T10:00:00+08:00",
-      "source_url": "https://www.booking.com/hotel/tw/wen-jia-xing-lu.html",
+      "last_checked": "2026-09-22T16:30:00+08:00",
+      "source_url": "https://www.agoda.com/hotel-cloud-riverside/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1",
       "status": "unverified",
       "supports": "hotel"
     },
     {
-      "authority": "Booking.com",
-      "confidence": 0.7,
+      "authority": "Agoda",
+      "confidence": 0.88,
       "conflicts": false,
       "freshness": "unknown",
-      "last_checked": "2026-09-22T10:00:00+08:00",
-      "source_url": "https://www.booking.com/hotel/tw/hong-zhou-lu-she-hz-wan-hua-qu.html",
+      "last_checked": "2026-09-22T16:30:00+08:00",
+      "source_url": "https://www.agoda.com/golden-tulip-fab-hotel/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1",
       "status": "unverified",
       "supports": "hotel"
     },

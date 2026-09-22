@@ -153,14 +153,15 @@ export function OverviewPage({ bundle, trip }: OverviewPageProps) {
 
       {hotelCandidates.length > 0 ? <section className="overview-section" aria-labelledby="hotel-candidates-title">
           <div className="section-heading"><div><p className="eyebrow">住宿評估</p><h2 id="hotel-candidates-title">河景房必須符合：兩晚含稅不超過 NT$6,000</h2></div></div>
-        <p className="overview-candidate-intro">所有方案都是 2026/09/30 入住、10/02 退房、1 位成人的研究候選，尚未代訂。只有結帳頁明列「河景／河畔景觀」房型，且兩晚含稅總額不超過 NT$6,000，才可選為住宿；飯店位於河邊或比價較低都不等於符合條件。</p>
+        <p className="overview-candidate-intro">以下 5 間均以 Agoda 的 2026/09/30 入住、10/02 退房、1 位成人查房連結整理，尚未代訂。只有結帳頁明列「河景／河畔景觀」房型、可取消條款符合需求，且兩晚含稅總額不超過 NT$6,000，才可選為住宿；其中標示「不適用本萬華路線」者僅作河景與價格比較，不能取代此行程的飯店與交通。公開頁未回傳動態總價時，一律標示待確認。</p>
         <div className="overview-candidate-grid">
           {hotelCandidates.map((candidate, index) => <article className="overview-candidate-card" key={candidate.place_id}>
-            <div className="overview-candidate-topline"><span>候選 {index + 1}</span>{candidate.selected_candidate ? <strong>已符合條件</strong> : candidate.price_status === 'unverified' ? <strong>條件待確認</strong> : <strong>備選</strong>}</div>
+            <div className="overview-candidate-topline"><span>候選 {index + 1}</span>{candidate.itinerary_compatible === false ? <strong>不適用本萬華路線</strong> : candidate.selected_candidate ? <strong>已符合條件</strong> : candidate.price_status === 'unverified' ? <strong>條件待確認</strong> : <strong>備選</strong>}</div>
             <h3>{candidate.name}</h3>
             {candidate.room_type ? <p className="overview-candidate-room">房型線索：{candidate.room_type}</p> : null}
             <p>{candidate.decision_note || '請以訂房頁的房型、取消條款與入住規則為準。'}</p>
             {candidate.distance_notes?.length ? <div className="overview-candidate-distance"><strong>距離與夜景判斷：</strong><ul>{candidate.distance_notes.map((note) => <li key={note}>{note}</li>)}</ul></div> : null}
+            {candidate.distance_sources?.length ? <p className="overview-candidate-status">距離估算：{candidate.distance_sources.map((source, index) => source.source_url ? <span key={source.source_url}>{index > 0 ? '、' : ''}<a href={source.source_url} target="_blank" rel="noreferrer">{source.note || source.provider || '地圖導航'}</a></span> : null)}（出發前請以即時導航覆核）</p> : null}
             {candidate.price_note ? <p className="overview-candidate-price"><strong>價格／查核：</strong>{candidate.price_note}</p> : null}
             <p className="overview-candidate-status">價格狀態：{candidate.price_status === 'unverified' ? '需以一成人結帳頁確認' : candidate.price_status || '未確認'}</p>
             <div className="overview-candidate-actions">

@@ -710,6 +710,12 @@ def _bundle_hotel_candidates(trip: dict, places: dict[str, dict[str, object]]) -
             "price_note": _safe_str(_as_dict(candidate.get("provenance")).get("note")),
             "decision_note": _safe_str(place.get("opening_hours_note")),
             "distance_notes": [note for note in _as_list(candidate.get("distance_notes")) if isinstance(note, str) and note.strip()],
+            "distance_sources": [
+                _public_provenance(source)
+                for source in _as_list(candidate.get("distance_sources"))
+                if isinstance(source, dict)
+            ],
+            "itinerary_compatible": candidate.get("itinerary_compatible") is not False,
             "selected_candidate": place_id in selected_ids,
             "provenance": _public_provenance(candidate.get("provenance")),
         })
