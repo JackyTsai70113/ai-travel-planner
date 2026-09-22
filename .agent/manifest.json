@@ -8,7 +8,10 @@
     "continuous-collaboration",
     "investigation",
     "planning",
-    "platform-impact-analysis"
+    "platform-impact-analysis",
+    "taiwan-hospitality-reviews",
+    "taiwan-official-events",
+    "taiwan-travel-trends"
   ],
   "hooks": {
     "policy": ".agent/hooks/README.md",
