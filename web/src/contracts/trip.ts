@@ -179,6 +179,20 @@ export interface Bundle {
     hotel_place_ids: string[]
     flight_ids: string[]
   }
+  hotel_candidates?: Array<{
+    place_id: string
+    name: string
+    address?: string | null
+    official_url?: string | null
+    search_url?: string | null
+    google_maps_url?: string | null
+    room_type?: string | null
+    price_status?: OperationalStatus | null
+    price_note?: string | null
+    decision_note?: string | null
+    selected_candidate?: boolean
+    provenance?: BundleProvenance | null
+  }>
   operations?: BundlePublicOperations
   conditions?: {
     tide?: BundleTideConditions

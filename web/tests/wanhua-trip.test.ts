@@ -19,6 +19,24 @@ describe('萬華 2026 公開旅程', () => {
     expect(isCatalogEntry(entry)).toBe(true)
     expect(entry).toMatchObject({ status: 'preview', readiness: 'incomplete', duration_days: 3 })
     expect(bundle.budget.categories['core-tickets']).toEqual({ amount: 0, currency: 'TWD' })
-    expect(bundle.places.find((place: { id?: string }) => place.id === 'westgate-hotel')?.opening_hours_note).toContain('未宣稱已完成訂房')
+    expect(bundle.places.find((place: { id?: string }) => place.id === 'hotel-riverview')?.opening_hours_note).toContain('未宣稱已完成訂房')
+  })
+
+  it('shows five researched lodging candidates without claiming a booking or a solo final price', () => {
+    expect(bundle.hotel_candidates).toHaveLength(5)
+    expect(bundle.hotel_candidates[0]).toMatchObject({
+      place_id: 'hotel-riverview',
+      selected_candidate: true,
+      price_status: 'unverified',
+    })
+    expect(bundle.hotel_candidates.map((candidate: { place_id: string }) => candidate.place_id)).toEqual([
+      'hotel-riverview',
+      'hotel-papa-whale',
+      'hotel-wonstar',
+      'hotel-monka',
+      'hotel-hz',
+    ])
+    expect(bundle.hotel_candidates.every((candidate: { price_note?: string }) => candidate.price_note?.includes('一房兩人資料') || candidate.price_note?.includes('一成人') || candidate.price_note?.includes('1 成人'))).toBe(true)
+    expect(bundle.hotel_candidates.every((candidate: { search_url?: string }) => Boolean(candidate.search_url))).toBe(true)
   })
 })

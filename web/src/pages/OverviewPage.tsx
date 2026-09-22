@@ -86,6 +86,7 @@ export function OverviewPage({ bundle, trip }: OverviewPageProps) {
   const dayCount = bundle.days.length
   const pretripChecklist = bundle.operations?.pretrip_checklist || []
   const sourceLedger = (bundle.source_ledger || []).filter((source) => source.source_url).slice(0, 8)
+  const hotelCandidates = bundle.hotel_candidates || []
   return (
     <section className="trip-overview-shell">
       <article className="trip-overview-hero" style={{ background: heroImage }}>
@@ -126,7 +127,7 @@ export function OverviewPage({ bundle, trip }: OverviewPageProps) {
 
       <div className="overview-columns">
         <section className="overview-section">
-          <div className="section-heading"><div><p className="eyebrow">住宿安排</p><h2>每天住哪裡</h2></div></div>
+          <div className="section-heading"><div><p className="eyebrow">住宿首選</p><h2>尚未訂房的行程落點</h2></div></div>
           <div className="overview-stay-list">
             {lodgingCards.map(({ placeId, place, checkIn, checkOut }, index) => (
               <article key={placeId}>
@@ -149,6 +150,26 @@ export function OverviewPage({ bundle, trip }: OverviewPageProps) {
           </div>
         </section>
       </div>
+
+      {hotelCandidates.length > 0 ? <section className="overview-section" aria-labelledby="hotel-candidates-title">
+        <div className="section-heading"><div><p className="eyebrow">住宿候選</p><h2 id="hotel-candidates-title">一人一房，每晚上限 NT$3,000</h2></div></div>
+        <p className="overview-candidate-intro">所有方案都是 2026/09/30 入住、10/02 退房的研究候選，尚未代訂。部分比價來源以一間房、兩人顯示，不能當作一人最終成交價；請在結帳頁選擇「1 位成人」並確認兩晚含稅總額不超過 NT$6,000。</p>
+        <div className="overview-candidate-grid">
+          {hotelCandidates.map((candidate, index) => <article className="overview-candidate-card" key={candidate.place_id}>
+            <div className="overview-candidate-topline"><span>候選 {index + 1}</span>{candidate.selected_candidate ? <strong>步行夜景首選</strong> : <strong>備選</strong>}</div>
+            <h3>{candidate.name}</h3>
+            {candidate.room_type ? <p className="overview-candidate-room">房型線索：{candidate.room_type}</p> : null}
+            <p>{candidate.decision_note || '請以訂房頁的房型、取消條款與入住規則為準。'}</p>
+            {candidate.price_note ? <p className="overview-candidate-price"><strong>價格／查核：</strong>{candidate.price_note}</p> : null}
+            <p className="overview-candidate-status">價格狀態：{candidate.price_status === 'unverified' ? '需以一成人結帳頁確認' : candidate.price_status || '未確認'}</p>
+            <div className="overview-candidate-actions">
+              {candidate.search_url ? <a href={candidate.search_url} target="_blank" rel="noreferrer">查房／訂房</a> : null}
+              {candidate.official_url ? <a href={candidate.official_url} target="_blank" rel="noreferrer">官方資訊</a> : null}
+              {candidate.google_maps_url ? <a href={candidate.google_maps_url} target="_blank" rel="noreferrer">查看位置</a> : null}
+            </div>
+          </article>)}
+        </div>
+      </section> : null}
 
       {(pretripChecklist.length > 0 || sourceLedger.length > 0) ? <div className="overview-columns">
         {pretripChecklist.length > 0 ? <section className="overview-section">
