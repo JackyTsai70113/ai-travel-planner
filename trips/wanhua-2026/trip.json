@@ -392,7 +392,7 @@
         "river_view_eligible": true,
         "itinerary_compatible": true,
         "search_url": "https://www.agoda.com/hotel-riverview/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1",
-        "price_status": "unverified",
+        "price_status": "warning",
         "distance_notes": [
           "淡水河景：飯店位於河岸；0 km，但必須在訂房頁選擇明列河景／河畔景觀的房型，不能只選一般房。",
           "華西街觀光夜市：約 0.7 km；步行約 10 分鐘，是第二晚最近的夜間用餐／逛街點，但不是河景。",
@@ -414,7 +414,7 @@
           "retrieved_at": "2026-09-22T17:10:00+08:00",
           "confidence": 0.82,
           "status": "unverified",
-          "note": "Agoda 指定日期、1 成人、1 房公開頁顯示「自 NT$2,415」，並提示所選日期有 2 種房型售罄；此為起價，未標示為河景房或兩晚含稅成交總額，不能當作符合預算。只有結帳頁同時明列河景／河畔景觀、可取消，且兩晚含稅總額不超過 NT$6,000 時才可選；未建立訂單。"
+          "note": "實際房型：Director Suite，明列河景；可取消。Agoda 房型 API 顯示最低每晚未稅 NT$6,389、兩晚含稅總額約 NT$14,760，超過 NT$6,000，已淘汰；未建立訂單。"
         }
       },
       {
@@ -423,10 +423,10 @@
         "room_type": "River Studio Double／River Corner Studio；1 位成人、可取消房型優先",
         "river_view_eligible": true,
         "itinerary_compatible": true,
-        "search_url": "https://www.agoda.com/suz-hotel/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1", "price_status": "unverified",
+        "search_url": "https://www.agoda.com/suz-hotel/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1", "price_status": "warning",
         "distance_notes": ["淡水河景：Agoda 明列 River Studio 與 River Corner Studio，窗戶河景不是口頭備註。", "華中河濱公園：約 4 km、夜間叫車約 20 分鐘；與豪景同一河岸，是五間中最靠近組。"],
         "primary_distance_source": {"source_type":"derived","provider":"Google Maps 路線規劃","source_url":"https://www.google.com/maps/dir/?api=1&origin=Suz+%26+Catorze+Taipei&destination=%E8%8F%AF%E4%B8%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92&travelmode=driving","retrieved_at":"2026-09-22T16:55:00+08:00","confidence":0.7,"status":"estimated","note":"到華中河濱公園"},
-        "provenance": {"source_type": "provider", "provider": "Agoda", "source_url": "https://www.agoda.com/suz-hotel/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1", "retrieved_at": "2026-09-22T17:10:00+08:00", "confidence": 0.9, "status": "unverified", "note": "Agoda 指定日期、1 成人、1 房公開頁顯示「自 NT$4,650」，且有 4 種房型售罄。起價未連結到 River Studio 的兩晚含稅成交總額，不能當作符合預算；須在結帳頁同時確認河景、可取消與兩晚含稅不超過 NT$6,000；未建立訂單。"}
+        "provenance": {"source_type": "provider", "provider": "Agoda", "source_url": "https://www.agoda.com/suz-hotel/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1", "retrieved_at": "2026-09-22T17:20:00+08:00", "confidence": 0.9, "status": "reported", "note": "實際房型：River Studio Twin，明列河景；最低兩晚含稅總額約 NT$14,437.5，且為不可退款，超過 NT$6,000 且不符合可取消，已淘汰；未建立訂單。"}
       },
       {
         "place": {"id": "hotel-new-riverview-suites", "name": "豪景大酒店新館 New Riverview Suites Hotel", "kind": "hotel"},
@@ -434,10 +434,10 @@
         "room_type": "朝河房型待 Agoda 結帳頁確認；1 位成人、可取消房型優先",
         "river_view_eligible": true,
         "itinerary_compatible": true,
-        "search_url": "https://www.agoda.com/new-riverview-suites/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1", "price_status": "unverified",
+        "search_url": "https://www.agoda.com/new-riverview-suites/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1", "price_status": "warning",
         "distance_notes": ["淡水河景：Agoda 指出部分客房有河景，必須在房型頁確認朝河窗戶才符合。", "華中河濱公園：約 4 km、夜間叫車約 20 分鐘；仍在萬華河岸側。"],
         "primary_distance_source": {"source_type":"derived","provider":"Google Maps 路線規劃","source_url":"https://www.google.com/maps/dir/?api=1&origin=New+Riverview+Suites+Hotel+Taipei&destination=%E8%8F%AF%E4%B8%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92&travelmode=driving","retrieved_at":"2026-09-22T16:55:00+08:00","confidence":0.7,"status":"estimated","note":"到華中河濱公園"},
-        "provenance": {"source_type": "provider", "provider": "Agoda", "source_url": "https://www.agoda.com/new-riverview-suites/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1", "retrieved_at": "2026-09-22T17:10:00+08:00", "confidence": 0.82, "status": "unverified", "note": "Agoda 指定日期、1 成人、1 房公開頁顯示「自 NT$3,090」，且有 3 種房型售罄。起價未連結到朝河房型的兩晚含稅成交總額，不能當作符合預算；須在結帳頁同時確認朝河窗戶、可取消與兩晚含稅不超過 NT$6,000；未建立訂單。"}
+        "provenance": {"source_type": "provider", "provider": "Agoda", "source_url": "https://www.agoda.com/new-riverview-suites/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1", "retrieved_at": "2026-09-22T17:20:00+08:00", "confidence": 0.82, "status": "unverified", "note": "本次指定日期的 Agoda 房型回應未提供可驗證的朝河房型與成交總額；不得以飯店名稱或一般房起價推定河景，已淘汰；未建立訂單。"}
       },
       {
         "place": {"id": "hotel-i-play-inn", "name": "I PLAY Inn 玩客棧", "kind": "hotel"},
@@ -445,10 +445,10 @@
         "room_type": "Landscape with River View Quadruple；一人入住須確認總價",
         "river_view_eligible": true,
         "itinerary_compatible": true,
-        "search_url": "https://www.agoda.com/i-play-inn/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1", "price_status": "unverified",
+        "search_url": "https://www.agoda.com/i-play-inn/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1", "price_status": "warning",
         "distance_notes": ["淡水河景：Agoda 明列 Landscape with River View Quadruple，房內可確認河景。", "華中河濱公園：約 5 km、夜間叫車約 20 分鐘；CP 值優先，但四人房不一定適合一人。"],
         "primary_distance_source": {"source_type":"derived","provider":"Google Maps 路線規劃","source_url":"https://www.google.com/maps/dir/?api=1&origin=I+PLAY+Inn+Taipei&destination=%E8%8F%AF%E4%B8%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92&travelmode=driving","retrieved_at":"2026-09-22T16:55:00+08:00","confidence":0.7,"status":"estimated","note":"到華中河濱公園"},
-        "provenance": {"source_type": "provider", "provider": "Agoda", "source_url": "https://www.agoda.com/i-play-inn/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1", "retrieved_at": "2026-09-22T17:10:00+08:00", "confidence": 0.9, "status": "unverified", "note": "Agoda 指定日期、1 成人、1 房公開頁顯示「自 NT$384」，但該起價未連結到 Landscape with River View Quadruple；不能當作河景私人房兩晚含稅成交總額。須在結帳頁同時確認河景、可取消與兩晚含稅不超過 NT$6,000；未建立訂單。"}
+        "provenance": {"source_type": "provider", "provider": "Agoda", "source_url": "https://www.agoda.com/i-play-inn/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1", "retrieved_at": "2026-09-22T17:20:00+08:00", "confidence": 0.9, "status": "reported", "note": "本次指定日期的 Agoda 可售房型沒有回傳河景房；搜尋摘要的 Landscape with River View Quadruple 不能取代當前可售房型，已淘汰；未建立訂單。"}
       },
       {
         "place": {"id": "hotel-citizenm-north-gate", "name": "citizenM 台北北門酒店", "kind": "hotel"},
@@ -456,10 +456,10 @@
         "room_type": "High Floor River View King Room；1 位成人、可取消房型優先",
         "river_view_eligible": true,
         "itinerary_compatible": true,
-        "search_url": "https://www.agoda.com/citizenm-taipei-north-gate/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1", "price_status": "unverified",
+        "search_url": "https://www.agoda.com/citizenm-taipei-north-gate/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1", "price_status": "warning",
         "distance_notes": ["淡水河景：Agoda 明列 High Floor River View King Room，房內高樓河景。", "華中河濱公園：約 6 km、夜間叫車約 25 分鐘；五間中最遠，但仍在北門市中心範圍。"],
         "primary_distance_source": {"source_type":"derived","provider":"Google Maps 路線規劃","source_url":"https://www.google.com/maps/dir/?api=1&origin=citizenM+Taipei+North+Gate&destination=%E8%8F%AF%E4%B8%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92&travelmode=driving","retrieved_at":"2026-09-22T16:55:00+08:00","confidence":0.7,"status":"estimated","note":"到華中河濱公園"},
-        "provenance": {"source_type": "provider", "provider": "Agoda", "source_url": "https://www.agoda.com/citizenm-taipei-north-gate/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1", "retrieved_at": "2026-09-22T17:10:00+08:00", "confidence": 0.9, "status": "unverified", "note": "Agoda 指定日期、1 成人、1 房公開頁顯示「自 NT$3,476」，且有 1 種房型售罄。起價未連結到 High Floor River View King Room 的兩晚含稅成交總額，不能當作符合預算；須在結帳頁同時確認河景、可取消與兩晚含稅不超過 NT$6,000；未建立訂單。"}
+        "provenance": {"source_type": "provider", "provider": "Agoda", "source_url": "https://www.agoda.com/citizenm-taipei-north-gate/hotel/taipei-tw.html?checkIn=2026-09-30&los=2&adults=1&rooms=1", "retrieved_at": "2026-09-22T17:20:00+08:00", "confidence": 0.9, "status": "reported", "note": "實際房型：Guest room, Double, Premium River view，明列河景；可取消。最低兩晚含稅總額約 NT$8,900，超過 NT$6,000，已淘汰；未建立訂單。"}
       }
     ],
     "flights": [],
