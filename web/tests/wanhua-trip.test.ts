@@ -66,4 +66,16 @@ describe('萬華 2026 公開旅程', () => {
     expect(bundle.hotel_candidates.every((candidate: { search_url?: string }) => candidate.search_url?.includes('agoda.com'))).toBe(true)
     expect(bundle.hotel_candidates.filter((candidate: { itinerary_compatible?: boolean }) => candidate.itinerary_compatible !== false)).toHaveLength(5)
   })
+
+  it('keeps nearby non-river lodging leads out of the river-view candidate list', () => {
+    expect(bundle.hotel_candidates.map((candidate: { place_id: string }) => candidate.place_id)).not.toEqual(expect.arrayContaining([
+      'hotel-wholesome',
+      'hotel-caesar-metro',
+      'hotel-manka',
+      'hotel-longshan-business',
+    ]))
+    const places = new Map(bundle.places.map((place: { id: string, name: string, official_url?: string }) => [place.id, place]))
+    expect(places.get('hotel-wholesome')).toMatchObject({ name: '禾順行旅 Wholesome Hotel', official_url: 'https://www.wholesomehotel.com/' })
+    expect(places.get('hotel-caesar-metro')).toMatchObject({ name: '台北凱達大飯店 Caesar Metro Taipei', official_url: 'https://www.caesarmetro.com/contact/' })
+  })
 })

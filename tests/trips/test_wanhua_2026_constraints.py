@@ -31,6 +31,15 @@ class Wanhua2026ConstraintsTests(unittest.TestCase):
         self.assertIn("NT$6,000", hotel["provenance"]["note"])
         self.assertIn("已淘汰", hotel["provenance"]["note"])
 
+    def test_nearby_lodging_leads_do_not_pass_the_river_view_gate(self) -> None:
+        hotels = {hotel["place"]["id"]: hotel for hotel in self.trip["candidate_sets"]["hotels"]}
+        self.assertFalse(hotels["hotel-wholesome"]["river_view_eligible"])
+        self.assertFalse(hotels["hotel-caesar-metro"]["river_view_eligible"])
+        self.assertEqual(hotels["hotel-wholesome"]["price_status"], "unverified")
+        self.assertEqual(hotels["hotel-caesar-metro"]["price_status"], "unverified")
+        self.assertEqual(hotels["hotel-manka"]["provenance"]["source_type"], "user_input")
+        self.assertEqual(hotels["hotel-longshan-business"]["provenance"]["source_type"], "user_input")
+
     def test_core_official_sources_and_metro_cost_are_recorded(self) -> None:
         places = {place["id"]: place for place in self.trip["candidate_sets"]["places"]}
         for place_id in ("bopiliao", "red-house", "longshan-temple", "qizhang-station"):
