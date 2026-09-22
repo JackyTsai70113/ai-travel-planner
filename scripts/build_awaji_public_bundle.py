@@ -680,6 +680,37 @@ def _bundle_reservations(days: list[dict], places: dict[str, dict[str, object]])
     return reservations
 
 
+def _bundle_hotel_candidates(trip: dict, places: dict[str, dict[str, object]]) -> list[dict]:
+    """Expose researched lodging options without treating one as a booking."""
+    output: list[dict] = []
+    selected_ids = {str(value) for value in _as_list(_as_dict(trip.get("selected")).get("hotel_place_ids"))}
+    for candidate in _as_list(_as_dict(trip.get("candidate_sets")).get("hotels")):
+        if not isinstance(candidate, dict):
+            continue
+        candidate_place = _as_dict(candidate.get("place"))
+        place_id = _safe_str(candidate_place.get("id"))
+        if not place_id:
+            continue
+        place = places.get(place_id, candidate_place)
+        if not isinstance(place, dict):
+            place = candidate_place
+        output.append({
+            "place_id": place_id,
+            "name": _safe_str(place.get("name")) or place_id,
+            "address": _safe_str(place.get("address")),
+            "official_url": _official_url(place),
+            "search_url": _safe_str(candidate.get("search_url")),
+            "google_maps_url": _google_maps_url(place),
+            "room_type": _safe_str(candidate.get("room_type")),
+            "price_status": _as_status(candidate.get("price_status")),
+            "price_note": _safe_str(_as_dict(candidate.get("provenance")).get("note")),
+            "decision_note": _safe_str(place.get("opening_hours_note")),
+            "selected_candidate": place_id in selected_ids,
+            "provenance": _public_provenance(candidate.get("provenance")),
+        })
+    return output
+
+
 def _public_preferences(preferences: dict) -> dict:
     return {
         "hard_constraints": [
@@ -719,6 +750,7 @@ def build_public_bundle(trip: dict, trip_path: Path) -> dict:
     operations = _bundle_operations(trip)
     travel_assistant = _bundle_travel_assistant(trip)
     transport_legs = _bundle_transport_legs(trip, places)
+    hotel_candidates = _bundle_hotel_candidates(trip, places)
     place_index = _bundle_place_index(places)
     source_ledger = _bundle_source_ledger(places, trip)
     budget = trip.get("budget", {})
@@ -760,6 +792,7 @@ def build_public_bundle(trip: dict, trip_path: Path) -> dict:
             "hotel_place_ids": selected_hotel_ids,
             "flight_ids": selected_flight_ids,
         },
+        "hotel_candidates": hotel_candidates,
         "days": days,
         "reservations": reservations,
         "preferences": _public_preferences(trip.get("preferences", {})),

@@ -38,41 +38,86 @@
   "candidate_sets": {
     "places": [
       {
-        "id": "westgate-hotel",
-        "name": "WESTGATE Hotel 永安棧",
+        "id": "hotel-riverview",
+        "name": "台北豪景大酒店 Hotel Riverview Taipei",
         "kind": "hotel",
-        "address": "臺北市萬華區中華路一段150號",
+        "address": "臺北市萬華區環河南路一段77號",
         "timezone": "Asia/Taipei",
-        "google_maps_url": "https://www.google.com/maps/search/?api=1&query=WESTGATE%20Hotel%20%E6%B0%B8%E5%AE%89%E6%A3%A7",
+        "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Hotel%20Riverview%20Taipei",
         "identifiers": [
           {
             "type": "official_url",
-            "value": "https://www.westgatehotel.com.tw/",
+            "value": "https://group.riverview.com.tw/",
             "provenance": {
               "source_type": "official",
-              "provider": "WESTGATE Hotel",
-              "source_url": "https://www.westgatehotel.com.tw/",
+              "provider": "台北豪景大酒店",
+              "source_url": "https://group.riverview.com.tw/",
               "retrieved_at": "2026-09-22T10:00:00+08:00",
               "confidence": 0.9,
               "status": "confirmed",
-              "note": "官方網站說明距捷運西門站步行約一分鐘；房型、價格與可訂性需於官方訂房頁以實際日期確認。"
+              "note": "官方網站確認地址與淡水河畔定位；房型、價格與可訂性仍須以實際日期的訂房頁確認。"
             }
           }
         ],
-        "opening_hours_note": "入住、退房與房價均以官方訂房流程的 2026-09-30 至 2026-10-02 搜尋結果為準；本行程未宣稱已完成訂房。",
+        "opening_hours_note": "首選原因：位於環河南路河岸，夜景散步後最容易步行回飯店。入住、退房與一成人房價均須在訂房頁確認；本行程未宣稱已完成訂房。",
         "resolution": {
           "state": "resolved",
           "confidence": 0.9
         },
         "provenance": {
           "source_type": "official",
-          "provider": "WESTGATE Hotel",
-          "source_url": "https://www.westgatehotel.com.tw/",
+          "provider": "台北豪景大酒店",
+          "source_url": "https://group.riverview.com.tw/",
           "retrieved_at": "2026-09-22T10:00:00+08:00",
           "confidence": 0.9,
           "status": "confirmed",
-          "note": "住宿候選，不是訂房確認。"
+          "note": "住宿首選，不是訂房確認。"
         }
+      },
+      {
+        "id": "hotel-papa-whale",
+        "name": "Hotel PaPa Whale",
+        "kind": "hotel",
+        "address": "臺北市萬華區昆明街46號",
+        "timezone": "Asia/Taipei",
+        "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Hotel%20PaPa%20Whale",
+        "identifiers": [{"type": "official_url", "value": "https://www.papawhale.com/zh-tw/%E5%8F%B0%E5%8C%97%2BPaPa%2BWhale", "provenance": {"source_type": "official", "provider": "Hotel PaPa Whale", "source_url": "https://www.papawhale.com/zh-tw/%E5%8F%B0%E5%8C%97%2BPaPa%2BWhale", "retrieved_at": "2026-09-22T10:00:00+08:00", "confidence": 0.9, "status": "confirmed", "note": "官方頁列有舒適單人房 SOHO Single Room。"}}],
+        "opening_hours_note": "預算優先備選：有明列單人房型，適合西門步行；河岸夜景後回程比豪景遠。",
+        "resolution": {"state": "resolved", "confidence": 0.9},
+        "provenance": {"source_type": "official", "provider": "Hotel PaPa Whale", "source_url": "https://www.papawhale.com/zh-tw/%E5%8F%B0%E5%8C%97%2BPaPa%2BWhale", "retrieved_at": "2026-09-22T10:00:00+08:00", "confidence": 0.9, "status": "confirmed", "note": "住宿候選，不是訂房確認。"}
+      },
+      {
+        "id": "hotel-wonstar",
+        "name": "萬事達行旅 Wonstar Hotel",
+        "kind": "hotel",
+        "address": "臺北市萬華區中華路一段82號",
+        "timezone": "Asia/Taipei",
+        "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Wonstar%20Hotel%20Taipei",
+        "opening_hours_note": "西門站步行便利，公開房型資料列有經濟單人房；不是河景位置。",
+        "resolution": {"state": "resolved", "confidence": 0.88},
+        "provenance": {"source_type": "provider", "provider": "Booking.com", "source_url": "https://www.booking.com/hotel/tw/wonstar-chonghua.html", "retrieved_at": "2026-09-22T10:00:00+08:00", "confidence": 0.85, "status": "reported", "note": "住宿候選，不是訂房確認。"}
+      },
+      {
+        "id": "hotel-monka",
+        "name": "文舺行旅 Monka Hotel",
+        "kind": "hotel",
+        "address": "臺北市萬華區西園路一段139號",
+        "timezone": "Asia/Taipei",
+        "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Monka%20Hotel%20Taipei",
+        "opening_hours_note": "龍山寺與剝皮寮步行便利；公開評價的地點與整體分數佳，但尚未取得本日期的一成人報價。",
+        "resolution": {"state": "resolved", "confidence": 0.88},
+        "provenance": {"source_type": "provider", "provider": "Booking.com", "source_url": "https://www.booking.com/hotel/tw/wen-jia-xing-lu.html", "retrieved_at": "2026-09-22T10:00:00+08:00", "confidence": 0.85, "status": "reported", "note": "住宿候選，不是訂房確認。"}
+      },
+      {
+        "id": "hotel-hz",
+        "name": "宏洲旅社 HZ Hotel",
+        "kind": "hotel",
+        "address": "臺北市萬華區漢中街4號",
+        "timezone": "Asia/Taipei",
+        "google_maps_url": "https://www.google.com/maps/search/?api=1&query=HZ%20Hotel%20Taipei",
+        "opening_hours_note": "預算安全牌，靠近西門；不在河岸，適合價格優先而非夜景優先的選擇。",
+        "resolution": {"state": "resolved", "confidence": 0.86},
+        "provenance": {"source_type": "provider", "provider": "Booking.com", "source_url": "https://www.booking.com/hotel/tw/hong-zhou-lu-she-hz-wan-hua-qu.html", "retrieved_at": "2026-09-22T10:00:00+08:00", "confidence": 0.85, "status": "reported", "note": "住宿候選，不是訂房確認。"}
       },
       {
         "id": "ximen-station",
@@ -273,8 +318,8 @@
     "hotels": [
       {
         "place": {
-          "id": "westgate-hotel",
-          "name": "WESTGATE Hotel 永安棧",
+          "id": "hotel-riverview",
+          "name": "台北豪景大酒店 Hotel Riverview Taipei",
           "kind": "hotel"
         },
         "check_in": "2026-09-30",
@@ -283,17 +328,46 @@
           "adults": 1,
           "child_ages": []
         },
-        "search_url": "https://www.westgatehotel.com.tw/",
+        "room_type": "私人房；以一成人、可取消房型為優先",
+        "search_url": "https://group.riverview.com.tw/",
         "price_status": "unverified",
         "provenance": {
-          "source_type": "official",
-          "provider": "WESTGATE Hotel",
-          "source_url": "https://www.westgatehotel.com.tw/",
+          "source_type": "provider",
+          "provider": "Vio 比價與飯店官方資訊",
+          "source_url": "https://www.vio.com/Hotel/1269872/en",
           "retrieved_at": "2026-09-22T10:00:00+08:00",
-          "confidence": 0.9,
+          "confidence": 0.7,
           "status": "unverified",
-          "note": "請以 1 成人、2026-09-30 入住、2026-10-02 退房查詢；未取得使用者付款授權，未建立訂單。"
+          "note": "比價頁顯示 9/30 US$44、10/1 US$66（含稅費、一房兩人資料）；僅作房價參考。請以 1 成人結帳頁確認，兩晚含稅須不超過 NT$6,000；未建立訂單。"
         }
+      },
+      {
+        "place": {"id": "hotel-papa-whale", "name": "Hotel PaPa Whale", "kind": "hotel"},
+        "check_in": "2026-09-30", "check_out": "2026-10-02", "occupancy": {"adults": 1, "child_ages": []},
+        "room_type": "舒適單人房 SOHO Single Room",
+        "search_url": "https://www.papawhale.com/zh-tw/%E5%8F%B0%E5%8C%97%2BPaPa%2BWhale", "price_status": "unverified",
+        "provenance": {"source_type": "provider", "provider": "Vio 比價與飯店官方資訊", "source_url": "https://www.vio.com/Hotel/3006908/en-GB", "retrieved_at": "2026-09-22T10:00:00+08:00", "confidence": 0.7, "status": "unverified", "note": "比價頁顯示 9/30 約 US$36、10/1 約 US$58（含稅費、一房兩人資料）；官方頁列有單人房。請以 1 成人結帳頁確認兩晚總額；未建立訂單。"}
+      },
+      {
+        "place": {"id": "hotel-wonstar", "name": "萬事達行旅 Wonstar Hotel", "kind": "hotel"},
+        "check_in": "2026-09-30", "check_out": "2026-10-02", "occupancy": {"adults": 1, "child_ages": []},
+        "room_type": "經濟單人房（公開房型資料）",
+        "search_url": "https://www.booking.com/hotel/tw/wonstar-chonghua.html", "price_status": "unverified",
+        "provenance": {"source_type": "provider", "provider": "Vio 比價與 Booking.com", "source_url": "https://www.vio.com/Hotel/1259214/en", "retrieved_at": "2026-09-22T10:00:00+08:00", "confidence": 0.7, "status": "unverified", "note": "比價頁顯示 9/30 約 US$49、10/1 約 US$61（含稅費、一房兩人資料）。單人房型與最終價格須以一成人結帳頁確認；未建立訂單。"}
+      },
+      {
+        "place": {"id": "hotel-monka", "name": "文舺行旅 Monka Hotel", "kind": "hotel"},
+        "check_in": "2026-09-30", "check_out": "2026-10-02", "occupancy": {"adults": 1, "child_ages": []},
+        "room_type": "私人房（房型與價格待確認）",
+        "search_url": "https://www.booking.com/hotel/tw/wen-jia-xing-lu.html", "price_status": "unverified",
+        "provenance": {"source_type": "provider", "provider": "Booking.com", "source_url": "https://www.booking.com/hotel/tw/wen-jia-xing-lu.html", "retrieved_at": "2026-09-22T10:00:00+08:00", "confidence": 0.75, "status": "unverified", "note": "尚未取得這兩晚的一成人動態報價；請先查房，只有兩晚含稅不超過 NT$6,000 時才列入比較。未建立訂單。"}
+      },
+      {
+        "place": {"id": "hotel-hz", "name": "宏洲旅社 HZ Hotel", "kind": "hotel"},
+        "check_in": "2026-09-30", "check_out": "2026-10-02", "occupancy": {"adults": 1, "child_ages": []},
+        "room_type": "私人雙人房供一人入住（以實際房型為準）",
+        "search_url": "https://www.booking.com/hotel/tw/hong-zhou-lu-she-hz-wan-hua-qu.html", "price_status": "unverified",
+        "provenance": {"source_type": "provider", "provider": "Booking.com", "source_url": "https://www.booking.com/hotel/tw/hong-zhou-lu-she-hz-wan-hua-qu.html", "retrieved_at": "2026-09-22T10:00:00+08:00", "confidence": 0.7, "status": "unverified", "note": "比價區間曾低於每晚 NT$3,000，但不是你的單人最終報價；請以 1 成人、含稅兩晚總額覆核。未建立訂單。"}
       }
     ],
     "flights": [],
@@ -301,7 +375,7 @@
       {
         "id": "hotel-to-red-house",
         "mode": "walk",
-        "from_place_id": "westgate-hotel",
+        "from_place_id": "hotel-riverview",
         "to_place_id": "red-house",
         "departure_at": "2026-09-30T11:45:00+08:00",
         "arrival_at": "2026-09-30T12:00:00+08:00",
@@ -363,7 +437,7 @@
     ]
   },
   "selected": {
-    "hotel_place_ids": ["westgate-hotel"],
+    "hotel_place_ids": ["hotel-riverview"],
     "flight_ids": []
   },
   "days": [
@@ -374,7 +448,7 @@
         {
           "id": "d1-hotel-bag-drop",
           "kind": "free_time",
-          "place_id": "westgate-hotel",
+          "place_id": "hotel-riverview",
           "start_at": "2026-09-30T10:30:00+08:00",
           "end_at": "2026-09-30T11:45:00+08:00",
           "selection_status": "selected",
@@ -401,7 +475,7 @@
         {
           "id": "d1-hotel-checkin",
           "kind": "check_in",
-          "place_id": "westgate-hotel",
+          "place_id": "hotel-riverview",
           "start_at": "2026-09-30T15:00:00+08:00",
           "end_at": "2026-09-30T15:30:00+08:00",
           "selection_status": "selected",
@@ -485,7 +559,7 @@
         {
           "id": "d3-hotel-checkout",
           "kind": "check_out",
-          "place_id": "westgate-hotel",
+          "place_id": "hotel-riverview",
           "start_at": "2026-10-02T11:00:00+08:00",
           "end_at": "2026-10-02T11:30:00+08:00",
           "selection_status": "selected",
