@@ -8,7 +8,6 @@ import {
   SectionId,
   TripRoute,
   parseSection,
-  SECTION_BY_ID,
 } from './route-registry'
 import { OverviewPage } from '../pages/OverviewPage'
 import { ItineraryPage } from '../pages/ItineraryPage'
@@ -59,6 +58,10 @@ export default function TripApp({ tripMeta = null, tripSlug }: TripAppProps) {
   const pageTitleId = 'trip-page-title'
 
   const selectedSection = parseSection(route.section, 'overview')
+  const availableSectionIds = bundleLoader.bundle?.presentation?.available_sections
+  const availableSections = availableSectionIds?.length
+    ? SECTION_DEFINITIONS.filter((section) => availableSectionIds.includes(section.id))
+    : SECTION_DEFINITIONS
   const isDayScopedSection = selectedSection === 'today'
   const requestedSection = route.raw
     ? (() => {
@@ -69,7 +72,7 @@ export default function TripApp({ tripMeta = null, tripSlug }: TripAppProps) {
       }
     })()
     : ''
-  const routeSectionNotFound = requestedSection ? !SECTION_BY_ID.has(requestedSection) : false
+  const routeSectionNotFound = requestedSection ? !availableSections.some((section) => section.id === requestedSection) : false
 
   const shellStatus: TripStatusType = useMemo<TripStatusType>(() => {
     if (routeNotFound) return 'route-not-found'
@@ -200,7 +203,7 @@ export default function TripApp({ tripMeta = null, tripSlug }: TripAppProps) {
         fallbackTitle={tripMeta?.title}
         shellStatus="loading"
         pageTitleId={pageTitleId}
-        sections={SECTION_DEFINITIONS}
+        sections={availableSections}
         activeSection={selectedSection}
         onNavigateSection={gotoSection}
         isDrawerOpen={drawerOpen}
@@ -219,7 +222,7 @@ export default function TripApp({ tripMeta = null, tripSlug }: TripAppProps) {
       fallbackTitle={tripMeta?.title}
       shellStatus={shellStatus}
       pageTitleId={pageTitleId}
-      sections={SECTION_DEFINITIONS}
+      sections={availableSections}
       activeSection={selectedSection}
       onNavigateSection={gotoSection}
       isDrawerOpen={drawerOpen}

@@ -331,9 +331,7 @@ try {
     return caption ? bounds.bottom - caption.bottom : 999
   }))
   if (mediaGaps.some((gap) => gap > 2)) throw new Error(`照片卡仍有拉伸空白：${mediaGaps.join(', ')}`)
-  const routeBHref = await mobile.getByRole('link', { name: '開啟路線B' }).getAttribute('href')
-  const routeBDestination = routeBHref ? new URL(routeBHref).searchParams.get('destination') : ''
-  if (!routeBDestination?.includes('Awaji Riverside Terrace Shizuki 780-12') || routeBDestination.includes('兵庫県淡路市志筑字黒田')) throw new Error(`路線 B 仍使用無法解析的飯店地址：${routeBDestination}`)
+  if (await mobile.locator('.daily-route-map').count()) throw new Error('每日行程不應重複顯示總路線；移動應以時間軸逐段呈現')
 
   await openRoute(mobile, 'today/2026-08-31', '.itinerary-workspace')
   const flightLink = mobile.locator('#item-day5-departure-flight .map-pin-link')

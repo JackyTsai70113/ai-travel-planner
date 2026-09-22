@@ -714,6 +714,13 @@
       }
     },
     {
+      "id": "taiwan-public-sections",
+      "path": "/presentation/available_sections",
+      "value": ["overview", "today"],
+      "preserve_on_replan": true,
+      "provenance": {"source_type": "derived", "provider": "Wanhua trip planner", "retrieved_at": "2026-09-22T15:00:00+08:00", "confidence": 1.0, "status": "confirmed", "note": "台灣單人行不顯示日本模板或空白 hub。"}
+    },
+    {
       "id": "pretrip-refresh",
       "path": "/operations/pretrip_checklist",
       "value": [

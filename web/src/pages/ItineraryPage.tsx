@@ -3,7 +3,7 @@ import { Bundle, BundleDay, BundleDayItem, BundleTransportLeg, buildMapsLink, fi
 import { TripRoute } from '../app/route-registry'
 import { MapPinLink } from '../components/MapPinLink'
 import { decisionCopy } from '../lib/decision-copy'
-import { buildMapsDirectionsLink, buildRouteDirectionChunks, googleMapsHrefForPlace, googleMapsQueryForPlace } from '../lib/google-maps-links'
+import { buildMapsDirectionsLink, googleMapsHrefForPlace, googleMapsQueryForPlace } from '../lib/google-maps-links'
 import { usableOfficialHref } from '../lib/official-links'
 import type { DailyAlternative } from '../content/awaji-travel-guide'
 
@@ -97,49 +97,6 @@ function legDirectionsLink(bundle: Bundle, leg: BundleTransportLeg): string {
   ], legTravelMode(leg.mode))
 }
 
-interface RoutePoint {
-  id: string
-  label: string
-  query: string
-}
-
-function placeRoutePoint(bundle: Bundle, placeId: string, fallbackLabel?: string): RoutePoint | null {
-  const place = bundle.places?.find((candidate) => candidate.id === placeId)
-  const label = place?.name || fallbackLabel || placeId
-  const query = googleMapsQueryForPlace(place, label)
-  return query ? { id: placeId, label, query } : null
-}
-
-function routePointsForDay(bundle: Bundle, day: BundleDay): RoutePoint[] {
-  const points: RoutePoint[] = []
-  const append = (point: RoutePoint | null) => {
-    if (!point || points.at(-1)?.query === point.query) return
-    points.push(point)
-  }
-  day.items.forEach((item) => {
-    const leg = transportLegForItem(bundle, item, day.date)
-    if (leg) {
-      append(placeRoutePoint(bundle, leg.from_place, leg.from_label))
-      append(placeRoutePoint(bundle, leg.to_place, leg.to_label))
-      return
-    }
-    append(placeRoutePoint(bundle, item.place_id))
-  })
-  return points
-}
-
-function routeUrls(bundle: Bundle, day: BundleDay, points: RoutePoint[]): { chunks: ReturnType<typeof buildRouteDirectionChunks>; embed?: string } | null {
-  if (points.length < 2) return null
-  const modes = day.items.map((item) => transportLegForItem(bundle, item, day.date)?.mode).filter((mode): mode is string => Boolean(mode))
-  const mode = modes.some((value) => ['bus', 'train', 'transit'].includes(value)) ? 'transit' : modes.some((value) => ['walk', 'walking'].includes(value)) ? 'walking' : 'driving'
-  const result = {
-    chunks: buildRouteDirectionChunks(points.map((point) => ({ id: point.id, label: point.label, mapsQuery: point.query })), mode),
-  }
-  if (mode !== 'driving') return result
-  const embedParams = new URLSearchParams({ output: 'embed', dirflg: 'd', saddr: points[0].label, daddr: points.at(-1)?.label || points[1].label })
-  return { ...result, embed: `https://maps.google.com/maps?${embedParams.toString()}` }
-}
-
 export function primaryRiskForDay(bundle: Bundle, day: BundleDay): string {
   return bundle.travel_assistant?.daily_guides[day.date]?.heatRisk || '依當日氣溫安排補水與休息'
 }
@@ -223,8 +180,6 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
 
   const guide = dailyGuides[selectedDay.date]
   const lodging = lodgingForDay(bundle, selectedDay.date)
-  const dailyRoutePoints = routePointsForDay(bundle, selectedDay)
-  const dailyRoute = routeUrls(bundle, selectedDay, dailyRoutePoints)
   const dailyMedia = (() => {
     const candidates = [
       ...(lodging ? [{ place: lodging, role: '當晚住宿' }] : []),
@@ -265,7 +220,6 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
           <div><span>開車時間</span><strong>{guide.driving}</strong><small>不含景點停留與用餐</small></div>
           <div><span>固定時間</span><strong>{guide.fixedTimes}</strong><small>其餘停留可依體力調整</small></div>
         </div> : null}
-        {guide && !(guide.temperature && guide.weather && guide.rain && guide.wind && guide.activity && guide.steps && guide.stairs && guide.slope && guide.driving && guide.fixedTimes) ? <p className="day-guide-notice">本日僅提供基本提醒：{guide.heatRisk} 完整天候、活動量與交通負擔資料尚未提供；出發前請以官方公告、即時天氣與交通資訊覆核。</p> : null}
         {guide?.tide ? <div className="day-tide-card"><span>鳴門潮流與海況</span><p>{guide.tide}</p><a href="https://www.uzunomichi.jp/tide-calendar/" target="_blank" rel="noreferrer">官方潮見表</a></div> : null}
       </header>
 
@@ -280,10 +234,6 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
         })}
       </section> : null}
 
-      {dailyRoute ? <section className="daily-route-map" aria-label="當日移動路線">
-        <header><div><span>移動路線</span><h3>今日移動與停靠順序</h3><p>下列連結會在你點擊後開啟 Google Maps；實際時間與路線以當下交通資訊為準。</p></div><div className="daily-route-links">{dailyRoute.chunks.map((chunk) => <a key={chunk.id} href={chunk.href} target="_blank" rel="noreferrer">{dailyRoute.chunks.length === 1 ? '開啟路線' : `開啟${chunk.label}`}</a>)}</div></header>
-        <div className="daily-route-body">{dailyRoute.embed ? <iframe title={`${selectedDay.date} 自駕路線圖`} src={dailyRoute.embed} referrerPolicy="no-referrer-when-downgrade" /> : null}<ol>{dailyRoutePoints.map((point, index) => <li key={`${point.id}-${index}`}><span>{index + 1}</span><strong>{point.label}</strong></li>)}</ol></div>
-      </section> : null}
 
       {!showPrintView ? <div className="itinerary-utility">
         <label className="itinerary-search" htmlFor="itinerary-search"><span>搜尋 {bundle.days.length} 日行程</span><input id="itinerary-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜尋景點、餐廳或玩法" /></label>
@@ -307,7 +257,7 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
             { label: '開放／營業時間', value: decisionCopy(placeGuide.hours) },
             { label: '停車', value: decisionCopy(placeGuide.parking), href: parkingMapsQuery ? buildMapsLink(parkingMapsQuery) : undefined },
           ].filter((fact): fact is { label: string; value: string; href?: string } => Boolean(fact.value)) : []
-          const detail = placeGuide?.duration ? `停留 ${placeGuide.duration}` : objectiveItemDetail(item, leg)
+          const detail = item.place_id === 'huazhong-riverside-park' && item.notes ? item.notes : (placeGuide?.duration ? `停留 ${placeGuide.duration}` : objectiveItemDetail(item, leg))
           return <article tabIndex={-1} className={`timeline-entry ${visualKind} ${leg ? 'transport-leg' : ''} ${item.id === route.item ? 'item-highlight' : ''}`} id={`item-${item.id}`} key={item.id}>
             <div className="timeline-time"><strong>{timeLabel(item.start_at)}</strong><span>{item.end_at && item.end_at !== item.start_at ? timeLabel(item.end_at) : ''}</span></div>
             <div className="timeline-track"><span>{visualKind === 'reservation' ? '◆' : visualKind === 'meal' ? '✦' : visualKind === 'move' ? '→' : '●'}</span>{index < visibleItems.length - 1 ? <i /> : null}</div>
@@ -315,9 +265,8 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
               <span className="timeline-category">{categoryLabel(visualKind, item)}</span>
               <div className="timeline-place-heading"><h3>{officialHref ? <a className="timeline-title-link" href={officialHref} target="_blank" rel="noreferrer">{title}</a> : title}</h3><MapPinLink href={mapHref} label={leg ? `在 Google Maps 開啟 ${title} 路線` : `在 Google Maps 開啟 ${title}`} /></div>
               {detail ? <p className="timeline-detail">{detail}</p> : null}
-              {placeGuide ? <>
+              {placeGuide && item.kind !== 'free_time' ? <>
                 {facts.length > 0 ? <dl className="place-facts">{facts.map((fact) => <div key={fact.label}><dt>{fact.label}</dt><dd>{fact.href ? <a className="parking-fact-link" href={fact.href} target="_blank" rel="noreferrer" aria-label={`在 Google Maps 開啟 ${parkingMapsQuery}`}>{fact.value}</a> : fact.value}</dd></div>)}</dl> : null}
-                {!(placeGuide.duration && placeGuide.cost && placeGuide.queue && placeGuide.parking && placeGuide.sourceUrl && placeGuide.source) ? <p className="place-guide-notice">此地點目前僅提供重點提示；停留時間、費用、排隊、停車與來源資料尚未完整提供，出發前請以官方資訊覆核。</p> : null}
                 <div className="place-highlights"><strong>{visualKind === 'meal' ? '推薦餐點與飲品' : '值得看與值得玩'}</strong><ul>{placeGuide.highlights.map((highlight) => { const parts = highlightParts(highlight); return <li key={highlight}><strong>{parts.title}</strong>{parts.reason ? <span>{parts.reason}</span> : null}</li> })}</ul></div>
               </> : null}
             </div>
@@ -326,9 +275,9 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
         {quickMode !== 'all' && visibleItems.length === 0 ? <p className="timeline-empty">此日期不是今天，請切回「全部」查看完整行程。</p> : null}
       </div>}
 
-      {guide ? <section className="day-alternatives" aria-label="雨天與額外時間推薦">
-        {guide.rainOptions ? <Alternatives title="下雨時這樣玩" items={guide.rainOptions} /> : <section className="day-alternative-group"><h3>下雨時這樣玩</h3><p>尚未提供此日的雨天備案；出發前請依官方公告與即時天氣調整。</p></section>}
-        {guide.extraTimeOptions ? <Alternatives title="有多的時間，或臨時跳過一站" items={guide.extraTimeOptions} /> : <section className="day-alternative-group"><h3>有多的時間，或臨時跳過一站</h3><p>尚未提供額外時間備案；請保留彈性，並以現場交通與營業資訊為準。</p></section>}
+      {guide && (guide.rainOptions?.length || guide.extraTimeOptions?.length) ? <section className="day-alternatives" aria-label="雨天與額外時間推薦">
+        {guide.rainOptions?.length ? <Alternatives title="下雨時這樣玩" items={guide.rainOptions} /> : null}
+        {guide.extraTimeOptions?.length ? <Alternatives title="有多的時間，或臨時跳過一站" items={guide.extraTimeOptions} /> : null}
       </section> : null}
     </section>
   )

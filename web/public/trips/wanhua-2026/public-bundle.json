@@ -413,8 +413,8 @@
   ],
   "local_timezone": "Asia/Taipei",
   "meta": {
-    "bundle_sha256": "5daa1530a42b3a020b4d7a7d6e9df22b7bf7c99a78405ccec157df95cca1c0d3",
-    "generated_at": "2026-09-22T06:30:08+00:00",
+    "bundle_sha256": "3f823325b2db9d26237bb27c7f6103843925aee5acdbbeefe4cfc6100035611e",
+    "generated_at": "2026-09-22T06:43:52+00:00",
     "source_coverage": {
       "days": 3,
       "places": 13,
@@ -422,7 +422,7 @@
       "selected_hotels": 1
     },
     "source_path": "trips/wanhua-2026/trip.json",
-    "source_sha256": "7b6644fb3694d8a7eeef2223167ca3935e2977e930aebe87a2810463913aafd4",
+    "source_sha256": "ab39954623101ffadcd85723bcc3e0ab10e0fede392ed58fbc303f1d8a58b5b9",
     "trip_schema": "trip-v1"
   },
   "operations": {
@@ -787,6 +787,12 @@
         "description": "以艋舺歷史街區、寺廟與西門文化場館為主。",
         "id": "heritage-walk"
       }
+    ]
+  },
+  "presentation": {
+    "available_sections": [
+      "overview",
+      "today"
     ]
   },
   "reservations": [],

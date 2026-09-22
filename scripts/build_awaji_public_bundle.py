@@ -783,6 +783,9 @@ def build_public_bundle(trip: dict, trip_path: Path) -> dict:
                 _as_dict(trip.get("operations")).get("next_recheck_at")
             ),
         },
+        "presentation": {
+            "available_sections": _as_list(_override_value(trip, "/presentation/available_sections")),
+        },
         "local_timezone": trip.get("local_timezone"),
         "places": _bundle_places(places),
         "status": trip_status,
