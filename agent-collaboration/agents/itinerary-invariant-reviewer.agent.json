@@ -25,6 +25,9 @@
   "constraints": [
     "Unknown routes are never treated as zero minutes.",
     "Unknown opening hours are never treated as open.",
+    "A daily page may not synthesize a whole-day route by concatenating item places; each displayed movement must correspond to its own timed transport leg.",
+    "Repeated places are valid only as distinct timed actions and must not be rendered as a fabricated back-and-forth navigation route.",
+    "A partial transport amount must never be presented as the trip total when a required leg has unknown cost.",
     "Closed restaurants cannot be selected for the closed meal slot.",
     "Deterministic validation remains the final correctness gate.",
     "A verdict must bind to the exact reviewed head SHA."

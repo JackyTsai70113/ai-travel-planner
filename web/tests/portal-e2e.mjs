@@ -103,18 +103,14 @@ try {
   await page.locator('.overview-day-grid').waitFor({ state: 'visible' })
   if (!page.url().includes('/trips/wanhua-2026/')) throw new Error(`Wanhua URL was not canonical: ${page.url()}`)
   const wanhuaOverviewText = await page.locator('body').innerText()
-  if (!wanhuaOverviewText.includes('西門文化散步、入住與華中河濱夜景')) throw new Error('Wanhua day one summary did not render')
-  if (!wanhuaOverviewText.includes('NT$40 只含兩段捷運')) throw new Error('Wanhua riverside transport budget disclosure did not render')
+  if (!wanhuaOverviewText.includes('七張出發、西門紅樓、入住與華中河濱夜景')) throw new Error('Wanhua day one summary did not render')
+  if (!wanhuaOverviewText.includes('NT$60 只含七張與西門往返捷運')) throw new Error('Wanhua transport budget disclosure did not render')
   const wanhuaErrors = []
   page.on('pageerror', (error) => wanhuaErrors.push(error.message))
   const wanhuaRoutes = [
     ['today/2026-09-30', '.itinerary-workspace'],
     ['today/2026-10-01', '.itinerary-workspace'],
     ['today/2026-10-02', '.itinerary-workspace'],
-    ['reservation', '.reservation-workspace'],
-    ['food', '.food-workspace'],
-    ['packing', '.packing-workspace'],
-    ['japanese', 'section.card[aria-label="實用日文"]'],
   ]
   for (const [route, selector] of wanhuaRoutes) {
     await page.goto(`${baseUrl}trips/wanhua-2026/#/${route}`, { waitUntil: 'domcontentloaded' })
@@ -139,10 +135,6 @@ try {
   const desktopNavigation = [
     ['旅行總覽', '#/overview', '.overview-day-grid'],
     ['每日行程', '#/today/2026-09-30', '.itinerary-workspace'],
-    ['預約時間', '#/reservation', '.reservation-workspace'],
-    ['餐飲與補給', '#/food', '.food-workspace'],
-    ['攜帶物品', '#/packing', '.packing-workspace'],
-    ['實用日文', '#/japanese', 'section.card[aria-label="實用日文"]'],
   ]
   for (const [label, hash, selector] of desktopNavigation) {
     await interactionPage.locator('.trip-nav-item').filter({ hasText: label }).click()
@@ -164,10 +156,7 @@ try {
     await interactionPage.locator('.day-kicker').filter({ hasText: date }).waitFor({ state: 'visible' })
     assertNoInteractionErrors(`day tab ${index + 1}`)
   }
-  const alternativeNotice = await interactionPage.locator('.day-alternatives').innerText()
-  if (!alternativeNotice.includes('尚未提供此日的雨天備案') || !alternativeNotice.includes('尚未提供額外時間備案')) throw new Error('Wanhua missing alternatives were not disclosed')
-  if (!(await interactionPage.locator('.day-guide-notice').innerText()).includes('完整天候、活動量與交通負擔資料尚未提供')) throw new Error('Wanhua partial daily guide was not disclosed')
-  if (!(await interactionPage.locator('.place-guide-notice').first().innerText()).includes('目前僅提供重點提示')) throw new Error('Wanhua partial place guide was not disclosed')
+  if (await interactionPage.locator('.daily-route-map, .day-guide-notice, .day-alternatives, .place-guide-notice').count()) throw new Error('Wanhua itinerary showed empty or duplicate research panels')
   await interactionPage.locator('.print-button').click()
   if (!(await interactionPage.locator('.itinerary-workspace').evaluate((element) => element.classList.contains('print-itinerary')))) throw new Error('Wanhua print view did not open')
   await interactionPage.getByRole('button', { name: '返回行程' }).click()
@@ -178,19 +167,8 @@ try {
     assertNoInteractionErrors(`quick filter ${label}`)
   }
 
-  await interactionPage.locator('.trip-nav-item').filter({ hasText: '實用日文' }).click()
-  await interactionPage.locator('section.card[aria-label="實用日文"]').waitFor({ state: 'visible' })
-  const phraseCount = await interactionPage.locator('.phrase-list article').count()
-  await interactionPage.getByLabel('搜尋日文').fill('謝謝')
-  if (await interactionPage.locator('.phrase-list article').count() >= phraseCount) throw new Error('Wanhua Japanese search did not filter phrases')
-  await interactionPage.getByLabel('搜尋日文').fill('')
-  await interactionPage.getByLabel('日文分類').selectOption({ index: 1 })
-  if (await interactionPage.locator('.phrase-list article').count() === 0) throw new Error('Wanhua Japanese category filter removed every phrase')
-  await interactionPage.getByLabel('日文分類').selectOption('all')
-  await interactionPage.getByRole('button', { name: '複製日文' }).first().click()
-  await interactionPage.locator('[role="status"]').waitFor({ state: 'visible' })
-  await interactionPage.getByRole('button', { name: '播放發音' }).first().click()
-  assertNoInteractionErrors('Japanese tools')
+  const wanhuaText = await interactionPage.locator('body').innerText()
+  if (/日文|日圓|護照|幼兒|船班|JX\d|自駕/.test(wanhuaText)) throw new Error('Wanhua exposed Japan-template content')
   await interactionPage.close()
 
   const mobilePage = await browser.newPage({ viewport: { width: 390, height: 844 } })
@@ -201,10 +179,6 @@ try {
   const mobileNavigation = [
     ['旅行總覽', '.overview-day-grid'],
     ['每日行程', '.itinerary-workspace'],
-    ['預約時間', '.reservation-workspace'],
-    ['餐飲與補給', '.food-workspace'],
-    ['攜帶物品', '.packing-workspace'],
-    ['實用日文', 'section.card[aria-label="實用日文"]'],
   ]
   for (const [label, selector] of mobileNavigation) {
     await mobilePage.getByRole('button', { name: '展開導覽選單' }).click()

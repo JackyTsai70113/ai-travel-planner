@@ -12,6 +12,7 @@ describe('萬華 2026 公開旅程', () => {
     expect(parseBundle(bundle)).toEqual({ ok: true, value: bundle })
     expect(bundle.date_range).toEqual({ start_date: '2026-09-30', end_date: '2026-10-02' })
     expect(bundle.traveler_profile).toMatchObject({ adults: 1, children_count: 0 })
+    expect(bundle.presentation?.available_sections).toEqual(['overview', 'today'])
   })
 
   it('is a public preview with honest lodging and ticket data', () => {
@@ -19,7 +20,22 @@ describe('萬華 2026 公開旅程', () => {
     expect(isCatalogEntry(entry)).toBe(true)
     expect(entry).toMatchObject({ status: 'preview', readiness: 'incomplete', duration_days: 3 })
     expect(bundle.budget.categories['core-tickets']).toEqual({ amount: 0, currency: 'TWD' })
+    expect(bundle.budget.categories.metro).toEqual({ amount: 60, currency: 'TWD' })
     expect(bundle.places.find((place: { id?: string }) => place.id === 'hotel-riverview')?.opening_hours_note).toContain('未宣稱已完成訂房')
+  })
+
+  it('uses seven-zhang as a continuous public-transit start and return, without synthetic hotel loops', () => {
+    const firstDay = bundle.days[0]
+    const finalDay = bundle.days.at(-1)
+    expect(firstDay.items[0]).toMatchObject({ id: 'd1-qizhang-to-ximen', place_id: 'ximen-station' })
+    const stopSequence = firstDay.items
+      .map((item: { place_id: string }) => item.place_id)
+      .filter((placeId: string, index: number, all: string[]) => index === 0 || placeId !== all[index - 1])
+    expect(stopSequence).toEqual(['ximen-station', 'red-house', 'ximen-pedestrian-area', 'hotel-riverview', 'huazhong-riverside-park', 'hotel-riverview'])
+    expect(finalDay.items.at(-1)).toMatchObject({ id: 'd3-ximen-to-qizhang', place_id: 'qizhang-station' })
+    expect(bundle.transport_legs.find((leg: { id: string }) => leg.id === 'qizhang-to-ximen')).toMatchObject({
+      from_place: 'qizhang-station', to_place: 'ximen-station', source_url: 'https://web.metro.taipei/pages2026/WebStation/035/8',
+    })
   })
 
   it('shows five researched lodging candidates without claiming a booking or a solo final price', () => {
