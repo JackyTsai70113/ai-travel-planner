@@ -52,6 +52,11 @@ def validate_trip(trip: dict) -> None:
                 raise TripValidationError(f"{path}.transport_leg_id does not reference candidate_sets.transport_legs")
             _require_offset(item["start_at"], f"{path}.start_at")
             _require_offset(item["end_at"], f"{path}.end_at")
+            if "satisfies_constraints" in item:
+                valid_ids = {entry.get("id") for entry in trip.get("preferences", {}).get("hard_constraints", [])}
+                if (not isinstance(item["satisfies_constraints"], list)
+                        or any(identifier not in valid_ids for identifier in item["satisfies_constraints"])):
+                    raise TripValidationError(f"{path}.satisfies_constraints must reference declared hard constraints")
 
 
 def _require_money_currency(value: object, path: str) -> None:
@@ -130,6 +135,8 @@ def _validate_place(place: object, path: str) -> None:
             raise TripValidationError(f"{provenance_path} must be a non-empty array")
         for index, value in enumerate(values):
             _require_provenance(value, f"{provenance_path}[{index}]")
+    if "night_view_evidence" in place:
+        _validate_night_view_evidence(place["night_view_evidence"], f"{path}.night_view_evidence")
     resolution = place.get("resolution")
     if resolution is not None:
         if not isinstance(resolution, dict) or set(resolution) - {"state", "confidence", "clarification"}:
@@ -151,6 +158,38 @@ def _validate_coordinates(value: object, path: str) -> None:
         or not -90 <= latitude <= 90 or not -180 <= longitude <= 180
     ):
         raise TripValidationError(f"{path} is outside coordinate bounds")
+
+
+def _validate_night_view_evidence(value: object, path: str) -> None:
+    fields = {"observation_point", "river_visibility", "obstructions", "night_scene", "access_point", "retrieved_at"}
+    if not isinstance(value, dict) or set(value) != fields:
+        raise TripValidationError(f"{path} requires observation, visibility, obstruction, night scene, entrance, and retrieval date")
+    _require_offset(value["retrieved_at"], f"{path}.retrieved_at")
+    expected = {"observation_point": "confirmed", "river_visibility": "visible", "obstructions": "clear", "night_scene": "visible"}
+    allowed = {"confirmed", "visible", "clear", "not_visible", "obstructed", "unknown"}
+    for field, status in expected.items():
+        fact = value[field]
+        fact_path = f"{path}.{field}"
+        if not isinstance(fact, dict) or set(fact) != {"status", "description", "provenance"}:
+            raise TripValidationError(f"{fact_path} has invalid fields")
+        if fact.get("status") not in allowed or not isinstance(fact.get("description"), str) or not fact["description"].strip():
+            raise TripValidationError(f"{fact_path} requires a known status and description")
+        _require_provenance(fact.get("provenance"), f"{fact_path}.provenance")
+    access = value["access_point"]
+    if not isinstance(access, dict) or set(access) - {"status", "description", "provenance", "navigation_point"}:
+        raise TripValidationError(f"{path}.access_point has invalid fields")
+    if access.get("status") not in {"confirmed", "unknown"} or not isinstance(access.get("description"), str) or not access["description"].strip():
+        raise TripValidationError(f"{path}.access_point requires a status and description")
+    _require_provenance(access.get("provenance"), f"{path}.access_point.provenance")
+    point = access.get("navigation_point")
+    if access["status"] == "confirmed" and not isinstance(point, dict):
+        raise TripValidationError(f"{path}.access_point requires a navigation point when confirmed")
+    if point is not None:
+        if point.get("kind") != "entrance" or not any(key in point for key in ("coordinates", "google_maps_url", "phone", "mapcode")):
+            raise TripValidationError(f"{path}.access_point.navigation_point must identify a routed entrance")
+        if "coordinates" in point:
+            _validate_coordinates(point["coordinates"], f"{path}.access_point.navigation_point.coordinates")
+        _require_provenance(point.get("provenance"), f"{path}.access_point.navigation_point.provenance")
 
 
 def _validate_restaurant(candidate: object, index: int) -> None:

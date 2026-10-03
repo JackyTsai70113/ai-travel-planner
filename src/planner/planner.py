@@ -5,6 +5,7 @@ from __future__ import annotations
 import copy
 from datetime import datetime, timedelta
 from typing import Iterable
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from src.conditions import evaluate_conditions
 from src.opening_hours import Eligibility
@@ -53,6 +54,7 @@ def _evaluate(trip: dict, request: PlannerInput) -> CandidatePlan:
     if _has_errors(violations):
         return CandidatePlan(trip, float("-inf"), PlanState.FAILED, tuple(violations), iterations)
     state = PlanState.REPAIRED if iterations else PlanState.READY
+    _record_constraint_satisfaction(trip, request.hard_constraints)
     return CandidatePlan(trip, _score(trip, request, violations), state, tuple(violations), iterations)
 
 
@@ -124,9 +126,78 @@ def _hard_constraint_violations(trip: dict, constraints: Iterable[HardConstraint
                     duration = (max(end for _, end in starts_ends) - min(start for start, _ in starts_ends)).total_seconds() / 60
                     if duration > maximum:
                         violations.append(_constraint_violation(constraint, f"/days/{day_index}", f"daily duration {duration:g} exceeds {maximum:g} minutes"))
+        elif constraint.kind == "night_river_view":
+            if _night_river_view_match(trip, constraint) is None:
+                violations.append(_constraint_violation(constraint, "/days", "no scheduled evening viewpoint has sourced evidence for a visible river, clear sightline, night scene, and confirmed entrance; confirm an observation point or choose an evidence-backed alternative"))
         else:
             raise ValueError(f"unsupported hard constraint kind: {constraint.kind}")
     return violations
+
+
+def _night_river_view_match(trip: dict, constraint: HardConstraint):
+    from datetime import time
+    value = constraint.value if isinstance(constraint.value, dict) else {}
+    try:
+        threshold = time.fromisoformat(value.get("after", "18:00"))
+    except (TypeError, ValueError):
+        return None
+    places = {place.get("id"): place for place in trip.get("candidate_sets", {}).get("places", [])}
+    for day_index, day in enumerate(trip.get("days", [])):
+        for item_index, item in enumerate(day.get("items", [])):
+            place = places.get(item.get("place_id"), {})
+            if item.get("kind") != "visit" or not _has_confirmed_night_view_evidence(place.get("night_view_evidence")):
+                continue
+            try:
+                start, end = _timestamp(item["start_at"]), _timestamp(item["end_at"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            try:
+                local_start = start.astimezone(ZoneInfo(trip["local_timezone"]))
+            except (KeyError, TypeError, ZoneInfoNotFoundError):
+                continue
+            if local_start.timetz().replace(tzinfo=None) >= threshold and end > start:
+                return day_index, item_index
+    return None
+
+
+def _has_confirmed_night_view_evidence(evidence: object) -> bool:
+    if not isinstance(evidence, dict):
+        return False
+    required = {"observation_point": "confirmed", "river_visibility": "visible", "obstructions": "clear", "night_scene": "visible"}
+    for field, expected in required.items():
+        fact = evidence.get(field)
+        if (not isinstance(fact, dict) or fact.get("status") != expected
+                or not isinstance(fact.get("description"), str) or not fact["description"].strip()
+                or not _confirmed_source(fact.get("provenance"))):
+            return False
+    access = evidence.get("access_point")
+    point = access.get("navigation_point") if isinstance(access, dict) else None
+    return (
+        isinstance(access, dict) and access.get("status") == "confirmed"
+        and isinstance(point, dict) and point.get("kind") == "entrance"
+        and _confirmed_source(access.get("provenance"))
+        and _confirmed_source(point.get("provenance"))
+    )
+
+
+def _confirmed_source(provenance: object) -> bool:
+    if not isinstance(provenance, dict) or provenance.get("status") != "confirmed":
+        return False
+    try:
+        _timestamp(provenance["retrieved_at"])
+    except (KeyError, TypeError, ValueError):
+        return False
+    return isinstance(provenance.get("source_url"), str) and provenance["source_url"].startswith("https://")
+
+
+def _record_constraint_satisfaction(trip: dict, constraints: Iterable[HardConstraint]) -> None:
+    for constraint in constraints:
+        if constraint.kind != "night_river_view":
+            continue
+        matched = _night_river_view_match(trip, constraint)
+        if matched is not None:
+            day_index, item_index = matched
+            trip["days"][day_index]["items"][item_index].setdefault("satisfies_constraints", []).append(constraint.id)
 
 
 def _repair_only_violating_scope(trip: dict, violations: Iterable[Violation], request: PlannerInput) -> bool:

@@ -1,0 +1,50 @@
+import copy
+import json
+from pathlib import Path
+import unittest
+
+from src.schemas import TripValidationError, validate_trip
+
+TRIP = Path(__file__).parents[1] / "fixtures/trips/japan-5-day-trip-v1.json"
+WANHUA = Path(__file__).parents[1] / "trips/wanhua-2026/trip.json"
+
+
+class NightViewEvidenceSchemaTests(unittest.TestCase):
+    def setUp(self):
+        self.trip = json.loads(TRIP.read_text(encoding="utf-8"))
+
+    def _evidence(self):
+        source = {"source_type": "official", "provider": "Official Park Guide", "source_url": "https://example.test/park", "retrieved_at": "2026-09-01T10:00:00+09:00", "status": "confirmed"}
+        fact = lambda status, description: {"status": status, "description": description, "provenance": source}
+        point = {"id": "river-entrance", "kind": "entrance", "name": "Viewing deck entrance", "google_maps_url": "https://maps.google.com/?q=river-entrance", "provenance": source}
+        return {"observation_point": fact("confirmed", "Riverside viewing deck"), "river_visibility": fact("visible", "River visible from the deck after dusk"), "obstructions": fact("clear", "Sightline has no tree obstruction"), "night_scene": fact("visible", "Bridge lights visible after dusk"), "access_point": {"status": "confirmed", "description": "Viewing deck entrance confirmed", "provenance": source, "navigation_point": point}, "retrieved_at": "2026-09-01T10:00:00+09:00"}
+
+    def test_night_view_evidence_and_requirement_trace_are_valid(self):
+        self.trip["days"][0]["items"][0]["satisfies_constraints"] = ["night-river-view"]
+        place_id = self.trip["days"][0]["items"][0]["place_id"]
+        place = next(candidate for candidate in self.trip["candidate_sets"]["places"] if candidate["id"] == place_id)
+        place["night_view_evidence"] = self._evidence()
+        self.trip["preferences"]["hard_constraints"].append({"id": "night-river-view", "kind": "night_river_view", "description": "晚上看得到河流與夜景", "value": {"after": "18:00", "river_visibility": "visible", "obstructions": "clear", "night_scene": "visible"}})
+        validate_trip(self.trip)
+
+    def test_night_view_fact_requires_provenance(self):
+        self.trip["candidate_sets"]["places"][0]["night_view_evidence"] = self._evidence()
+        self.trip["candidate_sets"]["places"][0]["night_view_evidence"]["river_visibility"].pop("provenance")
+        with self.assertRaises(TripValidationError):
+            validate_trip(self.trip)
+
+    def test_wanhua_night_view_is_explicitly_unknown_and_does_not_require_a_river_view_hotel(self):
+        trip = json.loads(WANHUA.read_text(encoding="utf-8"))
+        validate_trip(trip)
+        park = next(place for place in trip["candidate_sets"]["places"] if place["id"] == "huazhong-riverside-park")
+        evidence = park["night_view_evidence"]
+        self.assertEqual(evidence["river_visibility"]["status"], "unknown")
+        self.assertEqual(evidence["obstructions"]["status"], "unknown")
+        self.assertEqual(evidence["night_scene"]["status"], "unknown")
+        self.assertEqual(evidence["access_point"]["status"], "unknown")
+        self.assertFalse(any(item["id"] == "river-view-stay-budget" for item in trip["preferences"]["hard_constraints"]))
+        self.assertFalse(any("satisfies_constraints" in item for day in trip["days"] for item in day["items"]))
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -32,17 +32,17 @@
         "value": "activities-after-18:00"
       },
       {
-        "id": "river-view-stay-budget",
-        "kind": "lodging",
-        "description": "必須選到明列河景／河畔景觀的房型，且 1 位成人兩晚含稅總額不超過 NT$6,000；任一條件不符即不選。",
-        "value": "river-view-and-total-tax-included-lte-twd-6000"
+        "id": "night-river-view",
+        "kind": "night_river_view",
+        "description": "晚上看得到河流與夜景；觀景位置、河面可見性、遮蔽物、夜景與入口均需有來源證據。",
+        "value": {"after": "18:00", "river_visibility": "visible", "obstructions": "clear", "night_scene": "visible"}
       }
     ],
     "soft_preferences": [
       {
         "id": "nearby-river-night-view",
         "kind": "theme",
-        "description": "夜間以飯店河景與距離最近、照明及人流條件合適的河岸景色為優先。",
+        "description": "夜間以有證據支持的河岸觀景位置為優先；入口、照明與人流未知時不視為符合。",
         "value": "nearby-river-night-view"
       }
     ]
@@ -161,6 +161,14 @@
         "google_maps_url": "https://www.google.com/maps/search/?api=1&query=%E8%8F%AF%E4%B8%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92",
         "identifiers": [{"type": "official_url", "value": "https://travel.taipei/en/attraction/details/581", "provenance": {"source_type": "official", "provider": "臺北市政府觀光傳播局", "source_url": "https://travel.taipei/en/attraction/details/581", "retrieved_at": "2026-09-22T14:10:00+08:00", "confidence": 0.95, "status": "confirmed", "note": "官方景點頁列為萬華區河濱公園，並顯示 24 小時開放。"}}],
         "opening_hours_note": "官方資料列 24 小時開放；本行程僅在 18:50–20:00 安排夜景備選，單人不走偏僻河堤，抵達前以官方公告、現場水門、天候、照明與人流狀況覆核。",
+        "night_view_evidence": {
+          "observation_point": {"status": "unknown", "description": "官方景點資料未確認具體夜間觀景位置。", "provenance": {"source_type": "official", "provider": "臺北市政府觀光傳播局", "source_url": "https://travel.taipei/en/attraction/details/581", "retrieved_at": "2026-09-22T14:10:00+08:00", "status": "unverified", "note": "現有資料只確認景點位置與開放資訊，未證明指定觀景點。"}},
+          "river_visibility": {"status": "unknown", "description": "夜間是否能看見河面尚未確認。", "provenance": {"source_type": "official", "provider": "臺北市政府觀光傳播局", "source_url": "https://travel.taipei/en/attraction/details/581", "retrieved_at": "2026-09-22T14:10:00+08:00", "status": "unverified", "note": "鄰河位置與 24 小時開放不構成河面可見證據。"}},
+          "obstructions": {"status": "unknown", "description": "觀景方向是否受樹木或設施遮擋尚未確認。", "provenance": {"source_type": "official", "provider": "臺北市政府觀光傳播局", "source_url": "https://travel.taipei/en/attraction/details/581", "retrieved_at": "2026-09-22T14:10:00+08:00", "status": "unverified", "note": "現有資料沒有指定視線與遮蔽物紀錄。"}},
+          "night_scene": {"status": "unknown", "description": "夜間照明、橋梁或對岸景觀尚未確認。", "provenance": {"source_type": "official", "provider": "臺北市政府觀光傳播局", "source_url": "https://travel.taipei/en/attraction/details/581", "retrieved_at": "2026-09-22T14:10:00+08:00", "status": "unverified", "note": "現有資料沒有夜間燈光或照片證據。"}},
+          "access_point": {"status": "unknown", "description": "適合抵達觀景位置的入口尚未確認。", "provenance": {"source_type": "official", "provider": "臺北市政府觀光傳播局", "source_url": "https://travel.taipei/en/attraction/details/581", "retrieved_at": "2026-09-22T14:10:00+08:00", "status": "unverified", "note": "現有資料未確認觀景點入口。"}},
+          "retrieved_at": "2026-09-22T14:10:00+08:00"
+        },
         "resolution": {"state": "resolved", "confidence": 0.95},
         "provenance": {"source_type": "official", "provider": "臺北市政府觀光傳播局", "source_url": "https://travel.taipei/en/attraction/details/581", "retrieved_at": "2026-09-22T14:10:00+08:00", "confidence": 0.95, "status": "confirmed", "note": "夜景安排的地點與開放資訊；不保證特定燈光活動或治安狀態。"}
       },
@@ -592,7 +600,7 @@
         "departure_at": "2026-09-30T20:00:00+08:00",
         "arrival_at": "2026-09-30T20:20:00+08:00",
         "distance_km": 4.0,
-        "provenance": {"source_type": "derived", "provider": "市區夜間短程轉乘規劃", "retrieved_at": "2026-09-22T16:45:00+08:00", "confidence": 0.7, "status": "estimated", "note": "同去程叫車返回；若下雨、河川警戒、照明異常或人流過少，取消河濱段，直接留在飯店河景房。"}
+        "provenance": {"source_type": "derived", "provider": "市區夜間短程轉乘規劃", "retrieved_at": "2026-09-22T16:45:00+08:00", "confidence": 0.7, "status": "estimated", "note": "同去程叫車返回；若下雨、河川警戒、照明異常或人流過少，取消河濱段並待確認其他替代安排。"}
       },
       {
         "id": "hotel-to-longshan",
@@ -719,7 +727,7 @@
           "selection_status": "selected",
           "optional": true,
           "unresolved": true,
-          "notes": "18:50 後的河岸夜景備選：華中距飯店約 20 分鐘車程，不是最近選項。僅在下車點附近步道照明正常且現場有人流時短暫看河面、華中橋與對岸燈光；若下雨、河川警戒、照明不足或人流過少，取消本段，直接回飯店河景房。"
+          "notes": "18:50 後的河岸夜景待查候選：華中距飯店約 20 分鐘車程。現有來源未確認具體觀景位置、河面可見性、遮蔽物、夜間照明與入口；不得當成已滿足河景要求。若無法取得證據，取消本段並提出其他待確認觀景點。"
         },
         {
           "id": "d1-taxi-return-hotel",
