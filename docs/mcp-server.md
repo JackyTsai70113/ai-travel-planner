@@ -23,10 +23,9 @@ verify that `get_trip` still returns that trip.
 
 For the ChatGPT-facing Site, set `MCP_BACKEND_URL` to the Railway HTTPS origin
 (without a path) and set `MCP_BACKEND_TOKEN` to the same secret in the Sites
-runtime environment. Run `npm run build:site-mcp` and
-runtime environment using `sites_update_environment_variables`. Run
+runtime environment using `sites_update_environment_variables`. Then run
 `npm run build:site-mcp` and `npm run validate:site-mcp`; the artifact is
-produced at `dist/`. Then follow this repeatable publish/connect sequence using
+produced at `dist/`. Follow this repeatable publish/connect sequence using
 the connected Sites and Plugin Management operations:
 
 1. Create a short-lived source write credential with
