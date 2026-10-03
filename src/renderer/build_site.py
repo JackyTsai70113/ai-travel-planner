@@ -30,6 +30,13 @@ def build_site(trip: dict[str, Any], derived: dict[str, Any] | None = None) -> s
     days = "".join(_render_day(day, places, restaurants) for day in trip.get("days", []))
     budget = "".join(f"<tr><th>{escape(str(k))}</th><td>{escape(_money(v))}</td></tr>" for k, v in trip.get("budget", {}).get("categories", {}).items())
     budget_data = trip.get("budget", {})
+    flight_search_url = trip.get("flight_search_url")
+    flight_summary = trip.get("flight_search_summary")
+    flight_search = (
+        f'<p>{escape(str(flight_summary)) if flight_summary else ""}　<a href="{escape(flight_search_url, quote=True)}" target="_blank" rel="noopener">開啟 Google Flights 搜尋航班</a>（請在 Google Flights 查看當下票價）</p>'
+        if isinstance(flight_search_url, str) and _safe_web_url(flight_search_url)
+        else ""
+    )
     if budget_data.get("total_status") == "incomplete":
         total = "總額待確認（僅列已知費用小計）"
     else:
@@ -40,7 +47,7 @@ def build_site(trip: dict[str, Any], derived: dict[str, Any] | None = None) -> s
 <header><p class="eyebrow">TRIP · {escape(trip.get("local_timezone", ""))}</p><h1>{title}</h1><div class="stats">{stats}</div></header>
 <nav aria-label="行程區段"><a href="#overview">總覽</a><a href="#itinerary">行程</a><a href="#budget">預算</a></nav>
 <section id="overview"><h2>總覽</h2><h3>Validation warnings</h3><ul class="warnings">{warnings}</ul><h3>未確認與估算資訊</h3><p class="hint">以下狀態由資料來源提供；此頁不判定行程是否可行。</p><div class="sources">{sources}</div><div class="attributions">{attributions}</div></section>
-<section id="itinerary"><h2>行程</h2>{days}</section><section id="budget"><h2>預算</h2><table><tbody>{budget}</tbody><tfoot><tr><th>總計</th><td>{escape(str(total))}</td></tr></tfoot></table></section>
+<section id="itinerary"><h2>行程</h2>{days}</section><section id="flights"><h2>航班搜尋</h2>{flight_search}</section><section id="budget"><h2>預算</h2><table><tbody>{budget}</tbody><tfoot><tr><th>總計</th><td>{escape(str(total))}</td></tr></tfoot></table></section>
 </main></body></html>'''
 
 

@@ -47,9 +47,7 @@ from .providers import (
 )
 from .travel import (
     AmadeusClient,
-    AmadeusFlightAdapter,
     AmadeusHotelAdapter,
-    FlightSearchQuery,
     HotelSearchQuery,
     Occupancy,
     ProviderError,
@@ -60,7 +58,6 @@ from .travel import (
 __all__ = [
     "AdapterFailure",
     "AmadeusClient",
-    "AmadeusFlightAdapter",
     "AmadeusHotelAdapter",
     "CandidateRecord",
     "CandidateState",
@@ -70,7 +67,6 @@ __all__ = [
     "FactStatus",
     "FixtureCommunityRestaurantAdapter",
     "FixtureOfficialPoiAdapter",
-    "FlightSearchQuery",
     "GooglePlacesAdapter",
     "HotPepperGourmetAdapter",
     "HotelSearchQuery",

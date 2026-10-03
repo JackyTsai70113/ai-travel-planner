@@ -19,7 +19,7 @@ from src.orchestrator import OrchestrationResult, TravelOrchestrator, TravelOrch
 from src.planner import SchedulingInput, schedule
 from src.restaurant_intelligence import eligible_restaurants, meal_eligibility, reconcile_restaurant_candidates, validation_opening_hours
 from src.sources import (
-    AdapterFailure, AmadeusClient, AmadeusFlightAdapter, AmadeusHotelAdapter, FlightSearchQuery,
+    AdapterFailure, AmadeusClient, AmadeusHotelAdapter,
     GooglePlacesAdapter, HotPepperGourmetAdapter, HotelSearchQuery, Occupancy, SourceAdapter, SourceQuery,
     YouTubeEvidenceAdapter, collect_from_adapters,
 )
@@ -30,8 +30,6 @@ from src.validator import OpeningInterval, ValidationContext
 REQUIRED_ENVIRONMENT = (
     "GOOGLE_MAPS_API_KEY",
     "YOUTUBE_API_KEY",
-    "AMADEUS_CLIENT_ID",
-    "AMADEUS_CLIENT_SECRET",
     "OPENROUTESERVICE_API_KEY",
 )
 
@@ -67,11 +65,10 @@ class _ProductionResearchAdapter(SourceAdapter):
     name = "production-research"
 
     def __init__(self, intent: TravelIntent, google: SourceAdapter, youtube: YouTubeEvidenceAdapter,
-                 amadeus_client: AmadeusClient, optional_restaurants: Sequence[SourceAdapter] = ()) -> None:
+                 hotel_client: AmadeusClient | None, optional_restaurants: Sequence[SourceAdapter] = ()) -> None:
         self.intent, self.google, self.youtube = intent, google, youtube
         self.optional_restaurants = tuple(optional_restaurants)
-        self.flight_search = AmadeusFlightAdapter(amadeus_client)
-        self.hotel_search = AmadeusHotelAdapter(amadeus_client)
+        self.hotel_search = AmadeusHotelAdapter(hotel_client) if hotel_client else None
         self.evidence: list[object] = []
         self.failures: list[AdapterFailure] = []
 
@@ -92,27 +89,19 @@ class _ProductionResearchAdapter(SourceAdapter):
         start, end = _travel_dates(self.intent)
         occupancy = Occupancy(_adults(self.intent), self.intent.travelers.child_ages)
         currency = self.intent.currency or _default_currency(self.intent)
-        if "flights" in query.categories:
+        if self.hotel_search is not None:
             try:
-                origin, destination = _airport_codes(self.intent)
-                result = self.flight_search.search(FlightSearchQuery(
-                    origin, destination, start, occupancy, return_date=end, currency=currency,
-                    airport_timezones={code: _airport_timezone(code) for code in _SUPPORTED_AIRPORT_CODES},
+                result = self.hotel_search.search(HotelSearchQuery(
+                    _hotel_city_code(self.intent), start, end, occupancy, currency=currency,
+                    room_quantity=self.intent.room_count or 1,
+                    room_quantity_explicit=self.intent.room_count is not None,
                 ))
                 candidates.extend(result.candidates)
                 self.failures.extend(result.failures)
             except Exception as exc:
-                self.failures.append(AdapterFailure(self.flight_search.name, str(exc)))
-        try:
-            result = self.hotel_search.search(HotelSearchQuery(
-                _hotel_city_code(self.intent), start, end, occupancy, currency=currency,
-                room_quantity=self.intent.room_count or 1,
-                room_quantity_explicit=self.intent.room_count is not None,
-            ))
-            candidates.extend(result.candidates)
-            self.failures.extend(result.failures)
-        except Exception as exc:
-            self.failures.append(AdapterFailure(self.hotel_search.name, str(exc)))
+                self.failures.append(AdapterFailure(self.hotel_search.name, str(exc)))
+        else:
+            self.failures.append(AdapterFailure("hotel-search", "hotel search is unavailable: Amadeus Self-Service was retired; no replacement provider is configured"))
         restaurants = reconcile_restaurant_candidates(candidate for collection, candidate in candidates if collection == "restaurants")
         candidates = [(collection, candidate) for collection, candidate in candidates if collection != "restaurants"]
         candidates.extend(("restaurants", candidate) for candidate in restaurants)
@@ -158,7 +147,9 @@ def create_production_orchestrator(*, trip_id: str, trips_directory: Path = Path
     dependencies = dependencies or ProductionDependencies()
     google = dependencies.google or GooglePlacesAdapter(api_key=environment["GOOGLE_MAPS_API_KEY"])
     youtube = dependencies.youtube or YouTubeEvidenceAdapter(api_key=environment["YOUTUBE_API_KEY"])
-    amadeus = dependencies.amadeus_client or AmadeusClient(environment=dict(environment))
+    hotel_client = dependencies.amadeus_client
+    if hotel_client is None and environment.get("AMADEUS_CLIENT_ID") and environment.get("AMADEUS_CLIENT_SECRET"):
+        hotel_client = AmadeusClient(environment=dict(environment))
     routing_provider = dependencies.routing_provider or OpenRouteServiceProvider(api_key=environment["OPENROUTESERVICE_API_KEY"])
     optional_restaurants: list[SourceAdapter] = []
     if dependencies.hotpepper is not None:
@@ -172,7 +163,7 @@ def create_production_orchestrator(*, trip_id: str, trips_directory: Path = Path
     # the facade just before invoking the existing orchestrator.
     runner = _IntentBoundRunner(
         trip_id=trip_id, trips_directory=trips_directory, site_directory=site_directory,
-        google=google, youtube=youtube, amadeus=amadeus, routing_provider=routing_provider,
+        google=google, youtube=youtube, hotel_client=hotel_client, routing_provider=routing_provider,
         optional_restaurants=tuple(optional_restaurants),
         progress_callback=progress_callback,
     )
@@ -181,17 +172,17 @@ def create_production_orchestrator(*, trip_id: str, trips_directory: Path = Path
 
 class _IntentBoundRunner(ProductionPlanningRunner):
     def __init__(self, *, trip_id: str, trips_directory: Path, site_directory: Path,
-                 google: SourceAdapter, youtube: YouTubeEvidenceAdapter, amadeus: AmadeusClient,
+                 google: SourceAdapter, youtube: YouTubeEvidenceAdapter, hotel_client: AmadeusClient | None,
                  routing_provider: object, progress_callback: Callable[[str], None] | None,
                  optional_restaurants: Sequence[SourceAdapter] = ()) -> None:
         self.trip_id, self.trips_directory, self.site_directory = _safe_trip_id(trip_id), trips_directory, site_directory
-        self.google, self.youtube, self.amadeus = google, youtube, amadeus
+        self.google, self.youtube, self.hotel_client = google, youtube, hotel_client
         self.optional_restaurants = tuple(optional_restaurants)
         self.routing_provider, self.progress_callback = routing_provider, progress_callback
 
     def run(self, intent: TravelIntent) -> OrchestrationResult:
         _require_plannable_intent(intent)
-        research = _ProductionResearchAdapter(intent, self.google, self.youtube, self.amadeus, self.optional_restaurants)
+        research = _ProductionResearchAdapter(intent, self.google, self.youtube, self.hotel_client, self.optional_restaurants)
         config = TravelOrchestratorConfig(
             adapters=(research,),
             candidate_trip_factory=lambda current, store: _candidate_trips(self.trip_id, current, store.records(), _routing_context(store.records(), self.routing_provider, current)),
@@ -220,10 +211,8 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
     places = [place for place in collections["places"] if place.get("kind") == "poi"]
     restaurants = collections["restaurants"]
     hotels, flights = collections["hotels"], collections["flights"]
-    requires_flights = _requires_flight_search(intent)
-    if len(places) < days_count or (requires_flights and not flights):
-        required = "POIs and flight" if requires_flights else "POIs"
-        raise ProductionIncompleteError(f"live provider results are insufficient for a complete trip (need {required})")
+    if len(places) < days_count:
+        raise ProductionIncompleteError("live provider results are insufficient for a complete trip (need POIs)")
     selected_hotel = _select_hotel_candidate(hotels, intent, start, end, flights, collections["places"])
     restaurants = _restaurant_candidates(restaurants, intent, start, end, routing, places,
                                          selected_hotel["place"]["id"] if selected_hotel else None)
@@ -267,6 +256,8 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
         categories["flights"] = {"amount": flight_cost, "currency": currency}
     shell = {
         "schema_version": "trip-v1", "id": trip_id, "title": " + ".join(intent.destinations) + " 行程",
+        "flight_search_url": _google_flights_search_url(intent, start, end),
+        "flight_search_summary": _google_flights_search_summary(intent, start, end),
         "local_timezone": _local_timezone(intent), "date_range": {"start_date": start.isoformat(), "end_date": end.isoformat()},
         "traveler_profile": {"adults": _adults(intent), "children": [{"age": age} for age in intent.travelers.child_ages]},
         "preferences": {"hard_constraints": _canonical_hard_constraints(intent), "soft_preferences": []},
@@ -425,7 +416,8 @@ def _legacy_trip(trip_id, intent, collections, canonical_places, start, end, sel
         categories.pop("hotel")
     if flights:
         categories["flights"] = {"amount": flight_cost, "currency": currency}
-    return {"schema_version": "trip-v1", "id": trip_id, "title": " + ".join(intent.destinations) + " 行程", "local_timezone": _local_timezone(intent), "date_range": {"start_date": start.isoformat(), "end_date": end.isoformat()}, "traveler_profile": {"adults": _adults(intent), "children": [{"age": age} for age in intent.travelers.child_ages]}, "preferences": {"hard_constraints": _canonical_hard_constraints(intent), "soft_preferences": []}, "candidate_sets": {**collections, "places": canonical_places}, "selected": {"hotel_place_ids": [selected_hotel["place"]["id"]] if selected_hotel else [], "flight_ids": [flight["id"] for flight in flights[:1]]}, "days": days, "budget": {"currency": currency, "categories": categories, "total": {"amount": flight_cost + hotel_cost, "currency": currency}, "total_status": "incomplete"}, "validation": [], "provenance": {"source_type": "derived", "provider": "production composition", "retrieved_at": datetime.now(timezone.utc).isoformat(), "status": "estimated", "note": _lodging_note(selected_hotel)}}
+    trip = {"schema_version": "trip-v1", "id": trip_id, "title": " + ".join(intent.destinations) + " 行程", "flight_search_url": _google_flights_search_url(intent, start, end), "flight_search_summary": _google_flights_search_summary(intent, start, end), "local_timezone": _local_timezone(intent), "date_range": {"start_date": start.isoformat(), "end_date": end.isoformat()}, "traveler_profile": {"adults": _adults(intent), "children": [{"age": age} for age in intent.travelers.child_ages]}, "preferences": {"hard_constraints": _canonical_hard_constraints(intent), "soft_preferences": []}, "candidate_sets": {**collections, "places": canonical_places}, "selected": {"hotel_place_ids": [selected_hotel["place"]["id"]] if selected_hotel else [], "flight_ids": [flight["id"] for flight in flights[:1]]}, "days": days, "budget": {"currency": currency, "categories": categories, "total": {"amount": flight_cost + hotel_cost, "currency": currency}, "total_status": "incomplete"}, "validation": [], "provenance": {"source_type": "derived", "provider": "production composition", "retrieved_at": datetime.now(timezone.utc).isoformat(), "status": "estimated", "note": _lodging_note(selected_hotel)}}
+    return trip
 
 
 def _canonical_hard_constraints(intent: TravelIntent) -> list[dict]:
@@ -605,13 +597,15 @@ def _adults(intent: TravelIntent) -> int:
     return intent.travelers.adults
 
 
-def _airport_codes(intent: TravelIntent) -> tuple[str, str]:
-    origin = {"台灣": "TPE", "臺灣": "TPE", "台北": "TPE", "臺北": "TPE", "桃園": "TPE", "高雄": "KHH", "香港": "HKG", "東京": "NRT", "大阪": "KIX"}.get(intent.origin or "")
-    destination = {"台灣": "TPE", "台北": "TPE", "臺北": "TPE", "萬華": "TPE", "西門町": "TPE", "德島": "TKS", "神戶": "UKB", "東京": "TYO", "大阪": "OSA", "京都": "OSA", "福岡": "FUK", "札幌": "SPK", "沖繩": "OKA", "名古屋": "NGO"}.get(intent.destinations[0] if intent.destinations else "")
-    if not origin or not destination:
-        raise ProductionIncompleteError("origin/destination lacks an explicit Amadeus airport/city-code mapping")
-    return origin, destination
+def _google_flights_search_url(intent: TravelIntent, start: date, end: date) -> str:
+    del intent, start, end
+    return "https://www.google.com/travel/flights?hl=zh-TW"
 
+
+def _google_flights_search_summary(intent: TravelIntent, start: date, end: date) -> str:
+    origin = intent.origin or "出發地未指定"
+    destination = "、".join(intent.destinations) or "目的地未指定"
+    return f"{origin} → {destination}；{start.isoformat()} 至 {end.isoformat()}"
 
 _TAIWAN_DESTINATIONS = {"台灣", "台北", "臺北", "萬華", "西門町", "西門"}
 _JAPAN_DESTINATIONS = {
@@ -632,32 +626,8 @@ def _destination_country(intent: TravelIntent) -> str:
     raise ProductionIncompleteError("destination is outside the supported Taiwan and Japan provider coverage")
 
 
-def _origin_country(intent: TravelIntent) -> str | None:
-    origin = intent.origin
-    if origin in {"台灣", "臺灣", "台北", "臺北", "桃園", "高雄"}:
-        return "TW"
-    if origin == "香港":
-        return "HK"
-    if origin in {"東京", "大阪"}:
-        return "JP"
-    return None
-
-
-def _requires_flight_search(intent: TravelIntent) -> bool:
-    destination_country = _destination_country(intent)
-    origin_country = _origin_country(intent)
-    if origin_country is None:
-        if intent.origin is not None:
-            raise ProductionIncompleteError(f"flight search is not available for origin {intent.origin!r}")
-        return destination_country == "JP"
-    return origin_country != destination_country
-
-
 def _research_categories(intent: TravelIntent) -> tuple[str, ...]:
-    categories = ("pois", "restaurants", "hotels", "flights", "transport")
-    if _requires_flight_search(intent):
-        return categories
-    return tuple(category for category in categories if category != "flights")
+    return ("pois", "restaurants", "hotels", "transport")
 
 
 def _research_destination(intent: TravelIntent) -> str:
@@ -691,21 +661,7 @@ def _default_currency(intent: TravelIntent) -> str:
     return "TWD" if _destination_country(intent) == "TW" else "JPY"
 
 
-_SUPPORTED_AIRPORT_CODES = (
-    "TPE", "KHH", "HKG", "NRT", "HND", "KIX", "ITM", "TYO", "OSA", "TKS", "UKB",
-    "FUK", "SPK", "CTS", "OKA", "NGO",
-)
 _MAX_HOTEL_DISTANCE_TO_DESTINATION_KM = 10.0
-
-
-def _airport_timezone(code: str) -> str:
-    zones = {code: "Asia/Taipei" for code in ("TPE", "KHH")}
-    zones["HKG"] = "Asia/Hong_Kong"
-    zones.update({code: "Asia/Tokyo" for code in _SUPPORTED_AIRPORT_CODES if code not in zones and code != "HKG"})
-    if code not in zones:
-        raise ProductionIncompleteError(f"flight search returned an airport without a timezone mapping: {code}")
-    return zones[code]
-
 
 def _safe_trip_id(value: str) -> str:
     cleaned = re.sub(r"[^a-z0-9_-]+", "-", value.lower()).strip("-")

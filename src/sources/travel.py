@@ -1,8 +1,9 @@
 """Provider-neutral flight and hotel search boundary.
 
-The adapters in this module use Amadeus Self-Service's documented search APIs,
-but expose only canonical candidate data.  Credentials are read at request time
-from the environment and raw provider payloads never leave this module.
+The optional Amadeus hotel adapter exposes only canonical candidate data.
+Credentials are read at request time from the environment and raw provider
+payloads never leave this module. Flight search is handled by a user-facing
+Google Flights link; this module does not query flight fares.
 """
 from __future__ import annotations
 
@@ -14,7 +15,6 @@ from datetime import date, datetime, timezone
 from typing import Any, Callable, Iterable
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
-from zoneinfo import ZoneInfo
 
 from .adapters import AdapterFailure
 
@@ -40,18 +40,6 @@ class Occupancy:
     @property
     def travelers(self) -> int:
         return self.adults + len(self.child_ages)
-
-
-@dataclass(frozen=True)
-class FlightSearchQuery:
-    origin: str
-    destination: str
-    departure_date: date
-    occupancy: Occupancy
-    return_date: date | None = None
-    non_stop: bool = False
-    currency: str | None = None
-    airport_timezones: dict[str, str] | None = None
 
 
 @dataclass(frozen=True)
@@ -110,24 +98,6 @@ class AmadeusClient:
         return self._token
 
 
-class AmadeusFlightAdapter:
-    name = "amadeus-flight-offers"
-
-    def __init__(self, client: AmadeusClient, retrieved_at: datetime | None = None) -> None:
-        self.client, self.retrieved_at = client, retrieved_at
-
-    def search(self, query: FlightSearchQuery) -> SearchResult:
-        params = {"originLocationCode": query.origin, "destinationLocationCode": query.destination,
-                  "departureDate": query.departure_date.isoformat(), "adults": str(query.occupancy.adults),
-                  "max": "20", "nonStop": str(query.non_stop).lower()}
-        if query.return_date: params["returnDate"] = query.return_date.isoformat()
-        if query.currency: params["currencyCode"] = query.currency
-        payload = self.client.get("/v2/shopping/flight-offers", params)
-        now = self.retrieved_at or datetime.now(timezone.utc)
-        candidates = tuple(("flights", _normalise_flight(offer, now, query)) for offer in payload.get("data", []))
-        return SearchResult(candidates)
-
-
 class AmadeusHotelAdapter:
     name = "amadeus-hotel-offers"
 
@@ -166,23 +136,6 @@ def collect_travel_searches(searches: Iterable[Callable[[], SearchResult]]) -> S
     return SearchResult(tuple(candidates), tuple(failures))
 
 
-def _normalise_flight(offer: dict[str, Any], retrieved_at: datetime, query: FlightSearchQuery) -> dict[str, Any]:
-    itinerary = offer["itineraries"][0]
-    segments = itinerary["segments"]
-    first, last = segments[0], segments[-1]
-    departure = _timestamp(first["departure"]["at"], first["departure"]["iataCode"], query.airport_timezones)
-    arrival = _timestamp(last["arrival"]["at"], last["arrival"]["iataCode"], query.airport_timezones)
-    price = offer["price"]
-    fare = (offer.get("travelerPricings") or [{}])[0].get("fareDetailsBySegment", [{}])[0]
-    ident = str(offer.get("id", f"{first['carrierCode']}{first['number']}-{departure}"))
-    candidate = {"id": f"amadeus-flight-{ident}", "carrier": first["carrierCode"], "flight_number": f"{first['carrierCode']}{first['number']}",
-            "departure": {"place_id": first["departure"]["iataCode"].lower(), "at": departure}, "arrival": {"place_id": last["arrival"]["iataCode"].lower(), "at": arrival},
-            "cost": _money(price["grandTotal"], price["currency"]), "direct": len(segments) == 1, "transfer_count": len(segments) - 1,
-            "fare_family": fare.get("brandedFare"), "baggage": fare.get("includedCheckedBags"), "provider_reference": str(offer.get("id", "")),
-            "search_url": "https://www.amadeus.com/en/booking", "price_status": "unverified", "provenance": _provenance(retrieved_at)}
-    return {key: value for key, value in candidate.items() if value is not None}
-
-
 def _normalise_hotel(hotel: dict[str, Any], offer: dict[str, Any], retrieved_at: datetime, query: HotelSearchQuery) -> dict[str, Any]:
     price = offer["price"]
     total = _money(price["total"], price["currency"])
@@ -209,13 +162,6 @@ def _normalise_hotel(hotel: dict[str, Any], offer: dict[str, Any], retrieved_at:
 
 def _money(amount: Any, currency: str) -> dict[str, Any]: return {"amount": float(amount), "currency": currency.upper()}
 def _provenance(retrieved_at: datetime) -> dict[str, Any]: return {"source_type": "provider", "provider": "Amadeus Self-Service API", "source_url": "https://developers.amadeus.com/", "retrieved_at": retrieved_at.isoformat(), "status": "unverified", "note": "Search price only; availability and final price require provider confirmation."}
-def _timestamp(value: str, airport: str, zones: dict[str, str] | None) -> str:
-    parsed = datetime.fromisoformat(value)
-    if parsed.tzinfo is None:
-        zone = (zones or {}).get(airport)
-        if not zone: raise ProviderError(f"missing timezone for airport {airport}")
-        parsed = parsed.replace(tzinfo=ZoneInfo(zone))
-    return parsed.isoformat()
 def _provider_message(payload: dict[str, Any], status: int) -> str: return str(payload.get("errors", payload.get("error_description", f"provider HTTP {status}")))
 def _urllib_transport(method: str, url: str, headers: dict[str, str], body: bytes | None) -> tuple[int, dict[str, Any]]:
     try:
