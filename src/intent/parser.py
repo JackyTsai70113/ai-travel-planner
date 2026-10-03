@@ -142,6 +142,10 @@ def parse_trip_request(text: str) -> TripRequest:
         hard.append(HardConstraint(f"required-{place}", "required_location", place))
     for place in forbidden:
         hard.append(HardConstraint(f"forbidden-{place}", "forbidden_location", place))
+    night_river_view = re.search(r"(?:晚上|夜間|夜晚)[^，。；;]{0,12}(?:看到|看得到|可看|欣賞)[^，。；;]{0,12}(?:河流|河面|河景)[^，。；;]{0,8}(?:夜景|夜色)", text)
+    if night_river_view:
+        hard.append(HardConstraint("night-river-view", "night_river_view", {"after": "18:00", "river_visibility": "visible", "obstructions": "clear", "night_scene": "visible"}))
+        provenance["hard_constraints"].append(FieldProvenance(night_river_view.group(0), night_river_view.start(), night_river_view.end(), "hard_constraints"))
     soft = [SoftPreference("low-fatigue", "low_fatigue")] if pace == "relaxed" else []
     missing = _missing(places, start_date, values.get("duration"), values.get("adults"), budget_amount)
     ambiguous = []

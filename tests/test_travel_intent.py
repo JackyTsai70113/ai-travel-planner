@@ -331,6 +331,15 @@ class TravelIntentParserTests(unittest.TestCase):
         self.assertEqual(payload["constraint_issues"], [])
         self.assertEqual(json.loads(json.dumps(payload, ensure_ascii=False))["raw_text"], intent.raw_text)
 
+    def test_night_river_view_request_is_traceable_and_does_not_require_a_river_view_hotel(self):
+        text = "台灣萬華三天兩夜，晚上看得到河流與夜景"
+        intent = parse_trip_request(text)
+        constraint = next(item for item in intent.hard_constraints if item.kind == "night_river_view")
+        source = next(item for item in intent.provenance["hard_constraints"] if item.text == "晚上看得到河流與夜景")
+        self.assertEqual(constraint.value["after"], "18:00")
+        self.assertEqual(text[source.start:source.end], source.text)
+        self.assertFalse(any(item.kind == "river_view_hotel" for item in intent.hard_constraints))
+
     def _parse(self, name):
         return parse_trip_request(FIXTURE_BY_NAME[name]["text"])
 

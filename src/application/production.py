@@ -229,6 +229,7 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
     for place in [*all_places, *(restaurant["place"] for restaurant in restaurants)]:
         if place["id"] not in seen:
             seen.add(place["id"]); canonical_places.append(place)
+    _record_unknown_night_view_evidence(canonical_places, intent)
 
     if any(not candidate.get("schedule") for candidate in [*places, *restaurants]):
         # Backward-compatible path for normalized providers that predate the
@@ -263,7 +264,7 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
         "schema_version": "trip-v1", "id": trip_id, "title": " + ".join(intent.destinations) + " 行程",
         "local_timezone": _local_timezone(intent), "date_range": {"start_date": start.isoformat(), "end_date": end.isoformat()},
         "traveler_profile": {"adults": _adults(intent), "children": [{"age": age} for age in intent.travelers.child_ages]},
-        "preferences": {"hard_constraints": [], "soft_preferences": []},
+        "preferences": {"hard_constraints": _canonical_hard_constraints(intent), "soft_preferences": []},
         "candidate_sets": {**collections, "places": canonical_places},
         "selected": {"hotel_place_ids": [hotels[0]["place"]["id"]], "flight_ids": [flight["id"] for flight in flights[:1]]},
         "days": [],
@@ -284,7 +285,42 @@ def _legacy_trip(trip_id, intent, collections, canonical_places, start, end, hot
     categories = {"hotel": {"amount": hotel_cost, "currency": currency}}
     if flights:
         categories["flights"] = {"amount": flight_cost, "currency": currency}
-    return {"schema_version": "trip-v1", "id": trip_id, "title": " + ".join(intent.destinations) + " 行程", "local_timezone": _local_timezone(intent), "date_range": {"start_date": start.isoformat(), "end_date": end.isoformat()}, "traveler_profile": {"adults": _adults(intent), "children": [{"age": age} for age in intent.travelers.child_ages]}, "preferences": {"hard_constraints": [], "soft_preferences": []}, "candidate_sets": {**collections, "places": canonical_places}, "selected": {"hotel_place_ids": [hotels[0]["place"]["id"]], "flight_ids": [flight["id"] for flight in flights[:1]]}, "days": days, "budget": {"currency": currency, "categories": categories, "total": {"amount": flight_cost + hotel_cost, "currency": currency}}, "validation": [], "provenance": {"source_type": "derived", "provider": "production composition", "retrieved_at": datetime.now(timezone.utc).isoformat(), "status": "estimated", "note": "Built only from normalized provider candidates; availability requires provider confirmation."}}
+    return {"schema_version": "trip-v1", "id": trip_id, "title": " + ".join(intent.destinations) + " 行程", "local_timezone": _local_timezone(intent), "date_range": {"start_date": start.isoformat(), "end_date": end.isoformat()}, "traveler_profile": {"adults": _adults(intent), "children": [{"age": age} for age in intent.travelers.child_ages]}, "preferences": {"hard_constraints": _canonical_hard_constraints(intent), "soft_preferences": []}, "candidate_sets": {**collections, "places": canonical_places}, "selected": {"hotel_place_ids": [hotels[0]["place"]["id"]], "flight_ids": [flight["id"] for flight in flights[:1]]}, "days": days, "budget": {"currency": currency, "categories": categories, "total": {"amount": flight_cost + hotel_cost, "currency": currency}}, "validation": [], "provenance": {"source_type": "derived", "provider": "production composition", "retrieved_at": datetime.now(timezone.utc).isoformat(), "status": "estimated", "note": "Built only from normalized provider candidates; availability requires provider confirmation."}}
+
+
+def _canonical_hard_constraints(intent: TravelIntent) -> list[dict]:
+    constraints = []
+    source = next(iter(intent.provenance.get("hard_constraints", ())), None)
+    for constraint in intent.hard_constraints:
+        if constraint.kind == "night_river_view":
+            constraints.append({"id": constraint.id, "kind": constraint.kind,
+                                "description": source.text if source else "晚上看得到河流與夜景",
+                                "value": constraint.value})
+    return constraints
+
+
+def _record_unknown_night_view_evidence(places: Sequence[dict], intent: TravelIntent) -> None:
+    if not any(constraint.kind == "night_river_view" for constraint in intent.hard_constraints):
+        return
+    retrieved_at = datetime.now(ZoneInfo(_local_timezone(intent))).isoformat()
+    provenance = {"source_type": "derived", "provider": "production composition",
+                  "retrieved_at": retrieved_at, "status": "unverified",
+                  "note": "Current place sources do not include viewpoint-specific night visibility evidence."}
+    descriptions = {
+        "observation_point": "觀景位置尚未由來源確認。",
+        "river_visibility": "夜間河面可見性尚未由來源確認。",
+        "obstructions": "觀景方向的樹木或其他遮蔽物尚未由來源確認。",
+        "night_scene": "夜間照明或景觀尚未由來源確認。",
+    }
+    for place in places:
+        if place.get("kind") != "poi" or "night_view_evidence" in place:
+            continue
+        place["night_view_evidence"] = {
+            **{field: {"status": "unknown", "description": description, "provenance": provenance}
+               for field, description in descriptions.items()},
+            "access_point": {"status": "unknown", "description": "抵達入口尚未由來源確認。", "provenance": provenance},
+            "retrieved_at": retrieved_at,
+        }
 
 
 def _routing_context(records: Iterable[object], routing_provider: object, intent: TravelIntent) -> ValidationContext:

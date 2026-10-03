@@ -7,6 +7,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 import json
 import re
+from urllib.parse import urlsplit
 
 from src.opening_hours import parse_clock, snapshot_from_mapping
 
@@ -52,6 +53,14 @@ def validate_trip(trip: dict) -> None:
                 raise TripValidationError(f"{path}.transport_leg_id does not reference candidate_sets.transport_legs")
             _require_offset(item["start_at"], f"{path}.start_at")
             _require_offset(item["end_at"], f"{path}.end_at")
+            if "satisfies_constraints" in item:
+                valid_ids = {entry.get("id") for entry in trip.get("preferences", {}).get("hard_constraints", [])}
+                identifiers = item["satisfies_constraints"]
+                if (not isinstance(identifiers, list)
+                        or any(not isinstance(identifier, str) for identifier in identifiers)
+                        or len(identifiers) != len(set(identifiers))
+                        or any(identifier not in valid_ids for identifier in identifiers)):
+                    raise TripValidationError(f"{path}.satisfies_constraints must reference declared hard constraints")
 
 
 def _require_money_currency(value: object, path: str) -> None:
@@ -130,6 +139,8 @@ def _validate_place(place: object, path: str) -> None:
             raise TripValidationError(f"{provenance_path} must be a non-empty array")
         for index, value in enumerate(values):
             _require_provenance(value, f"{provenance_path}[{index}]")
+    if "night_view_evidence" in place:
+        _validate_night_view_evidence(place["night_view_evidence"], f"{path}.night_view_evidence")
     resolution = place.get("resolution")
     if resolution is not None:
         if not isinstance(resolution, dict) or set(resolution) - {"state", "confidence", "clarification"}:
@@ -151,6 +162,51 @@ def _validate_coordinates(value: object, path: str) -> None:
         or not -90 <= latitude <= 90 or not -180 <= longitude <= 180
     ):
         raise TripValidationError(f"{path} is outside coordinate bounds")
+
+
+def _validate_night_view_evidence(value: object, path: str) -> None:
+    fields = {"observation_point", "river_visibility", "obstructions", "night_scene", "access_point", "retrieved_at"}
+    if not isinstance(value, dict) or set(value) != fields:
+        raise TripValidationError(f"{path} requires observation, visibility, obstruction, night scene, entrance, and retrieval date")
+    _require_offset(value["retrieved_at"], f"{path}.retrieved_at")
+    allowed = {"observation_point": {"confirmed", "unknown"}, "river_visibility": {"visible", "not_visible", "unknown"}, "obstructions": {"clear", "obstructed", "unknown"}, "night_scene": {"visible", "not_visible", "unknown"}}
+    for field, statuses in allowed.items():
+        fact = value[field]
+        fact_path = f"{path}.{field}"
+        if not isinstance(fact, dict) or set(fact) != {"status", "description", "provenance"}:
+            raise TripValidationError(f"{fact_path} has invalid fields")
+        if fact.get("status") not in statuses or not isinstance(fact.get("description"), str) or not fact["description"].strip():
+            raise TripValidationError(f"{fact_path} requires a known status and description")
+        _require_provenance(fact.get("provenance"), f"{fact_path}.provenance")
+    access = value["access_point"]
+    if not isinstance(access, dict) or set(access) - {"status", "description", "provenance", "navigation_point"}:
+        raise TripValidationError(f"{path}.access_point has invalid fields")
+    if access.get("status") not in {"confirmed", "unknown"} or not isinstance(access.get("description"), str) or not access["description"].strip():
+        raise TripValidationError(f"{path}.access_point requires a status and description")
+    _require_provenance(access.get("provenance"), f"{path}.access_point.provenance")
+    point = access.get("navigation_point")
+    if access["status"] == "confirmed" and not isinstance(point, dict):
+        raise TripValidationError(f"{path}.access_point requires a navigation point when confirmed")
+    if point is not None:
+        point_path = f"{path}.access_point.navigation_point"
+        allowed_point_fields = {"id", "kind", "name", "coordinates", "google_maps_url", "phone", "mapcode", "provenance"}
+        if not isinstance(point, dict) or set(point) - allowed_point_fields:
+            raise TripValidationError(f"{point_path} has invalid fields")
+        _require_canonical_id(point.get("id"), f"{point_path}.id")
+        if point.get("kind") != "entrance" or not any(key in point for key in ("coordinates", "google_maps_url", "phone", "mapcode")):
+            raise TripValidationError(f"{path}.access_point.navigation_point must identify a routed entrance")
+        if "coordinates" in point:
+            _validate_coordinates(point["coordinates"], f"{point_path}.coordinates")
+        if "google_maps_url" in point and not _valid_uri(point["google_maps_url"]):
+            raise TripValidationError(f"{point_path}.google_maps_url must be a URI")
+        if "phone" in point and (not isinstance(point["phone"], str) or not point["phone"].strip()):
+            raise TripValidationError(f"{point_path}.phone must be non-empty")
+        if "mapcode" in point and (not isinstance(point["mapcode"], str) or not point["mapcode"].strip()):
+            raise TripValidationError(f"{point_path}.mapcode must be non-empty")
+        if "name" in point and not isinstance(point["name"], str):
+            raise TripValidationError(f"{point_path}.name must be a string")
+        if "provenance" in point:
+            _require_provenance(point["provenance"], f"{point_path}.provenance")
 
 
 def _validate_restaurant(candidate: object, index: int) -> None:
@@ -291,6 +347,18 @@ def _require_provenance(value: object, path: str) -> None:
 def _require_canonical_id(value: object, path: str) -> None:
     if not isinstance(value, str) or re.fullmatch(r"[a-z][a-z0-9_-]*", value) is None:
         raise TripValidationError(f"{path} must be a canonical lowercase ID")
+
+
+def _valid_uri(value: object) -> bool:
+    if not isinstance(value, str) or not value.strip():
+        return False
+    try:
+        parsed = urlsplit(value)
+        valid = parsed.scheme in {"http", "https"} and bool(parsed.netloc) and bool(parsed.hostname)
+        parsed.port  # Accessing port validates that any explicit port is numeric and in range.
+        return valid
+    except ValueError:
+        return False
 
 
 def load_trip(path: str | Path) -> dict:

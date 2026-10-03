@@ -34,8 +34,8 @@ class HardConstraint:
     """A non-negotiable planning condition, evaluated before soft scoring.
 
     Supported kinds are ``fixed_time``, ``reservation_time``,
-    ``required_location``, ``forbidden_location`` and
-    ``max_daily_duration``.  Opening-hours, transport feasibility, and a
+    ``required_location``, ``forbidden_location``, ``max_daily_duration`` and
+    ``night_river_view``. Opening-hours, transport feasibility, and a
     strict budget ceiling are supplied through :class:`ValidationContext` so
     the planner never invents those facts.
     """

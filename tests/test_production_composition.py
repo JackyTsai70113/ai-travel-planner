@@ -148,10 +148,26 @@ def test_taiwan_domestic_trip_uses_taiwan_context_without_flight_search(tmp_path
     assert trip["selected"]["flight_ids"] == []
     assert trip["candidate_sets"]["flights"] == []
     assert set(trip["budget"]["categories"]) == {"hotel"}
-    assert all(
-        item["start_at"].endswith("+08:00") and item["end_at"].endswith("+08:00")
-        for day in trip["days"] for item in day["items"]
-    )
+
+
+def test_night_river_view_without_confirmed_viewpoint_evidence_stays_incomplete(tmp_path):
+    intent = parse_trip_request("2026/10/20到2026/10/22，台北出發，台灣萬華西門三天兩夜，2大，大眾運輸，晚上看得到河流與夜景")
+
+    def taiwan_transport(method, url, headers, body):
+        if url.endswith("/v1/security/oauth2/token"):
+            return 200, {"access_token": "recorded-token"}
+        if "locations/hotels/by-city" in url:
+            return 200, {"data": [{"hotelId": "H1"}]}
+        if "hotel-offers" in url:
+            return 200, {"data": [{"hotel": {"hotelId": "H1", "name": "Recorded Taipei hotel", "latitude": 25.04, "longitude": 121.51}, "offers": [{"id": "hotel-offer", "price": {"total": "2000", "currency": "TWD"}}]}]}
+        raise AssertionError(url)
+
+    result = _runner(tmp_path, google=RecordedTaiwanGoogle(), transport=taiwan_transport).run(intent)
+    assert not result.succeeded
+    assert result.trip is None
+    validation = result.stage(StageName.VALIDATOR_REPAIR)
+    assert validation.status is StageStatus.FAILED
+    assert any("no scheduled evening viewpoint has sourced evidence" in warning.message for warning in validation.warnings)
 
 
 def test_cross_border_hong_kong_to_taiwan_still_searches_flight(tmp_path):

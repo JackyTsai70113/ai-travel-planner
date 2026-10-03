@@ -83,6 +83,40 @@ class PlannerTests(unittest.TestCase):
         self.assertEqual(result.plans[0].state, PlanState.FAILED)
         self.assertIn("constraint.forbidden_location", {v.code for v in result.plans[0].violations})
 
+    def test_night_river_view_requires_confirmed_facts_and_evening_visit(self):
+        from src.planner.planner import _hard_constraint_violations, _record_constraint_satisfaction
+
+        source = {"source_type": "official", "provider": "Official Park Guide", "source_url": "https://example.test/park", "retrieved_at": "2026-09-01T10:00:00+08:00", "status": "confirmed"}
+        fact = lambda status, description: {"status": status, "description": description, "provenance": source}
+        evidence = {"observation_point": fact("confirmed", "Riverside viewing deck"),
+                    "river_visibility": fact("visible", "River visible from the deck at night"),
+                    "obstructions": fact("clear", "No tree canopy blocks the sightline"),
+                    "night_scene": fact("visible", "Bridge lights visible after dusk"),
+                    "access_point": {"status": "confirmed", "description": "Entrance verified", "provenance": source,
+                                     "navigation_point": {"id": "river-entrance", "kind": "entrance", "google_maps_url": "https://maps.google.com/?q=river-entrance", "provenance": source}},
+                    "retrieved_at": "2026-09-01T10:00:00+08:00"}
+        trip = {"local_timezone": "Asia/Taipei", "candidate_sets": {"places": [{"id": "river-park", "night_view_evidence": evidence}]},
+                "days": [{"items": [{"kind": "visit", "place_id": "river-park", "start_at": "2026-10-01T19:00:00+08:00", "end_at": "2026-10-01T20:00:00+08:00"}]}]}
+        constraint = HardConstraint("night-river-view", "night_river_view", {"after": "18:00"})
+
+        self.assertEqual(_hard_constraint_violations(trip, [constraint]), [])
+        _record_constraint_satisfaction(trip, [constraint])
+        self.assertEqual(trip["days"][0]["items"][0]["satisfies_constraints"], ["night-river-view"])
+        trip["days"][0]["items"].append({"kind": "visit", "place_id": "other-place", "start_at": "2026-10-01T20:00:00+08:00", "end_at": "2026-10-01T21:00:00+08:00", "satisfies_constraints": ["night-river-view", "other-constraint"]})
+        _record_constraint_satisfaction(trip, [constraint])
+        self.assertEqual(trip["days"][0]["items"][0]["satisfies_constraints"], ["night-river-view"])
+        self.assertEqual(trip["days"][0]["items"][1]["satisfies_constraints"], ["other-constraint"])
+        _record_constraint_satisfaction(trip, [constraint])
+        self.assertEqual(trip["days"][0]["items"][0]["satisfies_constraints"], ["night-river-view"])
+        unknown = copy.deepcopy(trip)
+        unknown["candidate_sets"]["places"][0]["night_view_evidence"]["river_visibility"]["status"] = "unknown"
+        self.assertTrue(_hard_constraint_violations(unknown, [constraint]))
+        daylight = copy.deepcopy(trip)
+        daylight["days"][0]["items"][0]["start_at"] = "2026-10-01T17:00:00+08:00"
+        self.assertTrue(_hard_constraint_violations(daylight, [constraint]))
+        daylight["days"][0]["items"][0]["start_at"] = "2026-10-01T19:00:00+00:00"
+        self.assertTrue(_hard_constraint_violations(daylight, [constraint]))
+
     def test_preserved_override_wins_over_candidate_mutation(self):
         trip = copy.deepcopy(self.trip)
         trip["selected"]["hotel_place_ids"] = []
