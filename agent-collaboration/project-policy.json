@@ -95,5 +95,5 @@
       ]
     }
   ],
-  "required_checks": ["framework", "python", "pytest", "mcp-site", "website"]
+  "required_checks": ["framework", "python", "pytest", "mcp-site"]
 }

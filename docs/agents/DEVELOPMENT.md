@@ -133,7 +133,9 @@ Use `.github/PULL_REQUEST_TEMPLATE/agentic-checklist.md` to record acceptance co
 
 ## Review and integration
 
-1. CI jobs `framework`, `python`, and `website` must pass.
+1. CI jobs `framework`, `python`, `pytest`, and `mcp-site` must pass. The
+   conditional `website` job must also pass when website, trip-data, schema,
+   or static-site build paths change.
 2. Reviewers inspect the pushed exact head SHA and remain read-only.
 3. Travel domain reviewers are routed by changed path from `agent-collaboration/project-policy.json`.
 4. Any material fix invalidates an earlier verdict and requires review of the new SHA.
