@@ -197,7 +197,9 @@ def _record_constraint_satisfaction(trip: dict, constraints: Iterable[HardConstr
         matched = _night_river_view_match(trip, constraint)
         if matched is not None:
             day_index, item_index = matched
-            trip["days"][day_index]["items"][item_index].setdefault("satisfies_constraints", []).append(constraint.id)
+            satisfied = trip["days"][day_index]["items"][item_index].setdefault("satisfies_constraints", [])
+            if constraint.id not in satisfied:
+                satisfied.append(constraint.id)
 
 
 def _repair_only_violating_scope(trip: dict, violations: Iterable[Violation], request: PlannerInput) -> bool:

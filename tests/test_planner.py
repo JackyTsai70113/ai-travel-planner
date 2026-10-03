@@ -102,6 +102,8 @@ class PlannerTests(unittest.TestCase):
         self.assertEqual(_hard_constraint_violations(trip, [constraint]), [])
         _record_constraint_satisfaction(trip, [constraint])
         self.assertEqual(trip["days"][0]["items"][0]["satisfies_constraints"], ["night-river-view"])
+        _record_constraint_satisfaction(trip, [constraint])
+        self.assertEqual(trip["days"][0]["items"][0]["satisfies_constraints"], ["night-river-view"])
         unknown = copy.deepcopy(trip)
         unknown["candidate_sets"]["places"][0]["night_view_evidence"]["river_visibility"]["status"] = "unknown"
         self.assertTrue(_hard_constraint_violations(unknown, [constraint]))
