@@ -146,7 +146,7 @@ class MCPTravelServerTests(unittest.TestCase):
                 **os.environ,
                 "PYTHONPATH": str(project),
                 "MCP_TRANSPORT": "streamable-http",
-                "MCP_BACKEND_TOKEN": token,
+                "BEARER_TOKEN": token,
                 "PORT": str(port),
                 "RAILWAY_PUBLIC_DOMAIN": "travel.example.test",
             },

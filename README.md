@@ -25,6 +25,9 @@ export OPENROUTESERVICE_API_KEY='...'
 export HOTPEPPER_API_KEY='...'
 ```
 
+For the production OpenRouteService key, account signup, free-plan limits, and
+Railway secret setup, see [`docs/flight-hotel-providers.md`](docs/flight-hotel-providers.md#openrouteservice-key).
+
 Run the end-user entrypoint with a natural-language request:
 
 ```sh
