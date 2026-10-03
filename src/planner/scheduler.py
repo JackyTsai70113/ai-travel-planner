@@ -49,6 +49,26 @@ def schedule(request: SchedulingInput) -> SchedulingOutput:
     if _has_errors(violations):
         return SchedulingOutput((ScheduledTrip(trip, ScheduleState.FAILED, tuple(violations)),))
     trip["days"] = days
+    selected_meal_items = {(day_number, item["place_id"]): item
+                           for day_number, day in enumerate(days, start=1)
+                           for item in day["items"] if item.get("kind") == "meal"}
+    for candidate in trip.get("candidate_sets", {}).get("restaurants", []):
+        details = candidate.get("schedule")
+        place = candidate.get("place", candidate)
+        placed_entry = next(((day_number, item) for (day_number, place_id), item in selected_meal_items.items() if place_id == place.get("id")), None)
+        if placed_entry is None:
+            if isinstance(details, dict):
+                details["selected"] = False
+            continue
+        day_number, placed = placed_entry
+        placed_activity = next((item for item in activities if item["id"] == place.get("id")
+                                and item["schedule"].get("day") == day_number
+                                and item["schedule"].get("fixed_start_at") == placed["start_at"]), None)
+        if placed_activity is not None:
+            candidate["schedule"] = {key: value for key, value in placed_activity["schedule"].items()
+                                      if key != "alternative_for"}
+        candidate.setdefault("schedule", {})["day"] = day_number
+        candidate["schedule"]["selected"] = True
     if hotel_id is None:
         trip.setdefault("validation", []).append({"code": "schedule.hotel_missing", "severity": "warning", "message": "住宿尚未選定；每日首段抵達與每日結束後返回住宿的路線尚未驗證。", "path": "/selected/hotel_place_ids"})
         return SchedulingOutput((ScheduledTrip(trip, ScheduleState.PARTIAL, tuple(violations)),))
@@ -80,16 +100,12 @@ def _hotel_id(trip: dict, violations: list[Violation]) -> str | None:
 def _activities(trip: dict, violations: list[Violation]) -> list[dict]:
     records: list[dict] = []
     pending_alternatives: dict[str, list[dict]] = {}
+    restaurant_candidates = trip.get("candidate_sets", {}).get("restaurants", [])
     for collection in ("places", "restaurants"):
         for index, candidate in enumerate(trip.get("candidate_sets", {}).get(collection, [])):
             place = candidate.get("place", candidate) if collection == "restaurants" else candidate
             details = candidate.get("schedule")
-            is_alternative = any(isinstance(primary.get("schedule"), dict)
-                                 and primary["schedule"].get("selected", True)
-                                 and any(isinstance(link, dict) and link.get("place_id") == place.get("id")
-                                         for link in primary["schedule"].get("alternatives", ()))
-                                 for primary in trip.get("candidate_sets", {}).get("restaurants", [])) if collection == "restaurants" else False
-            if not details or (details.get("selected") is False and not is_alternative):
+            if not details or details.get("selected") is False:
                 continue
             if not isinstance(details.get("duration_minutes"), int) or details["duration_minutes"] <= 0:
                 violations.append(_failure("schedule.duration_missing", "selected activity requires an explicit positive duration", f"/candidate_sets/{collection}/{index}/schedule/duration_minutes"))
@@ -112,13 +128,24 @@ def _activities(trip: dict, violations: list[Violation]) -> list[dict]:
               for alternative in details.get("alternatives", ()):
                 if not isinstance(alternative, dict) or not isinstance(alternative.get("place_id"), str):
                     continue
-                pending_alternatives.setdefault(alternative["place_id"], []).append({"primary_id": place["id"], "schedule": details})
-    for record in records:
-        if record["kind"] != "meal" or record["schedule"].get("selected", True):
+                pending_alternatives.setdefault(place["id"], []).append(alternative["place_id"])
+    restaurant_by_id = {item.get("place", item).get("id"): item for item in restaurant_candidates}
+    for primary_id, backup_ids in pending_alternatives.items():
+        primary = next((record for record in records if record["id"] == primary_id and record["kind"] == "meal"), None)
+        if primary is None:
             continue
-        for link in pending_alternatives.get(record["id"], ()):
-            record["schedule"] = {key: value for key, value in link["schedule"].items() if key != "alternatives"}
-            record["schedule"].update({"selected": False, "alternative_for": link["primary_id"]})
+        for backup_id in backup_ids:
+            backup = restaurant_by_id.get(backup_id)
+            if backup is None:
+                continue
+            backup_place = backup.get("place", backup)
+            backup_details = primary["schedule"]
+            records.append({
+                "id": backup_id, "kind": "meal",
+                "schedule": {**{key: value for key, value in backup_details.items() if key != "alternatives"},
+                             "selected": False, "alternative_for": primary_id},
+                "path": f"/candidate_sets/restaurants/{restaurant_candidates.index(backup)}",
+            })
     return records
 
 
@@ -178,18 +205,31 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
         cursor = datetime.fromisoformat(anchor_items[-1]["end_at"])
     placed: set[str] = set()
     placed_activity = False
+    used_meal_ids: set[str] = set()
     low_fatigue = any(preference.get("kind") in {"low_fatigue", "pace"} and preference.get("value") in {True, "low"}
                       for preference in request.trip.get("preferences", {}).get("soft_preferences", []))
-    ordered = sorted(selected, key=lambda value: (
-        0 if value["schedule"].get("meal_period") == "breakfast" else 2 if value["schedule"].get("meal_period") in {"lunch", "dinner"} else 1,
-        not value["schedule"].get("required", False),
-        _meal_period_order(value["schedule"].get("meal_period")),
-        value["schedule"].get("fatigue", 0) if low_fatigue else 0,
-        value["id"],
-    ))
+    def schedule_order(value: dict) -> tuple:
+        fixed_start = value["schedule"].get("fixed_start_at")
+        if fixed_start:
+            try:
+                order_time = datetime.fromisoformat(fixed_start).time()
+            except ValueError:
+                order_time = time(23, 59)
+        else:
+            order_time = {"breakfast": time(8), "lunch": time(12, 30), "dinner": time(18, 30)}.get(value["schedule"].get("meal_period"), time(11))
+        return (
+            order_time,
+            not value["schedule"].get("required", False),
+            _meal_period_order(value["schedule"].get("meal_period")),
+            value["schedule"].get("fatigue", 0) if low_fatigue else 0,
+            value["id"],
+        )
+    ordered = sorted(selected, key=schedule_order)
     for primary in ordered:
         attempts = [primary, *alternatives_by_primary.get(primary["id"], [])]
         for attempt_index, activity in enumerate(attempts):
+            if activity["kind"] == "meal" and activity["id"] in used_meal_ids:
+                continue
             details = activity["schedule"]
             optional_meal = activity["kind"] == "meal" and not details.get("required", False)
             cursor_before, previous_before = cursor, previous
@@ -255,19 +295,69 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
                     if attempt_index < len(attempts) - 1:
                         continue
                 continue
+            if attempt_index > 0:
+                violations[:] = [item for item in violations
+                                 if not (item.path == primary["path"] and item.code.startswith("meal."))]
             items.append({"id": f"day{day_number}-{activity['id']}", "kind": activity["kind"], "place_id": activity["id"], "start_at": cursor.isoformat(), "end_at": end_at.isoformat(), "selection_status": "selected"})
             placed_activity = True
             previous, cursor = activity["id"], end_at
             if activity["schedule"].get("day") is None or not activity["schedule"].get("required", False):
                 placed.add(activity["id"])
+            if activity["kind"] == "meal":
+                used_meal_ids.add(activity["id"])
             break
     if placed_activity and hotel_id is not None:
         back = request.validation_context.travel_minutes.get((previous, hotel_id))
         while back is None or cursor + timedelta(minutes=back) > closes:
             if items and items[-1].get("kind") == "meal":
                 omitted = items.pop()
-                violations.append(Violation("meal.hotel_return_unverified", "warning", "restaurant meal omitted because the return route to lodging is unverified or too late", "/days"))
+                used_meal_ids.discard(omitted["place_id"])
                 last_item = items[-1] if items else None
+                primary = next((activity for activity in activities if activity["id"] == omitted["place_id"]), None)
+                if primary is not None:
+                    alternative_list = alternatives_by_primary.get(primary["id"], [])
+                    origin = last_item["place_id"] if last_item is not None else hotel_id
+                    alternative_cursor = (datetime.fromisoformat(last_item["end_at"]) if last_item is not None
+                                          else datetime.combine(current, time.fromisoformat(request.daily_start), zone))
+                    for alternative in alternative_list:
+                        if alternative["id"] in used_meal_ids:
+                            continue
+                        incoming = request.validation_context.travel_minutes.get((origin, alternative["id"]))
+                        if incoming is None or incoming < 0:
+                            continue
+                        details = alternative["schedule"]
+                        start_at = alternative_cursor + timedelta(minutes=incoming + details.get("parking_buffer_minutes", 0) + details.get("walking_buffer_minutes", 0))
+                        period = details.get("meal_period")
+                        if period in {"breakfast", "lunch", "dinner"}:
+                            meal_time = {"breakfast": time(8), "lunch": time(12, 30), "dinner": time(18, 30)}[period]
+                            start_at = max(start_at, datetime.combine(current, meal_time, zone))
+                        fixed_start = details.get("fixed_start_at")
+                        if fixed_start:
+                            fixed_start_dt = datetime.fromisoformat(fixed_start)
+                            if fixed_start_dt < start_at or fixed_start_dt.date() != current:
+                                continue
+                            start_at = fixed_start_dt
+                        end_at = start_at + timedelta(minutes=details["duration_minutes"])
+                        if details.get("fixed_end_at") and datetime.fromisoformat(details["fixed_end_at"]) != end_at:
+                            continue
+                        return_minutes = request.validation_context.travel_minutes.get((alternative["id"], hotel_id))
+                        if return_minutes is None or end_at > closes or end_at + timedelta(minutes=return_minutes) > closes:
+                            continue
+                        if not _is_open(alternative["id"], start_at, end_at, request):
+                            continue
+                        if _has_errors(_condition_findings(alternative["id"], start_at, end_at, request, alternative["path"])):
+                            continue
+                        items.append({"id": f"day{day_number}-{alternative['id']}", "kind": "meal", "place_id": alternative["id"], "start_at": start_at.isoformat(), "end_at": end_at.isoformat(), "selection_status": "selected"})
+                        previous, cursor, back = alternative["id"], end_at, return_minutes
+                        used_meal_ids.add(alternative["id"])
+                        violations.append(Violation("meal.hotel_return_alternative", "warning", "restaurant alternative used because the primary meal could not be followed by a verified return to lodging", alternative["path"]))
+                        break
+                    else:
+                        violations.append(Violation("meal.hotel_return_unverified", "warning", "restaurant meal omitted because the return route to lodging is unverified or too late", "/days"))
+                else:
+                    violations.append(Violation("meal.hotel_return_unverified", "warning", "restaurant meal omitted because the return route to lodging is unverified or too late", "/days"))
+                if items and items[-1].get("kind") == "meal" and items[-1].get("place_id") != omitted["place_id"]:
+                    continue
                 if last_item is None:
                     break
                 previous = last_item["place_id"]

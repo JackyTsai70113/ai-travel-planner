@@ -293,6 +293,37 @@ class PlannerTests(unittest.TestCase):
         assert result.best_trip is not None
         meals = [item["place_id"] for item in result.best_trip.trip["days"][0]["items"] if item["kind"] == "meal"]
         self.assertEqual(["backup-meal"], meals)
+        self.assertNotIn("meal.closed_or_unverified", {item.code for item in result.best_trip.violations})
+
+    def test_optional_meal_uses_alternative_when_primary_return_route_is_missing(self):
+        trip = copy.deepcopy(self.trip)
+        trip["days"] = []
+        trip["date_range"] = {"start_date": "2026-04-10", "end_date": "2026-04-10"}
+        poi = next(place for place in trip["candidate_sets"]["places"] if place["id"] == "ohori-park")
+        poi["schedule"] = {"duration_minutes": 60, "day": 1, "required": True}
+        trip["candidate_sets"]["places"] = [poi]
+        trip["candidate_sets"]["restaurants"] = []
+        primary = copy.deepcopy(self.trip["candidate_sets"]["restaurants"][0])
+        primary["place"]["id"] = "primary-meal"
+        primary["schedule"] = {"duration_minutes": 60, "day": 1, "meal_period": "lunch", "required": False,
+                               "fixed_start_at": "2026-04-10T12:30:00+09:00", "fixed_end_at": "2026-04-10T13:30:00+09:00",
+                               "selected": True, "alternatives": [{"place_id": "backup-meal"}]}
+        backup = copy.deepcopy(primary)
+        backup["place"]["id"] = "backup-meal"
+        backup["schedule"] = {**primary["schedule"], "selected": False}
+        trip["candidate_sets"]["restaurants"] = [primary, backup]
+        hotel = "hakata-hotel"
+        routes = {(hotel, poi["id"]): 10, (poi["id"], "primary-meal"): 10, (poi["id"], "backup-meal"): 10,
+                  ("backup-meal", hotel): 10, (poi["id"], hotel): 10}
+        hours = {poi["id"]: tuple(OpeningInterval(day, time(0), time(23, 59)) for day in range(7)),
+                 "primary-meal": tuple(OpeningInterval(day, time(0), time(23, 59)) for day in range(7)),
+                 "backup-meal": tuple(OpeningInterval(day, time(0), time(23, 59)) for day in range(7))}
+        result = schedule(SchedulingInput(trip, ValidationContext(routes, hours)))
+        assert result.best_trip is not None
+        meals = [item["place_id"] for item in result.best_trip.trip["days"][0]["items"] if item["kind"] == "meal"]
+        self.assertEqual(["backup-meal"], meals)
+        self.assertFalse(result.best_trip.trip["candidate_sets"]["restaurants"][0]["schedule"]["selected"])
+        self.assertTrue(result.best_trip.trip["candidate_sets"]["restaurants"][1]["schedule"]["selected"])
 
     def test_return_fallback_removes_each_trailing_meal_until_last_route_is_verified(self):
         trip = copy.deepcopy(self.trip)
@@ -327,18 +358,23 @@ class PlannerTests(unittest.TestCase):
         hotel_id = hotels[0]
         places = trip["candidate_sets"]["places"][:3]
         trip["candidate_sets"]["places"] = places
+        places[2]["id"] = "verified-waterfront-viewpoint"
+        places[2]["night_view_evidence"] = {"night_scene": {"status": "visible"}, "river_visibility": {"status": "visible"}, "obstructions": {"status": "clear"}}
         routes = {}
         hours = {}
         for day_index, place in enumerate(places, start=1):
             place["schedule"] = {"duration_minutes": 90, "day": day_index, "required": True}
+            if day_index == 3:
+                place["schedule"].update({"duration_minutes": 60, "fixed_start_at": "2026-04-12T18:00:00+09:00", "fixed_end_at": "2026-04-12T19:00:00+09:00"})
             hours[place["id"]] = tuple(OpeningInterval(day, time(0), time(23, 59)) for day in range(7))
         meals = []
         for day_index, meal_date in enumerate(("2026-04-10", "2026-04-11", "2026-04-12"), start=1):
             for period, starts in (("breakfast", "08:00"), ("lunch", "12:30"), ("dinner", "18:30")):
                 place_id = f"meal-{day_index}-{period}"
                 provenance = {"source_type": "provider", "provider": "recorded restaurant feed", "retrieved_at": "2026-04-01T00:00:00+09:00", "status": "confirmed"}
+                meal_start = "19:30" if day_index == 3 and period == "dinner" else starts
                 meals.append({"place": {"id": place_id, "name": place_id, "kind": "restaurant", "provenance": provenance}, "provenance": provenance,
-                    "schedule": {"duration_minutes": 60, "day": day_index, "meal_period": period, "required": False, "fixed_start_at": f"{meal_date}T{starts}:00+09:00", "fixed_end_at": f"{meal_date}T{int(starts[:2])+1:02d}:{starts[3:]}:00+09:00"},
+                    "schedule": {"duration_minutes": 60, "day": day_index, "meal_period": period, "required": False, "fixed_start_at": f"{meal_date}T{meal_start}:00+09:00", "fixed_end_at": f"{meal_date}T{int(meal_start[:2])+1:02d}:{meal_start[3:]}:00+09:00"},
                     "opening_hours": {"status": "fresh", "timezone": "Asia/Tokyo", "intervals": [{"weekday": day, "opens_at": "07:00", "closes_at": "22:00"} for day in range(7)]}})
                 hours[place_id] = tuple(OpeningInterval(day, time(7), time(22)) for day in range(7))
         trip["candidate_sets"]["restaurants"] = meals
@@ -346,12 +382,18 @@ class PlannerTests(unittest.TestCase):
             for destination in [hotel_id, *(item["id"] for item in places), *(item["place"]["id"] for item in meals)]:
                 if place != destination:
                     routes[(place, destination)] = 5
-        result = schedule(SchedulingInput(trip, ValidationContext(routes, hours), daily_start="07:00"))
+        result = schedule(SchedulingInput(trip, ValidationContext(routes, hours), daily_start="07:00", daily_end="21:00"))
         self.assertIsNotNone(result.best_trip)
         for day in result.best_trip.trip["days"]:
             meal_items = [item for item in day["items"] if item["kind"] == "meal"]
             self.assertEqual(3, len(meal_items))
-            self.assertEqual(["08:00", "12:30", "18:30"], [item["start_at"][11:16] for item in meal_items])
+            expected_dinner = "19:30" if day["date"] == "2026-04-12" else "18:30"
+            self.assertEqual(["08:00", "12:30", expected_dinner], [item["start_at"][11:16] for item in meal_items])
+        river_day = result.best_trip.trip["days"][2]
+        river = next(item for item in river_day["items"] if item["place_id"] == "verified-waterfront-viewpoint")
+        dinner = next(item for item in river_day["items"] if item["kind"] == "meal" and item["start_at"].startswith("2026-04-12T19:30"))
+        self.assertEqual(("18:00", "19:00"), (river["start_at"][11:16], river["end_at"][11:16]))
+        self.assertGreaterEqual(dinner["start_at"], river["end_at"])
 
     def test_scheduler_preserves_itinerary_as_partial_when_lodging_is_unselected(self):
         trip = copy.deepcopy(self.trip)
