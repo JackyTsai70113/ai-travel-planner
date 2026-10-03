@@ -66,6 +66,7 @@ export function FoodPage({ bundle }: FoodPageProps) {
               <a href={googleMapsHrefForPlace(alternate, alternateName)} target="_blank" rel="noreferrer">{alternateName}</a>
               {alternateFacts?.price_range ? <span>；{alternateFacts.price_range}<Attribution values={alternateFacts.field_provenance?.price_range} /></span> : null}
               <span>；營業時間已查核，行程會再依當日實際順序確認可達性</span>
+              <Attribution values={alternateFacts?.opening_hours?.provenance ? [alternateFacts.opening_hours.provenance] : alternateFacts?.field_provenance?.opening_hours} />
             </li>
           })}</ul></div> : null}
         </article>
