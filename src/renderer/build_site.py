@@ -26,7 +26,8 @@ def build_site(trip: dict[str, Any], derived: dict[str, Any] | None = None) -> s
     if not stats:
         stats = f'<div class="stat"><span>旅遊日期</span><strong>{escape(dates.get("start_date", "—"))} ～ {escape(dates.get("end_date", "—"))}</strong></div>'
     warnings = "".join(f"<li>{escape(_warning_text(x))}</li>" for x in trip.get("validation", [])) or '<li class="quiet">目前沒有上游 validation warning。</li>'
-    days = "".join(_render_day(day, places) for day in trip.get("days", []))
+    restaurants = {candidate.get("place", {}).get("id"): candidate for candidate in trip["candidate_sets"].get("restaurants", []) if isinstance(candidate, dict) and isinstance(candidate.get("place"), dict)}
+    days = "".join(_render_day(day, places, restaurants) for day in trip.get("days", []))
     budget = "".join(f"<tr><th>{escape(str(k))}</th><td>{escape(_money(v))}</td></tr>" for k, v in trip.get("budget", {}).get("categories", {}).items())
     budget_data = trip.get("budget", {})
     if budget_data.get("total_status") == "incomplete":
@@ -43,13 +44,34 @@ def build_site(trip: dict[str, Any], derived: dict[str, Any] | None = None) -> s
 </main></body></html>'''
 
 
-def _render_day(day: dict[str, Any], places: dict[str, dict[str, Any]]) -> str:
+def _render_day(day: dict[str, Any], places: dict[str, dict[str, Any]], restaurants: dict[str, dict[str, Any]] | None = None) -> str:
+    restaurants = restaurants or {}
     items = []
     for item in day.get("items", []):
         place = places.get(item.get("place_id"), {})
         details = _render_place_details(place)
+        restaurant = restaurants.get(item.get("place_id"), {}) if item.get("kind") == "meal" else {}
+        details += _render_restaurant_details(restaurant)
         items.append(f'<li><time>{escape(_time(item.get("start_at", "")))}</time><strong>{escape(place.get("name", item.get("place_id", "—")))}</strong><span>{escape(item.get("kind", ""))}</span>{details}</li>')
     return f'<article><p class="eyebrow">{escape(day.get("date", ""))}</p><h3>{escape(day.get("summary", ""))}</h3><ol>{"".join(items)}</ol></article>'
+
+
+def _render_restaurant_details(candidate: dict[str, Any]) -> str:
+    if not candidate:
+        return ""
+    lines = []
+    for label, field in (("料理", "cuisine"), ("價格參考", "price_range"), ("等候風險", "wait_risk")):
+        value = candidate.get(field)
+        if value and not (field == "wait_risk" and value == "unknown"):
+            lines.append(f"{escape(label)}：{escape(str(value))}")
+    hours = candidate.get("opening_hours")
+    provenance = candidate.get("provenance", {})
+    source = provenance.get("provider") if isinstance(provenance, dict) else None
+    checked = provenance.get("retrieved_at") if isinstance(provenance, dict) else None
+    if hours or source:
+        evidence = " · ".join(str(value) for value in (source, checked) if value)
+        lines.append("來源查核：" + escape(evidence or "餐廳候選資料"))
+    return '<div class="place-details">' + " · ".join(lines) + "</div>" if lines else ""
 
 
 def _sources(trip: dict[str, Any]) -> list[dict[str, Any]]:

@@ -217,18 +217,24 @@ describe('淡路島只讀旅遊助手', () => {
     expect(document.body.textContent).not.toMatch(/未完成時|聯絡[／/]參考|離線|只提供出發前閱讀|不要求旅途中/)
   })
 
-  it('餐飲頁的 map pin 連餐廳，停車資訊另連停車場', () => {
-    render(<FoodPage bundle={bundle} />)
-    expect(screen.getByText('一樂拉麵')).toBeInTheDocument()
-    expect(screen.getByText(/每人約 ¥1,000–1,800/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'ラーメン一樂' })).toHaveAttribute('href', 'https://nijigennomori.com/food/ichiraku/')
-    const foodCard = document.querySelector('.food-card') as HTMLElement
-    const placeMap = within(foodCard).getByRole('link', { name: '在 Google Maps 開啟 ラーメン一樂' })
-    const parkingMap = within(foodCard).getByRole('link', { name: '在 Google Maps 開啟 兵庫県立淡路島公園 E駐車場' })
-    expect(placeMap).toHaveAttribute('href', expect.stringContaining(encodeURIComponent('ラーメン一樂')))
-    expect(parkingMap).toHaveAttribute('href', expect.stringContaining(encodeURIComponent('兵庫県立淡路島公園 E駐車場')))
-    expect(placeMap.getAttribute('href')).not.toBe(parkingMap.getAttribute('href'))
-    expect(document.body.textContent).not.toMatch(/官方未公布|官方網站/)
+  it('餐飲頁由 Canonical Trip meal 與餐廳來源欄位呈現，不需要手寫 place guide', () => {
+    const withoutGuides = { ...bundle, travel_assistant: undefined,
+      days: [{ ...bundle.days[0], items: [{ id: 'lunch', kind: 'meal', start_at: `${dates[0]}T12:00:00+09:00`, end_at: `${dates[0]}T13:00:00+09:00`, place_id: placeIds[0] }] }],
+      restaurant_facts: [{ place_id: placeIds[0], provenance: guideSource, fields: { cuisine: '拉麵', price_range: '¥1,000–1,800', opening_hours: { status: 'fresh', intervals: [{ weekday: 0, opens_at: '11:00', closes_at: '18:00' }] }, recommended_dishes: [{ name: '豚骨拉麵', note: '店家推薦', provenance: guideSource }] } }],
+    } as Bundle
+    render(<FoodPage bundle={withoutGuides} />)
+    expect(screen.getByText('ラーメン一樂')).toBeInTheDocument()
+    expect(screen.getByText('¥1,000–1,800')).toBeInTheDocument()
+    expect(screen.getByText('豚骨拉麵')).toBeInTheDocument()
+    expect(screen.getByText(/查核時間/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /在 Google Maps 開啟/ })).toBeInTheDocument()
+    expect(screen.queryByText(/停車場/)).not.toBeInTheDocument()
+  })
+
+  it('無已安排餐點時清楚顯示待選，不假裝已完成', () => {
+    render(<FoodPage bundle={{ ...bundle, days: bundle.days.map((day) => ({ ...day, items: day.items.filter((item) => item.kind !== 'meal') })) }} />)
+    expect(screen.getByText(/餐飲仍待選擇/)).toBeInTheDocument()
+    expect(screen.queryByText('華西街夜市')).not.toBeInTheDocument()
   })
 
   it('行程結束後不把下一站跳回早餐', () => {

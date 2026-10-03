@@ -272,6 +272,7 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
           const leg = transportLegForItem(bundle, item, selectedDay.date)
           const title = timelineTitle(bundle, item, leg)
           const mapHref = leg ? legDirectionsLink(bundle, leg) : googleMapsHrefForPlace(place, item.place_id)
+          const restaurantFacts = bundle.restaurant_facts?.find((candidate) => candidate.place_id === item.place_id)?.fields
           const placeGuide = !leg ? placeGuides[item.place_id] : undefined
           const parkingMapsQuery = (placeGuide as typeof placeGuide & { parkingMapsQuery?: string } | undefined)?.parkingMapsQuery
           const officialHref = !leg ? usableOfficialHref(placeGuide?.sourceUrl || place?.official_url) : undefined
@@ -289,6 +290,11 @@ export function ItineraryPage({ bundle, route, onNavigate }: ItineraryPageProps)
               <span className="timeline-category">{categoryLabel(visualKind, item)}</span>
               <div className="timeline-place-heading"><h3>{officialHref ? <a className="timeline-title-link" href={officialHref} target="_blank" rel="noreferrer">{title}</a> : title}</h3><MapPinLink href={mapHref} label={leg ? `在 Google Maps 開啟 ${title} 路線` : `在 Google Maps 開啟 ${title}`} /></div>
               {detail ? <p className="timeline-detail">{detail}</p> : null}
+              {!placeGuide && visualKind === 'meal' && restaurantFacts ? <dl className="place-facts">
+                {restaurantFacts.cuisine ? <div><dt>料理類型</dt><dd>{restaurantFacts.cuisine}</dd></div> : null}
+                {restaurantFacts.price_range ? <div><dt>價格參考</dt><dd>{restaurantFacts.price_range}</dd></div> : null}
+                {restaurantFacts.opening_hours?.status === 'fresh' ? <div><dt>營業時間</dt><dd>{restaurantFacts.opening_hours.intervals?.map((entry) => `${entry.opens_at}–${entry.closes_at}`).join('、')}</dd></div> : null}
+              </dl> : null}
               {placeGuide && item.kind !== 'free_time' ? <>
                 {facts.length > 0 ? <dl className="place-facts">{facts.map((fact) => <div key={fact.label}><dt>{fact.label}</dt><dd>{fact.href ? <a className="parking-fact-link" href={fact.href} target="_blank" rel="noreferrer" aria-label={`在 Google Maps 開啟 ${parkingMapsQuery}`}>{fact.value}</a> : fact.value}</dd></div>)}</dl> : null}
                 <div className="place-highlights"><strong>{visualKind === 'meal' ? '推薦餐點與飲品' : '值得看與值得玩'}</strong><ul>{placeGuide.highlights.map((highlight) => { const parts = highlightParts(highlight); return <li key={highlight}><strong>{parts.title}</strong>{parts.reason ? <span>{parts.reason}</span> : null}</li> })}</ul></div>

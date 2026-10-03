@@ -51,6 +51,20 @@ def test_renderer_escapes_unrecognized_restaurant_attribution():
     assert "&lt;script&gt;alert(1)&lt;/script&gt;" in html
 
 
+def test_renderer_projects_restaurant_facts_from_canonical_candidate_for_scheduled_meal():
+    trip = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    restaurant = trip["candidate_sets"]["restaurants"][0]
+    restaurant["place"]["id"] = "hakata-food"
+    restaurant["place"]["name"] = "博多食堂"
+    restaurant["cuisine"] = "博多料理"
+    restaurant["price_range"] = "¥1,000–2,000"
+    restaurant["provenance"] = {"source_type": "official", "provider": "店家官方網站", "source_url": "https://restaurant.example/menu", "retrieved_at": "2026-10-03T09:00:00+09:00", "status": "reported"}
+    trip["days"][0]["items"].append({"id": "lunch", "kind": "meal", "place_id": "hakata-food", "start_at": "2026-04-10T12:00:00+09:00", "end_at": "2026-04-10T13:00:00+09:00"})
+    html = build_site(trip)
+    assert "博多料理" in html and "¥1,000–2,000" in html
+    assert "店家官方網站" in html and "2026-10-03T09:00:00+09:00" in html
+
+
 def test_renderer_shows_contact_navigation_and_clarification():
     trip = json.loads(FIXTURE.read_text(encoding="utf-8"))
     place = next(item for item in trip["candidate_sets"]["places"] if item["id"] == "dazaifu")

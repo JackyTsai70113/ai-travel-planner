@@ -41,7 +41,11 @@ def schedule(request: SchedulingInput) -> SchedulingOutput:
         unscheduled.difference_update(placed)
         days.append({"date": current.isoformat(), "summary": "", "items": planned})
     for activity_id in unscheduled:
-        violations.append(_failure("schedule.no_feasible_day", f"required activity {activity_id} has no feasible day", "/candidate_sets"))
+        activity = next((item for item in activities if item["id"] == activity_id), None)
+        if activity and activity["kind"] == "meal" and not activity["schedule"].get("required", False):
+            violations.append(Violation("meal.schedule_unavailable", "warning", f"optional meal candidate {activity_id} was not schedulable and remains unselected", activity["path"]))
+        else:
+            violations.append(_failure("schedule.no_feasible_day", f"required activity {activity_id} has no feasible day", "/candidate_sets"))
     if _has_errors(violations):
         return SchedulingOutput((ScheduledTrip(trip, ScheduleState.FAILED, tuple(violations)),))
     trip["days"] = days
@@ -204,7 +208,7 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
         items.append({"id": f"day{day_number}-{activity['id']}", "kind": activity["kind"], "place_id": activity["id"], "start_at": cursor.isoformat(), "end_at": end_at.isoformat(), "selection_status": "selected"})
         placed_activity = True
         previous, cursor = activity["id"], end_at
-        if activity["schedule"].get("day") is None:
+        if activity["schedule"].get("day") is None or not activity["schedule"].get("required", False):
             placed.add(activity["id"])
     if placed_activity and hotel_id is not None:
         back = request.validation_context.travel_minutes.get((previous, hotel_id))

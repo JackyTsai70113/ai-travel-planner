@@ -131,6 +131,23 @@ export interface BundlePlace {
   field_provenance?: BundleFieldProvenance | null
 }
 
+export interface BundleRestaurantFacts {
+  place_id: string
+  provenance?: BundleProvenance | null
+  fields?: {
+    opening_hours?: { status?: string; timezone?: string; intervals?: Array<{ weekday: number; opens_at: string; closes_at: string }> }
+    price_range?: string
+    meal_price_signals?: Array<{ meal?: string; label?: string; provenance?: BundleProvenance }>
+    rating?: number
+    review_count?: number
+    cuisine?: string
+    recommended_dishes?: Array<{ name: string; note?: string; provenance: BundleProvenance }>
+    reservation_required?: boolean
+    reservation_url?: string
+    wait_risk?: string
+  }
+}
+
 export interface BundleTransportLeg {
   id: string
   mode: string
@@ -169,6 +186,7 @@ export interface Bundle {
   status: 'ok' | 'warning' | 'error'
   local_timezone: string
   places?: BundlePlace[]
+  restaurant_facts?: BundleRestaurantFacts[]
   date_range: { start_date: string; end_date: string }
   traveler_profile: {
     adults: number

@@ -82,6 +82,11 @@ def _places_language(destination: str) -> str:
     return "zh-TW" if any(term in destination for term in taiwan_terms) else "ja"
 
 
+def _restaurant_search_text(destination: str) -> str:
+    regional = "Taipei WanHua" if any(term in destination for term in ("台灣", "臺灣", "台北", "臺北", "萬華", "西門町", "西門")) else destination
+    return f"breakfast lunch dinner restaurants in {regional}"
+
+
 class GooglePlacesAdapter(SourceAdapter):
     """Google Places API (New) text search adapter for POI and restaurants.
 
@@ -103,7 +108,7 @@ class GooglePlacesAdapter(SourceAdapter):
         if not self.api_key:
             raise ProviderConfigurationError("GOOGLE_MAPS_API_KEY is required for Google Places")
         result: list[tuple[str, dict[str, Any]]] = []
-        for category, text in (("pois", "tourist attractions"), ("restaurants", "restaurants")):
+        for category, text in (("pois", "tourist attractions"), ("restaurants", _restaurant_search_text(query.destination))):
             if category not in query.categories:
                 continue
             payload = self.http_client.request_json(
@@ -170,6 +175,8 @@ class GooglePlacesAdapter(SourceAdapter):
         restaurant_candidate["opening_hours"] = _google_opening_hours(
             hours, current=raw.get("currentOpeningHours"), timezone_name=timezone_name, provenance=provenance
         )
+        if restaurant_candidate["opening_hours"].get("status") == "fresh":
+            restaurant_candidate["schedule"] = {"duration_minutes": 60, "required": False}
         return restaurant_candidate
 
 
