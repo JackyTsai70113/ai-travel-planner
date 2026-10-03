@@ -54,6 +54,14 @@ python -m src.cli plan --demo --trip-id tokushima-kobe --request '德島＋神�
 open site/tokushima-kobe/index.html
 ```
 
+## MCP service
+
+The optional MCP server exposes the existing request parser, Canonical Trip
+validator, safe trip summary, production planner, and static site renderer as
+tools. It supports local stdio clients and requires an explicit confirmation
+argument before writing trip or site files. It does not publish or deploy.
+Install and connect it using the instructions in [`MCP travel planner service`](docs/mcp-server.md).
+
 The current provider adapters are Google Places, YouTube Data API, Amadeus
 Self-Service, OpenRouteService, and the optional official Hot Pepper Gourmet
 Web Service. Hot Pepper output must be displayed with
