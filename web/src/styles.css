@@ -1043,6 +1043,9 @@ textarea {
 .food-picks ol { display: grid; gap: 8px; margin: 9px 0 0; padding: 0; list-style: none; }
 .food-picks li { display: grid; gap: 4px; margin: 0; padding: 10px 11px; border: 1px solid #cfe4df; border-radius: 9px; color: #35545e; background: #fff; font-size: .8rem; }
 .food-picks li > strong { color: #126f6b; }.food-picks li > span { line-height: 1.55; }
+.food-meal-gaps { margin-top: 12px; padding: 12px; border: 1px dashed #9db9c2; border-radius: 10px; color: #49636e; background: #f7fafb; }
+.food-meal-gaps > strong { color: #315565; font-size: .8rem; }
+.food-meal-gaps ul { display: flex; flex-wrap: wrap; gap: 7px 16px; margin: 7px 0 0; padding-left: 18px; font-size: .76rem; }
 
 .handbook-toolbar { display: grid; grid-template-columns: minmax(0, 1fr) 180px; gap: 10px; margin-bottom: 15px; }
 .handbook-toolbar input, .handbook-toolbar select { min-height: 48px; padding: 10px 13px; border: 1px solid #b9cdd5; border-radius: 11px; color: #244957; background: #fff; font: inherit; }

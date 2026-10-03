@@ -68,6 +68,11 @@ def schedule(request: SchedulingInput) -> SchedulingOutput:
         if placed_activity is not None:
             candidate["schedule"] = {key: value for key, value in placed_activity["schedule"].items()
                                       if key != "alternative_for"}
+            if placed_activity["kind"] == "meal":
+                period = candidate["schedule"].get("meal_period")
+                period_label = {"breakfast": "早餐", "lunch": "午餐", "dinner": "晚餐"}.get(period)
+                if period_label and not candidate["schedule"].get("selection_reason"):
+                    candidate["schedule"]["selection_reason"] = f"符合第 {day_number} 天{period_label}安排；排程已確認當日營業時間與前後路線可行。"
         candidate.setdefault("schedule", {})["day"] = day_number
         candidate["schedule"]["selected"] = True
     if hotel_id is None:

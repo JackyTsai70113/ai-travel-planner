@@ -63,15 +63,51 @@ def _render_restaurant_details(candidate: dict[str, Any]) -> str:
     for label, field in (("料理", "cuisine"), ("價格參考", "price_range"), ("等候風險", "wait_risk")):
         value = candidate.get(field)
         if value and not (field == "wait_risk" and value == "unknown"):
-            lines.append(f"{escape(label)}：{escape(str(value))}")
+            attribution = _restaurant_field_attribution(candidate, field)
+            if attribution:
+                lines.append(f"{escape(label)}：{escape(str(value))}（{attribution}）")
     hours = candidate.get("opening_hours")
-    provenance = candidate.get("provenance", {})
-    source = provenance.get("provider") if isinstance(provenance, dict) else None
-    checked = provenance.get("retrieved_at") if isinstance(provenance, dict) else None
-    if hours or source:
-        evidence = " · ".join(str(value) for value in (source, checked) if value)
-        lines.append("來源查核：" + escape(evidence or "餐廳候選資料"))
+    if isinstance(hours, dict):
+        intervals = hours.get("intervals", [])
+        weekday_names = ("一", "二", "三", "四", "五", "六", "日")
+        for interval in intervals if isinstance(intervals, list) else []:
+            if not isinstance(interval, dict) or not isinstance(interval.get("weekday"), int) or not 0 <= interval["weekday"] <= 6:
+                continue
+            interval_label = f"{weekday_names[interval['weekday']]} {interval.get('opens_at', '')}–{interval.get('closes_at', '')}"
+            if interval.get("last_order_at"):
+                last_order_day = "次日 " if interval.get("last_order_day_offset") else ""
+                interval_label += f"（最後點餐 {last_order_day}{interval['last_order_at']}）"
+            attribution = _restaurant_field_attribution(candidate, "opening_hours")
+            if attribution:
+                lines.append(f"營業時間：{escape(interval_label)}（{attribution}）")
+    reason = candidate.get("schedule", {}).get("selection_reason") if isinstance(candidate.get("schedule"), dict) else None
+    if isinstance(reason, str) and reason.strip():
+        lines.append("選擇原因：" + escape(reason))
     return '<div class="place-details">' + " · ".join(lines) + "</div>" if lines else ""
+
+
+def _restaurant_field_attribution(candidate: dict[str, Any], field: str) -> str:
+    field_sources = candidate.get("field_provenance")
+    if isinstance(field_sources, dict):
+        sources = field_sources.get(field, [])
+    else:
+        provenance = candidate.get("provenance")
+        sources = [provenance] if isinstance(provenance, dict) else []
+    entries = []
+    for source in sources:
+        if not isinstance(source, dict):
+            continue
+        provider = source.get("provider")
+        checked = source.get("retrieved_at")
+        label = " · ".join(str(value) for value in (provider, checked) if value)
+        if label:
+            url = source.get("source_url")
+            if isinstance(url, str) and _safe_web_url(url):
+                label = f'<a href="{escape(url, quote=True)}" target="_blank" rel="noreferrer">{escape(label)}</a>'
+            else:
+                label = escape(label)
+            entries.append(label)
+    return "、".join(entries)
 
 
 def _sources(trip: dict[str, Any]) -> list[dict[str, Any]]:

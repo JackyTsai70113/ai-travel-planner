@@ -323,6 +323,7 @@ class PlannerTests(unittest.TestCase):
         self.assertEqual(["backup-meal"], meals)
         self.assertFalse(result.best_trip.trip["candidate_sets"]["restaurants"][0]["schedule"]["selected"])
         self.assertTrue(result.best_trip.trip["candidate_sets"]["restaurants"][1]["schedule"]["selected"])
+        self.assertIn("午餐安排", result.best_trip.trip["candidate_sets"]["restaurants"][1]["schedule"]["selection_reason"])
 
     def test_scheduler_ignores_alternatives_without_matching_verification(self):
         from src.planner.scheduler import _activities

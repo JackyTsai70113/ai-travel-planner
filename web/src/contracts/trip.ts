@@ -136,8 +136,8 @@ export interface BundleRestaurantFacts {
   provenance?: BundleProvenance | null
   fields?: {
     field_provenance?: Record<string, BundleProvenance[]>
-    schedule?: { day?: number; meal_period?: 'breakfast' | 'lunch' | 'dinner'; selected?: boolean; alternatives?: Array<{ place_id: string; meal_period: string; day: number; hours_verified: boolean; route_verified: boolean }> }
-    opening_hours?: { status?: string; timezone?: string; provenance?: BundleProvenance; intervals?: Array<{ weekday: number; opens_at: string; closes_at: string }>; special_hours?: Array<{ date: string; status: 'open' | 'closed' | 'unverified'; intervals: Array<{ opens_at: string; closes_at: string }> }> }
+    schedule?: { day?: number; meal_period?: 'breakfast' | 'lunch' | 'dinner'; selection_reason?: string; selected?: boolean; alternatives?: Array<{ place_id: string; meal_period: string; day: number; hours_verified: boolean; route_verified: boolean }> }
+    opening_hours?: { status?: string; timezone?: string; provenance?: BundleProvenance; intervals?: Array<{ weekday: number; opens_at: string; closes_at: string; last_order_at?: string; last_order_day_offset?: number }>; special_hours?: Array<{ date: string; status: 'open' | 'closed' | 'unverified'; intervals: Array<{ opens_at: string; closes_at: string; last_order_at?: string; last_order_day_offset?: number }> }> }
     price_range?: string
     meal_price_signals?: Array<{ meal?: string; label?: string; provenance?: BundleProvenance }>
     rating?: number

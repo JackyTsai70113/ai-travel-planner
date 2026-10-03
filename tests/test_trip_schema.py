@@ -21,7 +21,7 @@ class NightViewEvidenceSchemaTests(unittest.TestCase):
 
     def test_restaurant_schedule_and_alternatives_reject_unknown_fields(self):
         restaurant = self.trip["candidate_sets"]["restaurants"][0]
-        restaurant["schedule"] = {"duration_minutes": 60, "parking_buffer_minutes": 5, "alternatives": [{"place_id": "backup", "meal_period": "lunch", "day": 1, "hours_verified": True, "route_verified": True}]}
+        restaurant["schedule"] = {"duration_minutes": 60, "parking_buffer_minutes": 5, "selection_reason": "已驗證營業時間與路線", "alternatives": [{"place_id": "backup", "meal_period": "lunch", "day": 1, "hours_verified": True, "route_verified": True}]}
         backup = copy.deepcopy(restaurant)
         backup["place"]["id"] = "backup"
         backup.pop("schedule")

@@ -237,9 +237,11 @@ def _validate_restaurant(candidate: object, index: int) -> None:
             _require_provenance(source, f"{path}.field_provenance.{field}[{source_index}]")
     schedule = candidate.get("schedule")
     if schedule is not None:
-        allowed_schedule_fields = {"duration_minutes", "day", "meal_period", "fixed_start_at", "fixed_end_at", "parking_buffer_minutes", "walking_buffer_minutes", "fatigue", "alternatives", "required", "selected"}
+        allowed_schedule_fields = {"duration_minutes", "day", "meal_period", "fixed_start_at", "fixed_end_at", "parking_buffer_minutes", "walking_buffer_minutes", "fatigue", "selection_reason", "alternatives", "required", "selected"}
         if not isinstance(schedule, dict) or set(schedule) - allowed_schedule_fields:
             raise TripValidationError(f"{path}.schedule has unknown fields")
+        if "selection_reason" in schedule and (not isinstance(schedule["selection_reason"], str) or not schedule["selection_reason"].strip()):
+            raise TripValidationError(f"{path}.schedule.selection_reason must be a non-empty string")
         for alternative_index, alternative in enumerate(schedule.get("alternatives", [])):
             alternative_path = f"{path}.schedule.alternatives[{alternative_index}]"
             allowed_alternative_fields = {"place_id", "meal_period", "day", "hours_verified", "route_verified"}

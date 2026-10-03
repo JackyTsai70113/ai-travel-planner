@@ -244,9 +244,25 @@ describe('淡路島只讀旅遊助手', () => {
     expect(screen.queryByText(/停車場/)).not.toBeInTheDocument()
   })
 
+  it('部分餐段已安排時仍逐日列出待選餐段，並呈現選擇原因與最後點餐時間', () => {
+    const partialMeals = { ...bundle,
+      days: [{ ...bundle.days[0], items: [{ id: 'lunch', kind: 'meal', start_at: `${dates[0]}T12:30:00+09:00`, end_at: `${dates[0]}T13:30:00+09:00`, place_id: placeIds[0] }] }],
+      restaurant_facts: [{ place_id: placeIds[0], fields: {
+        schedule: { day: 1, meal_period: 'lunch', selected: true, selection_reason: '符合當日午餐時段且路線可行。' },
+        opening_hours: { status: 'fresh', intervals: [{ weekday: 3, opens_at: '11:00', closes_at: '20:00', last_order_at: '19:30' }] },
+      } }],
+    } as Bundle
+    render(<FoodPage bundle={partialMeals} />)
+    expect(screen.getByText('早餐：尚待選擇或確認不安排')).toBeInTheDocument()
+    expect(screen.getByText('晚餐：尚待選擇或確認不安排')).toBeInTheDocument()
+    expect(screen.queryByText('午餐：尚待選擇或確認不安排')).not.toBeInTheDocument()
+    expect(screen.getByText('符合當日午餐時段且路線可行。')).toBeInTheDocument()
+    expect(screen.getByText(/最後點餐 19:30/)).toBeInTheDocument()
+  })
+
   it('無已安排餐點時清楚顯示待選，不假裝已完成', () => {
     render(<FoodPage bundle={{ ...bundle, days: bundle.days.map((day) => ({ ...day, items: day.items.filter((item) => item.kind !== 'meal') })) }} />)
-    expect(screen.getByText(/餐飲仍待選擇/)).toBeInTheDocument()
+    expect(screen.getAllByText(/餐飲仍待選擇/)).toHaveLength(5)
     expect(screen.queryByText('華西街夜市')).not.toBeInTheDocument()
   })
 
