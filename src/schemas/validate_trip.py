@@ -111,19 +111,24 @@ def _validate_transport_leg(leg: object, path: str) -> None:
     _require_canonical_id(leg["id"], f"{path}.id")
     for field in ("from_place_id", "to_place_id"):
         _require_canonical_id(leg[field], f"{path}.{field}")
-    if leg["mode"] not in {"flight", "car", "transit", "mixed", "train", "bus", "taxi", "walk", "ferry", "other"}:
+    if not isinstance(leg["mode"], str) or leg["mode"] not in {"flight", "car", "transit", "mixed", "train", "bus", "taxi", "walk", "ferry", "other"}:
         raise TripValidationError(f"{path}.mode is invalid")
     for field in ("departure_at", "arrival_at"):
         _require_offset(leg[field], f"{path}.{field}")
     if datetime.fromisoformat(leg["arrival_at"]) < datetime.fromisoformat(leg["departure_at"]):
         raise TripValidationError(f"{path}.arrival_at must not precede departure_at")
     if "cost" in leg:
-        _require_money_currency(leg["cost"], f"{path}.cost")
+        cost = leg["cost"]
+        if (not isinstance(cost, dict) or set(cost) - {"amount", "currency"}
+                or not isinstance(cost.get("amount"), (int, float)) or isinstance(cost.get("amount"), bool)
+                or cost["amount"] < 0 or not isinstance(cost.get("currency"), str)
+                or re.fullmatch(r"[A-Z]{3}", cost["currency"]) is None):
+            raise TripValidationError(f"{path}.cost must contain a non-negative amount and currency")
     if "distance_km" in leg and (not isinstance(leg["distance_km"], (int, float)) or isinstance(leg["distance_km"], bool) or leg["distance_km"] < 0):
         raise TripValidationError(f"{path}.distance_km must be a non-negative number")
     if "provenance" in leg:
         _require_provenance(leg["provenance"], f"{path}.provenance")
-    if "verification_status" in leg and leg["verification_status"] not in {"confirmed", "estimated", "unverified"}:
+    if "verification_status" in leg and (not isinstance(leg["verification_status"], str) or leg["verification_status"] not in {"confirmed", "estimated", "unverified"}):
         raise TripValidationError(f"{path}.verification_status is invalid")
     for field in ("wait_seconds", "transfer_count"):
         if field in leg and (not isinstance(leg[field], int) or isinstance(leg[field], bool) or leg[field] < 0):
@@ -131,21 +136,31 @@ def _validate_transport_leg(leg: object, path: str) -> None:
     if "segments" in leg:
         if not isinstance(leg["segments"], list):
             raise TripValidationError(f"{path}.segments must be an array")
+        previous_arrival = None
+        first_departure = None
         for index, segment in enumerate(leg["segments"]):
             segment_path = f"{path}.segments[{index}]"
             segment_allowed = {"mode", "departure_at", "arrival_at", "departure_stop", "arrival_stop", "line_name", "headsign"}
             segment_required = {"mode", "departure_at", "arrival_at"}
             if not isinstance(segment, dict) or segment_required - segment.keys() or set(segment) - segment_allowed:
                 raise TripValidationError(f"{segment_path} has missing or unknown fields")
-            if segment["mode"] not in {"walk", "bus", "train", "subway", "ferry", "other"}:
+            if not isinstance(segment["mode"], str) or segment["mode"] not in {"walk", "bus", "train", "subway", "ferry", "other"}:
                 raise TripValidationError(f"{segment_path}.mode is invalid")
             for field in ("departure_at", "arrival_at"):
                 _require_offset(segment[field], f"{segment_path}.{field}")
-            if datetime.fromisoformat(segment["arrival_at"]) < datetime.fromisoformat(segment["departure_at"]):
+            segment_departure = datetime.fromisoformat(segment["departure_at"])
+            segment_arrival = datetime.fromisoformat(segment["arrival_at"])
+            if segment_arrival < segment_departure or (previous_arrival is not None and segment_departure < previous_arrival):
                 raise TripValidationError(f"{segment_path}.arrival_at must not precede departure_at")
+            if first_departure is None:
+                first_departure = segment_departure
+            previous_arrival = segment_arrival
             for field in segment_allowed - {"mode", "departure_at", "arrival_at"}:
                 if field in segment and not isinstance(segment[field], str):
                     raise TripValidationError(f"{segment_path}.{field} must be a string")
+        if leg["segments"] and (first_departure != datetime.fromisoformat(leg["departure_at"])
+                                 or previous_arrival != datetime.fromisoformat(leg["arrival_at"])):
+            raise TripValidationError(f"{path}.segments must span the transport leg time")
 
 
 def _validate_place(place: object, path: str) -> None:

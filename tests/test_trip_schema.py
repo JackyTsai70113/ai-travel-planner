@@ -20,16 +20,22 @@ class NightViewEvidenceSchemaTests(unittest.TestCase):
         return {"observation_point": fact("confirmed", "Riverside viewing deck"), "river_visibility": fact("visible", "River visible from the deck after dusk"), "obstructions": fact("clear", "Sightline has no tree obstruction"), "night_scene": fact("visible", "Bridge lights visible after dusk"), "access_point": {"status": "confirmed", "description": "Viewing deck entrance confirmed", "provenance": source, "navigation_point": point}, "retrieved_at": "2026-09-01T10:00:00+09:00"}
 
     def test_transport_leg_and_segments_are_runtime_validated(self):
-        leg = {"id": "transit-leg", "mode": "mixed", "from_place_id": "origin", "to_place_id": "destination", "departure_at": "2026-04-10T18:00:00+09:00", "arrival_at": "2026-04-10T18:45:00+09:00", "verification_status": "confirmed", "wait_seconds": 120, "transfer_count": 1, "segments": [{"mode": "walk", "departure_at": "2026-04-10T18:00:00+09:00", "arrival_at": "2026-04-10T18:05:00+09:00"}, {"mode": "train", "departure_at": "2026-04-10T18:07:00+09:00", "arrival_at": "2026-04-10T18:35:00+09:00", "line_name": "Airport Line"}]}
+        leg = {"id": "transit-leg", "mode": "mixed", "from_place_id": "origin", "to_place_id": "destination", "departure_at": "2026-04-10T18:00:00+09:00", "arrival_at": "2026-04-10T18:45:00+09:00", "verification_status": "confirmed", "wait_seconds": 120, "transfer_count": 1, "segments": [{"mode": "walk", "departure_at": "2026-04-10T18:00:00+09:00", "arrival_at": "2026-04-10T18:05:00+09:00"}, {"mode": "train", "departure_at": "2026-04-10T18:07:00+09:00", "arrival_at": "2026-04-10T18:45:00+09:00", "line_name": "Airport Line"}]}
         self.trip["candidate_sets"]["transport_legs"].append(leg)
         validate_trip(self.trip)
         invalids = [
             {**leg, "unexpected": True},
             {**leg, "mode": "scooter"},
+            {**leg, "mode": []},
+            {**leg, "verification_status": []},
             {**leg, "wait_seconds": True},
+            {**leg, "cost": "n/a"},
             {**leg, "arrival_at": "2026-04-10T17:59:00+09:00"},
             {**leg, "segments": [{"mode": "train", "departure_at": leg["departure_at"], "arrival_at": leg["arrival_at"], "extra": 1}]},
             {**leg, "segments": [{"mode": "airplane", "departure_at": leg["departure_at"], "arrival_at": leg["arrival_at"]}]},
+            {**leg, "segments": [{"mode": [], "departure_at": leg["departure_at"], "arrival_at": leg["arrival_at"]}]},
+            {**leg, "segments": [{"mode": "walk", "departure_at": leg["departure_at"], "arrival_at": "2026-04-10T18:30:00+09:00"}, {"mode": "train", "departure_at": "2026-04-10T18:20:00+09:00", "arrival_at": leg["arrival_at"]}]},
+            {**leg, "segments": [{"mode": "train", "departure_at": "2026-04-10T18:01:00+09:00", "arrival_at": leg["arrival_at"]}]},
         ]
         for invalid in invalids:
             with self.subTest(invalid=invalid):
