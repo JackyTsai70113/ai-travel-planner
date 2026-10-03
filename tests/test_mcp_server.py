@@ -76,6 +76,10 @@ class MCPTravelServerTests(unittest.TestCase):
                 self.assertIn(
                     "Use parse_trip_request before plan_trip", str(prompt.messages)
                 )
+                self.assertIn(
+                    "then call plan_trip with confirm_write=true",
+                    str(prompt.messages),
+                )
 
         asyncio.run(check())
 
@@ -110,10 +114,29 @@ class MCPTravelServerTests(unittest.TestCase):
                 self.assertIsNotNone(payload)
                 self.assertEqual(payload["status"], "parsed")
                 self.assertEqual(payload["intent"]["start_date"], "2026-04-01")
-                invalid_args = await client.call_tool(
+                empty_request = await client.call_tool(
                     "parse_trip_request", {"request": ""}
                 )
-                self.assertTrue(invalid_args.is_error)
+                self.assertTrue(empty_request.is_error)
+                oversized_request = await client.call_tool(
+                    "parse_trip_request", {"request": "x" * 20_001}
+                )
+                self.assertTrue(oversized_request.is_error)
+                whitespace_request = await client.call_tool(
+                    "parse_trip_request", {"request": "   \n"}
+                )
+                self.assertEqual(
+                    whitespace_request.structured_content["status"], "invalid_input"
+                )
+                malformed_trip_id = await client.call_tool(
+                    "get_trip", {"trip_id": "../escape"}
+                )
+                self.assertTrue(malformed_trip_id.is_error)
+                malformed_plan = await client.call_tool(
+                    "plan_trip",
+                    {"request": "trip", "trip_id": "../escape"},
+                )
+                self.assertTrue(malformed_plan.is_error)
                 invalid_trip = await client.call_tool(
                     "validate_trip", {"trip": {"schema_version": "wrong"}}
                 )

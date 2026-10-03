@@ -350,7 +350,7 @@ def plan_a_trip(request: str) -> str:
         "Use parse_trip_request before plan_trip. Never claim research, availability, "
         "opening hours, prices, routes, or validation succeeded without tool evidence. "
         "Before any tool writes local files, explain the exact side effect and obtain confirmation, "
-        "then call plan_trip_tool with confirm_write=true.\n\n"
+        "then call plan_trip with confirm_write=true.\n\n"
         f"Traveler request:\n{request}"
     )
 

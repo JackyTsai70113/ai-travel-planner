@@ -59,8 +59,8 @@ Input schema:
 Output statuses:
 
 - `parsed`: `{ "status":"parsed", "intent": <TravelIntent.as_dict()> }`; the intent includes fields, provenance, missing fields, ambiguities, and constraint issues.
-- `invalid_input`: empty/whitespace-only or oversized request; includes a short `message`.
-- MCP schema rejection (`isError=true`): wrong argument types or JSON Schema `minLength`/`maxLength` violation.
+- `invalid_input`: whitespace-only request passed directly to the tool function; includes a short `message`.
+- MCP schema rejection (`isError=true`): missing/wrong argument types, empty string (`minLength`), or more than 20,000 characters (`maxLength`). These inputs do not reach the tool function.
 
 Side effects and retries: none. Repeating the same request is deterministic.
 
@@ -85,8 +85,8 @@ Output statuses:
 - `ok`: `{ "status":"ok", "trip": {"schema_version","id","title","local_timezone","date_range","days","validation"} }`; each place is projected to `id`, `name`, `kind`, each item to `id`, `kind`, `start_at`, `end_at`, `status`, and findings to `code`, `severity`, `path`.
 - `not_found`: safe `trip_id` was not found.
 - `invalid`: stored trip could not be projected to the allowlisted summary.
-- `error`: invalid identifier, unreadable file, or invalid JSON; message does not contain file contents.
-- MCP schema rejection (`isError=true`): missing or malformed `trip_id`.
+- `error`: unreadable file or invalid JSON; message does not contain file contents.
+- MCP schema rejection (`isError=true`): missing/wrong argument types or a `trip_id` outside the published pattern. These inputs do not reach the tool function.
 
 Side effects and retries: read-only; safe to retry.
 
@@ -94,14 +94,15 @@ Side effects and retries: read-only; safe to retry.
 
 Input schema: `{ "type":"object", "required":["request","trip_id"], "properties":{"request":{"type":"string","minLength":1,"maxLength":20000},"trip_id":{"type":"string","pattern":"^[a-z0-9][a-z0-9-]{0,79}$"},"confirm_write":{"type":"boolean","default":false}} }`.
 
-Output statuses (checked in this order):
+Output statuses (checked in this order when the arguments pass the published JSON Schema):
 
-- `invalid_input`: unsafe `trip_id` or oversized request.
+- `invalid_input`: unsafe `trip_id` passed directly to the tool function.
 - `needs_clarification`: includes parsed `intent`, `missing_fields`, `ambiguous_fields`, and `constraint_issues`; no provider calls or writes.
 - `configuration_missing`: lists missing environment variable names only; no provider call or fixture fallback.
 - `confirmation_required`: configuration is present but `confirm_write` is false; no provider call or write.
 - `complete`: includes `trip_id`, stage names/statuses, and warning `code`/`stage`/`path` only.
 - `incomplete`: includes a generic message; provider exception text and warning message text are deliberately omitted.
+- MCP schema rejection (`isError=true`): missing/wrong argument types, empty or more than 20,000 character request, malformed `trip_id`, or non-boolean `confirm_write`. These inputs do not reach the tool function.
 
 Side effects and retries: with `confirm_write=true`, performs live provider research and may create or replace `trips/<trip_id>/trip.json` and `site/<trip_id>/index.html`. MCP adds no automatic retry. A client retry repeats live provider calls and can replace those files; the tool is non-idempotent. `confirm_write` is an explicit tool argument, not an authorization mechanism.
 
