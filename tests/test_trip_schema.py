@@ -44,10 +44,24 @@ class NightViewEvidenceSchemaTests(unittest.TestCase):
                     validate_trip(self.trip)
         place["night_view_evidence"]["access_point"]["navigation_point"] = point
 
+    def test_night_view_navigation_point_rejects_malformed_uri(self):
+        place = self.trip["candidate_sets"]["places"][0]
+        place["night_view_evidence"] = self._evidence()
+        place["night_view_evidence"]["access_point"]["navigation_point"]["google_maps_url"] = "https://"
+        with self.assertRaises(TripValidationError):
+            validate_trip(self.trip)
+
     def test_night_view_fact_status_must_match_fact_semantics(self):
         place = self.trip["candidate_sets"]["places"][0]
         place["night_view_evidence"] = self._evidence()
         place["night_view_evidence"]["river_visibility"]["status"] = "clear"
+        with self.assertRaises(TripValidationError):
+            validate_trip(self.trip)
+
+    def test_satisfies_constraints_rejects_duplicate_ids(self):
+        item = self.trip["days"][0]["items"][0]
+        item["satisfies_constraints"] = ["must-visit", "must-visit"]
+        self.trip["preferences"]["hard_constraints"] = [{"id": "must-visit", "kind": "required_location", "description": "Visit the selected attraction", "value": "sample"}]
         with self.assertRaises(TripValidationError):
             validate_trip(self.trip)
 

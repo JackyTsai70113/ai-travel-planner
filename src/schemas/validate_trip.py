@@ -7,6 +7,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 import json
 import re
+from urllib.parse import urlsplit
 
 from src.opening_hours import parse_clock, snapshot_from_mapping
 
@@ -54,8 +55,11 @@ def validate_trip(trip: dict) -> None:
             _require_offset(item["end_at"], f"{path}.end_at")
             if "satisfies_constraints" in item:
                 valid_ids = {entry.get("id") for entry in trip.get("preferences", {}).get("hard_constraints", [])}
-                if (not isinstance(item["satisfies_constraints"], list)
-                        or any(identifier not in valid_ids for identifier in item["satisfies_constraints"])):
+                identifiers = item["satisfies_constraints"]
+                if (not isinstance(identifiers, list)
+                        or any(not isinstance(identifier, str) for identifier in identifiers)
+                        or len(identifiers) != len(set(identifiers))
+                        or any(identifier not in valid_ids for identifier in identifiers)):
                     raise TripValidationError(f"{path}.satisfies_constraints must reference declared hard constraints")
 
 
@@ -193,7 +197,7 @@ def _validate_night_view_evidence(value: object, path: str) -> None:
             raise TripValidationError(f"{path}.access_point.navigation_point must identify a routed entrance")
         if "coordinates" in point:
             _validate_coordinates(point["coordinates"], f"{point_path}.coordinates")
-        if "google_maps_url" in point and (not isinstance(point["google_maps_url"], str) or not point["google_maps_url"].strip() or not point["google_maps_url"].startswith(("https://", "http://"))):
+        if "google_maps_url" in point and not _valid_uri(point["google_maps_url"]):
             raise TripValidationError(f"{point_path}.google_maps_url must be a URI")
         if "phone" in point and (not isinstance(point["phone"], str) or not point["phone"].strip()):
             raise TripValidationError(f"{point_path}.phone must be non-empty")
@@ -343,6 +347,16 @@ def _require_provenance(value: object, path: str) -> None:
 def _require_canonical_id(value: object, path: str) -> None:
     if not isinstance(value, str) or re.fullmatch(r"[a-z][a-z0-9_-]*", value) is None:
         raise TripValidationError(f"{path} must be a canonical lowercase ID")
+
+
+def _valid_uri(value: object) -> bool:
+    if not isinstance(value, str) or not value.strip():
+        return False
+    try:
+        parsed = urlsplit(value)
+        return parsed.scheme in {"http", "https"} and bool(parsed.netloc) and bool(parsed.hostname)
+    except ValueError:
+        return False
 
 
 def load_trip(path: str | Path) -> dict:

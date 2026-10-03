@@ -42,6 +42,7 @@ def plan(request: PlannerInput) -> PlannerOutput:
 
 def _evaluate(trip: dict, request: PlannerInput) -> CandidatePlan:
     _preserve_overrides(trip)
+    _clear_constraint_satisfaction(trip, request.hard_constraints)
     iterations = 0
     violations = _validate(trip, request)
     while _has_errors(violations) and iterations < request.max_repair_iterations:
@@ -192,14 +193,7 @@ def _confirmed_source(provenance: object) -> bool:
 
 def _record_constraint_satisfaction(trip: dict, constraints: Iterable[HardConstraint]) -> None:
     constraints = list(constraints)
-    planner_owned_ids = {constraint.id for constraint in constraints if constraint.kind == "night_river_view"}
-    for day in trip.get("days", []):
-        for item in day.get("items", []):
-            existing = item.get("satisfies_constraints", [])
-            if isinstance(existing, list):
-                item["satisfies_constraints"] = [constraint_id for constraint_id in existing if constraint_id not in planner_owned_ids]
-                if not item["satisfies_constraints"]:
-                    item.pop("satisfies_constraints")
+    _clear_constraint_satisfaction(trip, constraints)
     for constraint in constraints:
         if constraint.kind != "night_river_view":
             continue
@@ -209,6 +203,18 @@ def _record_constraint_satisfaction(trip: dict, constraints: Iterable[HardConstr
             satisfied = trip["days"][day_index]["items"][item_index].setdefault("satisfies_constraints", [])
             if constraint.id not in satisfied:
                 satisfied.append(constraint.id)
+
+
+def _clear_constraint_satisfaction(trip: dict, constraints: Iterable[HardConstraint]) -> None:
+    constraints = list(constraints)
+    planner_owned_ids = {constraint.id for constraint in constraints if constraint.kind == "night_river_view"}
+    for day in trip.get("days", []):
+        for item in day.get("items", []):
+            existing = item.get("satisfies_constraints", [])
+            if isinstance(existing, list):
+                item["satisfies_constraints"] = [constraint_id for constraint_id in existing if constraint_id not in planner_owned_ids]
+                if not item["satisfies_constraints"]:
+                    item.pop("satisfies_constraints")
 
 
 def _repair_only_violating_scope(trip: dict, violations: Iterable[Violation], request: PlannerInput) -> bool:
