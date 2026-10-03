@@ -245,6 +245,28 @@ class MCPTravelServerTests(unittest.TestCase):
             ],
         )
 
+        async def check_protocol() -> None:
+            with patch.dict("os.environ", {}, clear=True):
+                async with Client(mcp) as client:
+                    protocol_result = await client.call_tool(
+                        "plan_trip",
+                        {
+                            "request": request,
+                            "trip_id": "mcp-test-trip",
+                            "confirm_write": True,
+                        },
+                    )
+            self.assertEqual(
+                protocol_result.structured_content["status"],
+                "configuration_missing",
+            )
+            self.assertEqual(
+                protocol_result.structured_content["missing"],
+                result["missing"],
+            )
+
+        asyncio.run(check_protocol())
+
     def test_plan_requires_write_confirmation_before_constructing_live_providers(
         self,
     ) -> None:
