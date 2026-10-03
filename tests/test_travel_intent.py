@@ -37,6 +37,16 @@ class TravelIntentParserTests(unittest.TestCase):
         self.assertEqual(intent.provenance["budget"][0].text, "預算8萬台幣")
         self.assertEqual(intent.raw_text[intent.provenance["budget"][0].start:intent.provenance["budget"][0].end], "預算8萬台幣")
 
+    def test_explicit_japanese_origin_is_not_misclassified_as_destination(self):
+        intent = parse_trip_request("2026/10/20到2026/10/22，東京出發北海道三天兩夜，2大")
+        self.assertEqual(intent.origin, "東京")
+        self.assertEqual(intent.destinations, ("北海道",))
+
+    def test_taiwan_country_origin_is_not_misclassified_as_destination(self):
+        intent = parse_trip_request("台灣出發去熊本")
+        self.assertEqual(intent.origin, "台灣")
+        self.assertEqual(intent.destinations, ("熊本",))
+
     def test_mixed_preferences_map_to_existing_planner_contracts(self):
         intent = parse_trip_request(FIXTURES[1]["text"])
         self.assertEqual((intent.duration_days, intent.duration_nights), (5, 4))

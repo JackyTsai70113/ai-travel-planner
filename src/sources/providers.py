@@ -77,6 +77,11 @@ def prioritize_by_authority(candidates: Iterable[tuple[str, dict[str, Any]]]) ->
     return sorted(candidates, key=lambda item: authority_rank(_provenance(item[1])))
 
 
+def _places_language(destination: str) -> str:
+    taiwan_terms = ("台灣", "臺灣", "台北", "臺北", "萬華", "西門町", "西門")
+    return "zh-TW" if any(term in destination for term in taiwan_terms) else "ja"
+
+
 class GooglePlacesAdapter(SourceAdapter):
     """Google Places API (New) text search adapter for POI and restaurants.
 
@@ -108,7 +113,7 @@ class GooglePlacesAdapter(SourceAdapter):
                     "X-Goog-Api-Key": self.api_key,
                     "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location,places.googleMapsUri,places.websiteUri,places.rating,places.userRatingCount,places.primaryType,places.types,places.priceLevel,places.regularOpeningHours,places.currentOpeningHours,places.timeZone,places.businessStatus",
                 },
-                body={"textQuery": f"{text} in {query.destination}", "languageCode": "ja"},
+                body={"textQuery": f"{text} in {query.destination}", "languageCode": _places_language(query.destination)},
             )
             for place in result_or_empty(payload, "places"):
                 candidate = self._candidate(place, restaurant=(category == "restaurants"))
