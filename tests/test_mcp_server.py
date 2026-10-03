@@ -139,17 +139,24 @@ class MCPTravelServerTests(unittest.TestCase):
             sock.bind(("127.0.0.1", 0))
             port = sock.getsockname()[1]
         token = "t" * 40
+        server_env = {
+            **os.environ,
+            "PYTHONPATH": str(project),
+            "MCP_TRANSPORT": "streamable-http",
+            "BEARER_TOKEN": token,
+            "PORT": str(port),
+            "RAILWAY_PUBLIC_DOMAIN": "travel.example.test",
+        }
+        for name in (
+            "GOOGLE_MAPS_API_KEY",
+            "YOUTUBE_API_KEY",
+            "OPENROUTESERVICE_API_KEY",
+        ):
+            server_env.pop(name, None)
         process = subprocess.Popen(
             [sys.executable, "-m", "src.mcp_server.server"],
             cwd=project,
-            env={
-                **os.environ,
-                "PYTHONPATH": str(project),
-                "MCP_TRANSPORT": "streamable-http",
-                "BEARER_TOKEN": token,
-                "PORT": str(port),
-                "RAILWAY_PUBLIC_DOMAIN": "travel.example.test",
-            },
+            env=server_env,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
@@ -217,7 +224,7 @@ class MCPTravelServerTests(unittest.TestCase):
             chunked_too_large.read()
             chunked.close()
 
-            async def list_tools():
+            async def exercise_remote_protocol():
                 import httpx2
 
                 headers = {
@@ -229,10 +236,51 @@ class MCPTravelServerTests(unittest.TestCase):
                     async with streamable_http_client(endpoint, http_client=http_client) as (read, write):
                         async with ClientSession(read, write) as client:
                             await client.initialize()
-                            return await client.list_tools()
+                            tools = await client.list_tools()
+                            resources = await client.list_resources()
+                            prompts = await client.list_prompts()
+                            parsed = await client.call_tool(
+                                "parse_trip_request",
+                                {"request": "從台北出發去大阪，停留三天。"},
+                            )
+                            missing_configuration = await client.call_tool(
+                                "plan_trip",
+                                {
+                                    "request": "從台北出發，2026/04/01 到 2026/04/05 去東京，2大1小（6歲），預算8萬台幣，搭電車，想去東京迪士尼，不要太累。",
+                                    "trip_id": "mcp-http-missing-config",
+                                    "confirm_write": True,
+                                },
+                            )
+                            return (
+                                tools,
+                                resources,
+                                prompts,
+                                parsed,
+                                missing_configuration,
+                            )
 
-            result = asyncio.run(list_tools())
-            self.assertIn("parse_trip_request", {tool.name for tool in result.tools})
+            tools, resources, prompts, parsed, missing_configuration = asyncio.run(
+                exercise_remote_protocol()
+            )
+            self.assertIn("parse_trip_request", {tool.name for tool in tools.tools})
+            self.assertIn(
+                "travel-planner://capabilities",
+                {str(resource.uri) for resource in resources.resources},
+            )
+            self.assertIn("plan_a_trip", {prompt.name for prompt in prompts.prompts})
+            self.assertEqual(parsed.structured_content["status"], "parsed")
+            self.assertEqual(
+                missing_configuration.structured_content["status"],
+                "configuration_missing",
+            )
+            self.assertEqual(
+                missing_configuration.structured_content["missing"],
+                [
+                    "GOOGLE_MAPS_API_KEY",
+                    "YOUTUBE_API_KEY",
+                    "OPENROUTESERVICE_API_KEY",
+                ],
+            )
         finally:
             process.terminate()
             try:
