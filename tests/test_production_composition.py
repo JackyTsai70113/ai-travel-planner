@@ -95,7 +95,11 @@ def test_recorded_production_composition_runs_pipeline_and_persists_canonical_ou
     assert result.render_path == tmp_path / "site" / "recorded-trip" / "index.html"
     persisted = result.trip_path.read_text(encoding="utf-8")
     trip = json.loads(persisted)
-    assert trip["selected"]["flight_ids"] == ["amadeus-flight-offer-1"]
+    assert trip["selected"]["flight_ids"] == []
+    assert trip["candidate_sets"]["flights"] == []
+    assert "google.com/travel/flights?" in trip["flight_search_url"]
+    assert "開啟 Google Flights 搜尋航班" in result.render_path.read_text(encoding="utf-8")
+    assert "台北 → 德島" in trip["flight_search_summary"]
     assert trip["local_timezone"] == "Asia/Tokyo"
     assert trip["budget"]["currency"] == "JPY"
     assert "google-secret" not in persisted
@@ -267,7 +271,7 @@ def test_night_river_view_without_confirmed_viewpoint_evidence_stays_incomplete(
     assert any("no scheduled evening viewpoint has sourced evidence" in warning.message for warning in validation.warnings)
 
 
-def test_cross_border_hong_kong_to_taiwan_still_searches_flight(tmp_path):
+def test_cross_border_trip_links_to_google_flights_without_provider_search(tmp_path):
     calls = []
 
     def cross_border_transport(method, url, headers, body):
@@ -287,35 +291,33 @@ def test_cross_border_hong_kong_to_taiwan_still_searches_flight(tmp_path):
 
     assert result.succeeded
     trip = json.loads(result.trip_path.read_text(encoding="utf-8"))
-    assert "flight-offers" in " ".join(calls)
-    assert trip["selected"]["flight_ids"] == ["amadeus-flight-hk-tpe"]
+    assert "flight-offers" not in " ".join(calls)
+    assert trip["selected"]["flight_ids"] == []
+    assert trip["flight_search_url"] == "https://www.google.com/travel/flights?hl=zh-TW"
+    assert "香港 → 台灣、萬華" in trip["flight_search_summary"]
 
 
-def test_unsupported_explicit_origin_fails_before_provider_calls(tmp_path):
-    google = RecordedTaiwanGoogle()
+def test_unmapped_origin_falls_back_to_google_flights_search_page(tmp_path):
     intent = parse_trip_request("2026/10/20到2026/10/22，台灣萬華三天兩夜，2大")
-    intent = replace(intent, origin="新加坡")
-
-    try:
-        _runner(tmp_path, google=google).run(intent)
-    except Exception as exc:
-        assert "flight search is not available for origin '新加坡'" in str(exc)
-    else:
-        raise AssertionError("unsupported explicit origin must fail clearly")
-    assert google.queries == []
+    intent = replace(intent, origin="未知出發地")
+    result = _runner(tmp_path, google=RecordedTaiwanGoogle()).run(intent)
+    assert result.succeeded
+    trip = json.loads(result.trip_path.read_text(encoding="utf-8"))
+    assert trip["flight_search_url"] == "https://www.google.com/travel/flights?hl=zh-TW"
+    assert "未知出發地" in trip["flight_search_summary"]
 
 
 def test_unsupported_hotel_destination_reports_provider_capability_limit(tmp_path):
     intent = parse_trip_request("2026/10/20到2026/10/22，北海道三天兩夜，2大")
     result = _runner(tmp_path).run(intent)
 
-    assert not result.succeeded
+    assert result.succeeded
     research = result.stage(StageName.RESEARCH)
     assert research.status is StageStatus.INCOMPLETE
     assert any("hotel search is not available for this destination" in warning.message for warning in research.warnings)
 
 
-def test_international_japan_trip_stays_incomplete_without_flight_candidates(tmp_path):
+def test_international_japan_trip_completes_without_live_flight_provider(tmp_path):
     calls = []
 
     def no_flight_offers(method, url, headers, body):
@@ -327,20 +329,12 @@ def test_international_japan_trip_stays_incomplete_without_flight_candidates(tmp
     intent = parse_trip_request("2026/4/10到2026/4/14 台北出發德島五天四夜，2大，預算8萬日圓，自駕")
     result = _runner(tmp_path, transport=no_flight_offers).run(intent)
 
-    assert "flight-offers" in " ".join(calls)
-    assert not result.succeeded
-    assert result.trip is None
+    assert "flight-offers" not in " ".join(calls)
+    assert result.succeeded
+    trip = json.loads(result.trip_path.read_text(encoding="utf-8"))
+    assert trip["candidate_sets"]["flights"] == []
+    assert "google.com/travel/flights?" in trip["flight_search_url"]
 
-
-def test_unknown_provider_airport_code_does_not_assume_japan_timezone():
-    from src.application.production import ProductionIncompleteError, _airport_timezone
-
-    try:
-        _airport_timezone("SIN")
-    except ProductionIncompleteError as exc:
-        assert "without a timezone mapping: SIN" in str(exc)
-    else:
-        raise AssertionError("unknown airports must not receive a guessed timezone")
 
 
 def test_cli_non_demo_invokes_shared_production_composition_not_configuration_ready(monkeypatch, capsys, tmp_path):

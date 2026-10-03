@@ -15,13 +15,11 @@ AI 旅遊規劃平台：自動研究、最佳化行程、驗證時間與預算�
 ## Local setup and planning command
 
 This project uses only the Python standard library at runtime.  For production
-research, export these documented provider credentials before running a plan:
+research, export these provider credentials before running a plan:
 
 ```sh
 export GOOGLE_MAPS_API_KEY='...'
 export YOUTUBE_API_KEY='...'
-export AMADEUS_CLIENT_ID='...'
-export AMADEUS_CLIENT_SECRET='...'
 export OPENROUTESERVICE_API_KEY='...'
 # Optional Japan restaurant discovery source:
 export HOTPEPPER_API_KEY='...'
@@ -127,10 +125,11 @@ only explicit request facts and records field-level source provenance.
 
 ## Flight / hotel search
 
-Flight and hotel candidates use provider-neutral models and retain price
-freshness, provenance, occupancy, and explicit timezones. The current
-production-capable Amadeus adapter, credential handling, limits, and no-booking
-boundary are documented in [`docs/flight-hotel-providers.md`](docs/flight-hotel-providers.md).
+Flight fares are not fetched by the planner; each Canonical Trip shows the
+requested route and dates beside a link to the Google Flights search page. Hotel search may use an
+existing compatible Amadeus Self-Service account, but it is optional and a
+replacement hotel provider is not configured. See
+[`docs/flight-hotel-providers.md`](docs/flight-hotel-providers.md).
 
 ## Architecture principles
 

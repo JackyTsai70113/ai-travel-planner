@@ -117,6 +117,14 @@ def test_renderer_does_not_create_links_for_unsafe_urls_or_phone_values():
     assert "<img src=x onerror=alert(1)>" not in html
 
 
+def test_renderer_only_labels_the_canonical_google_flights_url():
+    trip = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    trip["flight_search_url"] = "https://attacker.example/redirect"
+    html = build_site(trip)
+    assert "開啟 Google Flights 搜尋航班" not in html
+    assert 'href="https://attacker.example/redirect"' not in html
+
+
 def test_renderer_allows_https_google_maps_and_safe_phone_links():
     trip = json.loads(FIXTURE.read_text(encoding="utf-8"))
     place = next(item for item in trip["candidate_sets"]["places"] if item["id"] == "dazaifu")

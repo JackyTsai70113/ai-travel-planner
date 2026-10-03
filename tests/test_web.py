@@ -63,10 +63,13 @@ class DashboardTests(unittest.TestCase):
         self.assertEqual(1, len(self.service.calls))
         status, body = self.request("GET", "/api/trips/" + job["trip_id"]); view = json.loads(body)
         self.assertEqual(200, status)
-        for field in ("overview", "days", "routes", "restaurants", "flights", "hotels", "budget", "sources", "validation", "contingencies", "website_url", "trip_json_url"):
+        for field in ("overview", "days", "routes", "restaurants", "flights", "flight_search_url", "flight_search_summary", "hotels", "budget", "sources", "validation", "contingencies", "website_url", "trip_json_url"):
             self.assertIn(field, view)
         self.assertTrue((self.app.trips_directory / job["trip_id"] / "trip.json").exists())
         self.assertTrue((self.app.site_directory / job["trip_id"] / "index.html").exists())
+        page = self.request("GET", "/")[1]
+        self.assertIn("開啟 Google Flights 搜尋航班", page)
+        self.assertIn("此行程未擷取或驗證即時報價。", page)
 
     def test_missing_configuration_is_visible_without_secret(self):
         os.environ["DASHBOARD_TEST_SECRET"] = "very-secret-value-123"

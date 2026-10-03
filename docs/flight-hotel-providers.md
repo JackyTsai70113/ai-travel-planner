@@ -1,35 +1,17 @@
-# Flight / hotel search providers
+# Flight and hotel search providers
 
-`src.sources.travel` is a read-only search boundary.  It currently implements
-the documented Amadeus Self-Service Flight Offers Search and Hotel Offers APIs.
-It produces canonical `flights` / `hotels` candidates; neither raw API payloads
-nor provider SDK objects reach the planner.  It never purchases tickets or books
-rooms.
+## Flights
 
-## Credentials and runtime
+Production planning does not call an airfare API. It does not scrape or automate Google Flights. Canonical Trip contains a `flight_search_url` to the public Google Flights search page and a separate route/date summary to enter there. Google does not document a public URL format for prefilled flight searches, and a free-text query link redirected to an unsupported page during browser verification, so the link opens the working search page without pretending to prefill it. Prices shown on Google Flights are external, can change, and are not returned as repository candidates or included in the trip budget.
 
-Set `AMADEUS_CLIENT_ID` and `AMADEUS_CLIENT_SECRET` in the process environment.
-Do not put either value in source control, fixtures, logs, or Trip data.  The
-adapter obtains an OAuth token only when a search runs.  The default base URL is
-Amadeus's test endpoint; production deployment must deliberately configure the
-approved production endpoint and credentials in its secret manager.
+Google's Flights Search integration is a partner-only program. The public Google Flights website can be opened by users without a repository API key.
 
-Amadeus applies account-specific quota, rate, and inventory limits.  A returned
-amount is marked `unverified`: it is a search result, not a guaranteed bookable
-price.  Preserve `retrieved_at`; callers choose their freshness window through
-`CandidateStore.require_fresh`.  Refresh stale candidates before presenting a
-booking decision.
+## Hotels
 
-## Inputs, normalization, and fallback
+The current production adapter still uses Amadeus Self-Service hotel search when both `AMADEUS_CLIENT_ID` and `AMADEUS_CLIENT_SECRET` are supplied. Those credentials are optional for planning; without them the trip can be planned without hotel candidates and the research stage records that hotel search is unavailable. Amadeus's Self-Service portal was retired; do not expect new credentials from the old registration flow. A replacement hotel provider has not been configured.
 
-Flight search accepts origin/destination airport codes, dates, direct-flight
-filter, currency, adults, and child ages.  When provider timestamps lack an
-offset, callers must supply an airport-to-IANA-timezone map so the normalized
-candidate has an explicit offset.  Hotel search accepts city, stay dates, room
-occupancy including child ages, currency, and optional provider hotel IDs.
+Hotel adapter results, when available from an existing compatible account, remain unverified search quotes and do not make reservations. Do not configure paid or Enterprise credentials until their API and endpoint compatibility has been confirmed.
 
-Search failures become `AdapterFailure` records.  `collect_travel_searches`
-keeps candidates returned by other providers; it does not erase them on one
-provider failure.  Configure another provider adapter or retain previous
-explicitly stale candidates as a fallback, clearly labelled `stale` or
-`unverified`.  CI uses injected recorded responses and never calls the network.
+## Other production credentials
+
+The following remain required by `src.application.production`: `GOOGLE_MAPS_API_KEY` for Places research, `YOUTUBE_API_KEY` for community video evidence, and `OPENROUTESERVICE_API_KEY` for driving/walking route matrices. Keep provider keys in the backend's secret environment and restrict them in each provider console.

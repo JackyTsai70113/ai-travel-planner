@@ -126,7 +126,10 @@ def _validate_policy(policy: dict[str, Any]) -> None:
     ):
         _require(parallelism.get(gate) is True, f"parallelism gate disabled: {gate}")
     checks = policy.get("required_checks")
-    _require(checks == ["framework", "python", "website"], "required CI jobs mismatch")
+    _require(
+        checks == ["framework", "python", "pytest", "mcp-site"],
+        "required CI jobs mismatch",
+    )
 
 
 def _validate_domain_agents(policy: dict[str, Any]) -> None:
@@ -171,6 +174,7 @@ def _validate_repository_contracts() -> None:
         ".github/PULL_REQUEST_TEMPLATE/agentic-checklist.md",
         ".github/ISSUE_TEMPLATE/agent-task.yml",
         ".github/workflows/ci.yml",
+        ".github/workflows/website-ci.yml",
         "agent-collaboration/overlay.json",
         "docs/agents/DEVELOPMENT.md",
     ]
@@ -192,9 +196,57 @@ def _validate_repository_contracts() -> None:
     for command in (
         "python3 scripts/validate_agent_collaboration.py",
         "python3 -m unittest discover -s tests -v",
-        "python3 -m src.renderer.build_site",
+        "npm run test:site-mcp",
+        "npm run build:site-mcp",
+        "npm run validate:site-mcp",
     ):
         _require(command in workflow, f"CI workflow command missing: {command}")
+    _require(
+        not re.search(r"(?m)^  website:", workflow),
+        "MCP CI must not contain an unconditional website job",
+    )
+    for command in (
+        "npm ci --prefix web",
+        "npm --prefix web run lint",
+        "npm --prefix web run typecheck",
+        "npm --prefix web run test",
+        "npm --prefix web run test:e2e",
+        "npm --prefix web run build",
+        "npx --prefix web",
+        "playwright",
+    ):
+        _require(command not in workflow, f"frontend command belongs in Website CI: {command}")
+    _require("web/" not in workflow, "MCP CI must not reference frontend workspace paths")
+    website_workflow = (ROOT / ".github/workflows/website-ci.yml").read_text(
+        encoding="utf-8"
+    )
+    website_pr_trigger = website_workflow.split("  pull_request:", 1)[-1].split(
+        "  push:", 1
+    )[0]
+    website_push_trigger = website_workflow.split("  push:", 1)[-1].split(
+        "  workflow_dispatch:", 1
+    )[0]
+    _require("    paths:" in website_pr_trigger, "Website CI pull requests must use path filters")
+    _require("    paths:" in website_push_trigger, "Website CI pushes must use path filters")
+    for path in ("web/**", "trips/**", "src/renderer/**"):
+        _require(website_workflow.count(f"'{path}'") >= 2, f"Website CI must path-filter both PRs and pushes: {path}")
+    for path in ("site-worker/**", "src/mcp_server/**", "Dockerfile"):
+        _require(path not in website_workflow, f"MCP-only path must not trigger Website CI: {path}")
+    _require(
+        "python3 -m src.renderer.build_site" in website_workflow,
+        "Website CI workflow is missing the canonical site build",
+    )
+    pages_workflow = (ROOT / ".github/workflows/deploy-pages.yml").read_text(
+        encoding="utf-8"
+    )
+    pages_push_trigger = pages_workflow.split("  push:", 1)[-1].split(
+        "  workflow_dispatch:", 1
+    )[0]
+    _require("    paths:" in pages_push_trigger, "Pages deployment pushes must use path filters")
+    for path in ("web/**", "trips/**", "src/renderer/**"):
+        _require(f"'{path}'" in pages_workflow, f"Pages deployment must path-filter website changes: {path}")
+    for path in ("site-worker/**", "src/mcp_server/**", "Dockerfile"):
+        _require(path not in pages_workflow, f"MCP-only path must not deploy GitHub Pages: {path}")
     template = (ROOT / ".github/PULL_REQUEST_TEMPLATE/agentic-checklist.md").read_text(
         encoding="utf-8"
     )

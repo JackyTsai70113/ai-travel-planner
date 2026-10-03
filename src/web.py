@@ -209,7 +209,7 @@ def _trip_read_model(trip: dict[str, Any], trip_id: str) -> dict[str, Any]:
                 sources.append({"group": group, "name": candidate.get("name") or candidate.get("place", {}).get("name") or candidate.get("id"), **_public_provenance(provenance)})
     overview = {"title": trip.get("title"), "dates": trip.get("date_range", {}), "travelers": trip.get("traveler_profile", {}), "cities": trip.get("preferences", {}).get("hard_constraints", []), "budget": trip.get("budget", {}).get("total"), "validation_status": "invalid" if any(x.get("severity") == "error" for x in trip.get("validation", [])) else "valid", "warnings": trip.get("validation", [])}
     contingencies = analyze_contingencies(trip)
-    return _public({"trip": trip, "overview": overview, "days": days, "routes": routes, "restaurants": sets.get("restaurants", []), "flights": sets.get("flights", []), "hotels": sets.get("hotels", []), "budget": trip.get("budget", {}), "sources": sources, "validation": trip.get("validation", []), "contingencies": contingencies, "website_url": f"/site/{quote(trip_id)}/index.html", "trip_json_url": f"/trips/{quote(trip_id)}/trip.json"})
+    return _public({"trip": trip, "overview": overview, "days": days, "routes": routes, "restaurants": sets.get("restaurants", []), "flights": sets.get("flights", []), "flight_search_url": trip.get("flight_search_url"), "flight_search_summary": trip.get("flight_search_summary"), "hotels": sets.get("hotels", []), "budget": trip.get("budget", {}), "sources": sources, "validation": trip.get("validation", []), "contingencies": contingencies, "website_url": f"/site/{quote(trip_id)}/index.html", "trip_json_url": f"/trips/{quote(trip_id)}/trip.json"})
 
 
 def _duration(start: Any, end: Any) -> str:
@@ -297,7 +297,13 @@ async function watch(id){let q=await fetch('/api/jobs/'+id),j=await q.json();p.t
 async function openTrip(id){let q=await fetch('/api/trips/'+id),j=await q.json();if(!q.ok){e.textContent='無法載入行程';return}window.trip=j;w.hidden=false;show('Overview')};
 document.querySelectorAll('[data-tab]').forEach(x=>x.onclick=()=>show(x.dataset.tab));
 function show(tab){let t=window.trip;if(!t)return;
-let maps={'Overview':t.overview,'Itinerary':t.days,'Map / Routing':t.routes,'Restaurants':t.restaurants,'Flights':t.flights,'Hotels':t.hotels,'Budget':t.budget,'Contingencies':t.contingencies,'Research / Sources':t.sources,'Validation':t.validation,'Final Website':{website:t.website_url,trip_json:t.trip_json_url}};
+if(tab==='Flights'){
+  r.replaceChildren();
+  if(t.flight_search_summary){const summary=document.createElement('p');summary.textContent=t.flight_search_summary;r.append(summary)}
+  if(t.flight_search_url==='https://www.google.com/travel/flights?hl=zh-TW'){const link=document.createElement('a');link.href=t.flight_search_url;link.target='_blank';link.rel='noopener';link.textContent='開啟 Google Flights 搜尋航班';r.append(link);const note=document.createElement('p');note.textContent='請在 Google Flights 查看當下航班與票價。此行程未擷取或驗證即時報價。';r.append(note)}
+  const options=document.createElement('pre');options.textContent=JSON.stringify(t.flights,null,2);r.append(options);return;
+}
+let maps={'Overview':t.overview,'Itinerary':t.days,'Map / Routing':t.routes,'Restaurants':t.restaurants,'Hotels':t.hotels,'Budget':t.budget,'Contingencies':t.contingencies,'Research / Sources':t.sources,'Validation':t.validation,'Final Website':{website:t.website_url,trip_json:t.trip_json_url}};
 r.textContent=JSON.stringify(maps[tab],null,2)}'''
 _CSS = 'body{font:16px system-ui;max-width:980px;margin:2rem auto;padding:0 1rem;background:#f5f7fa;color:#172033}textarea{width:100%;min-height:7rem;padding:1rem}button{padding:.7rem 1rem;margin:.5rem .3rem .5rem 0}section,form{background:white;padding:1rem;border-radius:.75rem;margin:1rem 0}.tabs{overflow:auto;white-space:nowrap}pre{white-space:pre-wrap;overflow:auto;background:#101828;color:#eaf2ff;padding:1rem;border-radius:.5rem}#error{color:#b42318}small{display:block;color:#667085}'
 
