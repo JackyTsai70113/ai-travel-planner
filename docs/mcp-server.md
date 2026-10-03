@@ -21,6 +21,12 @@ Railway must expose its HTTP service on the assigned `PORT` and pass the
 `/health` health check. After planning a trip, restart/redeploy the service and
 verify that `get_trip` still returns that trip.
 
+The Streamable HTTP transport keeps DNS-rebinding protection enabled. It
+automatically allows Railway's injected `RAILWAY_PUBLIC_DOMAIN`, plus local
+loopback hosts for development. If using an additional custom hostname, set
+`MCP_ALLOWED_HOSTS` to a comma-separated list of exact `Host` values (hostnames
+without a scheme or path); do not disable host validation.
+
 For the ChatGPT-facing Site, set `MCP_BACKEND_URL` to the Railway HTTPS origin
 (without a path) and set `MCP_BACKEND_TOKEN` to the same secret in the Sites
 runtime environment using `sites_update_environment_variables`. Then run
