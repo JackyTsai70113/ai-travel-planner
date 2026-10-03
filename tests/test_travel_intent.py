@@ -57,7 +57,7 @@ class TravelIntentParserTests(unittest.TestCase):
         self.assertEqual({field.field for field in intent.missing_fields}, {"dates_or_duration", "travelers", "budget"})
 
     def test_taiwan_destination_hierarchy_and_three_days_two_nights(self):
-        text = "2026/10/20到2026/10/22，台北出發，台灣萬華西門三天兩夜，2個人，大眾運輸，晚上看得到河流與夜景"
+        text = "2026/10/20到2026/10/22，台北出發，台灣萬華西門三天兩夜，2個人，大眾運輸，晚上看得到河流與夜景，包含景點餐廳旅館，預算2萬台幣"
         intent = parse_site_request(text)
         self.assertEqual(intent.destinations, ("台灣", "萬華", "西門町"))
         self.assertEqual((intent.duration_days, intent.duration_nights), (3, 2))
@@ -65,7 +65,24 @@ class TravelIntentParserTests(unittest.TestCase):
         self.assertNotIn("destination", required_request_fields(intent))
         for source in intent.provenance["destinations"]:
             self.assertEqual(text[source.start:source.end], source.text)
+        self.assertEqual((intent.budget_amount, intent.currency), (20000, "TWD"))
+
+    def test_taiwan_request_keeps_unstated_values_missing(self):
+        intent = parse_trip_request("臺灣萬華西門三天兩夜")
+        self.assertEqual(intent.destinations, ("台灣", "萬華", "西門町"))
+        self.assertIsNone(intent.start_date)
+        self.assertIsNone(intent.end_date)
+        self.assertIsNone(intent.travelers.adults)
         self.assertIsNone(intent.budget_amount)
+        self.assertEqual(
+            {field.field for field in intent.missing_fields},
+            {"travelers", "budget"},
+        )
+
+    def test_japanese_destinations_kumamoto_and_awaji_remain_recognized(self):
+        for destination in ("熊本", "淡路島"):
+            with self.subTest(destination=destination):
+                self.assertEqual(parse_trip_request(destination).destinations, (destination,))
 
     def test_taiwan_aliases_and_traditional_night_counts(self):
         variants = (
