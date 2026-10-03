@@ -220,13 +220,14 @@ describe('淡路島只讀旅遊助手', () => {
   it('餐飲頁由 Canonical Trip meal 與餐廳來源欄位呈現，不需要手寫 place guide', () => {
     const withoutGuides = { ...bundle, travel_assistant: undefined,
       days: [{ ...bundle.days[0], items: [{ id: 'lunch', kind: 'meal', start_at: `${dates[0]}T12:00:00+09:00`, end_at: `${dates[0]}T13:00:00+09:00`, place_id: placeIds[0] }] }],
-      restaurant_facts: [{ place_id: placeIds[0], provenance: guideSource, fields: { cuisine: '拉麵', price_range: '¥1,000–1,800', opening_hours: { status: 'fresh', intervals: [{ weekday: 0, opens_at: '11:00', closes_at: '18:00' }] }, recommended_dishes: [{ name: '豚骨拉麵', note: '店家推薦', provenance: guideSource }] } }],
+      restaurant_facts: [{ place_id: placeIds[0], provenance: guideSource, fields: { cuisine: '拉麵', price_range: '¥1,000–1,800', field_provenance: { cuisine: [guideSource], price_range: [{ ...guideSource, provider: '餐廳價格來源' }] }, opening_hours: { status: 'fresh', intervals: [{ weekday: 0, opens_at: '11:00', closes_at: '18:00' }] }, recommended_dishes: [{ name: '豚骨拉麵', note: '店家推薦', provenance: guideSource }] } }],
     } as Bundle
     render(<FoodPage bundle={withoutGuides} />)
     expect(screen.getByText('ラーメン一樂')).toBeInTheDocument()
     expect(screen.getByText('¥1,000–1,800')).toBeInTheDocument()
     expect(screen.getByText('豚骨拉麵')).toBeInTheDocument()
-    expect(screen.getByText(/查核時間/)).toBeInTheDocument()
+    expect(screen.getAllByText(/查核時間/)).toHaveLength(3)
+    expect(screen.getByText((_, element) => element?.tagName === 'SMALL' && element.textContent?.includes('餐廳價格來源') === true)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /在 Google Maps 開啟/ })).toBeInTheDocument()
     expect(screen.queryByText(/停車場/)).not.toBeInTheDocument()
   })
@@ -252,6 +253,19 @@ describe('淡路島只讀旅遊助手', () => {
     expect(screen.getByText('同餐段候補')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '候補食堂' })).toHaveAttribute('href', expect.stringContaining(encodeURIComponent('候補食堂')))
     expect(screen.getByText(/營業時間已查核，行程會再依當日實際順序確認可達性/)).toBeInTheDocument()
+  })
+
+  it('特殊營業時間優先於一般週間時間顯示', () => {
+    const withSpecialHours = { ...bundle,
+      days: [{ ...bundle.days[0], items: [{ id: 'lunch', kind: 'meal', start_at: `${dates[0]}T12:00:00+09:00`, end_at: `${dates[0]}T13:00:00+09:00`, place_id: placeIds[0] }] }],
+      restaurant_facts: [{ place_id: placeIds[0], fields: { opening_hours: {
+        status: 'fresh', intervals: [{ weekday: 0, opens_at: '09:00', closes_at: '21:00' }],
+        special_hours: [{ date: dates[0], status: 'open', intervals: [{ opens_at: '12:00', closes_at: '16:00' }] }],
+      } } }],
+    } as Bundle
+    render(<FoodPage bundle={withSpecialHours} />)
+    expect(screen.getByText('12:00–16:00')).toBeInTheDocument()
+    expect(screen.queryByText(/一般營業時間/)).not.toBeInTheDocument()
   })
 
   it('行程結束後不把下一站跳回早餐', () => {

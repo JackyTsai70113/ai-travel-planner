@@ -278,7 +278,7 @@ class PlannerTests(unittest.TestCase):
         primary["place"]["id"] = "primary-meal"
         primary["schedule"] = {"duration_minutes": 60, "day": 1, "meal_period": "lunch", "required": False,
                                "fixed_start_at": "2026-04-10T12:30:00+09:00", "fixed_end_at": "2026-04-10T13:30:00+09:00",
-                               "selected": True, "alternatives": [{"place_id": "backup-meal"}]}
+                               "selected": True, "alternatives": [{"place_id": "backup-meal", "meal_period": "lunch", "day": 1, "hours_verified": True, "route_verified": True}]}
         backup = copy.deepcopy(primary)
         backup["place"]["id"] = "backup-meal"
         backup["schedule"] = {**primary["schedule"], "selected": False}
@@ -295,6 +295,56 @@ class PlannerTests(unittest.TestCase):
         self.assertEqual(["backup-meal"], meals)
         self.assertNotIn("meal.closed_or_unverified", {item.code for item in result.best_trip.violations})
 
+    def test_optional_meal_uses_alternative_when_primary_fixed_end_does_not_fit(self):
+        trip = copy.deepcopy(self.trip)
+        trip["days"] = []
+        trip["date_range"] = {"start_date": "2026-04-10", "end_date": "2026-04-10"}
+        poi = next(place for place in trip["candidate_sets"]["places"] if place["id"] == "ohori-park")
+        poi["schedule"] = {"duration_minutes": 60, "day": 1, "required": True}
+        trip["candidate_sets"]["places"] = [poi]
+        primary = copy.deepcopy(self.trip["candidate_sets"]["restaurants"][0])
+        primary["place"]["id"] = "primary-meal"
+        primary["schedule"] = {"duration_minutes": 60, "day": 1, "meal_period": "lunch", "required": False,
+                               "fixed_start_at": "2026-04-10T12:30:00+09:00", "fixed_end_at": "2026-04-10T13:00:00+09:00",
+                               "selected": True, "alternatives": [{"place_id": "backup-meal", "meal_period": "lunch", "day": 1, "hours_verified": True, "route_verified": True}]}
+        backup = copy.deepcopy(primary)
+        backup["place"]["id"] = "backup-meal"
+        backup["schedule"] = {"duration_minutes": 45, "fixed_end_at": "2026-04-10T13:15:00+09:00", "selected": False}
+        trip["candidate_sets"]["restaurants"] = [primary, backup]
+        hotel = "hakata-hotel"
+        routes = {(hotel, poi["id"]): 10, (poi["id"], "primary-meal"): 10, (poi["id"], "backup-meal"): 10,
+                  ("primary-meal", hotel): 10, ("backup-meal", hotel): 10, (poi["id"], hotel): 10}
+        hours = {poi["id"]: tuple(OpeningInterval(day, time(0), time(23, 59)) for day in range(7)),
+                 "primary-meal": tuple(OpeningInterval(day, time(0), time(23, 59)) for day in range(7)),
+                 "backup-meal": tuple(OpeningInterval(day, time(0), time(23, 59)) for day in range(7))}
+        result = schedule(SchedulingInput(trip, ValidationContext(routes, hours)))
+        assert result.best_trip is not None
+        meals = [item["place_id"] for item in result.best_trip.trip["days"][0]["items"] if item["kind"] == "meal"]
+        self.assertEqual(["backup-meal"], meals)
+        self.assertFalse(result.best_trip.trip["candidate_sets"]["restaurants"][0]["schedule"]["selected"])
+        self.assertTrue(result.best_trip.trip["candidate_sets"]["restaurants"][1]["schedule"]["selected"])
+
+    def test_scheduler_ignores_alternatives_without_matching_verification(self):
+        from src.planner.scheduler import _activities
+
+        trip = copy.deepcopy(self.trip)
+        primary = trip["candidate_sets"]["restaurants"][0]
+        primary["schedule"] = {"duration_minutes": 60, "day": 1, "meal_period": "lunch", "selected": True,
+                               "alternatives": [
+                                   {"place_id": "unverified-backup", "meal_period": "lunch", "day": 1, "hours_verified": False, "route_verified": True},
+                                   {"place_id": "wrong-slot-backup", "meal_period": "dinner", "day": 1, "hours_verified": True, "route_verified": True},
+                               ]}
+        backups = []
+        for place_id in ("unverified-backup", "wrong-slot-backup"):
+            backup = copy.deepcopy(primary)
+            backup["place"]["id"] = place_id
+            backup["schedule"] = {"duration_minutes": 60, "selected": False}
+            backups.append(backup)
+        trip["candidate_sets"]["restaurants"] = [primary, *backups]
+        activities = _activities(trip, [])
+        self.assertNotIn("unverified-backup", {activity["id"] for activity in activities})
+        self.assertNotIn("wrong-slot-backup", {activity["id"] for activity in activities})
+
     def test_optional_meal_uses_alternative_when_primary_return_route_is_missing(self):
         trip = copy.deepcopy(self.trip)
         trip["days"] = []
@@ -307,7 +357,7 @@ class PlannerTests(unittest.TestCase):
         primary["place"]["id"] = "primary-meal"
         primary["schedule"] = {"duration_minutes": 60, "day": 1, "meal_period": "lunch", "required": False,
                                "fixed_start_at": "2026-04-10T12:30:00+09:00", "fixed_end_at": "2026-04-10T13:30:00+09:00",
-                               "selected": True, "alternatives": [{"place_id": "backup-meal"}]}
+                               "selected": True, "alternatives": [{"place_id": "backup-meal", "meal_period": "lunch", "day": 1, "hours_verified": True, "route_verified": True}]}
         backup = copy.deepcopy(primary)
         backup["place"]["id"] = "backup-meal"
         backup["schedule"] = {**primary["schedule"], "selected": False}
@@ -342,7 +392,7 @@ class PlannerTests(unittest.TestCase):
             primary["place"]["id"] = primary_id
             primary["schedule"] = {"duration_minutes": 60, "day": day, "meal_period": "lunch", "required": False,
                                    "fixed_start_at": f"{meal_date}T12:30:00+09:00", "fixed_end_at": f"{meal_date}T13:30:00+09:00",
-                                   "selected": True, "alternatives": [{"place_id": "shared-backup"}]}
+                                   "selected": True, "alternatives": [{"place_id": "shared-backup", "meal_period": "lunch", "day": day, "hours_verified": True, "route_verified": True}]}
             primary_meals.append(primary)
         backup = copy.deepcopy(primary_meals[0])
         backup["place"]["id"] = "shared-backup"

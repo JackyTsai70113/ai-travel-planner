@@ -224,6 +224,8 @@ def _public_restaurant_facts(candidate_sets: Mapping[str, Any]) -> list[dict[str
         for key in ("opening_hours", "price_range", "meal_price_signals", "rating", "review_count", "cuisine", "recommended_dishes", "reservation_required", "reservation_url", "wait_risk"):
             if key in candidate:
                 fields[key] = candidate[key]
+        if isinstance(candidate.get("field_provenance"), Mapping):
+            fields["field_provenance"] = candidate["field_provenance"]
         result.append({"place_id": place["id"], "provenance": provenance, "fields": fields})
     return result
 

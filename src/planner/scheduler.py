@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import copy
 from datetime import date, datetime, time, timedelta
-from typing import Iterable
+from typing import Iterable, Mapping
 from zoneinfo import ZoneInfo
 
 from src.conditions import evaluate_conditions
@@ -126,10 +126,14 @@ def _activities(trip: dict, violations: list[Violation]) -> list[dict]:
                 continue
             records.append({"id": place["id"], "kind": "meal" if collection == "restaurants" else "visit", "schedule": details, "path": f"/candidate_sets/{collection}/{index}"})
             if collection == "restaurants" and details.get("selected", True):
-              for alternative in details.get("alternatives", ()):
-                if not isinstance(alternative, dict) or not isinstance(alternative.get("place_id"), str):
-                    continue
-                pending_alternatives.setdefault(place["id"], []).append(alternative["place_id"])
+                for alternative in details.get("alternatives", ()):
+                    if not isinstance(alternative, dict) or not isinstance(alternative.get("place_id"), str):
+                        continue
+                    if alternative.get("hours_verified") is not True or alternative.get("route_verified") is not True:
+                        continue
+                    if alternative.get("day") != details.get("day") or alternative.get("meal_period") != details.get("meal_period"):
+                        continue
+                    pending_alternatives.setdefault(place["id"], []).append(alternative["place_id"])
     restaurant_by_id = {item.get("place", item).get("id"): item for item in restaurant_candidates}
     for primary_id, backup_ids in pending_alternatives.items():
         primary = next((record for record in records if record["id"] == primary_id and record["kind"] == "meal"), None)
@@ -139,12 +143,15 @@ def _activities(trip: dict, violations: list[Violation]) -> list[dict]:
             backup = restaurant_by_id.get(backup_id)
             if backup is None:
                 continue
-            backup_place = backup.get("place", backup)
             backup_details = primary["schedule"]
+            backup_schedule = backup.get("schedule") if isinstance(backup.get("schedule"), Mapping) else {}
+            candidate_schedule = {key: value for key, value in backup_details.items() if key != "alternatives"}
+            for key in ("duration_minutes", "fixed_start_at", "fixed_end_at", "parking_buffer_minutes", "walking_buffer_minutes", "fatigue"):
+                if key in backup_schedule:
+                    candidate_schedule[key] = backup_schedule[key]
             records.append({
                 "id": backup_id, "kind": "meal",
-                "schedule": {**{key: value for key, value in backup_details.items() if key != "alternatives"},
-                             "selected": False, "alternative_for": primary_id},
+                "schedule": {**candidate_schedule, "selected": False, "alternative_for": primary_id},
                 "path": f"/candidate_sets/restaurants/{restaurant_candidates.index(backup)}",
             })
     return records
@@ -274,10 +281,18 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
                 try:
                     confirmed_end = datetime.fromisoformat(fixed_end)
                 except ValueError:
-                    violations.append(_failure("schedule.fixed_time_invalid", "fixed_end_at must be ISO-8601", activity["path"]))
+                    violations.append(_optional_meal_warning(activity, "schedule.fixed_time_invalid", "fixed_end_at must be ISO-8601") if optional_meal else _failure("schedule.fixed_time_invalid", "fixed_end_at must be ISO-8601", activity["path"]))
+                    if optional_meal:
+                        cursor, previous = cursor_before, previous_before
+                        if attempt_index < len(attempts) - 1:
+                            continue
                     continue
                 if confirmed_end != end_at:
-                    violations.append(_failure("schedule.fixed_anchor_infeasible", "confirmed anchor end cannot be moved or re-durationed", activity["path"]))
+                    violations.append(_optional_meal_warning(activity, "schedule.fixed_anchor_infeasible", "meal duration does not fit its confirmed end time") if optional_meal else _failure("schedule.fixed_anchor_infeasible", "confirmed anchor end cannot be moved or re-durationed", activity["path"]))
+                    if optional_meal:
+                        cursor, previous = cursor_before, previous_before
+                        if attempt_index < len(attempts) - 1:
+                            continue
                     continue
             if end_at > closes or not _is_open(activity["id"], cursor, end_at, request):
                 violations.append(_optional_meal_warning(activity, "schedule.closed_or_unverified", "restaurant is not confirmed open for the scheduled meal interval") if optional_meal else _failure("schedule.closed_or_unverified", "activity lacks a verified open interval for its scheduled time", activity["path"]))
