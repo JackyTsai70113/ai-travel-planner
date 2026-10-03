@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -26,11 +27,53 @@ from src.validator import ValidationContext, validate_itinerary
 _TRIP_ID = re.compile(r"^[a-z0-9][a-z0-9-]{0,79}$")
 _TRIPS_DIR = Path(os.environ.get("TRAVEL_PLANNER_TRIPS_DIR", "trips")).resolve()
 _SITE_DIR = Path(os.environ.get("TRAVEL_PLANNER_SITE_DIR", "site")).resolve()
+_HTTP_REQUEST_LIMIT = 120
+_HTTP_WINDOW_SECONDS = 60
+_HTTP_MAX_BODY_BYTES = 4 * 1024 * 1024
 
 mcp = MCPServer(
     "ai-travel-planner",
     instructions="Use Canonical Trip V1 as the sole trip record. Preserve unknown facts. Ask for confirmation before tools write local files.",
 )
+
+
+def _consume_remote_request(
+    user_id: str,
+    now: float,
+    windows: dict[str, tuple[int, float]],
+) -> bool:
+    """Apply a per-user fixed-window limit; state is held only in process memory."""
+    count, window_started = windows.get(user_id, (0, now))
+    if now - window_started >= _HTTP_WINDOW_SECONDS:
+        count, window_started = 0, now
+    if count >= _HTTP_REQUEST_LIMIT:
+        return False
+    if user_id not in windows and len(windows) >= 10_000:
+        expired = [key for key, (_, started) in windows.items() if now - started >= _HTTP_WINDOW_SECONDS]
+        for key in expired:
+            windows.pop(key, None)
+        if len(windows) >= 10_000:
+            return False
+    windows[user_id] = (count + 1, window_started)
+    return True
+
+
+async def _read_limited_asgi_body(receive, limit: int) -> list[dict[str, Any]] | None:
+    """Buffer an HTTP request body, returning None once its actual bytes exceed limit."""
+    messages: list[dict[str, Any]] = []
+    size = 0
+    while True:
+        message = await receive()
+        if message["type"] == "http.disconnect":
+            return messages
+        if message["type"] != "http.request":
+            continue
+        size += len(message.get("body", b""))
+        if size > limit:
+            return None
+        messages.append(message)
+        if not message.get("more_body", False):
+            return messages
 
 
 def _trip_path(trip_id: str) -> Path:
@@ -356,7 +399,91 @@ def plan_a_trip(request: str) -> str:
 
 
 def main() -> None:
-    mcp.run(transport="stdio")
+    transport = os.environ.get("MCP_TRANSPORT", "stdio").lower()
+    if transport == "stdio":
+        mcp.run(transport="stdio")
+        return
+    if transport == "streamable-http":
+        run_http_server()
+        return
+    raise SystemExit("MCP_TRANSPORT must be 'stdio' or 'streamable-http'")
+
+
+def run_http_server() -> None:
+    """Serve the MCP endpoint behind an internal bearer-token gateway."""
+    import hmac
+
+    import uvicorn
+    from starlette.responses import PlainTextResponse
+
+    token = os.environ.get("MCP_BACKEND_TOKEN", "")
+    if len(token) < 32:
+        raise SystemExit("MCP_BACKEND_TOKEN must contain at least 32 characters")
+
+    class InternalBearerAuth:
+        def __init__(self, app):
+            self.app = app
+            self.request_windows: dict[str, tuple[int, float]] = {}
+
+        async def __call__(self, scope, receive, send):
+            if scope["type"] != "http" or scope.get("path") == "/health":
+                await self.app(scope, receive, send)
+                return
+            headers = {key.lower(): value for key, value in scope.get("headers", [])}
+            value = headers.get(b"authorization", b"").decode("latin-1")
+            supplied = value[7:] if value.startswith("Bearer ") else ""
+            if not hmac.compare_digest(supplied, token):
+                await self._reject(send, 401, "unauthorized")
+                return
+            user_id = headers.get(b"oai-authenticated-user-id", b"").decode("latin-1")
+            if not user_id.strip():
+                await self._reject(send, 401, "unauthorized")
+                return
+            content_length = headers.get(b"content-length")
+            if content_length:
+                try:
+                    if int(content_length) < 0:
+                        await self._reject(send, 400, "invalid_content_length")
+                        return
+                    if int(content_length) > _HTTP_MAX_BODY_BYTES:
+                        await self._reject(send, 413, "request_too_large")
+                        return
+                except ValueError:
+                    await self._reject(send, 400, "invalid_content_length")
+                    return
+            now = time.monotonic()
+            if not _consume_remote_request(user_id, now, self.request_windows):
+                await self._reject(send, 429, "rate_limited")
+                return
+            messages = await _read_limited_asgi_body(receive, _HTTP_MAX_BODY_BYTES)
+            if messages is None:
+                await self._reject(send, 413, "request_too_large")
+                return
+            pending = list(messages)
+
+            async def replay_receive():
+                if pending:
+                    return pending.pop(0)
+                return await receive()
+
+            await self.app(scope, replay_receive, send)
+
+        @staticmethod
+        async def _reject(send, status: int, error: str):
+            body = json.dumps({"error": error}, separators=(",", ":")).encode()
+            await send({"type": "http.response.start", "status": status, "headers": [(b"content-type", b"application/json"), (b"content-length", str(len(body)).encode())]})
+            await send({"type": "http.response.body", "body": body})
+
+    app = mcp.streamable_http_app(
+        streamable_http_path="/mcp", json_response=True, stateless_http=True
+    )
+
+    async def health(_request):
+        return PlainTextResponse("ok")
+
+    app.add_route("/health", health, methods=["GET"])
+    app.add_middleware(InternalBearerAuth)
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", "8000")), access_log=False)
 
 
 if __name__ == "__main__":

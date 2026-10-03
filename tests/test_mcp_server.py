@@ -3,14 +3,18 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import socket
+import subprocess
 import sys
+import time
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from mcp import Client
+from mcp import Client, ClientSession
 from mcp.client.stdio import StdioServerParameters
+from mcp.client.streamable_http import streamable_http_client
 
 from src.mcp_server.server import (
     _public_trip_summary,
@@ -20,10 +24,34 @@ from src.mcp_server.server import (
     parse_trip_request_tool,
     plan_trip_tool,
     validate_trip_tool,
+    _consume_remote_request,
+    _read_limited_asgi_body,
 )
 
 
 class MCPTravelServerTests(unittest.TestCase):
+    def test_remote_rate_limit_is_per_user_and_resets_by_window(self) -> None:
+        windows: dict[str, tuple[int, float]] = {}
+        for _ in range(120):
+            self.assertTrue(_consume_remote_request("user-a", 10.0, windows))
+        self.assertFalse(_consume_remote_request("user-a", 10.0, windows))
+        self.assertTrue(_consume_remote_request("user-b", 10.0, windows))
+        self.assertTrue(_consume_remote_request("user-a", 70.0, windows))
+
+    def test_streamed_body_without_content_length_is_limited_by_actual_size(self) -> None:
+        async def read_large_body():
+            messages = [
+                {"type": "http.request", "body": b"x" * (4 * 1024 * 1024), "more_body": True},
+                {"type": "http.request", "body": b"y", "more_body": False},
+            ]
+
+            async def receive():
+                return messages.pop(0)
+
+            return await _read_limited_asgi_body(receive, 4 * 1024 * 1024)
+
+        self.assertIsNone(asyncio.run(read_large_body()))
+
     def test_protocol_lists_tools_resources_and_prompts(self) -> None:
         async def check() -> None:
             async with Client(mcp) as client:
@@ -100,6 +128,79 @@ class MCPTravelServerTests(unittest.TestCase):
                 self.assertEqual(result.structured_content["status"], "parsed")
 
         asyncio.run(check())
+
+    def test_streamable_http_requires_internal_token_and_serves_tools(self) -> None:
+        import urllib.error
+        import urllib.request
+        import http.client
+
+        project = Path(__file__).parent.parent.resolve()
+        with socket.socket() as sock:
+            sock.bind(("127.0.0.1", 0))
+            port = sock.getsockname()[1]
+        token = "t" * 40
+        process = subprocess.Popen(
+            [sys.executable, "-m", "src.mcp_server.server"],
+            cwd=project,
+            env={**os.environ, "PYTHONPATH": str(project), "MCP_TRANSPORT": "streamable-http", "MCP_BACKEND_TOKEN": token, "PORT": str(port)},
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        endpoint = f"http://127.0.0.1:{port}/mcp"
+        try:
+            for _ in range(100):
+                if process.poll() is not None:
+                    self.fail("HTTP MCP server exited during startup")
+                try:
+                    urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=0.2).read()
+                    break
+                except (OSError, urllib.error.URLError):
+                    time.sleep(0.05)
+            with self.assertRaises(urllib.error.HTTPError) as unauthenticated:
+                urllib.request.urlopen(urllib.request.Request(endpoint, data=b"{}", method="POST", headers={"Authorization": f"Bearer {token}"}), timeout=2)
+            self.assertEqual(unauthenticated.exception.code, 401)
+            unauthenticated.exception.close()
+            connection = http.client.HTTPConnection("127.0.0.1", port, timeout=2)
+            connection.putrequest("POST", "/mcp")
+            connection.putheader("Authorization", f"Bearer {token}")
+            connection.putheader("oai-authenticated-user-id", "test-user")
+            connection.putheader("Content-Length", str(4 * 1024 * 1024 + 1))
+            connection.endheaders()
+            too_large = connection.getresponse()
+            self.assertEqual(too_large.status, 413)
+            too_large.read()
+            connection.close()
+
+            chunked = http.client.HTTPConnection("127.0.0.1", port, timeout=4)
+            chunked.putrequest("POST", "/mcp")
+            chunked.putheader("Authorization", f"Bearer {token}")
+            chunked.putheader("oai-authenticated-user-id", "test-user")
+            chunked.putheader("Transfer-Encoding", "chunked")
+            chunked.endheaders()
+            chunked.send(b"400000\r\n" + b"x" * (4 * 1024 * 1024) + b"\r\n")
+            chunked.send(b"1\r\ny\r\n0\r\n\r\n")
+            chunked_too_large = chunked.getresponse()
+            self.assertEqual(chunked_too_large.status, 413)
+            chunked_too_large.read()
+            chunked.close()
+
+            async def list_tools():
+                import httpx2
+
+                async with httpx2.AsyncClient(headers={"Authorization": f"Bearer {token}", "oai-authenticated-user-id": "test-user"}) as http_client:
+                    async with streamable_http_client(endpoint, http_client=http_client) as (read, write):
+                        async with ClientSession(read, write) as client:
+                            await client.initialize()
+                            return await client.list_tools()
+
+            result = asyncio.run(list_tools())
+            self.assertIn("parse_trip_request", {tool.name for tool in result.tools})
+        finally:
+            process.terminate()
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill()
 
     def test_request_parser_is_reachable_over_mcp_and_keeps_unknowns(self) -> None:
         async def check() -> None:

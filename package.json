@@ -1,0 +1,10 @@
+{
+  "name": "ai-travel-planner-chatgpt-mcp-site",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:site-mcp": "bash scripts/build_site_mcp.sh",
+    "validate:site-mcp": "node scripts/validate_site_mcp.mjs",
+    "test:site-mcp": "node --test site-worker/index.test.js"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "ai-travel-planner-site-worker",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "node --test" }
+}
