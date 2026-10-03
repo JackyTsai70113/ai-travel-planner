@@ -19,14 +19,30 @@ HTTP service on the assigned `PORT` and pass the `/health` health check.
 For the ChatGPT-facing Site, set `MCP_BACKEND_URL` to the Railway HTTPS origin
 (without a path) and set `MCP_BACKEND_TOKEN` to the same secret in the Sites
 runtime environment. Run `npm run build:site-mcp` and
-`npm run validate:site-mcp`; the artifact is produced at `dist/`. Push the
-matching source commit, save a Site version from that source, and deploy the
-saved version through the Sites deployment operations. The artifact declares
-the `site-worker/index.js` module as its Worker entrypoint at `/mcp`. Keep the
-Site private and let ChatGPT Sites provide authentication; the worker does not
-implement a second OAuth flow. After deployment, retrieve the generated MCP
-plugin connection and offer it to the ChatGPT account; verify a read-only MCP
-call after the account connects it.
+runtime environment (`sites_update_environment_variables`). Then follow this
+repeatable publish/connect sequence using the connected Sites and Plugin
+Management operations:
+
+1. Create a short-lived source write credential with
+   `sites_create_source_repository_write_credential(project_id)`; use its
+   returned remote URL, branch, and token only in the credential-safe Sites
+   source workflow. Never store the token in this repository.
+2. Run `npm run build:site-mcp` and `npm run validate:site-mcp`; the artifact
+   is produced at `dist/`. Push the exact source commit to the Site source
+   branch and pass that full commit SHA and the artifact path to
+   `sites_save_version_and_deploy_private`.
+3. Wait until the returned deployment status is `succeeded`. Check
+   `has_mcp=true` and `url` on the deployment result.
+4. Call `sites_get_site(project_id, include_mcp_connection=true)`. Pass its
+   returned `mcp_connection.plugin_id` unchanged to
+   `plugin_management_suggest_plugins`. The account user completes the
+   connection in ChatGPT, then verifies a read-only call to `parse_trip_request`
+   or `get_trip` from a chat that has selected this app.
+
+The artifact declares `site-worker/index.js` as the Worker entrypoint at
+`/mcp`. Keep the Site private and let ChatGPT Sites provide authentication; the
+worker does not implement a second OAuth flow. After any source change, rebuild,
+validate, push, save, and deploy a new version before reconnect verification.
 
 The default `MCP_TRANSPORT=stdio` remains for local clients. Set
 `MCP_TRANSPORT=streamable-http` for the Railway container.
