@@ -97,7 +97,7 @@ class _ProductionResearchAdapter(SourceAdapter):
                 origin, destination = _airport_codes(self.intent)
                 result = self.flight_search.search(FlightSearchQuery(
                     origin, destination, start, occupancy, return_date=end, currency=currency,
-                    airport_timezones={origin: _airport_timezone(origin), destination: _airport_timezone(destination)},
+                    airport_timezones={code: _airport_timezone(code) for code in _SUPPORTED_AIRPORT_CODES},
                 ))
                 candidates.extend(result.candidates)
                 self.failures.extend(result.failures)
@@ -424,12 +424,19 @@ def _default_currency(intent: TravelIntent) -> str:
     return "TWD" if _destination_country(intent) == "TW" else "JPY"
 
 
+_SUPPORTED_AIRPORT_CODES = (
+    "TPE", "KHH", "HKG", "NRT", "HND", "KIX", "ITM", "TYO", "OSA", "TKS", "UKB",
+    "FUK", "SPK", "CTS", "OKA", "NGO",
+)
+
+
 def _airport_timezone(code: str) -> str:
-    if code in {"TPE", "KHH"}:
-        return "Asia/Taipei"
-    if code == "HKG":
-        return "Asia/Hong_Kong"
-    return "Asia/Tokyo"
+    zones = {code: "Asia/Taipei" for code in ("TPE", "KHH")}
+    zones["HKG"] = "Asia/Hong_Kong"
+    zones.update({code: "Asia/Tokyo" for code in _SUPPORTED_AIRPORT_CODES if code not in zones and code != "HKG"})
+    if code not in zones:
+        raise ProductionIncompleteError(f"flight search returned an airport without a timezone mapping: {code}")
+    return zones[code]
 
 
 def _safe_trip_id(value: str) -> str:

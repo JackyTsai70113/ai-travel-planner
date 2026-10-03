@@ -219,6 +219,17 @@ def test_international_japan_trip_stays_incomplete_without_flight_candidates(tmp
     assert result.trip is None
 
 
+def test_unknown_provider_airport_code_does_not_assume_japan_timezone():
+    from src.application.production import ProductionIncompleteError, _airport_timezone
+
+    try:
+        _airport_timezone("SIN")
+    except ProductionIncompleteError as exc:
+        assert "without a timezone mapping: SIN" in str(exc)
+    else:
+        raise AssertionError("unknown airports must not receive a guessed timezone")
+
+
 def test_cli_non_demo_invokes_shared_production_composition_not_configuration_ready(monkeypatch, capsys, tmp_path):
     monkeypatch.setattr("src.cli.missing_required_configuration", lambda: [])
     called = {}
