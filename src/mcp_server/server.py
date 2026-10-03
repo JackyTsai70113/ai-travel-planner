@@ -58,6 +58,24 @@ def _consume_remote_request(
     return True
 
 
+async def _read_limited_asgi_body(receive, limit: int) -> list[dict[str, Any]] | None:
+    """Buffer an HTTP request body, returning None once its actual bytes exceed limit."""
+    messages: list[dict[str, Any]] = []
+    size = 0
+    while True:
+        message = await receive()
+        if message["type"] == "http.disconnect":
+            return messages
+        if message["type"] != "http.request":
+            continue
+        size += len(message.get("body", b""))
+        if size > limit:
+            return None
+        messages.append(message)
+        if not message.get("more_body", False):
+            return messages
+
+
 def _trip_path(trip_id: str) -> Path:
     if not _TRIP_ID.fullmatch(trip_id):
         raise ValueError("trip_id must contain lowercase letters, digits, and hyphens")
@@ -396,38 +414,65 @@ def run_http_server() -> None:
     import hmac
 
     import uvicorn
-    from starlette.middleware import Middleware
-    from starlette.middleware.base import BaseHTTPMiddleware
-    from starlette.responses import JSONResponse, PlainTextResponse
-
-    request_windows: dict[str, tuple[int, float]] = {}
+    from starlette.responses import PlainTextResponse
 
     token = os.environ.get("MCP_BACKEND_TOKEN", "")
     if len(token) < 32:
         raise SystemExit("MCP_BACKEND_TOKEN must contain at least 32 characters")
 
-    class InternalBearerAuth(BaseHTTPMiddleware):
-        async def dispatch(self, request, call_next):
-            if request.url.path == "/health":
-                return await call_next(request)
-            value = request.headers.get("authorization", "")
+    class InternalBearerAuth:
+        def __init__(self, app):
+            self.app = app
+            self.request_windows: dict[str, tuple[int, float]] = {}
+
+        async def __call__(self, scope, receive, send):
+            if scope["type"] != "http" or scope.get("path") == "/health":
+                await self.app(scope, receive, send)
+                return
+            headers = {key.lower(): value for key, value in scope.get("headers", [])}
+            value = headers.get(b"authorization", b"").decode("latin-1")
             supplied = value[7:] if value.startswith("Bearer ") else ""
             if not hmac.compare_digest(supplied, token):
-                return JSONResponse({"error": "unauthorized"}, status_code=401)
-            user_id = request.headers.get("oai-authenticated-user-id", "")
+                await self._reject(send, 401, "unauthorized")
+                return
+            user_id = headers.get(b"oai-authenticated-user-id", b"").decode("latin-1")
             if not user_id.strip():
-                return JSONResponse({"error": "unauthorized"}, status_code=401)
-            content_length = request.headers.get("content-length")
+                await self._reject(send, 401, "unauthorized")
+                return
+            content_length = headers.get(b"content-length")
             if content_length:
                 try:
+                    if int(content_length) < 0:
+                        await self._reject(send, 400, "invalid_content_length")
+                        return
                     if int(content_length) > _HTTP_MAX_BODY_BYTES:
-                        return JSONResponse({"error": "request_too_large"}, status_code=413)
+                        await self._reject(send, 413, "request_too_large")
+                        return
                 except ValueError:
-                    return JSONResponse({"error": "invalid_content_length"}, status_code=400)
+                    await self._reject(send, 400, "invalid_content_length")
+                    return
             now = time.monotonic()
-            if not _consume_remote_request(user_id, now, request_windows):
-                return JSONResponse({"error": "rate_limited"}, status_code=429)
-            return await call_next(request)
+            if not _consume_remote_request(user_id, now, self.request_windows):
+                await self._reject(send, 429, "rate_limited")
+                return
+            messages = await _read_limited_asgi_body(receive, _HTTP_MAX_BODY_BYTES)
+            if messages is None:
+                await self._reject(send, 413, "request_too_large")
+                return
+            pending = list(messages)
+
+            async def replay_receive():
+                if pending:
+                    return pending.pop(0)
+                return await receive()
+
+            await self.app(scope, replay_receive, send)
+
+        @staticmethod
+        async def _reject(send, status: int, error: str):
+            body = json.dumps({"error": error}, separators=(",", ":")).encode()
+            await send({"type": "http.response.start", "status": status, "headers": [(b"content-type", b"application/json"), (b"content-length", str(len(body)).encode())]})
+            await send({"type": "http.response.body", "body": body})
 
     app = mcp.streamable_http_app(
         streamable_http_path="/mcp", json_response=True, stateless_http=True
@@ -437,8 +482,7 @@ def run_http_server() -> None:
         return PlainTextResponse("ok")
 
     app.add_route("/health", health, methods=["GET"])
-    app.user_middleware.insert(0, Middleware(InternalBearerAuth))
-    app.middleware_stack = app.build_middleware_stack()
+    app.add_middleware(InternalBearerAuth)
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", "8000")), access_log=False)
 
 

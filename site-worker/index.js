@@ -2,6 +2,35 @@ const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(b
   status,
   headers: { "content-type": "application/json; charset=utf-8", ...headers },
 });
+const MAX_BODY_BYTES = 4 * 1024 * 1024;
+
+async function readBoundedBody(request) {
+  const reader = request.body?.getReader();
+  if (!reader) return new Uint8Array();
+  const chunks = [];
+  let size = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > MAX_BODY_BYTES) {
+        await reader.cancel();
+        return null;
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const body = new Uint8Array(size);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return body;
+}
 
 export default {
   async fetch(request, env) {
@@ -14,6 +43,10 @@ export default {
     const userId = request.headers.get("oai-authenticated-user-id");
     if (!userId) return json({ error: "unauthenticated" }, 401);
     if (!env.MCP_BACKEND_URL || !env.MCP_BACKEND_TOKEN) return json({ error: "service_unavailable" }, 503);
+    const contentLength = request.headers.get("content-length");
+    if (contentLength && Number(contentLength) > MAX_BODY_BYTES) return json({ error: "request_too_large" }, 413);
+    const body = await readBoundedBody(request);
+    if (body === null) return json({ error: "request_too_large" }, 413);
 
     let backend;
     try {
@@ -36,7 +69,7 @@ export default {
     if (sessionId) headers.set("mcp-session-id", sessionId);
 
     try {
-      return await fetch(backend, { method: "POST", headers, body: request.body, redirect: "error" });
+      return await fetch(backend, { method: "POST", headers, body, redirect: "error" });
     } catch {
       return json({ error: "backend_unavailable" }, 502);
     }

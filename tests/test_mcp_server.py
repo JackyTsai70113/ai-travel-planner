@@ -25,6 +25,7 @@ from src.mcp_server.server import (
     plan_trip_tool,
     validate_trip_tool,
     _consume_remote_request,
+    _read_limited_asgi_body,
 )
 
 
@@ -36,6 +37,20 @@ class MCPTravelServerTests(unittest.TestCase):
         self.assertFalse(_consume_remote_request("user-a", 10.0, windows))
         self.assertTrue(_consume_remote_request("user-b", 10.0, windows))
         self.assertTrue(_consume_remote_request("user-a", 70.0, windows))
+
+    def test_streamed_body_without_content_length_is_limited_by_actual_size(self) -> None:
+        async def read_large_body():
+            messages = [
+                {"type": "http.request", "body": b"x" * (4 * 1024 * 1024), "more_body": True},
+                {"type": "http.request", "body": b"y", "more_body": False},
+            ]
+
+            async def receive():
+                return messages.pop(0)
+
+            return await _read_limited_asgi_body(receive, 4 * 1024 * 1024)
+
+        self.assertIsNone(asyncio.run(read_large_body()))
 
     def test_protocol_lists_tools_resources_and_prompts(self) -> None:
         async def check() -> None:
@@ -155,6 +170,19 @@ class MCPTravelServerTests(unittest.TestCase):
             self.assertEqual(too_large.status, 413)
             too_large.read()
             connection.close()
+
+            chunked = http.client.HTTPConnection("127.0.0.1", port, timeout=4)
+            chunked.putrequest("POST", "/mcp")
+            chunked.putheader("Authorization", f"Bearer {token}")
+            chunked.putheader("oai-authenticated-user-id", "test-user")
+            chunked.putheader("Transfer-Encoding", "chunked")
+            chunked.endheaders()
+            chunked.send(b"400000\r\n" + b"x" * (4 * 1024 * 1024) + b"\r\n")
+            chunked.send(b"1\r\ny\r\n0\r\n\r\n")
+            chunked_too_large = chunked.getresponse()
+            self.assertEqual(chunked_too_large.status, 413)
+            chunked_too_large.read()
+            chunked.close()
 
             async def list_tools():
                 import httpx2

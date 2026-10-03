@@ -33,3 +33,21 @@ test("refuses a non-HTTPS backend before forwarding a secret", async () => {
   );
   assert.equal(response.status, 503);
 });
+
+test("rejects an oversized streamed body without Content-Length", async () => {
+  const body = new ReadableStream({
+    start(controller) {
+      controller.enqueue(new Uint8Array(4 * 1024 * 1024));
+      controller.enqueue(new Uint8Array(1));
+      controller.close();
+    },
+  });
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => { throw new Error("oversized body must not be forwarded"); };
+  try {
+    const response = await worker.fetch(new Request("https://site.example/mcp", {
+      method: "POST", body, duplex: "half", headers: { "oai-authenticated-user-id": "user-123" },
+    }), env);
+    assert.equal(response.status, 413);
+  } finally { globalThis.fetch = originalFetch; }
+});

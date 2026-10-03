@@ -2,8 +2,8 @@
 
 ## Remote ChatGPT deployment
 
-The repository includes a Streamable HTTP deployment for a private ChatGPT Site
-and a separately hosted Python backend. The Site Worker serves ChatGPT at
+The repository contains a Streamable HTTP backend and a Worker artifact for a
+private ChatGPT Site. The Worker serves ChatGPT at
 `/mcp`; it requires the trusted `oai-authenticated-user-id` header, then forwards
 only MCP POST requests to the configured backend using `MCP_BACKEND_TOKEN`.
 ChatGPT Sites supplies user authentication at its edge. Do not expose the Python
@@ -17,17 +17,25 @@ without them `plan_trip` returns `configuration_missing`. Railway must expose it
 HTTP service on the assigned `PORT` and pass the `/health` health check.
 
 For the ChatGPT-facing Site, set `MCP_BACKEND_URL` to the Railway HTTPS origin
-(without a path) and set `MCP_BACKEND_TOKEN` to the same secret. Run
-`npm run build:site-mcp` and `npm run validate:site-mcp`; the Site archive is
-produced at `dist/`. Publish that archive from the pushed commit using the Sites
-workflow. The artifact declares the `site-worker/index.js` module as its Worker
-entrypoint at `/mcp`. Keep the Site private and let ChatGPT Sites provide
-authentication; the worker does not implement a second OAuth flow.
+(without a path) and set `MCP_BACKEND_TOKEN` to the same secret in the Sites
+runtime environment. Run `npm run build:site-mcp` and
+`npm run validate:site-mcp`; the artifact is produced at `dist/`. Push the
+matching source commit, save a Site version from that source, and deploy the
+saved version through the Sites deployment operations. The artifact declares
+the `site-worker/index.js` module as its Worker entrypoint at `/mcp`. Keep the
+Site private and let ChatGPT Sites provide authentication; the worker does not
+implement a second OAuth flow. After deployment, retrieve the generated MCP
+plugin connection and offer it to the ChatGPT account; verify a read-only MCP
+call after the account connects it.
 
 The default `MCP_TRANSPORT=stdio` remains for local clients. Set
 `MCP_TRANSPORT=streamable-http` for the Railway container.
 
-The repository exposes its existing travel planning boundaries through the official MCP Python SDK. The server supports local stdio transport; it is not a public hosted endpoint.
+The Python MCP server exposes the existing travel planning boundaries through
+the official MCP Python SDK. Locally it defaults to stdio; Railway runs it as
+Streamable HTTP. Source/configuration files alone do not mean the backend or
+ChatGPT Site is deployed: the production URL and plugin become usable only
+after both hosting operations above succeed.
 
 ## Install and run
 
