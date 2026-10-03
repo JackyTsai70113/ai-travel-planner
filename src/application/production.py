@@ -331,18 +331,27 @@ def _schedule_legacy_meals(trip: dict, candidates: Sequence[dict], routing: Vali
             continue
         visit_end = datetime.fromisoformat(visit["end_at"])
         zone = ZoneInfo(trip["local_timezone"])
-        windows = (("lunch", time(12, 30)), ("dinner", time(18, 30)))
+        windows = (("breakfast", time(8, 0)), ("lunch", time(12, 30)), ("dinner", time(18, 30)))
         for period, target_time in windows:
             candidates_here = [candidate for candidate in candidates if candidate.get("place", {}).get("id") not in used
                                and candidate.get("opening_hours", {}).get("status") == "fresh"]
             candidates_here.sort(key=lambda candidate: (candidate.get("rating", 0), candidate.get("place", {}).get("id", "")), reverse=True)
             for candidate in candidates_here:
                 place_id = candidate["place"]["id"]
-                route_out = routing.travel_minutes.get((visit["place_id"], place_id))
-                route_back = routing.travel_minutes.get((place_id, hotel_id)) if hotel_id else None
+                if period == "breakfast":
+                    route_out = routing.travel_minutes.get((hotel_id, place_id)) if hotel_id else None
+                    route_back = routing.travel_minutes.get((place_id, visit["place_id"]))
+                else:
+                    route_out = routing.travel_minutes.get((visit["place_id"], place_id))
+                    route_back = routing.travel_minutes.get((place_id, hotel_id)) if hotel_id else None
                 if route_out is None or route_back is None:
                     continue
-                meal_start = max(datetime.combine(date.fromisoformat(day["date"]), target_time, zone), visit_end + timedelta(minutes=route_out))
+                earliest = datetime.combine(date.fromisoformat(day["date"]), target_time, zone)
+                if period == "breakfast":
+                    earliest += timedelta(minutes=route_out)
+                else:
+                    earliest = max(earliest, visit_end + timedelta(minutes=route_out))
+                meal_start = earliest
                 meal_end = meal_start + timedelta(minutes=60)
                 if meal_end.time() > time(20, 0) or meal_end + timedelta(minutes=route_back) > datetime.combine(date.fromisoformat(day["date"]), time(23, 0), zone):
                     continue

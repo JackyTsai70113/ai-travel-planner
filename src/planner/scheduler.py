@@ -158,13 +158,15 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
                       for preference in request.trip.get("preferences", {}).get("soft_preferences", []))
     for activity in sorted(selected, key=lambda value: (
         not value["schedule"].get("required", False),
+        _meal_period_order(value["schedule"].get("meal_period")),
         value["schedule"].get("fatigue", 0) if low_fatigue else 0,
         value["id"],
     )):
         details = activity["schedule"]
+        optional_meal = activity["kind"] == "meal" and not details.get("required", False)
         travel = request.validation_context.travel_minutes.get((previous, activity["id"])) if previous is not None else 0
         if travel is None:
-            violations.append(_failure("schedule.route_unknown", f"route from {previous} to {activity['id']} is required", activity["path"]))
+            violations.append(_optional_meal_warning(activity, "schedule.route_unknown", f"route from {previous} to {activity['id']} is not verified") if optional_meal else _failure("schedule.route_unknown", f"route from {previous} to {activity['id']} is required", activity["path"]))
             continue
         if travel < 0:
             violations.append(_failure("schedule.route_invalid", "route duration cannot be negative", activity["path"]))
@@ -176,6 +178,10 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
         cursor += timedelta(minutes=travel + buffers)
         if previous is None:
             violations.append(Violation("schedule.origin_unknown", "warning", "每日首個活動的住宿至目的地路線尚未驗證。", activity["path"]))
+        meal_period = details.get("meal_period")
+        if meal_period in {"breakfast", "lunch", "dinner"}:
+            target_time = {"breakfast": time(7, 0), "lunch": time(11, 30), "dinner": time(17, 30)}[meal_period]
+            cursor = max(cursor, datetime.combine(current, target_time, zone))
         fixed = details.get("fixed_start_at")
         if fixed:
             try:
@@ -199,11 +205,13 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
                 violations.append(_failure("schedule.fixed_anchor_infeasible", "confirmed anchor end cannot be moved or re-durationed", activity["path"]))
                 continue
         if end_at > closes or not _is_open(activity["id"], cursor, end_at, request):
-            violations.append(_failure("schedule.closed_or_unverified", "activity lacks a verified open interval for its scheduled time", activity["path"]))
+            violations.append(_optional_meal_warning(activity, "schedule.closed_or_unverified", "restaurant is not confirmed open for the scheduled meal interval") if optional_meal else _failure("schedule.closed_or_unverified", "activity lacks a verified open interval for its scheduled time", activity["path"]))
             continue
         condition_findings = _condition_findings(activity["id"], cursor, end_at, request, activity["path"])
         violations.extend(condition_findings)
         if _has_errors(condition_findings):
+            if optional_meal:
+                violations[-len(condition_findings):] = [_optional_meal_warning(activity, item.code, item.message) for item in condition_findings]
             continue
         items.append({"id": f"day{day_number}-{activity['id']}", "kind": activity["kind"], "place_id": activity["id"], "start_at": cursor.isoformat(), "end_at": end_at.isoformat(), "selection_status": "selected"})
         placed_activity = True
@@ -224,6 +232,14 @@ def _is_open(place_id: str, start: datetime, end: datetime, request: SchedulingI
     if not intervals:
         return False
     return any(interval.weekday == start.weekday() and interval.opens_at <= start.time() and end.time() <= interval.closes_at for interval in intervals)
+
+
+def _meal_period_order(period: object) -> int:
+    return {"breakfast": 0, "lunch": 1, "dinner": 2}.get(period, 3)
+
+
+def _optional_meal_warning(activity: dict, code: str, message: str) -> Violation:
+    return Violation("meal." + code.split(".")[-1], "warning", message, activity["path"])
 
 
 def _condition_findings(place_id: str, start: datetime, end: datetime, request: SchedulingInput, path: str) -> list[Violation]:

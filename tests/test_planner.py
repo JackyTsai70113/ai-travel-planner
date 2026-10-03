@@ -239,6 +239,20 @@ class PlannerTests(unittest.TestCase):
         self.assertIsNone(result.best_trip)
         self.assertIn("schedule.route_unknown", {violation.code for violation in result.candidates[0].violations})
 
+    def test_unroutable_optional_meal_is_skipped_without_failing_required_schedule(self):
+        trip = copy.deepcopy(self.trip)
+        trip["days"] = []
+        poi = next(place for place in trip["candidate_sets"]["places"] if place["id"] == "ohori-park")
+        poi["schedule"] = {"duration_minutes": 90, "day": 1, "required": True}
+        restaurant = trip["candidate_sets"]["restaurants"][0]
+        restaurant["schedule"] = {"duration_minutes": 60, "day": 1, "meal_period": "lunch", "required": False}
+        routes = {("hakata-hotel", poi["id"]): 15, (poi["id"], "hakata-hotel"): 15}
+        hours = {poi["id"]: tuple(OpeningInterval(day, time(0), time(23, 59)) for day in range(7))}
+        result = schedule(SchedulingInput(trip, ValidationContext(routes, hours)))
+        self.assertIsNotNone(result.best_trip)
+        self.assertNotIn("meal", {item["kind"] for item in result.best_trip.trip["days"][0]["items"]})
+        self.assertIn("meal.route_unknown", {item.code for item in result.best_trip.violations})
+
     def test_scheduler_preserves_itinerary_as_partial_when_lodging_is_unselected(self):
         trip = copy.deepcopy(self.trip)
         trip["days"] = []
