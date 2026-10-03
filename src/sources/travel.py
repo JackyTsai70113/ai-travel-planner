@@ -62,10 +62,14 @@ class HotelSearchQuery:
     occupancy: Occupancy
     currency: str | None = None
     hotel_ids: tuple[str, ...] = ()
+    room_quantity: int = 1
+    room_quantity_explicit: bool = False
 
     def __post_init__(self) -> None:
         if self.check_out_date <= self.check_in_date:
             raise ValueError("check_out_date must be after check_in_date")
+        if self.room_quantity < 1:
+            raise ValueError("room_quantity must be at least one")
 
 
 @dataclass(frozen=True)
@@ -136,7 +140,7 @@ class AmadeusHotelAdapter:
             return SearchResult(())
         params = {"hotelIds": ",".join(hotel_ids), "checkInDate": query.check_in_date.isoformat(),
                   "checkOutDate": query.check_out_date.isoformat(), "adults": str(query.occupancy.adults),
-                  "roomQuantity": "1"}
+                  "roomQuantity": str(query.room_quantity)}
         if query.occupancy.child_ages: params["childAges"] = ",".join(map(str, query.occupancy.child_ages))
         if query.currency: params["currency"] = query.currency
         payload = self.client.get("/v3/shopping/hotel-offers", params)
@@ -192,10 +196,12 @@ def _normalise_hotel(hotel: dict[str, Any], offer: dict[str, Any], retrieved_at:
         place["coordinates"] = {"latitude": float(hotel["latitude"]), "longitude": float(hotel["longitude"])}
     candidate = {"place": place, "nightly_cost": _money(float(total["amount"]) / (query.check_out_date - query.check_in_date).days, total["currency"]),
             "total_cost": total, "check_in": query.check_in_date.isoformat(), "check_out": query.check_out_date.isoformat(),
-            "occupancy": {"adults": query.occupancy.adults, "child_ages": list(query.occupancy.child_ages)}, "room_type": offer.get("room", {}).get("typeEstimated", {}).get("category"),
+            "occupancy": {"adults": query.occupancy.adults, "child_ages": list(query.occupancy.child_ages), "rooms": query.room_quantity}, "room_type": offer.get("room", {}).get("typeEstimated", {}).get("category"),
             "cancellation_policy": policy.get("cancellations", [{}])[0].get("description", {}).get("text"), "parking_available": None,
             "child_policy": None, "provider_reference": str(offer.get("id", "")), "search_url": "https://www.amadeus.com/en/booking", "price_status": "unverified", "provenance": _provenance(retrieved_at)}
-    candidate["provenance"]["note"] = "Provider total is a search quote; tax inclusion, availability, final price, occupancy, and cancellation terms require provider confirmation."
+    room_note = ("Room quantity was not stated; a one-room search is preliminary and requires confirmation. "
+                 if not query.room_quantity_explicit else "")
+    candidate["provenance"]["note"] = room_note + "Provider total is a search quote; tax inclusion, availability, final price, occupancy, and cancellation terms require provider confirmation."
     if taxes_total is not None:
         candidate["taxes_fees"] = _money(taxes_total, total["currency"])
     return {key: value for key, value in candidate.items() if value is not None}

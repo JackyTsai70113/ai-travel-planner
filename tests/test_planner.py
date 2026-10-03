@@ -239,6 +239,22 @@ class PlannerTests(unittest.TestCase):
         self.assertIsNone(result.best_trip)
         self.assertIn("schedule.route_unknown", {violation.code for violation in result.candidates[0].violations})
 
+    def test_scheduler_preserves_itinerary_as_partial_when_lodging_is_unselected(self):
+        trip = copy.deepcopy(self.trip)
+        trip["days"] = []
+        trip["selected"]["hotel_place_ids"] = []
+        place = next(item for item in trip["candidate_sets"]["places"] if item["id"] == "ohori-park")
+        place["schedule"] = {"duration_minutes": 60, "day": 1, "required": True}
+        context = verified_context()
+        output = schedule(SchedulingInput(trip, context))
+        candidate = output.best_trip
+        self.assertIsNotNone(candidate)
+        assert candidate is not None
+        self.assertEqual(candidate.state, ScheduleState.PARTIAL)
+        self.assertEqual(candidate.trip["days"][0]["items"][0]["place_id"], "ohori-park")
+        self.assertTrue(any(item["code"] == "schedule.hotel_missing" for item in candidate.trip["validation"]))
+        self.assertIn("schedule.origin_unknown", {item.code for item in candidate.violations})
+
     def test_scheduler_keeps_confirmed_reservation_time_unchanged(self):
         trip = copy.deepcopy(self.trip)
         trip["days"] = []

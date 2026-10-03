@@ -588,6 +588,8 @@ def budget_rule(trip: dict, context: ValidationContext) -> Sequence[Violation]:
     total = budget.get("total", {})
     currency = budget.get("currency")
     category_values = budget.get("categories", {}).values()
+    if budget.get("total_status", "complete") not in {"complete", "incomplete"}:
+        return [_error("budget.status_invalid", "budget total_status must be complete or incomplete", path)]
     if not total or currency is None:
         return [_warning("budget.unverified", "budget data is incomplete", path, {"reason": "budget_missing"})]
     if total.get("currency") != currency or any(value.get("currency") != currency for value in category_values):
@@ -596,12 +598,12 @@ def budget_rule(trip: dict, context: ValidationContext) -> Sequence[Violation]:
     if category_total != total["amount"]:
         return [_error("budget.total_mismatch", "budget total does not equal category total", path)]
     if context.budget_limit is None:
-        return []
+        return [_warning("budget.incomplete", "known cost subtotal excludes unpriced trip categories", path)] if budget.get("total_status") == "incomplete" else []
     if context.budget_limit.currency != currency:
         return [_warning("budget.unverified", "budget limit currency differs from trip budget currency", path, {"limit_currency": context.budget_limit.currency, "trip_currency": currency})]
     if total["amount"] > context.budget_limit.amount:
         return [_error("budget.exceeded", "budget total exceeds the supplied budget limit", path)]
-    return []
+    return [_warning("budget.incomplete", "known cost subtotal excludes unpriced trip categories", path)] if budget.get("total_status") == "incomplete" else []
 
 
 def _timestamps(item: dict) -> tuple[datetime, datetime]:

@@ -45,9 +45,10 @@ class TravelProviderTests(unittest.TestCase):
         self.assertEqual("stale", store.price_status(candidate["id"], max_age=timedelta(minutes=1), now=NOW + timedelta(minutes=2)))
 
     def test_hotel_normalizes_occupancy_stay_price_and_policy(self):
-        query = HotelSearchQuery("FUK", date(2026, 10, 1), date(2026, 10, 3), Occupancy(2, (2,)), currency="JPY", hotel_ids=("H1",))
+        query = HotelSearchQuery("FUK", date(2026, 10, 1), date(2026, 10, 3), Occupancy(2, (2,)), currency="JPY", hotel_ids=("H1",), room_quantity=2, room_quantity_explicit=True)
         candidate = AmadeusHotelAdapter(self.client, NOW).search(query).candidates[0][1]
-        self.assertEqual({"adults": 2, "child_ages": [2]}, candidate["occupancy"])
+        self.assertEqual({"adults": 2, "child_ages": [2], "rooms": 2}, candidate["occupancy"])
+        self.assertIn("roomQuantity=2", self.transport.calls[-1][1])
         self.assertEqual(15000.0, candidate["nightly_cost"]["amount"])
         self.assertEqual(30000.0, candidate["total_cost"]["amount"])
         self.assertEqual(1500.0, candidate["taxes_fees"]["amount"])

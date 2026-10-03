@@ -26,6 +26,7 @@ class ScheduleState(str, Enum):
     """Result of constructing a candidate itinerary from normalized facts."""
 
     READY = "ready"
+    PARTIAL = "partial"
     FAILED = "failed"
 
 
@@ -122,4 +123,4 @@ class SchedulingOutput:
 
     @property
     def best_trip(self) -> ScheduledTrip | None:
-        return next((candidate for candidate in self.candidates if candidate.state is ScheduleState.READY), None)
+        return next((candidate for candidate in self.candidates if candidate.state in {ScheduleState.READY, ScheduleState.PARTIAL}), None)
