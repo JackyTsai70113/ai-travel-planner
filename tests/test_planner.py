@@ -325,6 +325,45 @@ class PlannerTests(unittest.TestCase):
         self.assertFalse(result.best_trip.trip["candidate_sets"]["restaurants"][0]["schedule"]["selected"])
         self.assertTrue(result.best_trip.trip["candidate_sets"]["restaurants"][1]["schedule"]["selected"])
 
+    def test_same_restaurant_alternative_is_used_at_most_once_across_trip(self):
+        trip = copy.deepcopy(self.trip)
+        trip["days"] = []
+        trip["date_range"] = {"start_date": "2026-04-10", "end_date": "2026-04-11"}
+        pois = [place for place in trip["candidate_sets"]["places"] if place["id"] in {"ohori-park", "dazaifu"}]
+        trip["candidate_sets"]["places"] = pois
+        for day, poi in enumerate(pois, start=1):
+            poi["schedule"] = {"duration_minutes": 60, "day": day, "required": True}
+        trip["candidate_sets"]["restaurants"] = []
+        primary_meals = []
+        for day in (1, 2):
+            primary = copy.deepcopy(self.trip["candidate_sets"]["restaurants"][0])
+            primary_id = f"primary-{day}"
+            meal_date = f"2026-04-{9 + day}"
+            primary["place"]["id"] = primary_id
+            primary["schedule"] = {"duration_minutes": 60, "day": day, "meal_period": "lunch", "required": False,
+                                   "fixed_start_at": f"{meal_date}T12:30:00+09:00", "fixed_end_at": f"{meal_date}T13:30:00+09:00",
+                                   "selected": True, "alternatives": [{"place_id": "shared-backup"}]}
+            primary_meals.append(primary)
+        backup = copy.deepcopy(primary_meals[0])
+        backup["place"]["id"] = "shared-backup"
+        backup["schedule"] = {"duration_minutes": 60, "selected": False}
+        trip["candidate_sets"]["restaurants"] = [*primary_meals, backup]
+        hotel = "hakata-hotel"
+        routes = {}
+        hours = {"shared-backup": tuple(OpeningInterval(day, time(0), time(23, 59)) for day in range(7))}
+        for day, poi in enumerate(pois, start=1):
+            routes[(hotel, poi["id"])] = routes[(poi["id"], hotel)] = 10
+            routes[(poi["id"], f"primary-{day}")] = routes[(poi["id"], "shared-backup")] = 10
+            hours[poi["id"]] = tuple(OpeningInterval(weekday, time(0), time(23, 59)) for weekday in range(7))
+            hours[f"primary-{day}"] = tuple(OpeningInterval(weekday, time(0), time(0)) for weekday in range(7))
+        routes[("shared-backup", hotel)] = 10
+        result = schedule(SchedulingInput(trip, ValidationContext(routes, hours)))
+        assert result.best_trip is not None
+        scheduled = [[item["place_id"] for item in day["items"] if item["kind"] == "meal"]
+                     for day in result.best_trip.trip["days"]]
+        self.assertEqual([["shared-backup"], []], scheduled)
+        self.assertEqual(1, sum(place_id == "shared-backup" for day in scheduled for place_id in day))
+
     def test_return_fallback_removes_each_trailing_meal_until_last_route_is_verified(self):
         trip = copy.deepcopy(self.trip)
         trip["days"] = []

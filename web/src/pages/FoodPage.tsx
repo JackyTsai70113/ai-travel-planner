@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Bundle, BundleDayItem, buildMapsLink, findPlaceLabel } from '../contracts/trip'
+import { Bundle, BundleDayItem, findPlaceLabel } from '../contracts/trip'
 import { MapPinLink } from '../components/MapPinLink'
 import { googleMapsHrefForPlace } from '../lib/google-maps-links'
 import { usableOfficialHref } from '../lib/official-links'

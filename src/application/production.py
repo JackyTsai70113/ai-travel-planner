@@ -294,6 +294,7 @@ def _restaurant_candidates(candidates: Sequence[dict], intent: TravelIntent, sta
     windows = {"breakfast": time(8, 0), "lunch": time(12, 30), "dinner": time(18, 30)}
     selected: dict[str, dict] = {}
     used: set[str] = set()
+    meal_slots: list[tuple[str, list[dict], str, int, datetime]] = []
     for day_number in range(1, (end - start).days + 2):
         current_date = start + timedelta(days=day_number - 1)
         for period, start_time in windows.items():
@@ -313,12 +314,23 @@ def _restaurant_candidates(candidates: Sequence[dict], intent: TravelIntent, sta
                 "duration_minutes": 60, "day": day_number, "meal_period": period, "required": False,
                 "fixed_start_at": meal_start.isoformat(), "fixed_end_at": meal_end.isoformat(),
                 "selected": True,
-                "alternatives": [{"place_id": item["place"]["id"], "meal_period": period, "day": day_number,
-                                  "hours_verified": True, "route_verified": True}
-                                 for item in eligible if item["place"]["id"] != place_id],
+                "alternatives": [],
             }
             selected[place_id] = candidate
             used.add(place_id)
+            meal_slots.append((place_id, eligible, period, day_number, meal_start))
+    reserved_alternatives: set[str] = set()
+    for place_id, eligible, period, day_number, meal_start in meal_slots:
+        backup = next((item for item in eligible
+                       if item.get("place", {}).get("id") not in used | reserved_alternatives), None)
+        if backup is None:
+            continue
+        backup_id = backup["place"]["id"]
+        selected[place_id]["schedule"]["alternatives"] = [{
+            "place_id": backup_id, "meal_period": period, "day": day_number,
+            "hours_verified": True, "route_verified": True,
+        }]
+        reserved_alternatives.add(backup_id)
     result = []
     for candidate in candidates:
         place_id = candidate.get("place", {}).get("id")

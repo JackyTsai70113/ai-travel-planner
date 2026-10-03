@@ -381,7 +381,7 @@ def test_restaurant_selection_keeps_open_route_verified_candidate_when_first_is_
 
     intent = parse_trip_request("2026/4/10到2026/4/10 台北出發德島一日，1大，自駕")
     candidates = []
-    for index in range(4):
+    for index in range(7):
         place_id = f"restaurant-{index}"
         provenance = {"source_type": "provider", "provider": "recorded feed", "source_url": f"https://example.test/{index}", "retrieved_at": "2026-04-01T00:00:00+09:00", "status": "confirmed"}
         closed_days = [4] if index == 0 else []
@@ -400,3 +400,6 @@ def test_restaurant_selection_keeps_open_route_verified_candidate_when_first_is_
     planned = [candidate for candidate in selected if candidate.get("schedule", {}).get("selected") is True]
     assert all(candidate["schedule"].get("day") == 1 for candidate in planned)
     assert len({candidate["schedule"].get("meal_period") for candidate in planned}) == len(planned)
+    backup_ids = [item["place_id"] for candidate in planned for item in candidate["schedule"]["alternatives"]]
+    assert len(backup_ids) == len(set(backup_ids))
+    assert not set(backup_ids).intersection(candidate["place"]["id"] for candidate in planned)

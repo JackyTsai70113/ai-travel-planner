@@ -32,10 +32,11 @@ def schedule(request: SchedulingInput) -> SchedulingOutput:
     days: list[dict] = []
     unscheduled = {activity["id"] for activity in activities if activity["schedule"].get("day") is None}
     total_days = (end - start).days + 1
+    used_meal_ids: set[str] = set()
     for offset in range(total_days):
         current = start + timedelta(days=offset)
         planned, day_violations, placed = _schedule_day(
-            current, offset + 1, hotel_id, activities, anchors_by_date.get(current.isoformat(), ()), unscheduled, request,
+            current, offset + 1, hotel_id, activities, anchors_by_date.get(current.isoformat(), ()), unscheduled, request, used_meal_ids,
         )
         violations.extend(day_violations)
         unscheduled.difference_update(placed)
@@ -174,7 +175,7 @@ def _anchors(trip: dict, violations: list[Violation]) -> dict[str, tuple[dict, .
     return anchors
 
 
-def _schedule_day(current: date, day_number: int, hotel_id: str | None, activities: Iterable[dict], anchors: Iterable[dict], unscheduled: set[str], request: SchedulingInput) -> tuple[list[dict], list[Violation], set[str]]:
+def _schedule_day(current: date, day_number: int, hotel_id: str | None, activities: Iterable[dict], anchors: Iterable[dict], unscheduled: set[str], request: SchedulingInput, used_meal_ids: set[str]) -> tuple[list[dict], list[Violation], set[str]]:
     violations: list[Violation] = []
     selected = [activity for activity in activities if activity["schedule"].get("day") == day_number
                 and activity["schedule"].get("selected", True)]
@@ -205,7 +206,6 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
         cursor = datetime.fromisoformat(anchor_items[-1]["end_at"])
     placed: set[str] = set()
     placed_activity = False
-    used_meal_ids: set[str] = set()
     low_fatigue = any(preference.get("kind") in {"low_fatigue", "pace"} and preference.get("value") in {True, "low"}
                       for preference in request.trip.get("preferences", {}).get("soft_preferences", []))
     def schedule_order(value: dict) -> tuple:
