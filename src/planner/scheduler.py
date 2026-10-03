@@ -245,7 +245,7 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
             details = activity["schedule"]
             optional_meal = activity["kind"] == "meal" and not details.get("required", False)
             cursor_before, previous_before = cursor, previous
-            travel = request.validation_context.travel_minutes.get((previous, activity["id"])) if previous is not None else 0
+            travel = request.validation_context.travel_minutes_for(previous, activity["id"], cursor) if previous is not None else 0
             if travel is None:
                 violations.append(_optional_meal_warning(activity, "schedule.route_unknown", f"route from {previous} to {activity['id']} is not verified") if optional_meal else _failure("schedule.route_unknown", f"route from {previous} to {activity['id']} is required", activity["path"]))
                 if optional_meal and attempt_index < len(attempts) - 1:
@@ -327,7 +327,7 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
                 used_meal_ids.add(activity["id"])
             break
     if placed_activity and hotel_id is not None:
-        back = request.validation_context.travel_minutes.get((previous, hotel_id))
+        back = request.validation_context.travel_minutes_for(previous, hotel_id, cursor)
         while back is None or cursor + timedelta(minutes=back) > closes:
             if items and items[-1].get("kind") == "meal":
                 omitted = items.pop()
@@ -342,7 +342,7 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
                     for alternative in alternative_list:
                         if alternative["id"] in used_meal_ids:
                             continue
-                        incoming = request.validation_context.travel_minutes.get((origin, alternative["id"]))
+                        incoming = request.validation_context.travel_minutes_for(origin, alternative["id"], alternative_cursor)
                         if incoming is None or incoming < 0:
                             continue
                         details = alternative["schedule"]
@@ -360,7 +360,7 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
                         end_at = start_at + timedelta(minutes=details["duration_minutes"])
                         if details.get("fixed_end_at") and datetime.fromisoformat(details["fixed_end_at"]) != end_at:
                             continue
-                        return_minutes = request.validation_context.travel_minutes.get((alternative["id"], hotel_id))
+                        return_minutes = request.validation_context.travel_minutes_for(alternative["id"], hotel_id, end_at)
                         if return_minutes is None or end_at > closes or end_at + timedelta(minutes=return_minutes) > closes:
                             continue
                         if not _is_open(alternative["id"], start_at, end_at, request):
@@ -382,7 +382,7 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
                     break
                 previous = last_item["place_id"]
                 cursor = datetime.fromisoformat(last_item["end_at"])
-                back = request.validation_context.travel_minutes.get((previous, hotel_id))
+                back = request.validation_context.travel_minutes_for(previous, hotel_id, cursor)
                 continue
             if back is None:
                 violations.append(_failure("schedule.route_unknown", f"route from {previous} to {hotel_id} is required for daily hotel consistency", "/days"))

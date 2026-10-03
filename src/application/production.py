@@ -23,8 +23,8 @@ from src.sources import (
     GooglePlacesAdapter, HotPepperGourmetAdapter, HotelSearchQuery, Occupancy, SourceAdapter, SourceQuery,
     YouTubeEvidenceAdapter, collect_from_adapters,
 )
-from src.sources.routing import OpenRouteServiceProvider, PlaceRef, RouteMatrix, RouteMode, RouteStatus
-from src.validator import OpeningInterval, ValidationContext
+from src.sources.routing import GoogleTransitProvider, ModeRoutingProvider, OpenRouteServiceProvider, PlaceRef, RouteMatrix, RouteMode, RouteStatus
+from src.validator import OpeningInterval, RouteConstraint, ValidationContext
 
 
 REQUIRED_ENVIRONMENT = (
@@ -159,7 +159,11 @@ def create_production_orchestrator(*, trip_id: str, trips_directory: Path = Path
     google = dependencies.google or GooglePlacesAdapter(api_key=environment["GOOGLE_MAPS_API_KEY"])
     youtube = dependencies.youtube or YouTubeEvidenceAdapter(api_key=environment["YOUTUBE_API_KEY"])
     amadeus = dependencies.amadeus_client or AmadeusClient(environment=dict(environment))
-    routing_provider = dependencies.routing_provider or OpenRouteServiceProvider(api_key=environment["OPENROUTESERVICE_API_KEY"])
+    routing_provider = dependencies.routing_provider or ModeRoutingProvider({
+        RouteMode.DRIVING: OpenRouteServiceProvider(api_key=environment["OPENROUTESERVICE_API_KEY"]),
+        RouteMode.WALKING: OpenRouteServiceProvider(api_key=environment["OPENROUTESERVICE_API_KEY"]),
+        RouteMode.TRANSIT: GoogleTransitProvider(api_key=environment["GOOGLE_MAPS_API_KEY"]),
+    })
     optional_restaurants: list[SourceAdapter] = []
     if dependencies.hotpepper is not None:
         optional_restaurants.append(dependencies.hotpepper)
@@ -192,10 +196,13 @@ class _IntentBoundRunner(ProductionPlanningRunner):
     def run(self, intent: TravelIntent) -> OrchestrationResult:
         _require_plannable_intent(intent)
         research = _ProductionResearchAdapter(intent, self.google, self.youtube, self.amadeus, self.optional_restaurants)
+        routing_state: dict[str, object] = {}
+        def routing_for(current: TravelIntent, store: object) -> ValidationContext:
+            return _routing_context(store.records(), self.routing_provider, current, routing_state)
         config = TravelOrchestratorConfig(
             adapters=(research,),
-            candidate_trip_factory=lambda current, store: _candidate_trips(self.trip_id, current, store.records(), _routing_context(store.records(), self.routing_provider, current)),
-            routing_context_factory=lambda current, store: _routing_context(store.records(), self.routing_provider, current),
+            candidate_trip_factory=lambda current, store: _candidate_trips(self.trip_id, current, store.records(), routing_for(current, store)),
+            routing_context_factory=routing_for,
             optimizer=lambda candidates, context: tuple(candidates),
             output_directory=self.site_directory,
             trip_output_directory=self.trips_directory,
@@ -215,6 +222,13 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
     for record in records:
         collection, candidate = record.collection, record.candidate  # CandidateRecord protocol; no raw payload crosses here.
         collections[collection].append(candidate)
+    if "transit" in intent.transport and not routing.travel_minutes:
+        statuses = sorted({fact.status for fact in routing.route_facts.values() if fact.status})
+        detail = ", ".join(statuses) if statuses else "no route evidence"
+        if routing.route_lookup is None:
+            raise ProductionIncompleteError(
+                f"public-transport routes are unverified ({detail}); no walking fallback was used"
+            )
     start, end = _travel_dates(intent)
     days_count = (end - start).days + 1
     places = [place for place in collections["places"] if place.get("kind") == "poi"]
@@ -237,6 +251,21 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
     _record_unknown_night_view_evidence(canonical_places, intent)
 
     if any(not candidate.get("schedule") for candidate in places):
+        if routing.route_lookup is not None and ("transit" in intent.transport or "mixed" in intent.transport):
+            departure = datetime.combine(start, time(7), ZoneInfo(_local_timezone(intent)))
+            status = "no route evidence"
+            for origin in places:
+                destination = next((place for place in places if place.get("id") != origin.get("id")), None)
+                if destination is None:
+                    continue
+                fact = routing.route_lookup(origin["id"], destination["id"], departure)
+                if fact is not None:
+                    status = fact.status
+                    if fact.status == "verified":
+                        break
+            raise ProductionIncompleteError(
+                f"transit route-aware scheduling requires visit-duration metadata; candidate trip uses the legacy schedule path ({status}); no walking fallback was used"
+            )
         # Backward-compatible path for normalized providers that predate the
         # scheduler metadata contract.  New production candidates take the
         # route-aware branch below; this path remains only until those source
@@ -254,6 +283,7 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
         trip = _legacy_trip(trip_id, intent, collections, canonical_places, start, end, selected_hotel, flights, itinerary_days)
         trip["candidate_sets"]["restaurants"] = restaurants
         _schedule_legacy_meals(trip, restaurants, routing)
+        _attach_timed_transport_legs(trip, routing, intent)
         _add_unfilled_meal_warnings(trip)
         return [trip]
 
@@ -281,7 +311,12 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
     shell["budget"]["total_status"] = "incomplete"
     scheduled = schedule(SchedulingInput(shell, routing, daily_start="07:00")).best_trip
     if scheduled is None:
+        if "transit" in intent.transport or "mixed" in intent.transport:
+            statuses = sorted({fact.status for fact in routing.timed_route_facts.values() if fact.status})
+            detail = ", ".join(statuses) if statuses else "no departure-time route evidence"
+            raise ProductionIncompleteError(f"transit schedule is unverified ({detail}); no walking fallback was used")
         raise ProductionIncompleteError("no feasible route-aware schedule from normalized candidates")
+    _attach_timed_transport_legs(scheduled.trip, routing, intent)
     _add_unfilled_meal_warnings(scheduled.trip)
     return [scheduled.trip]
 
@@ -352,11 +387,11 @@ def _meal_route_feasible(candidate: Mapping[str, object], period: str, starts: d
     if not isinstance(place_id, str) or not isinstance(poi_id, str):
         return False
     if period == "breakfast":
-        outbound = routing.travel_minutes.get((hotel_id, place_id))
-        onward = routing.travel_minutes.get((place_id, poi_id))
+        outbound = routing.travel_minutes_for(hotel_id, place_id, starts - timedelta(minutes=60))
+        onward = routing.travel_minutes_for(place_id, poi_id, ends)
         return outbound is not None and onward is not None and starts - timedelta(minutes=outbound) >= datetime.combine(starts.date(), time(7), starts.tzinfo) and ends + timedelta(minutes=onward) <= datetime.combine(starts.date(), time(10), starts.tzinfo)
-    outbound = routing.travel_minutes.get((poi_id, place_id))
-    returning = routing.travel_minutes.get((place_id, hotel_id))
+    outbound = routing.travel_minutes_for(poi_id, place_id, starts - timedelta(minutes=60))
+    returning = routing.travel_minutes_for(place_id, hotel_id, ends)
     return outbound is not None and returning is not None and starts >= datetime.combine(starts.date(), time(12) if period == "lunch" else time(18), starts.tzinfo) and ends + timedelta(minutes=returning) <= datetime.combine(starts.date(), time(20), starts.tzinfo)
 
 
@@ -366,6 +401,59 @@ def _add_unfilled_meal_warnings(trip: dict) -> None:
         if len(day_meals) < 3:
             trip.setdefault("validation", []).append({"code": "meal.period_unselected", "severity": "warning",
                 "message": f"{day.get('date')} 有 {3-len(day_meals)} 個餐段未找到營業時間已驗證且路線可行的獨立餐廳；請選擇餐廳後再安排。", "path": f"/days/{day_number-1}"})
+
+
+def _attach_timed_transport_legs(trip: dict, routing: ValidationContext, intent: TravelIntent) -> None:
+    """Project the exact transit evidence used by scheduling into canonical legs and timeline items."""
+    if routing.route_lookup is None or not routing.timed_route_facts:
+        return
+    hotel_ids = trip.get("selected", {}).get("hotel_place_ids", [])
+    hotel_id = hotel_ids[0] if len(hotel_ids) == 1 else None
+    legs = trip.setdefault("candidate_sets", {}).setdefault("transport_legs", [])
+    for day_number, day in enumerate(trip.get("days", []), start=1):
+        activities = sorted(day.get("items", []), key=lambda item: item["start_at"])
+        if not activities:
+            continue
+        zone = ZoneInfo(trip["local_timezone"])
+        current_date = date.fromisoformat(day["date"])
+        route_pairs: list[tuple[str, str, datetime, dict | None]] = []
+        if hotel_id:
+            departure = datetime.combine(current_date, time(7), zone)
+            route_pairs.append((hotel_id, activities[0]["place_id"], departure, activities[0]))
+        for previous, destination in zip(activities, activities[1:]):
+            route_pairs.append((previous["place_id"], destination["place_id"], datetime.fromisoformat(previous["end_at"]), destination))
+        if hotel_id:
+            route_pairs.append((activities[-1]["place_id"], hotel_id, datetime.fromisoformat(activities[-1]["end_at"]), None))
+        new_items = []
+        for leg_number, (origin_id, destination_id, departure, destination_item) in enumerate(route_pairs, start=1):
+            fact = routing.timed_route_facts.get((origin_id, destination_id, departure.isoformat()))
+            if fact is None:
+                continue
+            if fact.status != "verified" or fact.departure_at is None or fact.arrival_at is None:
+                raise ProductionIncompleteError(f"transit route {origin_id} -> {destination_id} lacks a verified timed leg")
+            if fact.departure_at < departure:
+                raise ProductionIncompleteError(f"transit route {origin_id} -> {destination_id} departs before the scheduled departure")
+            if destination_item is not None and fact.arrival_at > datetime.fromisoformat(destination_item["start_at"]):
+                raise ProductionIncompleteError(f"transit route {origin_id} -> {destination_id} arrives after the scheduled activity")
+            leg_id = f"transit-day{day_number}-leg{leg_number}"
+            verified_status = fact.source_status if fact.source_status in {"confirmed", "estimated"} else "unverified"
+            provenance = {"source_type": "provider", "provider": fact.provider or "transit provider",
+                          "retrieved_at": (fact.retrieved_at or datetime.now(timezone.utc)).isoformat(),
+                          "status": verified_status}
+            if fact.source_url:
+                provenance["source_url"] = fact.source_url
+            leg = {"id": leg_id, "mode": "mixed" if "mixed" in intent.transport else "transit",
+                   "from_place_id": origin_id, "to_place_id": destination_id,
+                   "departure_at": fact.departure_at.isoformat(), "arrival_at": fact.arrival_at.isoformat(),
+                   "verification_status": verified_status, "wait_seconds": fact.wait_seconds,
+                   "transfer_count": fact.transfer_count, "segments": list(fact.steps), "provenance": provenance}
+            legs.append(leg)
+            if destination_item is not None:
+                destination_item["transport_leg_id"] = leg_id
+            new_items.append({"id": leg_id, "kind": "transport", "place_id": destination_id,
+                              "start_at": fact.departure_at.isoformat(), "end_at": fact.arrival_at.isoformat(),
+                              "transport_leg_id": leg_id, "selection_status": "selected"})
+        day["items"] = sorted([*day.get("items", []), *new_items], key=lambda item: item["start_at"])
 
 
 def _schedule_legacy_meals(trip: dict, candidates: Sequence[dict], routing: ValidationContext) -> None:
@@ -388,11 +476,11 @@ def _schedule_legacy_meals(trip: dict, candidates: Sequence[dict], routing: Vali
             for candidate in candidates_here:
                 place_id = candidate["place"]["id"]
                 if period == "breakfast":
-                    route_out = routing.travel_minutes.get((hotel_id, place_id)) if hotel_id else None
-                    route_back = routing.travel_minutes.get((place_id, visit["place_id"]))
+                    route_out = routing.travel_minutes_for(hotel_id, place_id, datetime.combine(date.fromisoformat(day["date"]), target_time, zone) - timedelta(minutes=60)) if hotel_id else None
+                    route_back = routing.travel_minutes_for(place_id, visit["place_id"], visit_end)
                 else:
-                    route_out = routing.travel_minutes.get((visit["place_id"], place_id))
-                    route_back = routing.travel_minutes.get((place_id, hotel_id)) if hotel_id else None
+                    route_out = routing.travel_minutes_for(visit["place_id"], place_id, datetime.combine(date.fromisoformat(day["date"]), target_time, zone) - timedelta(minutes=60))
+                    route_back = routing.travel_minutes_for(place_id, hotel_id, visit_end) if hotel_id else None
                 if route_out is None or route_back is None:
                     continue
                 earliest = datetime.combine(date.fromisoformat(day["date"]), target_time, zone)
@@ -554,7 +642,10 @@ def _record_unknown_night_view_evidence(places: Sequence[dict], intent: TravelIn
         }
 
 
-def _routing_context(records: Iterable[object], routing_provider: object, intent: TravelIntent) -> ValidationContext:
+def _routing_context(records: Iterable[object], routing_provider: object, intent: TravelIntent,
+                     routing_state: dict[str, object] | None = None) -> ValidationContext:
+    records = tuple(records)
+    routing_state = routing_state if routing_state is not None else {}
     places = []
     restaurants = []
     opening_hours = {}
@@ -579,13 +670,69 @@ def _routing_context(records: Iterable[object], routing_provider: object, intent
     # hidden batching/guessing and makes omitted routes unverified downstream.
     unique = list({place.place_id: place for place in places}.values())[:50]
     minutes: dict[tuple[str, str], int] = {}
+    route_facts: dict[tuple[str, str], RouteConstraint] = {}
+    requested_modes = {value for value in intent.transport if value in {"drive", "transit", "mixed"}}
+    if len(requested_modes - {"mixed"}) > 1:
+        raise ProductionIncompleteError("multiple transport modes require an explicit mode for each itinerary leg")
+    if "mixed" in requested_modes and requested_modes - {"mixed"}:
+        raise ProductionIncompleteError("mixed transport cannot be combined with another global mode without per-leg allocation")
+    mode = RouteMode.TRANSIT if requested_modes & {"transit", "mixed"} else RouteMode.DRIVING if requested_modes == {"drive"} else RouteMode.WALKING
     if len(unique) > 1:
-        matrix = RouteMatrix(routing_provider, ttl=timedelta(minutes=15))
-        mode = RouteMode.DRIVING if "drive" in intent.transport else RouteMode.WALKING
+        matrix = routing_state.get("matrix")
+        if not isinstance(matrix, RouteMatrix):
+            matrix = RouteMatrix(routing_provider, ttl=timedelta(minutes=15))
+            routing_state["matrix"] = matrix
+            routing_state["places"] = {place.place_id: place for place in unique}
+        refs = routing_state.get("places")
+        if not isinstance(refs, dict):
+            refs = {place.place_id: place for place in unique}
+            routing_state["places"] = refs
+        if mode is RouteMode.TRANSIT:
+            def route_lookup(origin_id: str, destination_id: str, departure_at: datetime) -> RouteConstraint | None:
+                origin = refs.get(origin_id)
+                destination = refs.get(destination_id)
+                if not isinstance(origin, PlaceRef) or not isinstance(destination, PlaceRef):
+                    return None
+                route = matrix.route_at(origin, destination, RouteMode.TRANSIT, departure_at)
+                duration = max(1, round(route.duration_seconds / 60)) if route.duration_seconds is not None else None
+                step_values = ({
+                    "mode": step.mode,
+                    "departure_at": step.departure_at.isoformat() if step.departure_at else None,
+                    "arrival_at": step.arrival_at.isoformat() if step.arrival_at else None,
+                    "departure_stop": step.departure_stop,
+                    "arrival_stop": step.arrival_stop,
+                    "line_name": step.line_name,
+                    "headsign": step.headsign,
+                } for step in route.steps)
+                steps = tuple({key: value for key, value in step.items() if value is not None} for step in step_values)
+                now = datetime.now(timezone.utc)
+                utc_departure = departure_at.astimezone(timezone.utc)
+                source_status = ("confirmed" if now - timedelta(days=7) <= utc_departure <= now + timedelta(days=7) else "estimated") if route.status is RouteStatus.AVAILABLE else "unverified"
+                return RouteConstraint(
+                    status="verified" if route.status is RouteStatus.AVAILABLE else route.status.value,
+                    minutes=duration, reason=route.provenance.note, source_status=source_status,
+                    mode="mixed" if "mixed" in requested_modes else "transit",
+                    departure_at=route.departure_at, arrival_at=route.arrival_at,
+                    wait_seconds=route.wait_seconds, transfer_count=route.transfer_count, steps=steps,
+                    provider=route.provenance.provider, source_url=route.provenance.source_url,
+                    retrieved_at=route.provenance.retrieved_at,
+                )
+            return ValidationContext(route_facts=route_facts, opening_hours={**validation_opening_hours(restaurants), **opening_hours}, route_lookup=route_lookup)
         for route in matrix.routes(unique, mode):
-            if route.status is RouteStatus.AVAILABLE and route.duration_seconds is not None:
-                minutes[(route.origin.place_id, route.destination.place_id)] = max(1, round(route.duration_seconds / 60))
-    return ValidationContext(travel_minutes=minutes, opening_hours={**validation_opening_hours(restaurants), **opening_hours})
+            key = (route.origin.place_id, route.destination.place_id)
+            duration = max(1, round(route.duration_seconds / 60)) if route.duration_seconds is not None else None
+            route_facts[key] = RouteConstraint(
+                status="verified" if route.status is RouteStatus.AVAILABLE else route.status.value,
+                minutes=duration,
+                reason=route.provenance.note,
+                source_status="confirmed" if route.status is RouteStatus.AVAILABLE else "unverified",
+                mode=mode.value, provider=route.provenance.provider, source_url=route.provenance.source_url,
+                retrieved_at=route.provenance.retrieved_at,
+            )
+            if route.status is RouteStatus.AVAILABLE and duration is not None:
+                minutes[key] = duration
+    return ValidationContext(travel_minutes=minutes, route_facts=route_facts,
+                             opening_hours={**validation_opening_hours(restaurants), **opening_hours})
 
 
 def _require_plannable_intent(intent: TravelIntent) -> None:

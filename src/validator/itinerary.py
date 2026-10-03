@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime, time
 from enum import Enum
-from typing import Callable, Mapping, Sequence
+from typing import Any, Callable, Mapping, Sequence
 
 from src.opening_hours import Eligibility, evaluate_opening_hours
 
@@ -76,6 +76,15 @@ class RouteConstraint:
     parking_buffer_minutes: int = 0
     walking_buffer_minutes: int = 0
     entry_buffer_minutes: int = 0
+    mode: str | None = None
+    departure_at: datetime | None = None
+    arrival_at: datetime | None = None
+    wait_seconds: int = 0
+    transfer_count: int = 0
+    steps: tuple[Mapping[str, Any], ...] = ()
+    provider: str | None = None
+    source_url: str | None = None
+    retrieved_at: datetime | None = None
 
 
 @dataclass(frozen=True)
@@ -117,6 +126,18 @@ class ValidationContext:
     condition_snapshot: ConditionSnapshot | None = None
     condition_evaluated_at: datetime | None = None
     condition_policy: ConditionPolicy = field(default_factory=ConditionPolicy)
+    route_lookup: Callable[[str, str, datetime], RouteConstraint | None] | None = field(default=None, repr=False, compare=False)
+    timed_route_facts: dict[tuple[str, str, str], RouteConstraint] = field(default_factory=dict, repr=False, compare=False)
+
+    def travel_minutes_for(self, origin: str, destination: str, departure_at: datetime | None = None) -> int | None:
+        """Use a route lookup at the actual departure instant when one is configured."""
+        if departure_at is not None and self.route_lookup is not None:
+            fact = self.route_lookup(origin, destination, departure_at)
+            if fact is None:
+                return None
+            self.timed_route_facts[(origin, destination, departure_at.isoformat())] = fact
+            return fact.minutes if fact.status in {"verified", "available"} else None
+        return self.travel_minutes.get((origin, destination))
 
 
 Rule = Callable[[dict, ValidationContext], Sequence[Violation]]
@@ -270,6 +291,21 @@ def transport_leg_rule(trip: dict, context: ValidationContext) -> Sequence[Viola
     """Enforce explicit route requirements and detect required-but-missing legs."""
 
     violations: list[Violation] = []
+    legs = {leg.get("id"): leg for leg in trip.get("candidate_sets", {}).get("transport_legs", []) if isinstance(leg, dict)}
+    for day_index, day in enumerate(trip.get("days", [])):
+        for item_index, item in enumerate(day.get("items", [])):
+            if item.get("kind") != "transport":
+                continue
+            if not item.get("transport_leg_id"):
+                continue
+            leg = legs.get(item.get("transport_leg_id"))
+            path = _item_path(day_index, item_index)
+            if leg is None:
+                violations.append(_error("transport.leg_missing", "transport timeline item does not reference a canonical leg", path))
+                continue
+            if (leg.get("to_place_id") != item.get("place_id") or leg.get("departure_at") != item.get("start_at")
+                    or leg.get("arrival_at") != item.get("end_at")):
+                violations.append(_error("transport.leg_mismatch", "transport timeline item differs from its canonical leg", path))
     required = {tuple(pair) for pair in context.required_transport_pairs}
     if not required:
         return violations
@@ -307,11 +343,14 @@ def travel_time_rule(trip: dict, context: ValidationContext) -> Sequence[Violati
     for day_index, day in enumerate(trip.get("days", [])):
         scheduled = sorted(enumerate(day.get("items", [])), key=lambda pair: pair[1]["start_at"])
         for (previous_index, previous), (item_index, item) in zip(scheduled, scheduled[1:]):
+            if item.get("kind") == "transport":
+                continue
             if previous["place_id"] == item["place_id"]:
                 continue
             route = (previous["place_id"], item["place_id"])
             path = _item_path(day_index, item_index)
-            fact = _resolve_route_constraint(route, context)
+            departure_at = datetime.fromisoformat(previous["end_at"])
+            fact = _resolve_route_constraint(route, context, departure_at)
             if fact is None:
                 violations.append(
                     _warning(
@@ -386,10 +425,12 @@ def route_condition_rule(trip: dict, context: ValidationContext) -> Sequence[Vio
     for day_index, day in enumerate(trip.get("days", [])):
         scheduled = sorted(enumerate(day.get("items", [])), key=lambda pair: pair[1]["start_at"])
         for (_, previous), (item_index, item) in zip(scheduled, scheduled[1:]):
+            if item.get("kind") == "transport":
+                continue
             if previous["place_id"] == item["place_id"]:
                 continue
             route = (previous["place_id"], item["place_id"])
-            fact = _resolve_route_constraint(route, context)
+            fact = _resolve_route_constraint(route, context, datetime.fromisoformat(previous["end_at"]))
             if fact is None:
                 continue
             path = _item_path(day_index, item_index)
@@ -618,7 +659,13 @@ def _is_unfresh(status: str | None) -> bool:
     return status is not None and status != "confirmed"
 
 
-def _resolve_route_constraint(route: tuple[str, str], context: ValidationContext) -> RouteConstraint | None:
+def _resolve_route_constraint(route: tuple[str, str], context: ValidationContext,
+                              departure_at: datetime | None = None) -> RouteConstraint | None:
+    if departure_at is not None and context.route_lookup is not None:
+        fact = context.route_lookup(route[0], route[1], departure_at)
+        if fact is not None:
+            context.timed_route_facts[(route[0], route[1], departure_at.isoformat())] = fact
+            return fact
     direct = context.route_facts.get(route)
     if direct is not None:
         minutes = direct.minutes
@@ -637,6 +684,15 @@ def _resolve_route_constraint(route: tuple[str, str], context: ValidationContext
             parking_buffer_minutes=direct.parking_buffer_minutes,
             walking_buffer_minutes=direct.walking_buffer_minutes,
             entry_buffer_minutes=direct.entry_buffer_minutes,
+            mode=direct.mode,
+            departure_at=direct.departure_at,
+            arrival_at=direct.arrival_at,
+            wait_seconds=direct.wait_seconds,
+            transfer_count=direct.transfer_count,
+            steps=direct.steps,
+            provider=direct.provider,
+            source_url=direct.source_url,
+            retrieved_at=direct.retrieved_at,
         )
 
     minutes = context.travel_minutes.get(route)

@@ -235,7 +235,9 @@ def _repair_only_violating_scope(trip: dict, violations: Iterable[Violation], re
             continue
         start, end = _timestamp(item["start_at"]), _timestamp(item["end_at"])
         required_start = _timestamp(previous["end_at"])
-        travel = request.validation_context.travel_minutes.get((previous["place_id"], item["place_id"]), 0)
+        travel = request.validation_context.travel_minutes_for(
+            previous["place_id"], item["place_id"], _timestamp(previous["end_at"])
+        ) or 0
         required_start += timedelta(minutes=travel)
         if start < required_start:
             duration = end - start

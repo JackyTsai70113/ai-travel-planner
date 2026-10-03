@@ -7,12 +7,39 @@ import unittest
 from pathlib import Path
 
 from src.web_publisher import build_all, build_trip, init_site
+from src.web_publisher.pipeline import _generic_bundle
 
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 class WebPublisherTests(unittest.TestCase):
+    def test_public_projection_preserves_timed_transit_segments_and_source(self) -> None:
+        trip = json.loads((ROOT / "fixtures/trips/japan-5-day-trip-v1.json").read_text())
+        config = json.loads((ROOT / "site-configs/kyushu-2026/site.json").read_text())
+        leg = {
+            "id": "transit-day1-leg1", "mode": "mixed", "from_place_id": "hakata-hotel",
+            "to_place_id": "fuk", "departure_at": "2026-04-10T07:00:00+09:00",
+            "arrival_at": "2026-04-10T07:30:00+09:00", "verification_status": "estimated",
+            "wait_seconds": 180, "transfer_count": 1,
+            "segments": [{"mode": "walk", "departure_at": "2026-04-10T07:00:00+09:00", "arrival_at": "2026-04-10T07:05:00+09:00"}],
+            "provenance": {"source_type": "provider", "provider": "Google Routes", "retrieved_at": "2026-04-01T00:00:00+09:00", "status": "estimated", "source_url": "https://routes.googleapis.com/directions/v2:computeRoutes"},
+        }
+        trip["candidate_sets"]["transport_legs"].append(leg)
+        trip["days"][0]["items"][0]["transport_leg_id"] = leg["id"]
+
+        bundle = _generic_bundle(trip, config, ROOT / "site-configs/kyushu-2026/trip.json", "incomplete", "2026-04-01T00:00:00Z")
+
+        public_leg = next(item for item in bundle["transport_legs"] if item["id"] == leg["id"])
+        self.assertEqual(public_leg["verification_status"], "estimated")
+        self.assertEqual(public_leg["mode"], "transit")
+        self.assertEqual((public_leg["from_place"], public_leg["to_place"]), ("hakata-hotel", "fuk"))
+        self.assertEqual(public_leg["segments"], leg["segments"])
+        self.assertIn("walk", public_leg["note"])
+        self.assertEqual(public_leg["provenance"]["authority"], "Google Routes")
+        self.assertEqual(public_leg["provenance"]["last_checked"], leg["provenance"]["retrieved_at"])
+        self.assertEqual(bundle["days"][0]["items"][0]["transport_leg_id"], leg["id"])
+
     def test_build_all_emits_two_trip_registry_and_hashes(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "site"

@@ -2,18 +2,20 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import replace
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 import json
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from src.application.production import ProductionDependencies, _select_hotel_candidate, create_production_orchestrator
+from src.application.production import ProductionDependencies, ProductionIncompleteError, _attach_timed_transport_legs, _routing_context, _select_hotel_candidate, create_production_orchestrator
 from src.cli import plan_command
 from src.intent import parse_trip_request
 from src.orchestrator import StageName, StageStatus
 from src.sources import AmadeusClient, SourceAdapter
-from src.sources.routing import FixtureRoutingProvider
+from src.sources.routing import FixtureRoutingProvider, Route, RouteMode, RouteProvenance, RouteStatus, RouteStep
+from src.schemas import validate_trip
+from src.validator import RouteConstraint, ValidationContext
 
 
 ENVIRONMENT = {
@@ -63,6 +65,26 @@ class BrokenYouTube(RecordedYouTube):
         raise RuntimeError("recorded YouTube timeout")
 
 
+class RecordedTransitRoutingProvider(FixtureRoutingProvider):
+    def __init__(self):
+        super().__init__(())
+        self.modes = []
+
+    def fetch(self, origin, destination, mode):
+        self.modes.append(mode)
+        assert mode is RouteMode.TRANSIT
+        return Route(origin, destination, mode, RouteStatus.AVAILABLE,
+                     RouteProvenance("recorded transit", datetime(2026, 1, 1, tzinfo=timezone.utc)), 300, 1000)
+
+    def fetch_at(self, origin, destination, mode, departure_at):
+        self.modes.append(mode)
+        assert mode is RouteMode.TRANSIT
+        arrival_at = departure_at + timedelta(minutes=5)
+        return Route(origin, destination, mode, RouteStatus.AVAILABLE,
+                     RouteProvenance("recorded transit", datetime(2026, 1, 1, tzinfo=timezone.utc)),
+                     300, 1000, departure_at, arrival_at, (RouteStep("bus", departure_at, arrival_at, "A", "B", "R1"),))
+
+
 def _transport(method, url, headers, body):
     if url.endswith("/v1/security/oauth2/token"):
         return 200, {"access_token": "recorded-token"}
@@ -75,10 +97,10 @@ def _transport(method, url, headers, body):
     raise AssertionError(url)
 
 
-def _runner(tmp_path, *, youtube=None, google=None, transport=_transport):
+def _runner(tmp_path, *, youtube=None, google=None, transport=_transport, routing_provider=None):
     dependencies = ProductionDependencies(
         google=google or RecordedGoogle(), youtube=youtube or RecordedYouTube(),
-        amadeus_client=AmadeusClient(transport, ENVIRONMENT), routing_provider=FixtureRoutingProvider(()),
+        amadeus_client=AmadeusClient(transport, ENVIRONMENT), routing_provider=routing_provider or FixtureRoutingProvider(()),
     )
     return create_production_orchestrator(
         trip_id="recorded-trip", trips_directory=tmp_path / "trips", site_directory=tmp_path / "site",
@@ -101,6 +123,108 @@ def test_recorded_production_composition_runs_pipeline_and_persists_canonical_ou
     assert "google-secret" not in persisted
     assert "amadeus-secret" not in persisted
     assert result.render_path.exists()
+
+
+def test_transit_request_keeps_transit_mode_and_preserves_unsupported_status():
+    class RecordingRoutingProvider(FixtureRoutingProvider):
+        def __init__(self):
+            super().__init__(())
+            self.modes = []
+
+        def fetch(self, origin, destination, mode):
+            self.modes.append(mode)
+            return super().fetch(origin, destination, mode)
+
+        def fetch_at(self, origin, destination, mode, departure_at):
+            self.modes.append(mode)
+            return super().fetch_at(origin, destination, mode, departure_at)
+
+    provider = RecordingRoutingProvider()
+    records = [
+        SimpleNamespace(collection="places", candidate={"id": place_id, "coordinates": {"latitude": 25.0, "longitude": 121.0 + index / 100}})
+        for index, place_id in enumerate(("origin", "destination"))
+    ]
+    intent = parse_trip_request("2026/4/10到2026/4/10 台北一日，大眾運輸")
+
+    context = _routing_context(records, provider, intent)
+    travel = context.travel_minutes_for("origin", "destination", datetime(2026, 4, 10, 7, tzinfo=timezone.utc))
+
+    assert provider.modes
+    assert set(provider.modes) == {RouteMode.TRANSIT}
+    assert travel is None
+    assert context.travel_minutes == {}
+    assert context.timed_route_facts[("origin", "destination", "2026-04-10T07:00:00+00:00")].status == "unsupported"
+
+
+def test_transit_request_with_unsupported_provider_does_not_emit_complete_trip(tmp_path):
+    intent = parse_trip_request("2026/10/20到2026/10/20，台北出發，台灣萬華一日，2大，大眾運輸")
+    result = _runner(tmp_path, google=RecordedTaiwanGoogle()).run(intent)
+
+    assert not result.succeeded
+    planner = result.stage(StageName.PLANNER)
+    assert planner.status is StageStatus.FAILED
+    assert any("unsupported" in error.message and "no walking fallback" in error.message for error in planner.errors)
+
+
+def test_mixed_transport_uses_explicit_transit_steps_instead_of_walking_fallback():
+    class RecordingRoutingProvider(FixtureRoutingProvider):
+        def __init__(self):
+            super().__init__(())
+            self.modes = []
+
+        def fetch_at(self, origin, destination, mode, departure_at):
+            self.modes.append(mode)
+            return super().fetch_at(origin, destination, mode, departure_at)
+
+    provider = RecordingRoutingProvider()
+    records = [SimpleNamespace(collection="places", candidate={"id": place_id, "coordinates": {"latitude": 25.0, "longitude": 121.0 + index / 100}})
+               for index, place_id in enumerate(("origin", "destination"))]
+    intent = parse_trip_request("2026/4/10到2026/4/10 台北一日，混合交通")
+
+    context = _routing_context(records, provider, intent)
+    assert context.route_lookup is not None
+    assert context.travel_minutes_for("origin", "destination", datetime(2026, 4, 10, 7, tzinfo=timezone.utc)) is None
+    assert provider.modes == [RouteMode.TRANSIT]
+
+
+def test_transit_schedule_exports_same_timed_routes_into_canonical_trip_and_public_leg_contract():
+    trip = json.loads((Path(__file__).parents[1] / "fixtures/trips/japan-5-day-trip-v1.json").read_text())
+    poi_id = next(place["id"] for place in trip["candidate_sets"]["places"] if place.get("kind") == "poi")
+    trip["days"] = [{"date": "2026-04-10", "items": [{
+        "id": "d1-visit", "kind": "visit", "place_id": poi_id,
+        "start_at": "2026-04-10T10:00:00+09:00", "end_at": "2026-04-10T12:00:00+09:00",
+        "selection_status": "selected",
+    }]}]
+    hotel_id = trip["selected"]["hotel_place_ids"][0]
+    start = datetime.fromisoformat("2026-04-10T07:00:00+09:00")
+    visit_end = datetime.fromisoformat("2026-04-10T12:00:00+09:00")
+    retrieved = datetime.fromisoformat("2026-04-10T06:00:00+09:00")
+
+    def fact(departure):
+        arrival = departure + timedelta(minutes=5)
+        return RouteConstraint(status="verified", minutes=5, source_status="confirmed", mode="mixed",
+                               departure_at=departure, arrival_at=arrival, wait_seconds=120, transfer_count=1,
+                               steps=({"mode": "walk", "departure_at": departure.isoformat(), "arrival_at": (departure + timedelta(minutes=1)).isoformat()},
+                                      {"mode": "train", "departure_at": (departure + timedelta(minutes=2)).isoformat(), "arrival_at": arrival.isoformat(), "departure_stop": "A", "arrival_stop": "B", "line_name": "R1"}),
+                               provider="recorded Google Routes", source_url="https://routes.googleapis.com/directions/v2:computeRoutes", retrieved_at=retrieved)
+
+    context = ValidationContext(route_lookup=lambda *_: None, timed_route_facts={
+        (hotel_id, poi_id, start.isoformat()): fact(start),
+        (poi_id, hotel_id, visit_end.isoformat()): fact(visit_end),
+    })
+    intent = parse_trip_request("2026/4/10到2026/4/14，德島五天四夜，混合交通")
+
+    _attach_timed_transport_legs(trip, context, intent)
+    validate_trip(trip)
+
+    legs = trip["candidate_sets"]["transport_legs"][-2:]
+    assert [leg["mode"] for leg in legs] == ["mixed", "mixed"]
+    assert [leg["transfer_count"] for leg in legs] == [1, 1]
+    assert all(leg["verification_status"] == "confirmed" for leg in legs)
+    assert all(leg["provenance"]["provider"] == "recorded Google Routes" for leg in legs)
+    transport_items = [item for day in trip["days"] for item in day["items"] if item["kind"] == "transport"]
+    assert len(transport_items) == 2
+    assert [item["transport_leg_id"] for item in transport_items] == [leg["id"] for leg in legs]
 
 
 def test_nested_provider_failure_is_visible_to_orchestrator_without_losing_trip(tmp_path):
@@ -135,7 +259,7 @@ def test_taiwan_domestic_trip_uses_taiwan_context_without_flight_search(tmp_path
         raise AssertionError(url)
 
     google = RecordedTaiwanGoogle()
-    intent = parse_trip_request("2026/10/20到2026/10/22，台北出發，台灣萬華西門三天兩夜，2大，大眾運輸")
+    intent = parse_trip_request("2026/10/20到2026/10/22，台北出發，台灣萬華西門三天兩夜，2大，自駕")
     result = _runner(tmp_path, google=google, transport=taiwan_transport).run(intent)
 
     assert result.succeeded
@@ -248,7 +372,7 @@ def test_hotel_selection_compares_distance_to_requested_destination_places():
 
 
 def test_night_river_view_without_confirmed_viewpoint_evidence_stays_incomplete(tmp_path):
-    intent = parse_trip_request("2026/10/20到2026/10/22，台北出發，台灣萬華西門三天兩夜，2大，大眾運輸，晚上看得到河流與夜景")
+    intent = parse_trip_request("2026/10/20到2026/10/22，台北出發，台灣萬華西門三天兩夜，2大，自駕，晚上看得到河流與夜景")
 
     def taiwan_transport(method, url, headers, body):
         if url.endswith("/v1/security/oauth2/token"):

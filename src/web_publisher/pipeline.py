@@ -130,6 +130,43 @@ def _safe_provenance(raw: Any, supports: str) -> dict[str, Any] | None:
     return {key: value for key, value in result.items() if value is not None}
 
 
+def _safe_transport_legs(raw_legs: Any, places: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    result = []
+    for leg in raw_legs if isinstance(raw_legs, list) else []:
+        if not isinstance(leg, dict) or not isinstance(leg.get("id"), str):
+            continue
+        origin = places.get(leg.get("from_place_id"), {})
+        destination = places.get(leg.get("to_place_id"), {})
+        departure = leg.get("departure_at")
+        arrival = leg.get("arrival_at")
+        try:
+            duration = max(0, round((datetime.fromisoformat(arrival) - datetime.fromisoformat(departure)).total_seconds() / 60))
+        except (TypeError, ValueError):
+            duration = None
+        segments = leg.get("segments") if isinstance(leg.get("segments"), list) else []
+        segment_summary = " → ".join(str(segment.get("mode")) for segment in segments if isinstance(segment, dict) and segment.get("mode"))
+        wait_minutes = round(leg.get("wait_seconds", 0) / 60) if isinstance(leg.get("wait_seconds"), int) else None
+        transfer_count = leg.get("transfer_count") if isinstance(leg.get("transfer_count"), int) else None
+        note_parts = [part for part in (segment_summary, f"等候約 {wait_minutes} 分鐘" if wait_minutes else None,
+                                        f"轉乘 {transfer_count} 次" if transfer_count else None) if part]
+        safe = {"id": leg["id"], "mode": "transit" if leg.get("mode") in {"transit", "mixed"} else leg.get("mode"),
+                "status": leg.get("verification_status", "unverified"),
+                "from_place": leg.get("from_place_id"), "to_place": leg.get("to_place_id"),
+                "from_label": origin.get("name") or leg.get("from_place_id"),
+                "to_label": destination.get("name") or leg.get("to_place_id"),
+                "departure_at": departure, "arrival_at": arrival, "estimated_duration_minutes": duration,
+                "transfer_minutes": wait_minutes, "note": "；".join(note_parts) or None,
+                "source_url": (leg.get("provenance") or {}).get("source_url") if isinstance(leg.get("provenance"), dict) else None,
+                "segments": segments, "verification_status": leg.get("verification_status"),
+                "wait_seconds": leg.get("wait_seconds"), "transfer_count": transfer_count}
+        safe = {key: value for key, value in safe.items() if value is not None}
+        provenance = _safe_provenance(leg.get("provenance"), f"transport_leg:{leg['id']}")
+        if provenance:
+            safe["provenance"] = provenance
+        result.append(safe)
+    return result
+
+
 def _generic_bundle(trip: dict[str, Any], config: dict[str, Any], trip_path: Path, readiness: str, generated_at: str) -> dict[str, Any]:
     candidate = trip.get("candidate_sets") if isinstance(trip.get("candidate_sets"), dict) else {}
     places = [place for place in candidate.get("places", []) if isinstance(place, dict) and place.get("id")]
@@ -138,15 +175,19 @@ def _generic_bundle(trip: dict[str, Any], config: dict[str, Any], trip_path: Pat
     for day in trip.get("days", []):
         if not isinstance(day, dict):
             continue
-        days.append({"date": day.get("date"), "summary": day.get("summary"), "items": [{key: item.get(key) for key in ("id", "kind", "place_id", "start_at", "end_at") if item.get(key) is not None} for item in day.get("items", []) if isinstance(item, dict)]})
+        days.append({"date": day.get("date"), "summary": day.get("summary"), "items": [{key: item.get(key) for key in ("id", "kind", "place_id", "start_at", "end_at", "transport_leg_id") if item.get(key) is not None} for item in day.get("items", []) if isinstance(item, dict)]})
     safe_places = [{key: place.get(key) for key in ("id", "name", "address", "kind", "maps_query") if place.get(key) is not None} for place in places]
-    legs = [{key: leg.get(key) for key in ("id", "mode", "from_place_id", "to_place_id", "departure_at", "arrival_at", "estimated_duration", "distance_km") if leg.get(key) is not None} for leg in candidate.get("transport_legs", []) if isinstance(leg, dict)]
+    legs = _safe_transport_legs(candidate.get("transport_legs"), {place["id"]: place for place in places})
     validation = [{key: item.get(key) for key in ("code", "message", "severity", "path", "reference") if item.get(key) is not None} for item in trip.get("validation", []) if isinstance(item, dict)]
     ledger = []
     if _safe_provenance(trip.get("provenance"), "trip"):
         ledger.append(_safe_provenance(trip.get("provenance"), "trip"))
     for place in places:
         entry = _safe_provenance(place.get("provenance"), f"place:{place['id']}")
+        if entry:
+            ledger.append(entry)
+    for leg in candidate.get("transport_legs", []) if isinstance(candidate.get("transport_legs"), list) else []:
+        entry = _safe_provenance(leg.get("provenance"), f"transport_leg:{leg['id']}") if isinstance(leg, dict) and isinstance(leg.get("id"), str) else None
         if entry:
             ledger.append(entry)
     budget = trip.get("budget") if isinstance(trip.get("budget"), dict) else {}
