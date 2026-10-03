@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Annotated, Any
 
 from mcp.server import MCPServer
+from mcp.server.transport_security import TransportSecuritySettings
 from mcp.types import ToolAnnotations
 from pydantic import Field
 
@@ -30,6 +31,7 @@ _SITE_DIR = Path(os.environ.get("TRAVEL_PLANNER_SITE_DIR", "site")).resolve()
 _HTTP_REQUEST_LIMIT = 120
 _HTTP_WINDOW_SECONDS = 60
 _HTTP_MAX_BODY_BYTES = 4 * 1024 * 1024
+_MCP_LOCAL_ALLOWED_HOSTS = ("127.0.0.1:*", "localhost:*", "[::1]:*")
 
 mcp = MCPServer(
     "ai-travel-planner",
@@ -418,9 +420,9 @@ def run_http_server() -> None:
     import uvicorn
     from starlette.responses import PlainTextResponse
 
-    token = os.environ.get("MCP_BACKEND_TOKEN", "")
+    token = os.environ.get("BEARER_TOKEN", "")
     if len(token) < 32:
-        raise SystemExit("MCP_BACKEND_TOKEN must contain at least 32 characters")
+        raise SystemExit("BEARER_TOKEN must contain at least 32 characters")
 
     class InternalBearerAuth:
         def __init__(self, app):
@@ -476,8 +478,23 @@ def run_http_server() -> None:
             await send({"type": "http.response.start", "status": status, "headers": [(b"content-type", b"application/json"), (b"content-length", str(len(body)).encode())]})
             await send({"type": "http.response.body", "body": body})
 
+    allowed_hosts = list(_MCP_LOCAL_ALLOWED_HOSTS)
+    railway_public_domain = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "").strip()
+    if railway_public_domain:
+        allowed_hosts.append(railway_public_domain)
+    allowed_hosts.extend(
+        host.strip()
+        for host in os.environ.get("MCP_ALLOWED_HOSTS", "").split(",")
+        if host.strip()
+    )
     app = mcp.streamable_http_app(
-        streamable_http_path="/mcp", json_response=True, stateless_http=True
+        streamable_http_path="/mcp",
+        json_response=True,
+        stateless_http=True,
+        transport_security=TransportSecuritySettings(
+            enable_dns_rebinding_protection=True,
+            allowed_hosts=list(dict.fromkeys(allowed_hosts)),
+        ),
     )
 
     async def health(_request):

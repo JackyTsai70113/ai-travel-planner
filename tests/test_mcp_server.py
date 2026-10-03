@@ -142,7 +142,14 @@ class MCPTravelServerTests(unittest.TestCase):
         process = subprocess.Popen(
             [sys.executable, "-m", "src.mcp_server.server"],
             cwd=project,
-            env={**os.environ, "PYTHONPATH": str(project), "MCP_TRANSPORT": "streamable-http", "MCP_BACKEND_TOKEN": token, "PORT": str(port)},
+            env={
+                **os.environ,
+                "PYTHONPATH": str(project),
+                "MCP_TRANSPORT": "streamable-http",
+                "BEARER_TOKEN": token,
+                "PORT": str(port),
+                "RAILWAY_PUBLIC_DOMAIN": "travel.example.test",
+            },
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
@@ -160,6 +167,32 @@ class MCPTravelServerTests(unittest.TestCase):
                 urllib.request.urlopen(urllib.request.Request(endpoint, data=b"{}", method="POST", headers={"Authorization": f"Bearer {token}"}), timeout=2)
             self.assertEqual(unauthenticated.exception.code, 401)
             unauthenticated.exception.close()
+            wrong_host = urllib.request.Request(
+                endpoint,
+                data=json.dumps(
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 1,
+                        "method": "initialize",
+                        "params": {
+                            "protocolVersion": "2025-06-18",
+                            "capabilities": {},
+                            "clientInfo": {"name": "test", "version": "1"},
+                        },
+                    }
+                ).encode(),
+                method="POST",
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "oai-authenticated-user-id": "test-user",
+                    "Host": "untrusted.example.test",
+                    "Content-Type": "application/json",
+                },
+            )
+            with self.assertRaises(urllib.error.HTTPError) as rejected_host:
+                urllib.request.urlopen(wrong_host, timeout=2)
+            self.assertEqual(rejected_host.exception.code, 421)
+            rejected_host.exception.close()
             connection = http.client.HTTPConnection("127.0.0.1", port, timeout=2)
             connection.putrequest("POST", "/mcp")
             connection.putheader("Authorization", f"Bearer {token}")
@@ -187,7 +220,12 @@ class MCPTravelServerTests(unittest.TestCase):
             async def list_tools():
                 import httpx2
 
-                async with httpx2.AsyncClient(headers={"Authorization": f"Bearer {token}", "oai-authenticated-user-id": "test-user"}) as http_client:
+                headers = {
+                    "Authorization": f"Bearer {token}",
+                    "oai-authenticated-user-id": "test-user",
+                    "Host": "travel.example.test",
+                }
+                async with httpx2.AsyncClient(headers=headers) as http_client:
                     async with streamable_http_client(endpoint, http_client=http_client) as (read, write):
                         async with ClientSession(read, write) as client:
                             await client.initialize()

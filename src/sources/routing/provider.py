@@ -68,7 +68,7 @@ class OpenRouteServiceProvider(RoutingProvider):
     _PROFILES = {RouteMode.DRIVING: "driving-car", RouteMode.WALKING: "foot-walking"}
 
     def __init__(self, *, api_key: str | None = None, timeout_seconds: float = 10,
-                 endpoint: str = "https://api.openrouteservice.org/v2/matrix",
+                 endpoint: str = "https://api.heigit.org/openrouteservice/v2/matrix",
                  opener: Callable[..., object] = urlopen, now: Callable[[], datetime] | None = None) -> None:
         self.api_key = api_key if api_key is not None else os.environ.get("OPENROUTESERVICE_API_KEY")
         self.timeout_seconds = timeout_seconds

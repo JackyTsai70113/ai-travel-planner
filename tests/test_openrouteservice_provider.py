@@ -35,6 +35,7 @@ class OpenRouteServiceProviderTests(unittest.TestCase):
         matrix = RouteMatrix(provider)
         routes = matrix.routes(self.places, RouteMode.DRIVING)
         self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0][0].full_url, "https://api.heigit.org/openrouteservice/v2/matrix/driving-car")
         self.assertEqual(len(routes), 6)
         ab = matrix.route(self.places[0], self.places[1], RouteMode.DRIVING)
         self.assertEqual((ab.duration_seconds, ab.distance_meters, ab.status.value), (61, 502, "available"))

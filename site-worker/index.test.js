@@ -2,11 +2,25 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import worker from "./index.js";
 
-const env = { MCP_BACKEND_URL: "https://backend.example", MCP_BACKEND_TOKEN: "internal-secret" };
+const env = { MCP_BACKEND_URL: "https://backend.example", BEARER_TOKEN: "internal-secret" };
 
 test("rejects calls without the authenticated ChatGPT user header", async () => {
   const response = await worker.fetch(new Request("https://site.example/mcp", { method: "POST", body: "{}" }), env);
   assert.equal(response.status, 401);
+});
+
+test("accepts a backend URL that already ends in /mcp without duplicating the path", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    assert.equal(url.href, "https://backend.example/mcp");
+    return new Response("{}", { headers: { "content-type": "application/json" } });
+  };
+  try {
+    const response = await worker.fetch(new Request("https://site.example/mcp", {
+      method: "POST", body: "{}", headers: { "oai-authenticated-user-id": "user-123" },
+    }), { ...env, MCP_BACKEND_URL: "https://backend.example/mcp/" });
+    assert.equal(response.status, 200);
+  } finally { globalThis.fetch = originalFetch; }
 });
 
 test("forwards MCP POST with internal bearer credentials", async () => {
