@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import replace
 from datetime import datetime, timezone
 import json
 from pathlib import Path
@@ -147,6 +148,10 @@ def test_taiwan_domestic_trip_uses_taiwan_context_without_flight_search(tmp_path
     assert trip["selected"]["flight_ids"] == []
     assert trip["candidate_sets"]["flights"] == []
     assert set(trip["budget"]["categories"]) == {"hotel"}
+    assert all(
+        item["start_at"].endswith("+08:00") and item["end_at"].endswith("+08:00")
+        for day in trip["days"] for item in day["items"]
+    )
 
 
 def test_cross_border_hong_kong_to_taiwan_still_searches_flight(tmp_path):
@@ -171,6 +176,20 @@ def test_cross_border_hong_kong_to_taiwan_still_searches_flight(tmp_path):
     trip = json.loads(result.trip_path.read_text(encoding="utf-8"))
     assert "flight-offers" in " ".join(calls)
     assert trip["selected"]["flight_ids"] == ["amadeus-flight-hk-tpe"]
+
+
+def test_unsupported_explicit_origin_fails_before_provider_calls(tmp_path):
+    google = RecordedTaiwanGoogle()
+    intent = parse_trip_request("2026/10/20到2026/10/22，台灣萬華三天兩夜，2大")
+    intent = replace(intent, origin="新加坡")
+
+    try:
+        _runner(tmp_path, google=google).run(intent)
+    except Exception as exc:
+        assert "flight search is not available for origin '新加坡'" in str(exc)
+    else:
+        raise AssertionError("unsupported explicit origin must fail clearly")
+    assert google.queries == []
 
 
 def test_unsupported_hotel_destination_reports_provider_capability_limit(tmp_path):

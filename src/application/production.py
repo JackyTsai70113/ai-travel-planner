@@ -235,7 +235,7 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
         # scheduler metadata contract.  New production candidates take the
         # route-aware branch below; this path remains only until those source
         # adapters publish explicit visit-duration facts.
-        tz = ZoneInfo("Asia/Tokyo")
+        tz = ZoneInfo(_local_timezone(intent))
         itinerary_days = []
         for index in range(days_count):
             current_date = start + timedelta(days=index)
@@ -380,7 +380,9 @@ def _requires_flight_search(intent: TravelIntent) -> bool:
     destination_country = _destination_country(intent)
     origin_country = _origin_country(intent)
     if origin_country is None:
-        return intent.origin is not None or destination_country == "JP"
+        if intent.origin is not None:
+            raise ProductionIncompleteError(f"flight search is not available for origin {intent.origin!r}")
+        return destination_country == "JP"
     return origin_country != destination_country
 
 
