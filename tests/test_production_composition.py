@@ -362,3 +362,44 @@ def test_cli_non_demo_invokes_shared_production_composition_not_configuration_re
     output = capsys.readouterr().out
     assert '"status": "complete"' in output
     assert "configuration_ready" not in output
+
+
+def test_legacy_breakfast_is_omitted_when_route_would_overlap_first_poi():
+    from src.application.production import _schedule_legacy_meals
+    from src.validator import ValidationContext
+
+    restaurant = {"place": {"id": "breakfast-shop", "name": "早餐店"}, "opening_hours": {"status": "fresh", "timezone": "Asia/Taipei", "intervals": [{"weekday": day, "opens_at": "06:00", "closes_at": "20:00"} for day in range(7)]}, "provenance": {"source_type": "provider", "provider": "recorded", "retrieved_at": "2026-01-01T00:00:00+08:00"}}
+    trip = {"local_timezone": "Asia/Taipei", "selected": {"hotel_place_ids": ["hotel"]}, "candidate_sets": {"restaurants": [restaurant]}, "days": [{"date": "2026-04-10", "items": [{"id": "poi", "kind": "visit", "place_id": "poi", "start_at": "2026-04-10T10:00:00+08:00", "end_at": "2026-04-10T12:00:00+08:00"}]}]}
+    routes = {("hotel", "breakfast-shop"): 45, ("breakfast-shop", "poi"): 45}
+    _schedule_legacy_meals(trip, [restaurant], ValidationContext(travel_minutes=routes))
+    assert all(item["kind"] != "meal" for item in trip["days"][0]["items"])
+
+
+def test_restaurant_selection_keeps_open_route_verified_candidate_when_first_is_closed():
+    from src.application.production import _restaurant_candidates
+    from src.validator import ValidationContext
+
+    intent = parse_trip_request("2026/4/10到2026/4/10 台北出發德島一日，1大，自駕")
+    candidates = []
+    for index in range(7):
+        place_id = f"restaurant-{index}"
+        provenance = {"source_type": "provider", "provider": "recorded feed", "source_url": f"https://example.test/{index}", "retrieved_at": "2026-04-01T00:00:00+09:00", "status": "confirmed"}
+        closed_days = [4] if index == 0 else []
+        candidates.append({"place": {"id": place_id, "name": place_id, "kind": "restaurant", "provenance": provenance}, "provenance": provenance,
+                           "opening_hours": {"status": "fresh", "timezone": "Asia/Tokyo", "closed_weekdays": closed_days,
+                                             "intervals": [{"weekday": day, "opens_at": "07:00", "closes_at": "22:00"} for day in range(7)]}})
+    routes = {}
+    for candidate in candidates:
+        place_id = candidate["place"]["id"]
+        routes[("hotel", place_id)] = routes[(place_id, "poi")] = routes[("poi", place_id)] = routes[(place_id, "hotel")] = 5
+    selected = _restaurant_candidates(candidates, intent, date(2026, 4, 10), date(2026, 4, 10), ValidationContext(routes), [{"id": "poi"}], "hotel")
+    lunch = next(candidate for candidate in selected if candidate.get("schedule", {}).get("meal_period") == "lunch")
+    assert lunch["place"]["id"] != "restaurant-0"
+    assert lunch["schedule"]["alternatives"]
+    assert all(item["hours_verified"] and item["route_verified"] for item in lunch["schedule"]["alternatives"])
+    planned = [candidate for candidate in selected if candidate.get("schedule", {}).get("selected") is True]
+    assert all(candidate["schedule"].get("day") == 1 for candidate in planned)
+    assert len({candidate["schedule"].get("meal_period") for candidate in planned}) == len(planned)
+    backup_ids = [item["place_id"] for candidate in planned for item in candidate["schedule"]["alternatives"]]
+    assert len(backup_ids) == len(set(backup_ids))
+    assert not set(backup_ids).intersection(candidate["place"]["id"] for candidate in planned)

@@ -350,7 +350,7 @@ try {
   if (await mobile.locator('.reservation-card').count() !== 4) throw new Error('reservation count changed unexpectedly')
 
   await openRoute(mobile, 'food', '.food-workspace')
-  await mobile.getByText('推薦餐點與飲品', { exact: true }).first().waitFor()
+  await mobile.locator('.food-place-heading h3').first().waitFor()
   const foodParkingPairs = await mobile.locator('.food-card:has(.parking-fact-link)').evaluateAll((cards) => cards.map((card) => {
     const placeHref = card.querySelector('.map-pin-link')?.getAttribute('href') || ''
     const parkingHref = card.querySelector('.parking-fact-link')?.getAttribute('href') || ''

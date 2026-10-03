@@ -107,6 +107,12 @@ def reconcile_restaurant_candidates(candidates: Iterable[Mapping[str, object]]) 
 def _reconcile_group(group: Sequence[Mapping[str, object]]) -> dict[str, object]:
     ranked = sorted(group, key=lambda item: (_authority(item), _freshness(item)))
     result: dict[str, object] = {"provenance": _copy_value(_provenance(ranked[0]))}
+    field_provenance: dict[str, list[dict[str, object]]] = {}
+
+    def remember_field_source(field: str, sources: Sequence[Mapping[str, object]]) -> None:
+        provenance_values = _unique_provenance(sources)
+        if provenance_values:
+            field_provenance[field] = provenance_values
     place_sources = [candidate for candidate in ranked if isinstance(candidate.get("place"), Mapping)]
     if place_sources:
         place_source = min(place_sources, key=_place_rank)
@@ -148,8 +154,10 @@ def _reconcile_group(group: Sequence[Mapping[str, object]]) -> dict[str, object]
                 tuple(snapshots),
                 "same-authority opening-hours conflict",
             ))
+            remember_field_source(field, peers)
         else:
             result[field] = _copy_value(sources[0][field])
+            remember_field_source(field, sources[:1])
         for source in sources[1:]:
             if _fact_value(source[field]) != _fact_value(result[field]):
                 alternatives.append({"field": field, "value": _copy_value(source[field]), "provenance": dict(_provenance(source))})
@@ -168,6 +176,7 @@ def _reconcile_group(group: Sequence[Mapping[str, object]]) -> dict[str, object]
         for field in rating_bundle:
             if field in selected_rating:
                 result[field] = _copy_value(selected_rating[field])
+                remember_field_source(field, [selected_rating])
         for source in ranked:
             if source is selected_rating:
                 continue
@@ -182,6 +191,7 @@ def _reconcile_group(group: Sequence[Mapping[str, object]]) -> dict[str, object]
         count_sources = sorted((candidate for candidate in ranked if "review_count" in candidate), key=lambda item: _quality_rank(item, "review_count"))
         if count_sources:
             result["review_count"] = _copy_value(count_sources[0]["review_count"])
+            remember_field_source("review_count", count_sources[:1])
             for source in count_sources[1:]:
                 if _fact_value(source["review_count"]) != _fact_value(result["review_count"]):
                     alternatives.append({
@@ -195,6 +205,7 @@ def _reconcile_group(group: Sequence[Mapping[str, object]]) -> dict[str, object]
         if not sources:
             continue
         result[field] = _copy_value(sources[0][field])
+        remember_field_source(field, sources[:1])
         for source in sources[1:]:
             if _fact_value(source[field]) != _fact_value(result[field]):
                 alternatives.append({
@@ -211,6 +222,8 @@ def _reconcile_group(group: Sequence[Mapping[str, object]]) -> dict[str, object]
         result["attributions"] = list(dict.fromkeys(attributions))
     if alternatives:
         result["alternatives"] = _unique_alternatives(alternatives)
+    if field_provenance:
+        result["field_provenance"] = field_provenance
     return result
 
 

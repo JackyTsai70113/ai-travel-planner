@@ -163,6 +163,10 @@ def test_official_override_and_same_authority_conflict_are_auditable():
     )
     alternative_fields = {alternative["field"] for alternative in reconciled["alternatives"]}
     assert {"rating", "rating_source", "review_count", "cuisine"} <= alternative_fields
+    assert reconciled["field_provenance"]["opening_hours"] == [official_source]
+    assert reconciled["field_provenance"]["cuisine"] == [PROVENANCE]
+    assert reconciled["field_provenance"]["rating"] == [PROVENANCE]
+    assert reconciled["field_provenance"]["review_count"] == [PROVENANCE]
 
     other_official = candidate(provenance={**official_source, "provider": "Official notice"})
     conflict = reconcile_restaurant_candidates([official, other_official])[0]

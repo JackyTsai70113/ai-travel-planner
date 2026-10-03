@@ -13,6 +13,7 @@ interface PlaceMapsTarget {
   name?: string | null
   maps_query?: string | null
   google_maps_url?: string | null
+  coordinates?: { latitude?: number | null; longitude?: number | null } | null
 }
 
 export interface RouteDirectionChunk {
@@ -79,6 +80,9 @@ export function googleMapsQueryForPlace(place: PlaceMapsTarget | null | undefine
 }
 
 export function googleMapsHrefForPlace(place: PlaceMapsTarget | null | undefined, fallback = ''): string {
+  const latitude = safeToNumber(place?.coordinates?.latitude)
+  const longitude = safeToNumber(place?.coordinates?.longitude)
+  if (latitude !== null && longitude !== null) return buildMapsSearchLink(`${latitude},${longitude}`)
   return buildMapsSearchLink(googleMapsQueryForPlace(place, fallback))
 }
 

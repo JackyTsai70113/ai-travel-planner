@@ -167,6 +167,18 @@ describe('淡路島只讀旅遊助手', () => {
     expect(document.body.textContent).not.toMatch(/規劃估計|Sheet 指定|家庭／無障礙|聯絡[／/]參考|狀態正常|住宿安排已放入今日時間軸/)
   })
 
+  it('每日時間軸只保留 Canonical Trip 餐段，不重複顯示餐廳事實', () => {
+    const factsOnlyBundle = { ...bundle,
+      travel_assistant: { ...bundle.travel_assistant, place_guides: {} },
+      restaurant_facts: [{ place_id: placeIds[0], fields: { cuisine: '拉麵', price_range: '¥1,000–1,800', opening_hours: { status: 'fresh', intervals: [{ weekday: 4, opens_at: '11:00', closes_at: '20:00' }] } } }],
+    } as Bundle
+    render(<ItineraryPage bundle={factsOnlyBundle} route={{ section: 'today', day: dates[0], raw: '' }} onNavigate={vi.fn()} />)
+    expect(document.querySelector('#item-visit-0')).toBeInTheDocument()
+    expect(screen.queryByText('料理類型')).not.toBeInTheDocument()
+    expect(screen.queryByText('價格參考')).not.toBeInTheDocument()
+    expect(screen.queryByText('營業時間')).not.toBeInTheDocument()
+  })
+
   it('潮流只放在第 3、4 天，並提供官方潮見表', () => {
     const { rerender } = render(<ItineraryPage bundle={bundle} route={{ section: 'today', day: dates[0], raw: '' }} onNavigate={vi.fn()} />)
     expect(screen.queryByText('鳴門潮流與海況')).not.toBeInTheDocument()
@@ -217,18 +229,73 @@ describe('淡路島只讀旅遊助手', () => {
     expect(document.body.textContent).not.toMatch(/未完成時|聯絡[／/]參考|離線|只提供出發前閱讀|不要求旅途中/)
   })
 
-  it('餐飲頁的 map pin 連餐廳，停車資訊另連停車場', () => {
-    render(<FoodPage bundle={bundle} />)
-    expect(screen.getByText('一樂拉麵')).toBeInTheDocument()
-    expect(screen.getByText(/每人約 ¥1,000–1,800/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'ラーメン一樂' })).toHaveAttribute('href', 'https://nijigennomori.com/food/ichiraku/')
-    const foodCard = document.querySelector('.food-card') as HTMLElement
-    const placeMap = within(foodCard).getByRole('link', { name: '在 Google Maps 開啟 ラーメン一樂' })
-    const parkingMap = within(foodCard).getByRole('link', { name: '在 Google Maps 開啟 兵庫県立淡路島公園 E駐車場' })
-    expect(placeMap).toHaveAttribute('href', expect.stringContaining(encodeURIComponent('ラーメン一樂')))
-    expect(parkingMap).toHaveAttribute('href', expect.stringContaining(encodeURIComponent('兵庫県立淡路島公園 E駐車場')))
-    expect(placeMap.getAttribute('href')).not.toBe(parkingMap.getAttribute('href'))
-    expect(document.body.textContent).not.toMatch(/官方未公布|官方網站/)
+  it('餐飲頁由 Canonical Trip meal 與餐廳來源欄位呈現，不需要手寫 place guide', () => {
+    const withoutGuides = { ...bundle, travel_assistant: undefined,
+      days: [{ ...bundle.days[0], items: [{ id: 'lunch', kind: 'meal', start_at: `${dates[0]}T12:00:00+09:00`, end_at: `${dates[0]}T13:00:00+09:00`, place_id: placeIds[0] }] }],
+      restaurant_facts: [{ place_id: placeIds[0], provenance: guideSource, fields: { cuisine: '拉麵', price_range: '¥1,000–1,800', field_provenance: { cuisine: [guideSource], price_range: [{ ...guideSource, provider: '餐廳價格來源' }] }, opening_hours: { status: 'fresh', intervals: [{ weekday: 0, opens_at: '11:00', closes_at: '18:00' }] }, recommended_dishes: [{ name: '豚骨拉麵', note: '店家推薦', provenance: guideSource }] } }],
+    } as Bundle
+    render(<FoodPage bundle={withoutGuides} />)
+    expect(screen.getByText('ラーメン一樂')).toBeInTheDocument()
+    expect(screen.getByText('¥1,000–1,800')).toBeInTheDocument()
+    expect(screen.getByText('豚骨拉麵')).toBeInTheDocument()
+    expect(screen.getAllByText(/查核時間/)).toHaveLength(3)
+    expect(screen.getByText((_, element) => element?.tagName === 'SMALL' && element.textContent?.includes('餐廳價格來源') === true)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /在 Google Maps 開啟/ })).toBeInTheDocument()
+    expect(screen.queryByText(/停車場/)).not.toBeInTheDocument()
+  })
+
+  it('部分餐段已安排時仍逐日列出待選餐段，並呈現選擇原因與最後點餐時間', () => {
+    const partialMeals = { ...bundle,
+      days: [{ ...bundle.days[0], items: [{ id: 'lunch', kind: 'meal', start_at: `${dates[0]}T12:30:00+09:00`, end_at: `${dates[0]}T13:30:00+09:00`, place_id: placeIds[0] }] }],
+      restaurant_facts: [{ place_id: placeIds[0], fields: {
+        schedule: { day: 1, meal_period: 'lunch', selected: true, selection_reason: '符合當日午餐時段且路線可行。' },
+        opening_hours: { status: 'fresh', intervals: [{ weekday: 3, opens_at: '11:00', closes_at: '20:00', last_order_at: '19:30' }] },
+      } }],
+    } as Bundle
+    render(<FoodPage bundle={partialMeals} />)
+    expect(screen.getByText('早餐：尚待選擇或確認不安排')).toBeInTheDocument()
+    expect(screen.getByText('晚餐：尚待選擇或確認不安排')).toBeInTheDocument()
+    expect(screen.queryByText('午餐：尚待選擇或確認不安排')).not.toBeInTheDocument()
+    expect(screen.getByText('符合當日午餐時段且路線可行。')).toBeInTheDocument()
+    expect(screen.getByText(/最後點餐 19:30/)).toBeInTheDocument()
+  })
+
+  it('無已安排餐點時清楚顯示待選，不假裝已完成', () => {
+    render(<FoodPage bundle={{ ...bundle, days: bundle.days.map((day) => ({ ...day, items: day.items.filter((item) => item.kind !== 'meal') })) }} />)
+    expect(screen.getAllByText(/餐飲仍待選擇/)).toHaveLength(5)
+    expect(screen.queryByText('華西街夜市')).not.toBeInTheDocument()
+  })
+
+  it('餐段候補只顯示營業與路線均已查核的餐廳', () => {
+    const selected = placeIds[0]
+    const backup = 'backup-restaurant'
+    const mealBundle = { ...bundle,
+      places: [...(bundle.places || []), { id: backup, name: '候補食堂', maps_query: '候補食堂' }],
+      days: [{ ...bundle.days[0], items: [{ id: 'lunch', kind: 'meal', start_at: `${dates[0]}T12:30:00+09:00`, end_at: `${dates[0]}T13:30:00+09:00`, place_id: selected }] }],
+      restaurant_facts: [
+        { place_id: selected, provenance: guideSource, fields: { schedule: { day: 1, meal_period: 'lunch', selected: true, alternatives: [{ place_id: backup, meal_period: 'lunch', day: 1, hours_verified: true, route_verified: true }] } } },
+        { place_id: backup, provenance: guideSource, fields: { price_range: '¥900–1,500', field_provenance: { price_range: [{ ...guideSource, provider: '候補價格來源' }] }, opening_hours: { status: 'fresh', intervals: [], provenance: { ...guideSource, provider: '候補營業時間來源' } } } },
+      ],
+    } as Bundle
+    render(<FoodPage bundle={mealBundle} />)
+    expect(screen.getByText('同餐段候補')).toBeInTheDocument()
+    expect(screen.getByText((_, element) => element?.tagName === 'SMALL' && element.textContent?.includes('候補價格來源') === true)).toBeInTheDocument()
+    expect(screen.getByText((_, element) => element?.tagName === 'SMALL' && element.textContent?.includes('候補營業時間來源') === true)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '候補食堂' })).toHaveAttribute('href', expect.stringContaining(encodeURIComponent('候補食堂')))
+    expect(screen.getByText(/營業時間已查核，行程會再依當日實際順序確認可達性/)).toBeInTheDocument()
+  })
+
+  it('特殊營業時間優先於一般週間時間顯示', () => {
+    const withSpecialHours = { ...bundle,
+      days: [{ ...bundle.days[0], items: [{ id: 'lunch', kind: 'meal', start_at: `${dates[0]}T12:00:00+09:00`, end_at: `${dates[0]}T13:00:00+09:00`, place_id: placeIds[0] }] }],
+      restaurant_facts: [{ place_id: placeIds[0], fields: { opening_hours: {
+        status: 'fresh', intervals: [{ weekday: 0, opens_at: '09:00', closes_at: '21:00' }],
+        special_hours: [{ date: dates[0], status: 'open', intervals: [{ opens_at: '12:00', closes_at: '16:00' }] }],
+      } } }],
+    } as Bundle
+    render(<FoodPage bundle={withSpecialHours} />)
+    expect(screen.getByText('12:00–16:00')).toBeInTheDocument()
+    expect(screen.queryByText(/一般營業時間/)).not.toBeInTheDocument()
   })
 
   it('行程結束後不把下一站跳回早餐', () => {

@@ -105,6 +105,7 @@ def trip_to_public_bundle(trip: Mapping[str, Any]) -> dict[str, Any]:
     _require_trip_basics(trip)
     candidate_sets = _mapping(trip.get("candidate_sets"))
     places = _public_places(candidate_sets)
+    restaurant_facts = _public_restaurant_facts(candidate_sets)
     validation = [_public_validation(value) for value in _sequence(trip.get("validation")) if isinstance(value, Mapping)]
     has_error = any(item["severity"] in {"error", "critical"} for item in validation)
     has_warning = bool(validation)
@@ -130,6 +131,7 @@ def trip_to_public_bundle(trip: Mapping[str, Any]) -> dict[str, Any]:
             "children_ages": [child["age"] for child in children if isinstance(child.get("age"), int)],
         },
         "places": places,
+        "restaurant_facts": restaurant_facts,
         "selected": {key: list(_sequence(_mapping(trip.get("selected")).get(key))) for key in ("hotel_place_ids", "flight_ids")},
         "days": [_public_day(day) for day in _sequence(trip.get("days")) if isinstance(day, Mapping)],
         "transport_legs": [_public_leg(leg) for leg in _sequence(candidate_sets.get("transport_legs")) if isinstance(leg, Mapping)],
@@ -195,7 +197,36 @@ def _public_places(candidate_sets: Mapping[str, Any]) -> list[dict[str, Any]]:
             if not isinstance(identifier, str) or identifier in seen:
                 continue
             seen.add(identifier)
-            result.append({key: place[key] for key in ("id", "name", "address", "kind", "maps_query", "official_url", "opening_hours_note", "parking", "accessibility_notes") if key in place})
+            result.append({key: place[key] for key in ("id", "name", "address", "kind", "maps_query", "official_url", "opening_hours_note", "parking", "accessibility_notes", "coordinates") if key in place})
+            projected = result[-1]
+            candidate_provenance = candidate.get("provenance") if isinstance(candidate.get("provenance"), Mapping) else place.get("provenance")
+            if isinstance(candidate_provenance, Mapping):
+                projected["provenance"] = dict(candidate_provenance)
+            for field in ("opening_hours_note", "phone", "image_url", "image_source_url", "image_alt"):
+                if field in place:
+                    projected[field] = place[field]
+    return result
+
+
+def _public_restaurant_facts(candidate_sets: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """Project restaurant decision facts and their provenance from the canonical candidates."""
+    result = []
+    for candidate in _sequence(candidate_sets.get("restaurants")):
+        if not isinstance(candidate, Mapping):
+            continue
+        place = _mapping(candidate.get("place"))
+        if not isinstance(place.get("id"), str):
+            continue
+        provenance = candidate.get("provenance") if isinstance(candidate.get("provenance"), Mapping) else place.get("provenance")
+        fields = {}
+        if isinstance(candidate.get("schedule"), Mapping):
+            fields["schedule"] = candidate["schedule"]
+        for key in ("opening_hours", "price_range", "meal_price_signals", "rating", "review_count", "cuisine", "recommended_dishes", "reservation_required", "reservation_url", "wait_risk"):
+            if key in candidate:
+                fields[key] = candidate[key]
+        if isinstance(candidate.get("field_provenance"), Mapping):
+            fields["field_provenance"] = candidate["field_provenance"]
+        result.append({"place_id": place["id"], "provenance": provenance, "fields": fields})
     return result
 
 

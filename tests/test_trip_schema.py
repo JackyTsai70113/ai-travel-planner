@@ -19,6 +19,27 @@ class NightViewEvidenceSchemaTests(unittest.TestCase):
         point = {"id": "river-entrance", "kind": "entrance", "name": "Viewing deck entrance", "google_maps_url": "https://maps.google.com/?q=river-entrance", "provenance": source}
         return {"observation_point": fact("confirmed", "Riverside viewing deck"), "river_visibility": fact("visible", "River visible from the deck after dusk"), "obstructions": fact("clear", "Sightline has no tree obstruction"), "night_scene": fact("visible", "Bridge lights visible after dusk"), "access_point": {"status": "confirmed", "description": "Viewing deck entrance confirmed", "provenance": source, "navigation_point": point}, "retrieved_at": "2026-09-01T10:00:00+09:00"}
 
+    def test_restaurant_schedule_and_alternatives_reject_unknown_fields(self):
+        restaurant = self.trip["candidate_sets"]["restaurants"][0]
+        restaurant["schedule"] = {"duration_minutes": 60, "parking_buffer_minutes": 5, "selection_reason": "已驗證營業時間與路線", "alternatives": [{"place_id": "backup", "meal_period": "lunch", "day": 1, "hours_verified": True, "route_verified": True}]}
+        backup = copy.deepcopy(restaurant)
+        backup["place"]["id"] = "backup"
+        backup.pop("schedule")
+        self.trip["candidate_sets"]["restaurants"].append(backup)
+        restaurant["field_provenance"] = {"price_range": [{"source_type": "official", "provider": "Restaurant", "source_url": "https://example.test/menu", "retrieved_at": "2026-09-01T10:00:00+09:00", "status": "confirmed"}]}
+        validate_trip(self.trip)
+        restaurant["schedule"]["unexpected"] = True
+        with self.assertRaises(TripValidationError):
+            validate_trip(self.trip)
+        restaurant["schedule"].pop("unexpected")
+        restaurant["schedule"]["alternatives"][0]["unexpected"] = True
+        with self.assertRaises(TripValidationError):
+            validate_trip(self.trip)
+        restaurant["schedule"]["alternatives"][0].pop("unexpected")
+        restaurant["schedule"]["alternatives"][0]["place_id"] = "missing-backup"
+        with self.assertRaises(TripValidationError):
+            validate_trip(self.trip)
+
     def test_night_view_evidence_and_requirement_trace_are_valid(self):
         self.trip["days"][0]["items"][0]["satisfies_constraints"] = ["night-river-view"]
         place_id = self.trip["days"][0]["items"][0]["place_id"]

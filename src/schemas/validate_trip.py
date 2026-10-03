@@ -40,13 +40,16 @@ def validate_trip(trip: dict) -> None:
         _require_canonical_id(place.get("id"), "candidate_sets.places[].id")
         _validate_place(place, f"candidate_sets.places[{index}]")
     transport_ids = {leg["id"] for leg in trip["candidate_sets"].get("transport_legs", [])}
-    restaurant_ids: set[str] = set()
-    for index, candidate in enumerate(trip["candidate_sets"].get("restaurants", [])):
+    restaurants = trip["candidate_sets"].get("restaurants", [])
+    restaurant_ids = {candidate.get("place", {}).get("id") for candidate in restaurants if isinstance(candidate, dict) and isinstance(candidate.get("place"), dict)}
+    if len(restaurant_ids) != len(restaurants):
+        raise TripValidationError("candidate_sets.restaurants contains duplicate canonical place IDs")
+    for index, candidate in enumerate(restaurants):
         _validate_restaurant(candidate, index)
         place_id = candidate.get("place", {}).get("id")
-        if place_id in restaurant_ids:
-            raise TripValidationError("candidate_sets.restaurants contains duplicate canonical place IDs")
-        restaurant_ids.add(place_id)
+        for alternative_index, alternative in enumerate(candidate.get("schedule", {}).get("alternatives", [])):
+            if alternative.get("place_id") not in restaurant_ids:
+                raise TripValidationError(f"candidate_sets.restaurants[{index}].schedule.alternatives[{alternative_index}].place_id does not reference candidate_sets.restaurants")
     for index, hotel in enumerate(trip["candidate_sets"].get("hotels", [])):
         occupancy = hotel.get("occupancy") if isinstance(hotel, dict) else None
         if isinstance(occupancy, dict) and "rooms" in occupancy and (
@@ -224,6 +227,34 @@ def _validate_restaurant(candidate: object, index: int) -> None:
         raise TripValidationError(f"{path} must contain place")
     _require_canonical_id(candidate["place"].get("id"), f"{path}.place.id")
     _require_provenance(candidate.get("provenance"), f"{path}.provenance")
+    field_provenance = candidate.get("field_provenance", {})
+    if not isinstance(field_provenance, dict):
+        raise TripValidationError(f"{path}.field_provenance must be an object")
+    for field, sources in field_provenance.items():
+        if not isinstance(field, str) or not isinstance(sources, list):
+            raise TripValidationError(f"{path}.field_provenance entries must be provenance arrays")
+        for source_index, source in enumerate(sources):
+            _require_provenance(source, f"{path}.field_provenance.{field}[{source_index}]")
+    schedule = candidate.get("schedule")
+    if schedule is not None:
+        allowed_schedule_fields = {"duration_minutes", "day", "meal_period", "fixed_start_at", "fixed_end_at", "parking_buffer_minutes", "walking_buffer_minutes", "fatigue", "selection_reason", "alternatives", "required", "selected"}
+        if not isinstance(schedule, dict) or set(schedule) - allowed_schedule_fields:
+            raise TripValidationError(f"{path}.schedule has unknown fields")
+        if "selection_reason" in schedule and (not isinstance(schedule["selection_reason"], str) or not schedule["selection_reason"].strip()):
+            raise TripValidationError(f"{path}.schedule.selection_reason must be a non-empty string")
+        for alternative_index, alternative in enumerate(schedule.get("alternatives", [])):
+            alternative_path = f"{path}.schedule.alternatives[{alternative_index}]"
+            allowed_alternative_fields = {"place_id", "meal_period", "day", "hours_verified", "route_verified"}
+            if not isinstance(alternative, dict) or set(alternative) - allowed_alternative_fields:
+                raise TripValidationError(f"{alternative_path} has unknown fields")
+            if not isinstance(alternative.get("place_id"), str) or not alternative["place_id"].strip():
+                raise TripValidationError(f"{alternative_path}.place_id is required")
+            if alternative.get("meal_period") not in {"breakfast", "lunch", "dinner"}:
+                raise TripValidationError(f"{alternative_path}.meal_period is invalid")
+            if not isinstance(alternative.get("day"), int) or isinstance(alternative.get("day"), bool) or alternative["day"] < 1:
+                raise TripValidationError(f"{alternative_path}.day must be a positive integer")
+            if not isinstance(alternative.get("hours_verified"), bool) or not isinstance(alternative.get("route_verified"), bool):
+                raise TripValidationError(f"{alternative_path} requires verification status for hours and route")
     for rating_index, rating in enumerate(candidate.get("ratings", [])):
         rating_path = f"{path}.ratings[{rating_index}]"
         if not isinstance(rating, dict):

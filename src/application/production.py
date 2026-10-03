@@ -17,7 +17,7 @@ from zoneinfo import ZoneInfo
 from src.intent import TravelIntent
 from src.orchestrator import OrchestrationResult, TravelOrchestrator, TravelOrchestratorConfig
 from src.planner import SchedulingInput, schedule
-from src.restaurant_intelligence import eligible_restaurants, reconcile_restaurant_candidates, validation_opening_hours
+from src.restaurant_intelligence import eligible_restaurants, meal_eligibility, reconcile_restaurant_candidates, validation_opening_hours
 from src.sources import (
     AdapterFailure, AmadeusClient, AmadeusFlightAdapter, AmadeusHotelAdapter, FlightSearchQuery,
     GooglePlacesAdapter, HotPepperGourmetAdapter, HotelSearchQuery, Occupancy, SourceAdapter, SourceQuery,
@@ -221,20 +221,22 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
     restaurants = collections["restaurants"]
     hotels, flights = collections["hotels"], collections["flights"]
     requires_flights = _requires_flight_search(intent)
-    if len(places) < days_count or not restaurants or (requires_flights and not flights):
-        required = "POIs, restaurants, and flight" if requires_flights else "POIs and restaurants"
+    if len(places) < days_count or (requires_flights and not flights):
+        required = "POIs and flight" if requires_flights else "POIs"
         raise ProductionIncompleteError(f"live provider results are insufficient for a complete trip (need {required})")
     selected_hotel = _select_hotel_candidate(hotels, intent, start, end, flights, collections["places"])
+    restaurants = _restaurant_candidates(restaurants, intent, start, end, routing, places,
+                                         selected_hotel["place"]["id"] if selected_hotel else None)
 
-    all_places = [*collections["places"], *(hotel["place"] for hotel in hotels)]
+    all_places = [*collections["places"], *(hotel["place"] for hotel in hotels), *(restaurant["place"] for restaurant in restaurants)]
     seen: set[str] = set()
     canonical_places = []
-    for place in [*all_places, *(restaurant["place"] for restaurant in restaurants)]:
+    for place in all_places:
         if place["id"] not in seen:
             seen.add(place["id"]); canonical_places.append(place)
     _record_unknown_night_view_evidence(canonical_places, intent)
 
-    if any(not candidate.get("schedule") for candidate in [*places, *restaurants]):
+    if any(not candidate.get("schedule") for candidate in places):
         # Backward-compatible path for normalized providers that predate the
         # scheduler metadata contract.  New production candidates take the
         # route-aware branch below; this path remains only until those source
@@ -245,17 +247,15 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
             current_date = start + timedelta(days=index)
             visit_start = datetime.combine(current_date, time(10), tz)
             visit_end = datetime.combine(current_date, time(12), tz)
-            meal_start = datetime.combine(current_date, time(12, 30), tz)
-            meal_end = datetime.combine(current_date, time(13, 30), tz)
-            eligible = eligible_restaurants(restaurants, meal_start, meal_end)
-            if not eligible:
-                raise ProductionIncompleteError(f"no restaurant has fresh verified opening hours for {current_date.isoformat()} lunch")
-            poi, restaurant = places[index], eligible[index % len(eligible)]
+            poi = places[index]
             itinerary_days.append({"date": current_date.isoformat(), "summary": poi["name"], "items": [
                 {"id": f"day{index + 1}-visit", "kind": "visit", "place_id": poi["id"], "start_at": visit_start.isoformat(), "end_at": visit_end.isoformat(), "selection_status": "selected"},
-                {"id": f"day{index + 1}-meal", "kind": "meal", "place_id": restaurant["place"]["id"], "start_at": meal_start.isoformat(), "end_at": meal_end.isoformat(), "selection_status": "selected"},
             ]})
-        return [_legacy_trip(trip_id, intent, collections, canonical_places, start, end, selected_hotel, flights, itinerary_days)]
+        trip = _legacy_trip(trip_id, intent, collections, canonical_places, start, end, selected_hotel, flights, itinerary_days)
+        trip["candidate_sets"]["restaurants"] = restaurants
+        _schedule_legacy_meals(trip, restaurants, routing)
+        _add_unfilled_meal_warnings(trip)
+        return [trip]
 
     currency = _budget_currency(intent, flights[0] if flights else None, selected_hotel)
     flight_cost = _money_amount(flights[0].get("cost"), currency) if flights else 0.0
@@ -277,10 +277,143 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
         "validation": [],
         "provenance": {"source_type": "derived", "provider": "production composition", "retrieved_at": datetime.now(timezone.utc).isoformat(), "status": "estimated", "note": _lodging_note(selected_hotel)},
     }
-    scheduled = schedule(SchedulingInput(shell, routing)).best_trip
+    shell["candidate_sets"]["restaurants"] = restaurants
+    shell["budget"]["total_status"] = "incomplete"
+    scheduled = schedule(SchedulingInput(shell, routing, daily_start="07:00")).best_trip
     if scheduled is None:
         raise ProductionIncompleteError("no feasible route-aware schedule from normalized candidates")
+    _add_unfilled_meal_warnings(scheduled.trip)
     return [scheduled.trip]
+
+
+def _restaurant_candidates(candidates: Sequence[dict], intent: TravelIntent, start: date, end: date,
+                           routing: ValidationContext | None = None, places: Sequence[dict] = (), hotel_id: str | None = None) -> list[dict]:
+    """Select distinct evidence-backed candidates for each feasible meal period."""
+    timezone_name = _local_timezone(intent)
+    zone = ZoneInfo(timezone_name)
+    windows = {"breakfast": time(8, 0), "lunch": time(12, 30), "dinner": time(18, 30)}
+    selected: dict[str, dict] = {}
+    used: set[str] = set()
+    meal_slots: list[tuple[str, list[dict], str, int, datetime]] = []
+    for day_number in range(1, (end - start).days + 2):
+        current_date = start + timedelta(days=day_number - 1)
+        for period, start_time in windows.items():
+            meal_start = datetime.combine(current_date, start_time, zone)
+            meal_end = meal_start + timedelta(minutes=60)
+            eligible = [candidate for candidate in eligible_restaurants(candidates, meal_start, meal_end)
+                        if candidate.get("place", {}).get("id") not in used
+                        and candidate.get("schedule", {}).get("duration_minutes", 60) > 0
+                        and _meal_route_feasible(candidate, period, meal_start, meal_end, day_number, routing, places, hotel_id)]
+            if not eligible:
+                continue
+            candidate = dict(eligible[(day_number + len(selected)) % len(eligible)])
+            place_id = candidate.get("place", {}).get("id")
+            if not isinstance(place_id, str):
+                continue
+            candidate["schedule"] = {
+                "duration_minutes": 60, "day": day_number, "meal_period": period, "required": False,
+                "fixed_start_at": meal_start.isoformat(), "fixed_end_at": meal_end.isoformat(),
+                "selected": True,
+                "alternatives": [],
+            }
+            selected[place_id] = candidate
+            used.add(place_id)
+            meal_slots.append((place_id, eligible, period, day_number, meal_start))
+    reserved_alternatives: set[str] = set()
+    for place_id, eligible, period, day_number, meal_start in meal_slots:
+        backup = next((item for item in eligible
+                       if item.get("place", {}).get("id") not in used | reserved_alternatives), None)
+        if backup is None:
+            continue
+        backup_id = backup["place"]["id"]
+        selected[place_id]["schedule"]["alternatives"] = [{
+            "place_id": backup_id, "meal_period": period, "day": day_number,
+            "hours_verified": True, "route_verified": True,
+        }]
+        reserved_alternatives.add(backup_id)
+    result = []
+    for candidate in candidates:
+        place_id = candidate.get("place", {}).get("id")
+        copied = dict(candidate)
+        if place_id in selected:
+            copied["schedule"] = selected[place_id]["schedule"]
+        elif copied.get("schedule"):
+            copied["schedule"] = {**copied["schedule"], "selected": False}
+        result.append(copied)
+    return result
+
+
+def _meal_route_feasible(candidate: Mapping[str, object], period: str, starts: datetime, ends: datetime,
+                         day_number: int, routing: ValidationContext | None, places: Sequence[dict], hotel_id: str | None) -> bool:
+    if routing is None or hotel_id is None or day_number > len(places):
+        return False
+    place_id = candidate.get("place", {}).get("id")
+    poi_id = places[day_number - 1].get("id")
+    if not isinstance(place_id, str) or not isinstance(poi_id, str):
+        return False
+    if period == "breakfast":
+        outbound = routing.travel_minutes.get((hotel_id, place_id))
+        onward = routing.travel_minutes.get((place_id, poi_id))
+        return outbound is not None and onward is not None and starts - timedelta(minutes=outbound) >= datetime.combine(starts.date(), time(7), starts.tzinfo) and ends + timedelta(minutes=onward) <= datetime.combine(starts.date(), time(10), starts.tzinfo)
+    outbound = routing.travel_minutes.get((poi_id, place_id))
+    returning = routing.travel_minutes.get((place_id, hotel_id))
+    return outbound is not None and returning is not None and starts >= datetime.combine(starts.date(), time(12) if period == "lunch" else time(18), starts.tzinfo) and ends + timedelta(minutes=returning) <= datetime.combine(starts.date(), time(20), starts.tzinfo)
+
+
+def _add_unfilled_meal_warnings(trip: dict) -> None:
+    for day_number, day in enumerate(trip.get("days", []), start=1):
+        day_meals = [item for item in day.get("items", []) if item.get("kind") == "meal"]
+        if len(day_meals) < 3:
+            trip.setdefault("validation", []).append({"code": "meal.period_unselected", "severity": "warning",
+                "message": f"{day.get('date')} 有 {3-len(day_meals)} 個餐段未找到營業時間已驗證且路線可行的獨立餐廳；請選擇餐廳後再安排。", "path": f"/days/{day_number-1}"})
+
+
+def _schedule_legacy_meals(trip: dict, candidates: Sequence[dict], routing: ValidationContext) -> None:
+    """Append meals only where time, opening hours, and outbound/return routes are known."""
+    by_id = {candidate.get("place", {}).get("id"): candidate for candidate in candidates}
+    hotel_ids = trip.get("selected", {}).get("hotel_place_ids", [])
+    hotel_id = hotel_ids[0] if len(hotel_ids) == 1 else None
+    used: set[str] = set()
+    for day_number, day in enumerate(trip.get("days", []), start=1):
+        visit = next((item for item in day.get("items", []) if item.get("kind") == "visit"), None)
+        if visit is None:
+            continue
+        visit_end = datetime.fromisoformat(visit["end_at"])
+        zone = ZoneInfo(trip["local_timezone"])
+        windows = (("breakfast", time(8, 0)), ("lunch", time(12, 30)), ("dinner", time(18, 30)))
+        for period, target_time in windows:
+            candidates_here = [candidate for candidate in candidates if candidate.get("place", {}).get("id") not in used
+                               and candidate.get("opening_hours", {}).get("status") == "fresh"]
+            candidates_here.sort(key=lambda candidate: (candidate.get("rating", 0), candidate.get("place", {}).get("id", "")), reverse=True)
+            for candidate in candidates_here:
+                place_id = candidate["place"]["id"]
+                if period == "breakfast":
+                    route_out = routing.travel_minutes.get((hotel_id, place_id)) if hotel_id else None
+                    route_back = routing.travel_minutes.get((place_id, visit["place_id"]))
+                else:
+                    route_out = routing.travel_minutes.get((visit["place_id"], place_id))
+                    route_back = routing.travel_minutes.get((place_id, hotel_id)) if hotel_id else None
+                if route_out is None or route_back is None:
+                    continue
+                earliest = datetime.combine(date.fromisoformat(day["date"]), target_time, zone)
+                if period == "breakfast":
+                    earliest += timedelta(minutes=route_out)
+                else:
+                    earliest = max(earliest, visit_end + timedelta(minutes=route_out))
+                if period == "breakfast" and earliest + timedelta(minutes=60 + route_back) > datetime.fromisoformat(visit["start_at"]):
+                    continue
+                meal_start = earliest
+                meal_end = meal_start + timedelta(minutes=60)
+                if meal_end.time() > time(20, 0) or meal_end + timedelta(minutes=route_back) > datetime.combine(date.fromisoformat(day["date"]), time(23, 0), zone):
+                    continue
+                if meal_eligibility(candidate, meal_start, meal_end).value != "eligible":
+                    continue
+                day["items"].append({"id": f"day{day_number}-{period}-{place_id}", "kind": "meal", "place_id": place_id, "start_at": meal_start.isoformat(), "end_at": meal_end.isoformat(), "selection_status": "selected"})
+                candidate["schedule"] = {"duration_minutes": 60, "day": day_number, "meal_period": period, "required": False,
+                                          "fixed_start_at": meal_start.isoformat(), "fixed_end_at": meal_end.isoformat()}
+                used.add(place_id)
+                break
+        day["items"].sort(key=lambda item: item["start_at"])
 
 
 def _legacy_trip(trip_id, intent, collections, canonical_places, start, end, selected_hotel, flights, days):
