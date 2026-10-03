@@ -28,7 +28,11 @@ def build_site(trip: dict[str, Any], derived: dict[str, Any] | None = None) -> s
     warnings = "".join(f"<li>{escape(_warning_text(x))}</li>" for x in trip.get("validation", [])) or '<li class="quiet">目前沒有上游 validation warning。</li>'
     days = "".join(_render_day(day, places) for day in trip.get("days", []))
     budget = "".join(f"<tr><th>{escape(str(k))}</th><td>{escape(_money(v))}</td></tr>" for k, v in trip.get("budget", {}).get("categories", {}).items())
-    total = derived.get("budget", {}).get("total_label") or _money(trip.get("budget", {}).get("total", {}))
+    budget_data = trip.get("budget", {})
+    if budget_data.get("total_status") == "incomplete":
+        total = "總額待確認（僅列已知費用小計）"
+    else:
+        total = derived.get("budget", {}).get("total_label") or _money(budget_data.get("total", {}))
     sources = "".join(_render_source(x) for x in _sources(trip)) or '<p class="quiet">沒有未確認來源資料。</p>'
     attributions = "".join(_render_attribution(value) for value in _attributions(trip))
     return f'''<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{title}</title><style>{_CSS}</style></head><body><main>

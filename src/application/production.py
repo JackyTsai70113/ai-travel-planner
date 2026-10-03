@@ -105,7 +105,9 @@ class _ProductionResearchAdapter(SourceAdapter):
                 self.failures.append(AdapterFailure(self.flight_search.name, str(exc)))
         try:
             result = self.hotel_search.search(HotelSearchQuery(
-                _hotel_city_code(self.intent), start, end + timedelta(days=1), occupancy, currency=currency,
+                _hotel_city_code(self.intent), start, end, occupancy, currency=currency,
+                room_quantity=self.intent.room_count or 1,
+                room_quantity_explicit=self.intent.room_count is not None,
             ))
             candidates.extend(result.candidates)
             self.failures.extend(result.failures)
@@ -219,9 +221,10 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
     restaurants = collections["restaurants"]
     hotels, flights = collections["hotels"], collections["flights"]
     requires_flights = _requires_flight_search(intent)
-    if len(places) < days_count or not restaurants or not hotels or (requires_flights and not flights):
-        required = "POIs, restaurants, hotel, and flight" if requires_flights else "POIs, restaurants, and hotel"
+    if len(places) < days_count or not restaurants or (requires_flights and not flights):
+        required = "POIs, restaurants, and flight" if requires_flights else "POIs and restaurants"
         raise ProductionIncompleteError(f"live provider results are insufficient for a complete trip (need {required})")
+    selected_hotel = _select_hotel_candidate(hotels, intent, start, end, flights, collections["places"])
 
     all_places = [*collections["places"], *(hotel["place"] for hotel in hotels)]
     seen: set[str] = set()
@@ -252,12 +255,14 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
                 {"id": f"day{index + 1}-visit", "kind": "visit", "place_id": poi["id"], "start_at": visit_start.isoformat(), "end_at": visit_end.isoformat(), "selection_status": "selected"},
                 {"id": f"day{index + 1}-meal", "kind": "meal", "place_id": restaurant["place"]["id"], "start_at": meal_start.isoformat(), "end_at": meal_end.isoformat(), "selection_status": "selected"},
             ]})
-        return [_legacy_trip(trip_id, intent, collections, canonical_places, start, end, hotels, flights, itinerary_days)]
+        return [_legacy_trip(trip_id, intent, collections, canonical_places, start, end, selected_hotel, flights, itinerary_days)]
 
-    currency = _budget_currency(intent, flights[0] if flights else None, hotels[0])
+    currency = _budget_currency(intent, flights[0] if flights else None, selected_hotel)
     flight_cost = _money_amount(flights[0].get("cost"), currency) if flights else 0.0
-    hotel_cost = _money_amount(hotels[0].get("total_cost"), currency)
+    hotel_cost = _money_amount(selected_hotel.get("total_cost"), currency) if selected_hotel else 0.0
     categories = {"hotel": {"amount": hotel_cost, "currency": currency}}
+    if selected_hotel is None:
+        categories.pop("hotel")
     if flights:
         categories["flights"] = {"amount": flight_cost, "currency": currency}
     shell = {
@@ -266,11 +271,11 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
         "traveler_profile": {"adults": _adults(intent), "children": [{"age": age} for age in intent.travelers.child_ages]},
         "preferences": {"hard_constraints": _canonical_hard_constraints(intent), "soft_preferences": []},
         "candidate_sets": {**collections, "places": canonical_places},
-        "selected": {"hotel_place_ids": [hotels[0]["place"]["id"]], "flight_ids": [flight["id"] for flight in flights[:1]]},
+        "selected": {"hotel_place_ids": [selected_hotel["place"]["id"]] if selected_hotel else [], "flight_ids": [flight["id"] for flight in flights[:1]]},
         "days": [],
-        "budget": {"currency": currency, "categories": categories, "total": {"amount": flight_cost + hotel_cost, "currency": currency}},
+        "budget": {"currency": currency, "categories": categories, "total": {"amount": flight_cost + hotel_cost, "currency": currency}, "total_status": "incomplete"},
         "validation": [],
-        "provenance": {"source_type": "derived", "provider": "production composition", "retrieved_at": datetime.now(timezone.utc).isoformat(), "status": "estimated", "note": "Built only from normalized provider candidates; availability requires provider confirmation."},
+        "provenance": {"source_type": "derived", "provider": "production composition", "retrieved_at": datetime.now(timezone.utc).isoformat(), "status": "estimated", "note": _lodging_note(selected_hotel)},
     }
     scheduled = schedule(SchedulingInput(shell, routing)).best_trip
     if scheduled is None:
@@ -278,14 +283,16 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
     return [scheduled.trip]
 
 
-def _legacy_trip(trip_id, intent, collections, canonical_places, start, end, hotels, flights, days):
-    currency = _budget_currency(intent, flights[0] if flights else None, hotels[0])
+def _legacy_trip(trip_id, intent, collections, canonical_places, start, end, selected_hotel, flights, days):
+    currency = _budget_currency(intent, flights[0] if flights else None, selected_hotel)
     flight_cost = _money_amount(flights[0].get("cost"), currency) if flights else 0.0
-    hotel_cost = _money_amount(hotels[0].get("total_cost"), currency)
+    hotel_cost = _money_amount(selected_hotel.get("total_cost"), currency) if selected_hotel else 0.0
     categories = {"hotel": {"amount": hotel_cost, "currency": currency}}
+    if selected_hotel is None:
+        categories.pop("hotel")
     if flights:
         categories["flights"] = {"amount": flight_cost, "currency": currency}
-    return {"schema_version": "trip-v1", "id": trip_id, "title": " + ".join(intent.destinations) + " 行程", "local_timezone": _local_timezone(intent), "date_range": {"start_date": start.isoformat(), "end_date": end.isoformat()}, "traveler_profile": {"adults": _adults(intent), "children": [{"age": age} for age in intent.travelers.child_ages]}, "preferences": {"hard_constraints": _canonical_hard_constraints(intent), "soft_preferences": []}, "candidate_sets": {**collections, "places": canonical_places}, "selected": {"hotel_place_ids": [hotels[0]["place"]["id"]], "flight_ids": [flight["id"] for flight in flights[:1]]}, "days": days, "budget": {"currency": currency, "categories": categories, "total": {"amount": flight_cost + hotel_cost, "currency": currency}}, "validation": [], "provenance": {"source_type": "derived", "provider": "production composition", "retrieved_at": datetime.now(timezone.utc).isoformat(), "status": "estimated", "note": "Built only from normalized provider candidates; availability requires provider confirmation."}}
+    return {"schema_version": "trip-v1", "id": trip_id, "title": " + ".join(intent.destinations) + " 行程", "local_timezone": _local_timezone(intent), "date_range": {"start_date": start.isoformat(), "end_date": end.isoformat()}, "traveler_profile": {"adults": _adults(intent), "children": [{"age": age} for age in intent.travelers.child_ages]}, "preferences": {"hard_constraints": _canonical_hard_constraints(intent), "soft_preferences": []}, "candidate_sets": {**collections, "places": canonical_places}, "selected": {"hotel_place_ids": [selected_hotel["place"]["id"]] if selected_hotel else [], "flight_ids": [flight["id"] for flight in flights[:1]]}, "days": days, "budget": {"currency": currency, "categories": categories, "total": {"amount": flight_cost + hotel_cost, "currency": currency}, "total_status": "incomplete"}, "validation": [], "provenance": {"source_type": "derived", "provider": "production composition", "retrieved_at": datetime.now(timezone.utc).isoformat(), "status": "estimated", "note": _lodging_note(selected_hotel)}}
 
 
 def _canonical_hard_constraints(intent: TravelIntent) -> list[dict]:
@@ -297,6 +304,97 @@ def _canonical_hard_constraints(intent: TravelIntent) -> list[dict]:
                                 "description": source.text if source else "晚上看得到河流與夜景",
                                 "value": constraint.value})
     return constraints
+
+
+def _lodging_note(selected_hotel: Mapping[str, object] | None) -> str:
+    if selected_hotel is None:
+        return "No lodging candidate meets the verified stay dates, party, total-budget, destination proximity (within 10 km of a researched destination place), and explicit lodging preferences; lodging remains unselected. No booking is created. The overall trip budget is incomplete because lodging, dining, or local transport costs remain unpriced."
+    return "Selected hotel is a preferred search candidate only; candidates were compared by distance to researched destination places (within 10 km) and total price. No booking is created. Price and availability require provider confirmation. The overall trip budget is incomplete because dining and local transport costs are not priced."
+
+
+def _select_hotel_candidate(hotels: Sequence[dict], intent: TravelIntent, check_in: date, check_out: date,
+                            flights: Sequence[dict], destination_places: Sequence[dict]) -> dict | None:
+    """Choose a documented lodging search candidate; never imply a booking."""
+    expected_currency = intent.currency or _default_currency(intent)
+    adults = _adults(intent)
+    child_ages = list(intent.travelers.child_ages)
+    preferences = tuple(intent.accommodation_preferences)
+    flight_amount = 0.0
+    if flights:
+        flight_cost = flights[0].get("cost")
+        if isinstance(flight_cost, Mapping) and flight_cost.get("currency") == expected_currency:
+            amount = flight_cost.get("amount")
+            if isinstance(amount, (int, float)) and not isinstance(amount, bool):
+                flight_amount = float(amount)
+    remaining_budget = intent.budget_amount - flight_amount if intent.budget_amount is not None else None
+    target_coordinates = [place.get("coordinates") for place in destination_places
+                          if isinstance(place, Mapping) and isinstance(place.get("coordinates"), Mapping)]
+    eligible = []
+    for hotel in hotels:
+        if hotel.get("check_in") != check_in.isoformat() or hotel.get("check_out") != check_out.isoformat():
+            continue
+        occupancy = hotel.get("occupancy")
+        if not isinstance(occupancy, Mapping) or (
+            occupancy.get("adults") != adults or occupancy.get("child_ages") != child_ages
+            or occupancy.get("rooms") != (intent.room_count or 1)
+        ):
+            continue
+        total = hotel.get("total_cost")
+        if not isinstance(total, Mapping) or total.get("currency") != expected_currency:
+            continue
+        amount = total.get("amount")
+        if not isinstance(amount, (int, float)) or isinstance(amount, bool) or amount < 0:
+            continue
+        if remaining_budget is not None and amount > remaining_budget:
+            continue
+        place = hotel.get("place") if isinstance(hotel.get("place"), Mapping) else {}
+        evidence = " ".join(str(value) for value in (
+            place.get("name", ""),
+            hotel.get("child_policy", ""), hotel.get("location_note", ""),
+        )).casefold()
+        preference_terms = {
+            "ryokan": ("ryokan", "旅館", "溫泉"),
+            "business_hotel": ("business", "商務"),
+            "family_hotel": ("family", "親子"),
+            "central": ("central", "downtown", "市中心"),
+        }
+        if any(not any(term.casefold() in evidence for term in preference_terms.get(preference, (preference.casefold(),))) for preference in preferences):
+            continue
+        requested_room_types = {
+            "雙床房": ("twin", "雙床"), "單人房": ("single", "單人"),
+            "雙人房": ("double", "雙人"), "家庭房": ("family", "家庭"), "套房": ("suite", "套房"),
+        }
+        requested_room = next((terms for label, terms in requested_room_types.items() if label in intent.raw_text), None)
+        room_evidence = str(hotel.get("room_type", "")).casefold()
+        if requested_room and not any(term.casefold() in room_evidence for term in requested_room):
+            continue
+        distance = _nearest_destination_distance_km(place.get("coordinates"), target_coordinates)
+        if distance is None or distance > _MAX_HOTEL_DISTANCE_TO_DESTINATION_KM:
+            continue
+        eligible.append((distance, float(amount), hotel.get("cancellation_policy") in (None, ""), str(place.get("id", "")), hotel))
+    return min(eligible, key=lambda item: item[:4])[4] if eligible else None
+
+
+def _nearest_destination_distance_km(hotel_coordinates: object, target_coordinates: Sequence[object]) -> float | None:
+    if not isinstance(hotel_coordinates, Mapping) or not target_coordinates:
+        return None
+    try:
+        from math import asin, cos, radians, sin, sqrt
+        latitude = float(hotel_coordinates["latitude"])
+        longitude = float(hotel_coordinates["longitude"])
+        distances = []
+        for target in target_coordinates:
+            if not isinstance(target, Mapping):
+                continue
+            target_latitude = float(target["latitude"])
+            target_longitude = float(target["longitude"])
+            delta_lat = radians(target_latitude - latitude)
+            delta_lon = radians(target_longitude - longitude)
+            a = sin(delta_lat / 2) ** 2 + cos(radians(latitude)) * cos(radians(target_latitude)) * sin(delta_lon / 2) ** 2
+            distances.append(6371 * 2 * asin(sqrt(a)))
+        return min(distances) if distances else None
+    except (KeyError, TypeError, ValueError):
+        return None
 
 
 def _record_unknown_night_view_evidence(places: Sequence[dict], intent: TravelIntent) -> None:
@@ -464,6 +562,7 @@ _SUPPORTED_AIRPORT_CODES = (
     "TPE", "KHH", "HKG", "NRT", "HND", "KIX", "ITM", "TYO", "OSA", "TKS", "UKB",
     "FUK", "SPK", "CTS", "OKA", "NGO",
 )
+_MAX_HOTEL_DISTANCE_TO_DESTINATION_KM = 10.0
 
 
 def _airport_timezone(code: str) -> str:
@@ -482,10 +581,11 @@ def _safe_trip_id(value: str) -> str:
     return cleaned
 
 
-def _budget_currency(intent: TravelIntent, flight: Mapping[str, object] | None, hotel: Mapping[str, object]) -> str:
-    currencies = [value.get("currency") for value in (
-        flight.get("cost", {}) if flight else {}, hotel.get("total_cost", {}),
-    ) if isinstance(value, Mapping) and value.get("currency")]
+def _budget_currency(intent: TravelIntent, flight: Mapping[str, object] | None, hotel: Mapping[str, object] | None) -> str:
+    values = [flight.get("cost", {}) if flight else {}]
+    if hotel:
+        values.append(hotel.get("total_cost", {}))
+    currencies = [value.get("currency") for value in values if isinstance(value, Mapping) and value.get("currency")]
     if len(set(currencies)) > 1:
         raise ProductionIncompleteError("flight and hotel provider currencies differ; no conversion rate was invented")
     currency = str(currencies[0]) if currencies else (intent.currency or _default_currency(intent))

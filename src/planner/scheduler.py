@@ -25,7 +25,7 @@ def schedule(request: SchedulingInput) -> SchedulingOutput:
     start, end = _date_range(trip, violations)
     hotel_id = _hotel_id(trip, violations)
     activities = _activities(trip, violations)
-    if violations or start is None or end is None or hotel_id is None:
+    if _has_errors(violations) or start is None or end is None:
         return SchedulingOutput((ScheduledTrip(trip, ScheduleState.FAILED, tuple(violations)),))
 
     anchors_by_date = _anchors(trip, violations)
@@ -45,6 +45,9 @@ def schedule(request: SchedulingInput) -> SchedulingOutput:
     if _has_errors(violations):
         return SchedulingOutput((ScheduledTrip(trip, ScheduleState.FAILED, tuple(violations)),))
     trip["days"] = days
+    if hotel_id is None:
+        trip.setdefault("validation", []).append({"code": "schedule.hotel_missing", "severity": "warning", "message": "住宿尚未選定；每日首段抵達與每日結束後返回住宿的路線尚未驗證。", "path": "/selected/hotel_place_ids"})
+        return SchedulingOutput((ScheduledTrip(trip, ScheduleState.PARTIAL, tuple(violations)),))
     return SchedulingOutput((ScheduledTrip(trip, ScheduleState.READY, tuple(violations)),))
 
 
@@ -62,6 +65,8 @@ def _date_range(trip: dict, violations: list[Violation]) -> tuple[date | None, d
 
 def _hotel_id(trip: dict, violations: list[Violation]) -> str | None:
     hotels = trip.get("selected", {}).get("hotel_place_ids", [])
+    if hotels == []:
+        return None
     if len(hotels) != 1 or not isinstance(hotels[0], str):
         violations.append(_failure("schedule.hotel_missing", "exactly one selected hotel is required for daily routing", "/selected/hotel_place_ids"))
         return None
@@ -121,7 +126,7 @@ def _anchors(trip: dict, violations: list[Violation]) -> dict[str, tuple[dict, .
     return anchors
 
 
-def _schedule_day(current: date, day_number: int, hotel_id: str, activities: Iterable[dict], anchors: Iterable[dict], unscheduled: set[str], request: SchedulingInput) -> tuple[list[dict], list[Violation], set[str]]:
+def _schedule_day(current: date, day_number: int, hotel_id: str | None, activities: Iterable[dict], anchors: Iterable[dict], unscheduled: set[str], request: SchedulingInput) -> tuple[list[dict], list[Violation], set[str]]:
     violations: list[Violation] = []
     selected = [activity for activity in activities if activity["schedule"].get("day") == day_number]
     # An unassigned required activity is tried once, then removed only after it
@@ -153,7 +158,7 @@ def _schedule_day(current: date, day_number: int, hotel_id: str, activities: Ite
         value["id"],
     )):
         details = activity["schedule"]
-        travel = request.validation_context.travel_minutes.get((previous, activity["id"]))
+        travel = request.validation_context.travel_minutes.get((previous, activity["id"])) if previous is not None else 0
         if travel is None:
             violations.append(_failure("schedule.route_unknown", f"route from {previous} to {activity['id']} is required", activity["path"]))
             continue
@@ -165,6 +170,8 @@ def _schedule_day(current: date, day_number: int, hotel_id: str, activities: Ite
             violations.append(_failure("schedule.buffer_invalid", "parking/walking buffers must be non-negative integers", activity["path"]))
             continue
         cursor += timedelta(minutes=travel + buffers)
+        if previous is None:
+            violations.append(Violation("schedule.origin_unknown", "warning", "每日首個活動的住宿至目的地路線尚未驗證。", activity["path"]))
         fixed = details.get("fixed_start_at")
         if fixed:
             try:
@@ -199,7 +206,7 @@ def _schedule_day(current: date, day_number: int, hotel_id: str, activities: Ite
         previous, cursor = activity["id"], end_at
         if activity["schedule"].get("day") is None:
             placed.add(activity["id"])
-    if placed_activity:
+    if placed_activity and hotel_id is not None:
         back = request.validation_context.travel_minutes.get((previous, hotel_id))
         if back is None:
             violations.append(_failure("schedule.route_unknown", f"route from {previous} to {hotel_id} is required for daily hotel consistency", "/days"))

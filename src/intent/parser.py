@@ -99,6 +99,7 @@ def parse_trip_request(text: str) -> TripRequest:
 
     adult_match = capture("adults", r"([\d一二三四五六七八九十]+)\s*(?:大|位大人|成人)", lambda m: _number(m.group(1)))
     child_match = capture("children", r"([\d一二三四五六七八九十]+)\s*(?:小|位小孩|位兒童|小孩|兒童)", lambda m: _number(m.group(1)))
+    capture("room_count", r"([\d一二兩三四五六七八九十]+)\s*(?:間\s*)?(?:房間|房)", lambda m: _number(m.group(1)))
     ages = tuple(int(match.group(1)) for match in re.finditer(r"(\d{1,2})\s*歲", text))
     for match in re.finditer(r"(\d{1,2})\s*歲", text):
         provenance["child_ages"].append(FieldProvenance(match.group(0), match.start(), match.end(), "child_ages"))
@@ -165,6 +166,7 @@ def parse_trip_request(text: str) -> TripRequest:
         end_date=end_date, duration_days=days, duration_nights=nights,
         origin=values.get("origin"),
         travelers=TravelerGroup(values.get("adults"), values.get("children"), ages),
+        room_count=values.get("room_count"),
         budget_amount=budget_amount, currency=currency, transport=transport,
         required_places=required, forbidden_places=forbidden,
         accommodation_preferences=accommodation, food_preferences=food, pace=pace,

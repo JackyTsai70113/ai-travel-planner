@@ -108,6 +108,7 @@ class TripRequest:
     duration_nights: int | None = None
     origin: str | None = None
     travelers: TravelerGroup = field(default_factory=TravelerGroup)
+    room_count: int | None = None
     budget_amount: int | None = None
     currency: str | None = None
     transport: tuple[str, ...] = ()
@@ -167,6 +168,7 @@ class TripRequest:
             "duration_nights": self.duration_nights,
             "origin": self.origin,
             "travelers": {"adults": self.travelers.adults, "children": self.travelers.children, "child_ages": list(self.travelers.child_ages)},
+            "room_count": self.room_count,
             "budget_amount": self.budget_amount,
             "currency": self.currency,
             "transport": list(self.transport),

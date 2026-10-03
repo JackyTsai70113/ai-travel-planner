@@ -23,6 +23,9 @@ def validate_trip(trip: dict) -> None:
         raise TripValidationError(f"missing required fields: {', '.join(sorted(missing))}")
     if trip["schema_version"] != "trip-v1":
         raise TripValidationError("schema_version must be trip-v1")
+    budget = trip.get("budget")
+    if isinstance(budget, dict) and budget.get("total_status", "complete") not in {"complete", "incomplete"}:
+        raise TripValidationError("budget.total_status must be complete or incomplete")
     try:
         ZoneInfo(trip["local_timezone"])
     except (ZoneInfoNotFoundError, TypeError) as exc:
@@ -44,6 +47,12 @@ def validate_trip(trip: dict) -> None:
         if place_id in restaurant_ids:
             raise TripValidationError("candidate_sets.restaurants contains duplicate canonical place IDs")
         restaurant_ids.add(place_id)
+    for index, hotel in enumerate(trip["candidate_sets"].get("hotels", [])):
+        occupancy = hotel.get("occupancy") if isinstance(hotel, dict) else None
+        if isinstance(occupancy, dict) and "rooms" in occupancy and (
+            not isinstance(occupancy["rooms"], int) or isinstance(occupancy["rooms"], bool) or occupancy["rooms"] < 1
+        ):
+            raise TripValidationError(f"candidate_sets.hotels[{index}].occupancy.rooms must be a positive integer")
     for day_index, day in enumerate(trip["days"]):
         for item_index, item in enumerate(day.get("items", [])):
             path = f"days[{day_index}].items[{item_index}]"

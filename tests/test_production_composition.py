@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import replace
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 import json
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from src.application.production import ProductionDependencies, create_production_orchestrator
+from src.application.production import ProductionDependencies, _select_hotel_candidate, create_production_orchestrator
 from src.cli import plan_command
 from src.intent import parse_trip_request
 from src.orchestrator import StageName, StageStatus
@@ -148,6 +148,103 @@ def test_taiwan_domestic_trip_uses_taiwan_context_without_flight_search(tmp_path
     assert trip["selected"]["flight_ids"] == []
     assert trip["candidate_sets"]["flights"] == []
     assert set(trip["budget"]["categories"]) == {"hotel"}
+    hotel_query = next(url for url in calls if "hotel-offers" in url)
+    assert "checkInDate=2026-10-20" in hotel_query
+    assert "checkOutDate=2026-10-22" in hotel_query
+    assert trip["candidate_sets"]["hotels"][0]["check_in"] == "2026-10-20"
+    assert trip["candidate_sets"]["hotels"][0]["check_out"] == "2026-10-22"
+    assert trip["candidate_sets"]["hotels"][0]["occupancy"] == {"adults": 2, "child_ages": [], "rooms": 1}
+    assert "taxes_fees" not in trip["candidate_sets"]["hotels"][0]
+    assert "tax inclusion" in trip["candidate_sets"]["hotels"][0]["provenance"]["note"]
+    assert "one-room search is preliminary" in trip["candidate_sets"]["hotels"][0]["provenance"]["note"]
+    assert trip["candidate_sets"]["hotels"][0]["price_status"] == "unverified"
+    assert "cancellation_policy" not in trip["candidate_sets"]["hotels"][0]
+    assert not any("river" in str(constraint).lower() for constraint in trip["preferences"]["hard_constraints"])
+    assert "no booking is created" in trip["provenance"]["note"].lower()
+
+
+def test_hotel_selection_is_price_ranked_and_unqualified_stays_pending(tmp_path):
+    calls = []
+
+    def hotels_transport(method, url, headers, body):
+        calls.append(url)
+        if url.endswith("/v1/security/oauth2/token"):
+            return 200, {"access_token": "recorded-token"}
+        if "locations/hotels/by-city" in url:
+            return 200, {"data": [{"hotelId": "H-expensive"}, {"hotelId": "H-cheap"}]}
+        if "hotel-offers" in url:
+            return 200, {"data": [
+                {"hotel": {"hotelId": "H-expensive", "name": "Expensive Taipei", "latitude": 25.04, "longitude": 121.51}, "offers": [{"id": "expensive", "price": {"total": "7000", "currency": "TWD"}, "room": {"typeEstimated": {"category": "STANDARD_ROOM"}}}]},
+                {"hotel": {"hotelId": "H-cheap", "name": "Affordable Taipei", "latitude": 25.05, "longitude": 121.52}, "offers": [{"id": "cheap", "price": {"total": "4000", "currency": "TWD"}, "room": {"typeEstimated": {"category": "TWIN_BED"}}}]},
+            ]}
+        raise AssertionError(url)
+
+    intent = parse_trip_request("2026/10/20到2026/10/22，台灣萬華西門三天兩夜，2大，2間房，雙床房，預算8千元")
+    result = _runner(tmp_path, google=RecordedTaiwanGoogle(), transport=hotels_transport).run(intent)
+    assert result.succeeded
+    trip = json.loads(result.trip_path.read_text(encoding="utf-8"))
+    assert trip["selected"]["hotel_place_ids"] == ["amadeus-hotel-h-cheap"]
+    assert trip["budget"]["categories"]["hotel"]["amount"] == 4000
+    selected_candidate = next(item for item in trip["candidate_sets"]["hotels"] if item["place"]["id"] == trip["selected"]["hotel_place_ids"][0])
+    assert selected_candidate["room_type"] == "TWIN_BED"
+    assert selected_candidate["occupancy"]["rooms"] == 2
+    assert "roomQuantity=2" in next(url for url in calls if "hotel-offers" in url)
+
+
+def test_hotel_over_budget_or_unverified_preference_remains_unselected(tmp_path):
+    def hotels_transport(method, url, headers, body):
+        if url.endswith("/v1/security/oauth2/token"):
+            return 200, {"access_token": "recorded-token"}
+        if "locations/hotels/by-city" in url:
+            return 200, {"data": [{"hotelId": "H1"}]}
+        if "hotel-offers" in url:
+            return 200, {"data": [{"hotel": {"hotelId": "H1", "name": "Generic Taipei hotel", "latitude": 25.04, "longitude": 121.51}, "offers": [{"id": "hotel-offer", "price": {"total": "9000", "currency": "TWD"}}]}]}
+        raise AssertionError(url)
+
+    intent = parse_trip_request("2026/10/20到2026/10/22，台灣萬華三天兩夜，2大，預算8千元")
+    result = _runner(tmp_path, google=RecordedTaiwanGoogle(), transport=hotels_transport).run(intent)
+    assert result.succeeded
+    trip = json.loads(result.trip_path.read_text(encoding="utf-8"))
+    assert trip["selected"]["hotel_place_ids"] == []
+    assert trip["candidate_sets"]["hotels"]
+    assert "hotel" not in trip["budget"]["categories"]
+    assert trip["budget"]["total_status"] == "incomplete"
+    assert "remains unselected" in trip["provenance"]["note"]
+    assert "總額待確認" in result.render_path.read_text(encoding="utf-8")
+
+    def untyped_room_transport(method, url, headers, body):
+        if url.endswith("/v1/security/oauth2/token"):
+            return 200, {"access_token": "recorded-token"}
+        if "locations/hotels/by-city" in url:
+            return 200, {"data": [{"hotelId": "H1"}]}
+        if "hotel-offers" in url:
+            return 200, {"data": [{"hotel": {"hotelId": "H1", "name": "Generic Taipei hotel", "latitude": 25.04, "longitude": 121.51}, "offers": [{"id": "hotel-offer", "price": {"total": "4000", "currency": "TWD"}}]}]}
+        raise AssertionError(url)
+
+    room_intent = parse_trip_request("2026/10/20到2026/10/22，台灣萬華三天兩夜，2大，雙床房，預算8千元")
+    room_result = _runner(tmp_path / "room-type", google=RecordedTaiwanGoogle(), transport=untyped_room_transport).run(room_intent)
+    assert room_result.succeeded
+    room_trip = json.loads(room_result.trip_path.read_text(encoding="utf-8"))
+    assert room_trip["selected"]["hotel_place_ids"] == []
+    assert room_trip["candidate_sets"]["hotels"]
+
+
+def test_hotel_selection_compares_distance_to_requested_destination_places():
+    intent = parse_trip_request("2026/10/20到2026/10/22，台灣萬華西門三天兩夜，2大")
+    candidate = lambda hotel_id, latitude, price: {
+        "place": {"id": hotel_id, "name": hotel_id, "kind": "hotel", "coordinates": {"latitude": latitude, "longitude": 121.51}},
+        "check_in": "2026-10-20", "check_out": "2026-10-22",
+        "occupancy": {"adults": 2, "child_ages": [], "rooms": 1},
+        "total_cost": {"amount": price, "currency": "TWD"},
+    }
+    hotels = [candidate("far-cheap", 25.20, 1000), candidate("near-expensive", 25.05, 5000)]
+    selected = _select_hotel_candidate(hotels, intent, date(2026, 10, 20), date(2026, 10, 22), [], [
+        {"coordinates": {"latitude": 25.04, "longitude": 121.51}},
+    ])
+    assert selected is hotels[1]
+    assert _select_hotel_candidate([hotels[0]], intent, date(2026, 10, 20), date(2026, 10, 22), [], [
+        {"coordinates": {"latitude": 25.04, "longitude": 121.51}},
+    ]) is None
 
 
 def test_night_river_view_without_confirmed_viewpoint_evidence_stays_incomplete(tmp_path):

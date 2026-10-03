@@ -77,6 +77,13 @@ class TravelIntentParserTests(unittest.TestCase):
             self.assertEqual(text[source.start:source.end], source.text)
         self.assertEqual((intent.budget_amount, intent.currency), (20000, "TWD"))
 
+    def test_explicit_hotel_room_quantity_is_preserved(self):
+        for phrase, expected in (("2間房", 2), ("兩間房", 2), ("3房", 3)):
+            with self.subTest(phrase=phrase):
+                intent = parse_trip_request(f"2026/10/20到2026/10/22，台灣萬華三天兩夜，2大，{phrase}")
+                self.assertEqual(intent.room_count, expected)
+                self.assertEqual(intent.as_dict()["room_count"], expected)
+
     def test_taiwan_request_keeps_unstated_values_missing(self):
         intent = parse_trip_request("臺灣萬華西門三天兩夜")
         self.assertEqual(intent.destinations, ("台灣", "萬華", "西門町"))

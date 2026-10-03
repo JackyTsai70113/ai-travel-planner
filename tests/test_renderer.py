@@ -17,6 +17,16 @@ def test_renderer_shows_core_views_and_provenance_state():
     assert "目前沒有上游 validation warning" in html
 
 
+def test_renderer_does_not_show_false_zero_when_trip_budget_is_incomplete():
+    trip = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    trip["budget"]["total"] = {"amount": 0, "currency": trip["budget"]["currency"]}
+    trip["budget"]["categories"] = {}
+    trip["budget"]["total_status"] = "incomplete"
+    html = build_site(trip)
+    assert "總額待確認（僅列已知費用小計）" in html
+    assert f'{trip["budget"]["currency"]} 0' not in html
+
+
 def test_renderer_displays_upstream_validation_without_evaluating_it():
     trip = json.loads(FIXTURE.read_text(encoding="utf-8"))
     trip["validation"] = [{"code": "schedule_conflict", "message": "由 validator 提供"}]
