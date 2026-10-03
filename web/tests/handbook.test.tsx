@@ -167,6 +167,18 @@ describe('淡路島只讀旅遊助手', () => {
     expect(document.body.textContent).not.toMatch(/規劃估計|Sheet 指定|家庭／無障礙|聯絡[／/]參考|狀態正常|住宿安排已放入今日時間軸/)
   })
 
+  it('每日時間軸只保留 Canonical Trip 餐段，不重複顯示餐廳事實', () => {
+    const factsOnlyBundle = { ...bundle,
+      travel_assistant: { ...bundle.travel_assistant, place_guides: {} },
+      restaurant_facts: [{ place_id: placeIds[0], fields: { cuisine: '拉麵', price_range: '¥1,000–1,800', opening_hours: { status: 'fresh', intervals: [{ weekday: 4, opens_at: '11:00', closes_at: '20:00' }] } } }],
+    } as Bundle
+    render(<ItineraryPage bundle={factsOnlyBundle} route={{ section: 'today', day: dates[0], raw: '' }} onNavigate={vi.fn()} />)
+    expect(document.querySelector('#item-visit-0')).toBeInTheDocument()
+    expect(screen.queryByText('料理類型')).not.toBeInTheDocument()
+    expect(screen.queryByText('價格參考')).not.toBeInTheDocument()
+    expect(screen.queryByText('營業時間')).not.toBeInTheDocument()
+  })
+
   it('潮流只放在第 3、4 天，並提供官方潮見表', () => {
     const { rerender } = render(<ItineraryPage bundle={bundle} route={{ section: 'today', day: dates[0], raw: '' }} onNavigate={vi.fn()} />)
     expect(screen.queryByText('鳴門潮流與海況')).not.toBeInTheDocument()
