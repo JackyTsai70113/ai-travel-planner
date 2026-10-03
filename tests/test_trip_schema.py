@@ -19,6 +19,24 @@ class NightViewEvidenceSchemaTests(unittest.TestCase):
         point = {"id": "river-entrance", "kind": "entrance", "name": "Viewing deck entrance", "google_maps_url": "https://maps.google.com/?q=river-entrance", "provenance": source}
         return {"observation_point": fact("confirmed", "Riverside viewing deck"), "river_visibility": fact("visible", "River visible from the deck after dusk"), "obstructions": fact("clear", "Sightline has no tree obstruction"), "night_scene": fact("visible", "Bridge lights visible after dusk"), "access_point": {"status": "confirmed", "description": "Viewing deck entrance confirmed", "provenance": source, "navigation_point": point}, "retrieved_at": "2026-09-01T10:00:00+09:00"}
 
+    def test_transport_leg_and_segments_are_runtime_validated(self):
+        leg = {"id": "transit-leg", "mode": "mixed", "from_place_id": "origin", "to_place_id": "destination", "departure_at": "2026-04-10T18:00:00+09:00", "arrival_at": "2026-04-10T18:45:00+09:00", "verification_status": "confirmed", "wait_seconds": 120, "transfer_count": 1, "segments": [{"mode": "walk", "departure_at": "2026-04-10T18:00:00+09:00", "arrival_at": "2026-04-10T18:05:00+09:00"}, {"mode": "train", "departure_at": "2026-04-10T18:07:00+09:00", "arrival_at": "2026-04-10T18:35:00+09:00", "line_name": "Airport Line"}]}
+        self.trip["candidate_sets"]["transport_legs"].append(leg)
+        validate_trip(self.trip)
+        invalids = [
+            {**leg, "unexpected": True},
+            {**leg, "mode": "scooter"},
+            {**leg, "wait_seconds": True},
+            {**leg, "arrival_at": "2026-04-10T17:59:00+09:00"},
+            {**leg, "segments": [{"mode": "train", "departure_at": leg["departure_at"], "arrival_at": leg["arrival_at"], "extra": 1}]},
+            {**leg, "segments": [{"mode": "airplane", "departure_at": leg["departure_at"], "arrival_at": leg["arrival_at"]}]},
+        ]
+        for invalid in invalids:
+            with self.subTest(invalid=invalid):
+                self.trip["candidate_sets"]["transport_legs"] = [invalid]
+                with self.assertRaises(TripValidationError):
+                    validate_trip(self.trip)
+
     def test_restaurant_schedule_and_alternatives_reject_unknown_fields(self):
         restaurant = self.trip["candidate_sets"]["restaurants"][0]
         restaurant["schedule"] = {"duration_minutes": 60, "parking_buffer_minutes": 5, "selection_reason": "已驗證營業時間與路線", "alternatives": [{"place_id": "backup", "meal_period": "lunch", "day": 1, "hours_verified": True, "route_verified": True}]}

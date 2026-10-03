@@ -117,6 +117,19 @@ class OpenRouteServiceProviderTests(unittest.TestCase):
         self.assertEqual(expired.status, RouteStatus.UNSUPPORTED)
         self.assertEqual(too_old.status, RouteStatus.UNSUPPORTED)
 
+    def test_google_transit_rejects_overlapping_step_times(self):
+        payload = {"routes": [{"duration": "1200s", "legs": [{
+            "startTime": "2026-04-10T09:00:00Z", "endTime": "2026-04-10T09:20:00Z", "steps": [
+                {"travelMode": "WALK", "duration": "600s"},
+                {"travelMode": "TRANSIT", "transitDetails": {"stopDetails": {
+                    "departureTime": "2026-04-10T09:06:00Z", "arrivalTime": "2026-04-10T09:15:00Z"}}},
+            ]}] }]}
+        provider = GoogleTransitProvider(api_key="test-key", opener=lambda *_args, **_kwargs: _Response(payload),
+                                         now=lambda: datetime(2026, 1, 1, tzinfo=timezone.utc))
+        route = provider.fetch_at(self.places[0], self.places[1], RouteMode.TRANSIT,
+                                  datetime(2026, 4, 10, 9, tzinfo=timezone.utc))
+        self.assertEqual(route.status, RouteStatus.ERROR)
+
     def test_route_matrix_separates_transit_cache_by_departure_time(self):
         calls = []
         provider = GoogleTransitProvider(api_key="test-key",

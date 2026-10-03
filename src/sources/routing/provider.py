@@ -301,8 +301,8 @@ def _transit_steps(data: list, started: datetime) -> tuple[tuple[RouteStep, ...]
         stops = detail.get("stopDetails") or {}
         departure = _parse_provider_time(stops["departureTime"]) if stops.get("departureTime") else cursor
         arrival = _parse_provider_time(stops["arrivalTime"]) if stops.get("arrivalTime") else None
-        if arrival is None:
-            raise ValueError("transit step omitted scheduled arrival time")
+        if arrival is None or departure < cursor or arrival < departure:
+            raise ValueError("transit step has missing or non-monotonic scheduled times")
         wait_seconds += max(0, int((departure - cursor).total_seconds()))
         transit_count += 1
         result.append(_transit_step(entry, departure, arrival))

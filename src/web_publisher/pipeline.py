@@ -149,7 +149,7 @@ def _safe_transport_legs(raw_legs: Any, places: dict[str, dict[str, Any]]) -> li
         transfer_count = leg.get("transfer_count") if isinstance(leg.get("transfer_count"), int) else None
         note_parts = [part for part in (segment_summary, f"等候約 {wait_minutes} 分鐘" if wait_minutes else None,
                                         f"轉乘 {transfer_count} 次" if transfer_count else None) if part]
-        safe = {"id": leg["id"], "mode": "transit" if leg.get("mode") in {"transit", "mixed"} else leg.get("mode"),
+        safe = {"id": leg["id"], "mode": leg.get("mode"),
                 "status": leg.get("verification_status", "unverified"),
                 "from_place": leg.get("from_place_id"), "to_place": leg.get("to_place_id"),
                 "from_label": origin.get("name") or leg.get("from_place_id"),

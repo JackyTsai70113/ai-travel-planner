@@ -32,7 +32,7 @@ class WebPublisherTests(unittest.TestCase):
 
         public_leg = next(item for item in bundle["transport_legs"] if item["id"] == leg["id"])
         self.assertEqual(public_leg["verification_status"], "estimated")
-        self.assertEqual(public_leg["mode"], "transit")
+        self.assertEqual(public_leg["mode"], "mixed")
         self.assertEqual((public_leg["from_place"], public_leg["to_place"]), ("hakata-hotel", "fuk"))
         self.assertEqual(public_leg["segments"], leg["segments"])
         self.assertIn("walk", public_leg["note"])
