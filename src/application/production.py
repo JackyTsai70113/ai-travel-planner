@@ -6,7 +6,7 @@ adapters/providers through ``dependencies`` without changing production code.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date, datetime, time, timedelta, timezone
 import os
 import re
@@ -77,6 +77,7 @@ class _ProductionResearchAdapter(SourceAdapter):
 
     def fetch(self, query: SourceQuery):
         self.failures = []
+        query = replace(query, destination=_research_destination(self.intent))
         # Evidence is deliberately not converted into an operational candidate.
         try:
             self.evidence = list(self.youtube.fetch_evidence(query))
@@ -88,22 +89,23 @@ class _ProductionResearchAdapter(SourceAdapter):
             self.evidence = []
         candidates, failures = collect_from_adapters((self.google, *self.optional_restaurants), query)
         self.failures.extend(failures)
-        origin, destination = _airport_codes(self.intent)
         start, end = _travel_dates(self.intent)
         occupancy = Occupancy(_adults(self.intent), self.intent.travelers.child_ages)
-        currency = self.intent.currency or "JPY"
-        try:
-            result = self.flight_search.search(FlightSearchQuery(
-                origin, destination, start, occupancy, return_date=end, currency=currency,
-                airport_timezones={origin: "Asia/Taipei", destination: "Asia/Tokyo"},
-            ))
-            candidates.extend(result.candidates)
-            self.failures.extend(result.failures)
-        except Exception as exc:
-            self.failures.append(AdapterFailure(self.flight_search.name, str(exc)))
+        currency = self.intent.currency or _default_currency(self.intent)
+        if "flights" in query.categories:
+            try:
+                origin, destination = _airport_codes(self.intent)
+                result = self.flight_search.search(FlightSearchQuery(
+                    origin, destination, start, occupancy, return_date=end, currency=currency,
+                    airport_timezones={code: _airport_timezone(code) for code in _SUPPORTED_AIRPORT_CODES},
+                ))
+                candidates.extend(result.candidates)
+                self.failures.extend(result.failures)
+            except Exception as exc:
+                self.failures.append(AdapterFailure(self.flight_search.name, str(exc)))
         try:
             result = self.hotel_search.search(HotelSearchQuery(
-                destination, start, end + timedelta(days=1), occupancy, currency=currency,
+                _hotel_city_code(self.intent), start, end + timedelta(days=1), occupancy, currency=currency,
             ))
             candidates.extend(result.candidates)
             self.failures.extend(result.failures)
@@ -195,6 +197,7 @@ class _IntentBoundRunner(ProductionPlanningRunner):
             optimizer=lambda candidates, context: tuple(candidates),
             output_directory=self.site_directory,
             trip_output_directory=self.trips_directory,
+            research_categories=_research_categories(intent),
         )
         orchestrator = TravelOrchestrator(config)
         if self.progress_callback:
@@ -215,8 +218,10 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
     places = [place for place in collections["places"] if place.get("kind") == "poi"]
     restaurants = collections["restaurants"]
     hotels, flights = collections["hotels"], collections["flights"]
-    if len(places) < days_count or not restaurants or not hotels or not flights:
-        raise ProductionIncompleteError("live provider results are insufficient for a complete trip (need POIs, restaurants, hotel, and flight)")
+    requires_flights = _requires_flight_search(intent)
+    if len(places) < days_count or not restaurants or not hotels or (requires_flights and not flights):
+        required = "POIs, restaurants, hotel, and flight" if requires_flights else "POIs, restaurants, and hotel"
+        raise ProductionIncompleteError(f"live provider results are insufficient for a complete trip (need {required})")
 
     all_places = [*collections["places"], *(hotel["place"] for hotel in hotels)]
     seen: set[str] = set()
@@ -230,7 +235,7 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
         # scheduler metadata contract.  New production candidates take the
         # route-aware branch below; this path remains only until those source
         # adapters publish explicit visit-duration facts.
-        tz = ZoneInfo("Asia/Tokyo")
+        tz = ZoneInfo(_local_timezone(intent))
         itinerary_days = []
         for index in range(days_count):
             current_date = start + timedelta(days=index)
@@ -248,17 +253,19 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
             ]})
         return [_legacy_trip(trip_id, intent, collections, canonical_places, start, end, hotels, flights, itinerary_days)]
 
-    currency = _budget_currency(intent, flights[0], hotels[0])
-    flight_cost = _money_amount(flights[0].get("cost"), currency)
+    currency = _budget_currency(intent, flights[0] if flights else None, hotels[0])
+    flight_cost = _money_amount(flights[0].get("cost"), currency) if flights else 0.0
     hotel_cost = _money_amount(hotels[0].get("total_cost"), currency)
-    categories = {"flights": {"amount": flight_cost, "currency": currency}, "hotel": {"amount": hotel_cost, "currency": currency}}
+    categories = {"hotel": {"amount": hotel_cost, "currency": currency}}
+    if flights:
+        categories["flights"] = {"amount": flight_cost, "currency": currency}
     shell = {
         "schema_version": "trip-v1", "id": trip_id, "title": " + ".join(intent.destinations) + " 行程",
-        "local_timezone": "Asia/Tokyo", "date_range": {"start_date": start.isoformat(), "end_date": end.isoformat()},
+        "local_timezone": _local_timezone(intent), "date_range": {"start_date": start.isoformat(), "end_date": end.isoformat()},
         "traveler_profile": {"adults": _adults(intent), "children": [{"age": age} for age in intent.travelers.child_ages]},
         "preferences": {"hard_constraints": [], "soft_preferences": []},
         "candidate_sets": {**collections, "places": canonical_places},
-        "selected": {"hotel_place_ids": [hotels[0]["place"]["id"]], "flight_ids": [flights[0]["id"]]},
+        "selected": {"hotel_place_ids": [hotels[0]["place"]["id"]], "flight_ids": [flight["id"] for flight in flights[:1]]},
         "days": [],
         "budget": {"currency": currency, "categories": categories, "total": {"amount": flight_cost + hotel_cost, "currency": currency}},
         "validation": [],
@@ -271,10 +278,13 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
 
 
 def _legacy_trip(trip_id, intent, collections, canonical_places, start, end, hotels, flights, days):
-    currency = _budget_currency(intent, flights[0], hotels[0])
-    flight_cost = _money_amount(flights[0].get("cost"), currency)
+    currency = _budget_currency(intent, flights[0] if flights else None, hotels[0])
+    flight_cost = _money_amount(flights[0].get("cost"), currency) if flights else 0.0
     hotel_cost = _money_amount(hotels[0].get("total_cost"), currency)
-    return {"schema_version": "trip-v1", "id": trip_id, "title": " + ".join(intent.destinations) + " 行程", "local_timezone": "Asia/Tokyo", "date_range": {"start_date": start.isoformat(), "end_date": end.isoformat()}, "traveler_profile": {"adults": _adults(intent), "children": [{"age": age} for age in intent.travelers.child_ages]}, "preferences": {"hard_constraints": [], "soft_preferences": []}, "candidate_sets": {**collections, "places": canonical_places}, "selected": {"hotel_place_ids": [hotels[0]["place"]["id"]], "flight_ids": [flights[0]["id"]]}, "days": days, "budget": {"currency": currency, "categories": {"flights": {"amount": flight_cost, "currency": currency}, "hotel": {"amount": hotel_cost, "currency": currency}}, "total": {"amount": flight_cost + hotel_cost, "currency": currency}}, "validation": [], "provenance": {"source_type": "derived", "provider": "production composition", "retrieved_at": datetime.now(timezone.utc).isoformat(), "status": "estimated", "note": "Built only from normalized provider candidates; availability requires provider confirmation."}}
+    categories = {"hotel": {"amount": hotel_cost, "currency": currency}}
+    if flights:
+        categories["flights"] = {"amount": flight_cost, "currency": currency}
+    return {"schema_version": "trip-v1", "id": trip_id, "title": " + ".join(intent.destinations) + " 行程", "local_timezone": _local_timezone(intent), "date_range": {"start_date": start.isoformat(), "end_date": end.isoformat()}, "traveler_profile": {"adults": _adults(intent), "children": [{"age": age} for age in intent.travelers.child_ages]}, "preferences": {"hard_constraints": [], "soft_preferences": []}, "candidate_sets": {**collections, "places": canonical_places}, "selected": {"hotel_place_ids": [hotels[0]["place"]["id"]], "flight_ids": [flight["id"] for flight in flights[:1]]}, "days": days, "budget": {"currency": currency, "categories": categories, "total": {"amount": flight_cost + hotel_cost, "currency": currency}}, "validation": [], "provenance": {"source_type": "derived", "provider": "production composition", "retrieved_at": datetime.now(timezone.utc).isoformat(), "status": "estimated", "note": "Built only from normalized provider candidates; availability requires provider confirmation."}}
 
 
 def _routing_context(records: Iterable[object], routing_provider: object, intent: TravelIntent) -> ValidationContext:
@@ -329,11 +339,104 @@ def _adults(intent: TravelIntent) -> int:
 
 
 def _airport_codes(intent: TravelIntent) -> tuple[str, str]:
-    origin = {"台北": "TPE", "桃園": "TPE", "高雄": "KHH", "香港": "HKG", "東京": "NRT", "大阪": "KIX"}.get(intent.origin or "")
-    destination = {"德島": "TKS", "神戶": "UKB", "東京": "TYO", "大阪": "OSA", "京都": "OSA", "福岡": "FUK", "札幌": "SPK", "沖繩": "OKA", "名古屋": "NGO"}.get(intent.destinations[0] if intent.destinations else "")
+    origin = {"台灣": "TPE", "臺灣": "TPE", "台北": "TPE", "臺北": "TPE", "桃園": "TPE", "高雄": "KHH", "香港": "HKG", "東京": "NRT", "大阪": "KIX"}.get(intent.origin or "")
+    destination = {"台灣": "TPE", "台北": "TPE", "臺北": "TPE", "萬華": "TPE", "西門町": "TPE", "德島": "TKS", "神戶": "UKB", "東京": "TYO", "大阪": "OSA", "京都": "OSA", "福岡": "FUK", "札幌": "SPK", "沖繩": "OKA", "名古屋": "NGO"}.get(intent.destinations[0] if intent.destinations else "")
     if not origin or not destination:
         raise ProductionIncompleteError("origin/destination lacks an explicit Amadeus airport/city-code mapping")
     return origin, destination
+
+
+_TAIWAN_DESTINATIONS = {"台灣", "台北", "臺北", "萬華", "西門町", "西門"}
+_JAPAN_DESTINATIONS = {
+    "東京", "大阪", "京都", "神戶", "德島", "福岡", "札幌", "沖繩", "名古屋", "奈良",
+    "熊本", "由布院", "北海道", "淡路島", "東京迪士尼", "環球影城",
+    "關西", "關東", "九州", "四國",
+}
+
+
+def _destination_country(intent: TravelIntent) -> str:
+    destinations = set(intent.destinations) | set(intent.regions)
+    if destinations & _TAIWAN_DESTINATIONS:
+        if destinations & _JAPAN_DESTINATIONS:
+            raise ProductionIncompleteError("a trip spanning Taiwan and Japan needs an explicit destination split")
+        return "TW"
+    if destinations & _JAPAN_DESTINATIONS:
+        return "JP"
+    raise ProductionIncompleteError("destination is outside the supported Taiwan and Japan provider coverage")
+
+
+def _origin_country(intent: TravelIntent) -> str | None:
+    origin = intent.origin
+    if origin in {"台灣", "臺灣", "台北", "臺北", "桃園", "高雄"}:
+        return "TW"
+    if origin == "香港":
+        return "HK"
+    if origin in {"東京", "大阪"}:
+        return "JP"
+    return None
+
+
+def _requires_flight_search(intent: TravelIntent) -> bool:
+    destination_country = _destination_country(intent)
+    origin_country = _origin_country(intent)
+    if origin_country is None:
+        if intent.origin is not None:
+            raise ProductionIncompleteError(f"flight search is not available for origin {intent.origin!r}")
+        return destination_country == "JP"
+    return origin_country != destination_country
+
+
+def _research_categories(intent: TravelIntent) -> tuple[str, ...]:
+    categories = ("pois", "restaurants", "hotels", "flights", "transport")
+    if _requires_flight_search(intent):
+        return categories
+    return tuple(category for category in categories if category != "flights")
+
+
+def _research_destination(intent: TravelIntent) -> str:
+    destinations = tuple(intent.destinations)
+    if _destination_country(intent) == "TW":
+        specific = tuple(place for place in destinations if place not in {"台灣"})
+        if specific:
+            return "、".join(specific)
+    return destinations[0] if destinations else (intent.regions[0] if intent.regions else "")
+
+
+def _hotel_city_code(intent: TravelIntent) -> str:
+    destination_country = _destination_country(intent)
+    if destination_country == "TW":
+        return "TPE"
+    city_codes = {
+        "德島": "TKS", "神戶": "UKB", "東京": "TYO", "大阪": "OSA", "京都": "OSA",
+        "福岡": "FUK", "札幌": "SPK", "沖繩": "OKA", "名古屋": "NGO",
+    }
+    for place in intent.destinations:
+        if place in city_codes:
+            return city_codes[place]
+    raise ProductionIncompleteError("hotel search is not available for this destination")
+
+
+def _local_timezone(intent: TravelIntent) -> str:
+    return "Asia/Taipei" if _destination_country(intent) == "TW" else "Asia/Tokyo"
+
+
+def _default_currency(intent: TravelIntent) -> str:
+    return "TWD" if _destination_country(intent) == "TW" else "JPY"
+
+
+_SUPPORTED_AIRPORT_CODES = (
+    "TPE", "KHH", "HKG", "NRT", "HND", "KIX", "ITM", "TYO", "OSA", "TKS", "UKB",
+    "FUK", "SPK", "CTS", "OKA", "NGO",
+)
+
+
+def _airport_timezone(code: str) -> str:
+    zones = {code: "Asia/Taipei" for code in ("TPE", "KHH")}
+    zones["HKG"] = "Asia/Hong_Kong"
+    zones.update({code: "Asia/Tokyo" for code in _SUPPORTED_AIRPORT_CODES if code not in zones and code != "HKG"})
+    if code not in zones:
+        raise ProductionIncompleteError(f"flight search returned an airport without a timezone mapping: {code}")
+    return zones[code]
 
 
 def _safe_trip_id(value: str) -> str:
@@ -343,11 +446,17 @@ def _safe_trip_id(value: str) -> str:
     return cleaned
 
 
-def _budget_currency(intent: TravelIntent, flight: Mapping[str, object], hotel: Mapping[str, object]) -> str:
-    currencies = [value.get("currency") for value in (flight.get("cost", {}), hotel.get("total_cost", {})) if isinstance(value, Mapping)]
-    if len(set(currencies)) != 1 or not currencies[0]:
+def _budget_currency(intent: TravelIntent, flight: Mapping[str, object] | None, hotel: Mapping[str, object]) -> str:
+    currencies = [value.get("currency") for value in (
+        flight.get("cost", {}) if flight else {}, hotel.get("total_cost", {}),
+    ) if isinstance(value, Mapping) and value.get("currency")]
+    if len(set(currencies)) > 1:
         raise ProductionIncompleteError("flight and hotel provider currencies differ; no conversion rate was invented")
-    return str(currencies[0])
+    currency = str(currencies[0]) if currencies else (intent.currency or _default_currency(intent))
+    expected = intent.currency or _default_currency(intent)
+    if currency != expected:
+        raise ProductionIncompleteError("provider currency differs from the explicitly requested or destination currency")
+    return currency
 
 
 def _money_amount(value: object, currency: str) -> float:

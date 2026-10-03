@@ -109,7 +109,14 @@ class ProductionProviderAdapterTests(unittest.TestCase):
         self.assertEqual("restaurant", restaurant["place"]["kind"])
         self.assertEqual("unknown", restaurant["wait_risk"])
         self.assertEqual("POST", client.calls[0][0])
+        self.assertEqual({"ja"}, {call[3]["languageCode"] for call in client.calls})
         self.assertNotIn("test-key", str(client.calls[0][3]))
+
+    def test_google_places_uses_traditional_chinese_for_taiwan_destinations(self):
+        client = RecordedHttpClient([self.google_recording, self.google_recording])
+        adapter = GooglePlacesAdapter("test-key", http_client=client, now=NOW)
+        list(adapter.fetch(SourceQuery(destination="台灣、萬華", categories=("pois", "restaurants"))))
+        self.assertEqual({"zh-TW"}, {call[3]["languageCode"] for call in client.calls})
 
     def test_google_restaurant_normalizes_rating_reviews_and_split_opening_hours(self):
         restaurant_recording = {

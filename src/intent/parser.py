@@ -26,6 +26,7 @@ _TAIWAN_DESTINATION_ALIASES = {
     "台北市": "台北", "臺北市": "台北", "台北": "台北", "臺北": "台北",
     "萬華": "萬華", "西門町": "西門町", "西門": "西門町",
 }
+_ORIGIN_PATTERN = r"(?:(?:從|由|出發地[：:]?)(台灣|臺灣|台北|臺北|高雄|桃園|香港|東京|大阪)(?:出發|飛|去)?|(台灣|臺灣|台北|臺北|高雄|桃園|香港|東京|大阪)出發)"
 
 
 def parse_trip_request(text: str) -> TripRequest:
@@ -46,13 +47,29 @@ def parse_trip_request(text: str) -> TripRequest:
             provenance[field].extend(FieldProvenance(match.group(0), match.start(), match.end(), field) for match in matches)
         return matches
 
-    places = tuple(place for place in _KNOWN_PLACES if (matches := list(re.finditer(re.escape(place), text))) and not _record_matches(provenance, "destinations", matches))
+    origin_matches = capture("origin", _ORIGIN_PATTERN, lambda m: m.group(1) or m.group(2))
+    origin_spans = tuple(
+        (match.start(1) if match.group(1) else match.start(2),
+         match.end(1) if match.group(1) else match.end(2))
+        for match in origin_matches
+    )
+
+    def is_origin(match: re.Match[str]) -> bool:
+        return any(match.start() < end and match.end() > start for start, end in origin_spans)
+
+    known_places: list[str] = []
+    for place in _KNOWN_PLACES:
+        matches = [match for match in re.finditer(re.escape(place), text) if not is_origin(match)]
+        if matches:
+            known_places.append(place)
+            _record_matches(provenance, "destinations", matches)
+    places = tuple(known_places)
     taiwan_pattern = re.compile("|".join(
         re.escape(alias) for alias in sorted(_TAIWAN_DESTINATION_ALIASES, key=len, reverse=True)
     ))
     normalized_taiwan_places: list[str] = []
     for match in taiwan_pattern.finditer(text):
-        if re.match(r"\s*出發", text[match.end():]):
+        if is_origin(match):
             continue
         place = _TAIWAN_DESTINATION_ALIASES[match.group(0)]
         if place not in normalized_taiwan_places:
@@ -68,7 +85,6 @@ def parse_trip_request(text: str) -> TripRequest:
         provenance["regions"].append(FieldProvenance(region, match.start(), match.end(), "regions"))
     values["destinations"], values["regions"] = places, regions
 
-    capture("origin", r"(?:(?:從|由|出發地[：:]?)(台北|高雄|桃園|香港|東京|大阪)(?:出發|飛|去)?|(台北|高雄|桃園|香港|東京|大阪)出發)", lambda m: m.group(1) or m.group(2))
     capture("duration", r"([\d一二三四五六七八九十兩]+)天([\d一二三四五六七八九十兩]+)夜", lambda m: (_number(m.group(1)), _number(m.group(2))))
     if "duration" not in values:
         capture("duration", r"([\d一二三四五六七八九十兩]+)天", lambda m: (_number(m.group(1)), None))
