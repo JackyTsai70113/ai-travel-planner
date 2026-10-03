@@ -14,6 +14,10 @@ from src.validator import OpeningInterval, Violation
 from .contracts import ScheduledTrip, ScheduleState, SchedulingInput, SchedulingOutput
 
 
+def _route_time_description(status: str) -> str:
+    return {"confirmed": "已確認", "estimated": "估計", "unverified": "未驗證"}[status]
+
+
 def schedule(request: SchedulingInput) -> SchedulingOutput:
     """Build a schedule and, when safe, try verified earlier day starts for late returns."""
     initial = _schedule_once(request)
@@ -76,7 +80,7 @@ def schedule(request: SchedulingInput) -> SchedulingOutput:
         if evidence is None:
             continue
         verification_status = evidence.source_status if evidence.source_status in {"confirmed", "estimated"} else "unverified"
-        route_description = "已確認" if verification_status == "confirmed" else "估計"
+        route_description = _route_time_description(verification_status)
         warning = Violation(
             "schedule.daily_start_adjustment", "warning",
             f"原每日開始時刻無可查證的末班回程；已將行程開始調整至 {adjusted_start}，新排程的回住宿路線為{route_description}時刻。",

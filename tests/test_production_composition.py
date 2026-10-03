@@ -16,6 +16,7 @@ from src.sources import AmadeusClient, SourceAdapter
 from src.sources.routing import FixtureRoutingProvider, Route, RouteMode, RouteProvenance, RouteStatus, RouteStep
 from src.schemas import validate_trip
 from src.planner import SchedulingInput, ScheduleState, schedule
+from src.planner.scheduler import _route_time_description
 from src.validator import OpeningInterval, RouteConstraint, ValidationContext
 
 
@@ -26,6 +27,12 @@ ENVIRONMENT = {
     "AMADEUS_CLIENT_SECRET": "amadeus-secret",
     "OPENROUTESERVICE_API_KEY": "ors-secret",
 }
+
+
+def test_transit_route_time_language_distinguishes_source_verification_status():
+    assert _route_time_description("confirmed") == "已確認"
+    assert _route_time_description("estimated") == "估計"
+    assert _route_time_description("unverified") == "未驗證"
 
 
 class RecordedGoogle(SourceAdapter):
@@ -233,6 +240,7 @@ def test_transit_scheduler_adjusts_day_start_after_last_service_and_verifies_ret
     assert adjustment.context["return_arrival_at"] == "2026-04-10T19:50:00+09:00"
     assert adjustment.context["mode"] == "transit"
     assert adjustment.context["verification_status"] == "estimated"
+    assert "路線為估計時刻" in adjustment.message
     assert any(item["code"] == "schedule.daily_start_adjustment"
                for item in result.best_trip.trip["validation"])
     validate_trip(result.best_trip.trip)
