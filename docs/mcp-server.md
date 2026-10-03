@@ -24,9 +24,10 @@ verify that `get_trip` still returns that trip.
 `Dockerfile`, so this service does not need `RAILWAY_DOCKERFILE_PATH`. If the
 Dockerfile is moved, update `railway.json`; the variable is an alternative way
 to configure a non-default path.
-The Railway `PUBLIC_URL` variable is the ChatGPT Site origin; form the public MCP
-address as `${PUBLIC_URL%/}/mcp` when needed. Do not use the Site URL as the
-Worker's backend address.
+`PUBLIC_URL` is a custom Railway service variable, not a Railway-provided
+variable. Set it to the published ChatGPT Site origin (or use the live URL
+returned by Sites), then form the public MCP address as `${PUBLIC_URL%/}/mcp`
+when needed. Do not use the Site URL as the Worker's backend address.
 
 The Streamable HTTP transport keeps DNS-rebinding protection enabled. It
 automatically allows Railway's injected `RAILWAY_PUBLIC_DOMAIN`, plus local
