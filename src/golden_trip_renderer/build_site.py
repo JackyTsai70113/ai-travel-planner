@@ -239,7 +239,7 @@ def _render_route_link(leg: dict[str, Any], places: dict[str, dict[str, Any]]) -
 
 
 def _render_flight_search(url: Any, summary: Any = None) -> str:
-    if not isinstance(url, str) or not url.startswith("https://www.google.com/travel/flights?"):
+    if url != "https://www.google.com/travel/flights?hl=zh-TW":
         return "<p class='quiet'>請在 Google Flights 搜尋航班與票價。</p>"
     details = f'：{escape(summary)}' if isinstance(summary, str) and summary else ''
     return f'<p>{details}　<a href="{escape(url, quote=True)}" target="_blank" rel="noopener">開啟 Google Flights 搜尋航班</a>（請在 Google Flights 查看當下票價）</p>'

@@ -34,7 +34,7 @@ def build_site(trip: dict[str, Any], derived: dict[str, Any] | None = None) -> s
     flight_summary = trip.get("flight_search_summary")
     flight_search = (
         f'<p>{escape(str(flight_summary)) if flight_summary else ""}　<a href="{escape(flight_search_url, quote=True)}" target="_blank" rel="noopener">開啟 Google Flights 搜尋航班</a>（請在 Google Flights 查看當下票價）</p>'
-        if isinstance(flight_search_url, str) and _safe_web_url(flight_search_url)
+        if flight_search_url == "https://www.google.com/travel/flights?hl=zh-TW"
         else ""
     )
     if budget_data.get("total_status") == "incomplete":

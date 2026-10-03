@@ -300,7 +300,7 @@ function show(tab){let t=window.trip;if(!t)return;
 if(tab==='Flights'){
   r.replaceChildren();
   if(t.flight_search_summary){const summary=document.createElement('p');summary.textContent=t.flight_search_summary;r.append(summary)}
-  if(typeof t.flight_search_url==='string'&&t.flight_search_url.startsWith('https://www.google.com/travel/flights?')){const link=document.createElement('a');link.href=t.flight_search_url;link.target='_blank';link.rel='noopener';link.textContent='開啟 Google Flights 搜尋航班';r.append(link);const note=document.createElement('p');note.textContent='請在 Google Flights 查看當下航班與票價。此行程未擷取或驗證即時報價。';r.append(note)}
+  if(t.flight_search_url==='https://www.google.com/travel/flights?hl=zh-TW'){const link=document.createElement('a');link.href=t.flight_search_url;link.target='_blank';link.rel='noopener';link.textContent='開啟 Google Flights 搜尋航班';r.append(link);const note=document.createElement('p');note.textContent='請在 Google Flights 查看當下航班與票價。此行程未擷取或驗證即時報價。';r.append(note)}
   const options=document.createElement('pre');options.textContent=JSON.stringify(t.flights,null,2);r.append(options);return;
 }
 let maps={'Overview':t.overview,'Itinerary':t.days,'Map / Routing':t.routes,'Restaurants':t.restaurants,'Hotels':t.hotels,'Budget':t.budget,'Contingencies':t.contingencies,'Research / Sources':t.sources,'Validation':t.validation,'Final Website':{website:t.website_url,trip_json:t.trip_json_url}};

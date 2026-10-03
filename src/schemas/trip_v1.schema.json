@@ -30,8 +30,7 @@
       "minLength": 1
     },
     "flight_search_url": {
-      "type": "string",
-      "format": "uri"
+      "const": "https://www.google.com/travel/flights?hl=zh-TW"
     },
     "local_timezone": {
       "type": "string",
