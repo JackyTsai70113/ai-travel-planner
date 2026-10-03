@@ -397,3 +397,6 @@ def test_restaurant_selection_keeps_open_route_verified_candidate_when_first_is_
     assert lunch["place"]["id"] != "restaurant-0"
     assert lunch["schedule"]["alternatives"]
     assert all(item["hours_verified"] and item["route_verified"] for item in lunch["schedule"]["alternatives"])
+    planned = [candidate for candidate in selected if candidate.get("schedule", {}).get("selected") is True]
+    assert all(candidate["schedule"].get("day") == 1 for candidate in planned)
+    assert len({candidate["schedule"].get("meal_period") for candidate in planned}) == len(planned)

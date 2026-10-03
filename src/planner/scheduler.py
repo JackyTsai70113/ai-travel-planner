@@ -79,11 +79,17 @@ def _hotel_id(trip: dict, violations: list[Violation]) -> str | None:
 
 def _activities(trip: dict, violations: list[Violation]) -> list[dict]:
     records: list[dict] = []
+    pending_alternatives: dict[str, list[dict]] = {}
     for collection in ("places", "restaurants"):
         for index, candidate in enumerate(trip.get("candidate_sets", {}).get(collection, [])):
             place = candidate.get("place", candidate) if collection == "restaurants" else candidate
             details = candidate.get("schedule")
-            if not details or not details.get("selected", True):
+            is_alternative = any(isinstance(primary.get("schedule"), dict)
+                                 and primary["schedule"].get("selected", True)
+                                 and any(isinstance(link, dict) and link.get("place_id") == place.get("id")
+                                         for link in primary["schedule"].get("alternatives", ()))
+                                 for primary in trip.get("candidate_sets", {}).get("restaurants", [])) if collection == "restaurants" else False
+            if not details or (details.get("selected") is False and not is_alternative):
                 continue
             if not isinstance(details.get("duration_minutes"), int) or details["duration_minutes"] <= 0:
                 violations.append(_failure("schedule.duration_missing", "selected activity requires an explicit positive duration", f"/candidate_sets/{collection}/{index}/schedule/duration_minutes"))
@@ -102,6 +108,17 @@ def _activities(trip: dict, violations: list[Violation]) -> list[dict]:
                 violations.append(_failure("schedule.fatigue_invalid", "fatigue must be a non-negative number", f"/candidate_sets/{collection}/{index}/schedule/fatigue"))
                 continue
             records.append({"id": place["id"], "kind": "meal" if collection == "restaurants" else "visit", "schedule": details, "path": f"/candidate_sets/{collection}/{index}"})
+            if collection == "restaurants" and details.get("selected", True):
+              for alternative in details.get("alternatives", ()):
+                if not isinstance(alternative, dict) or not isinstance(alternative.get("place_id"), str):
+                    continue
+                pending_alternatives.setdefault(alternative["place_id"], []).append({"primary_id": place["id"], "schedule": details})
+    for record in records:
+        if record["kind"] != "meal" or record["schedule"].get("selected", True):
+            continue
+        for link in pending_alternatives.get(record["id"], ()):
+            record["schedule"] = {key: value for key, value in link["schedule"].items() if key != "alternatives"}
+            record["schedule"].update({"selected": False, "alternative_for": link["primary_id"]})
     return records
 
 
@@ -132,7 +149,14 @@ def _anchors(trip: dict, violations: list[Violation]) -> dict[str, tuple[dict, .
 
 def _schedule_day(current: date, day_number: int, hotel_id: str | None, activities: Iterable[dict], anchors: Iterable[dict], unscheduled: set[str], request: SchedulingInput) -> tuple[list[dict], list[Violation], set[str]]:
     violations: list[Violation] = []
-    selected = [activity for activity in activities if activity["schedule"].get("day") == day_number]
+    selected = [activity for activity in activities if activity["schedule"].get("day") == day_number
+                and activity["schedule"].get("selected", True)]
+    alternatives_by_primary = {
+        activity["id"]: [candidate for candidate in activities
+                         if candidate["schedule"].get("selected") is False
+                         and candidate["schedule"].get("alternative_for") == activity["id"]]
+        for activity in activities if activity["kind"] == "meal"
+    }
     # An unassigned required activity is tried once, then removed only after it
     # was actually placed.  It is never duplicated across five daily plans.
     selected.extend(activity for activity in activities if activity["id"] in unscheduled and activity["schedule"].get("required", False))
@@ -156,75 +180,87 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
     placed_activity = False
     low_fatigue = any(preference.get("kind") in {"low_fatigue", "pace"} and preference.get("value") in {True, "low"}
                       for preference in request.trip.get("preferences", {}).get("soft_preferences", []))
-    for activity in sorted(selected, key=lambda value: (
+    ordered = sorted(selected, key=lambda value: (
         0 if value["schedule"].get("meal_period") == "breakfast" else 2 if value["schedule"].get("meal_period") in {"lunch", "dinner"} else 1,
         not value["schedule"].get("required", False),
         _meal_period_order(value["schedule"].get("meal_period")),
         value["schedule"].get("fatigue", 0) if low_fatigue else 0,
         value["id"],
-    )):
-        details = activity["schedule"]
-        optional_meal = activity["kind"] == "meal" and not details.get("required", False)
-        cursor_before, previous_before = cursor, previous
-        travel = request.validation_context.travel_minutes.get((previous, activity["id"])) if previous is not None else 0
-        if travel is None:
-            violations.append(_optional_meal_warning(activity, "schedule.route_unknown", f"route from {previous} to {activity['id']} is not verified") if optional_meal else _failure("schedule.route_unknown", f"route from {previous} to {activity['id']} is required", activity["path"]))
-            continue
-        if travel < 0:
-            violations.append(_failure("schedule.route_invalid", "route duration cannot be negative", activity["path"]))
-            continue
-        buffers = details.get("parking_buffer_minutes", 0) + details.get("walking_buffer_minutes", 0)
-        if not isinstance(buffers, int) or buffers < 0:
-            violations.append(_failure("schedule.buffer_invalid", "parking/walking buffers must be non-negative integers", activity["path"]))
-            continue
-        cursor += timedelta(minutes=travel + buffers)
-        if previous is None:
-            violations.append(Violation("schedule.origin_unknown", "warning", "每日首個活動的住宿至目的地路線尚未驗證。", activity["path"]))
-        meal_period = details.get("meal_period")
-        if meal_period in {"breakfast", "lunch", "dinner"}:
-            target_time = {"breakfast": time(8, 0), "lunch": time(12, 30), "dinner": time(18, 30)}[meal_period]
-            cursor = max(cursor, datetime.combine(current, target_time, zone))
-        fixed = details.get("fixed_start_at")
-        if fixed:
-            try:
-                fixed_start = datetime.fromisoformat(fixed)
-            except ValueError:
-                violations.append(_failure("schedule.fixed_time_invalid", "fixed_start_at must be ISO-8601", activity["path"]))
+    ))
+    for primary in ordered:
+        attempts = [primary, *alternatives_by_primary.get(primary["id"], [])]
+        for attempt_index, activity in enumerate(attempts):
+            details = activity["schedule"]
+            optional_meal = activity["kind"] == "meal" and not details.get("required", False)
+            cursor_before, previous_before = cursor, previous
+            travel = request.validation_context.travel_minutes.get((previous, activity["id"])) if previous is not None else 0
+            if travel is None:
+                violations.append(_optional_meal_warning(activity, "schedule.route_unknown", f"route from {previous} to {activity['id']} is not verified") if optional_meal else _failure("schedule.route_unknown", f"route from {previous} to {activity['id']} is required", activity["path"]))
+                if optional_meal and attempt_index < len(attempts) - 1:
+                    continue
                 continue
-            if fixed_start.date() != current or fixed_start < cursor:
-                violations.append(_optional_meal_warning(activity, "schedule.fixed_anchor_infeasible", "restaurant cannot be reached by its meal period") if optional_meal else _failure("schedule.fixed_anchor_infeasible", "confirmed anchor cannot be reached without moving it", activity["path"]))
+            if travel < 0:
+                violations.append(_failure("schedule.route_invalid", "route duration cannot be negative", activity["path"]))
+                continue
+            buffers = details.get("parking_buffer_minutes", 0) + details.get("walking_buffer_minutes", 0)
+            if not isinstance(buffers, int) or buffers < 0:
+                violations.append(_failure("schedule.buffer_invalid", "parking/walking buffers must be non-negative integers", activity["path"]))
+                continue
+            cursor += timedelta(minutes=travel + buffers)
+            if previous is None:
+                violations.append(Violation("schedule.origin_unknown", "warning", "每日首個活動的住宿至目的地路線尚未驗證。", activity["path"]))
+            meal_period = details.get("meal_period")
+            if meal_period in {"breakfast", "lunch", "dinner"}:
+                target_time = {"breakfast": time(8, 0), "lunch": time(12, 30), "dinner": time(18, 30)}[meal_period]
+                cursor = max(cursor, datetime.combine(current, target_time, zone))
+            fixed = details.get("fixed_start_at")
+            if fixed:
+                try:
+                    fixed_start = datetime.fromisoformat(fixed)
+                except ValueError:
+                    violations.append(_failure("schedule.fixed_time_invalid", "fixed_start_at must be ISO-8601", activity["path"]))
+                    continue
+                if fixed_start.date() != current or fixed_start < cursor:
+                    violations.append(_optional_meal_warning(activity, "schedule.fixed_anchor_infeasible", "restaurant cannot be reached by its meal period") if optional_meal else _failure("schedule.fixed_anchor_infeasible", "confirmed anchor cannot be reached without moving it", activity["path"]))
+                    if optional_meal:
+                        cursor, previous = cursor_before, previous_before
+                        if attempt_index < len(attempts) - 1:
+                            continue
+                    continue
+                cursor = fixed_start
+            end_at = cursor + timedelta(minutes=details["duration_minutes"])
+            fixed_end = details.get("fixed_end_at")
+            if fixed_end:
+                try:
+                    confirmed_end = datetime.fromisoformat(fixed_end)
+                except ValueError:
+                    violations.append(_failure("schedule.fixed_time_invalid", "fixed_end_at must be ISO-8601", activity["path"]))
+                    continue
+                if confirmed_end != end_at:
+                    violations.append(_failure("schedule.fixed_anchor_infeasible", "confirmed anchor end cannot be moved or re-durationed", activity["path"]))
+                    continue
+            if end_at > closes or not _is_open(activity["id"], cursor, end_at, request):
+                violations.append(_optional_meal_warning(activity, "schedule.closed_or_unverified", "restaurant is not confirmed open for the scheduled meal interval") if optional_meal else _failure("schedule.closed_or_unverified", "activity lacks a verified open interval for its scheduled time", activity["path"]))
                 if optional_meal:
                     cursor, previous = cursor_before, previous_before
+                    if attempt_index < len(attempts) - 1:
+                        continue
                 continue
-            cursor = fixed_start
-        end_at = cursor + timedelta(minutes=details["duration_minutes"])
-        fixed_end = details.get("fixed_end_at")
-        if fixed_end:
-            try:
-                confirmed_end = datetime.fromisoformat(fixed_end)
-            except ValueError:
-                violations.append(_failure("schedule.fixed_time_invalid", "fixed_end_at must be ISO-8601", activity["path"]))
+            condition_findings = _condition_findings(activity["id"], cursor, end_at, request, activity["path"])
+            violations.extend(condition_findings)
+            if _has_errors(condition_findings):
+                if optional_meal:
+                    violations[-len(condition_findings):] = [_optional_meal_warning(activity, item.code, item.message) for item in condition_findings]
+                    cursor, previous = cursor_before, previous_before
+                    if attempt_index < len(attempts) - 1:
+                        continue
                 continue
-            if confirmed_end != end_at:
-                violations.append(_failure("schedule.fixed_anchor_infeasible", "confirmed anchor end cannot be moved or re-durationed", activity["path"]))
-                continue
-        if end_at > closes or not _is_open(activity["id"], cursor, end_at, request):
-            violations.append(_optional_meal_warning(activity, "schedule.closed_or_unverified", "restaurant is not confirmed open for the scheduled meal interval") if optional_meal else _failure("schedule.closed_or_unverified", "activity lacks a verified open interval for its scheduled time", activity["path"]))
-            if optional_meal:
-                cursor, previous = cursor_before, previous_before
-            continue
-        condition_findings = _condition_findings(activity["id"], cursor, end_at, request, activity["path"])
-        violations.extend(condition_findings)
-        if _has_errors(condition_findings):
-            if optional_meal:
-                violations[-len(condition_findings):] = [_optional_meal_warning(activity, item.code, item.message) for item in condition_findings]
-                cursor, previous = cursor_before, previous_before
-            continue
-        items.append({"id": f"day{day_number}-{activity['id']}", "kind": activity["kind"], "place_id": activity["id"], "start_at": cursor.isoformat(), "end_at": end_at.isoformat(), "selection_status": "selected"})
-        placed_activity = True
-        previous, cursor = activity["id"], end_at
-        if activity["schedule"].get("day") is None or not activity["schedule"].get("required", False):
-            placed.add(activity["id"])
+            items.append({"id": f"day{day_number}-{activity['id']}", "kind": activity["kind"], "place_id": activity["id"], "start_at": cursor.isoformat(), "end_at": end_at.isoformat(), "selection_status": "selected"})
+            placed_activity = True
+            previous, cursor = activity["id"], end_at
+            if activity["schedule"].get("day") is None or not activity["schedule"].get("required", False):
+                placed.add(activity["id"])
+            break
     if placed_activity and hotel_id is not None:
         back = request.validation_context.travel_minutes.get((previous, hotel_id))
         while back is None or cursor + timedelta(minutes=back) > closes:

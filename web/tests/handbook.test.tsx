@@ -251,7 +251,7 @@ describe('淡路島只讀旅遊助手', () => {
     render(<FoodPage bundle={mealBundle} />)
     expect(screen.getByText('同餐段候補')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '候補食堂' })).toHaveAttribute('href', expect.stringContaining(encodeURIComponent('候補食堂')))
-    expect(screen.getByText(/營業時間與行程路線已查核/)).toBeInTheDocument()
+    expect(screen.getByText(/營業時間已查核，行程會再依當日實際順序確認可達性/)).toBeInTheDocument()
   })
 
   it('行程結束後不把下一站跳回早餐', () => {

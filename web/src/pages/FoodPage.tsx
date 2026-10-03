@@ -52,7 +52,7 @@ export function FoodPage({ bundle }: FoodPageProps) {
             return <li key={`${alternative.day}-${alternative.meal_period}-${alternative.place_id}`}>
               <a href={googleMapsHrefForPlace(alternate, alternateName)} target="_blank" rel="noreferrer">{alternateName}</a>
               {alternateFacts?.price_range ? <span>；{alternateFacts.price_range}</span> : null}
-              <span>；營業時間與行程路線已查核</span>
+              <span>；營業時間已查核，行程會再依當日實際順序確認可達性</span>
             </li>
           })}</ul></div> : null}
           {provenance ? <p className="food-source">資料來源：{provenance.provider || '餐廳資料來源'}{provenance.retrieved_at ? `；查核時間 ${provenance.retrieved_at}` : ''}{provenance.source_url ? <>；<a href={provenance.source_url} target="_blank" rel="noreferrer">查看來源</a></> : ''}</p> : null}

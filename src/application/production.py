@@ -10,6 +10,7 @@ from dataclasses import dataclass, replace
 from datetime import date, datetime, time, timedelta, timezone
 import os
 import re
+import copy
 from pathlib import Path
 from typing import Callable, Iterable, Mapping, Sequence
 from zoneinfo import ZoneInfo
@@ -320,11 +321,29 @@ def _restaurant_candidates(candidates: Sequence[dict], intent: TravelIntent, sta
             selected[place_id] = candidate
             used.add(place_id)
     result = []
+    pending_backup_schedules: dict[str, dict] = {}
+    candidate_by_id = {item.get("place", {}).get("id"): item for item in candidates}
     for candidate in candidates:
         place_id = candidate.get("place", {}).get("id")
         copied = dict(candidate)
         if place_id in selected:
             copied["schedule"] = selected[place_id]["schedule"]
+            for alternative in copied["schedule"]["alternatives"]:
+                backup = candidate_by_id.get(alternative["place_id"])
+                if backup is not None:
+                    backup_id = backup["place"]["id"]
+                    selected_schedule = copied["schedule"]
+                    backup_schedule = {key: value for key, value in selected_schedule.items() if key != "alternatives"}
+                    backup_schedule.update({"selected": False, "alternative_for": place_id})
+                    pending_backup_schedules.setdefault(backup_id, (backup_schedule, copy.deepcopy(backup)))
+        elif copied.get("schedule"):
+            copied["schedule"] = {**copied["schedule"], "selected": False}
+        if place_id in pending_backup_schedules:
+            schedule_details, source_backup = pending_backup_schedules[place_id]
+            copied["schedule"] = schedule_details
+            for key in ("opening_hours", "provenance"):
+                if key in source_backup:
+                    copied[key] = source_backup[key]
         result.append(copied)
     return result
 

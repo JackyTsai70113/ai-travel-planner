@@ -208,6 +208,7 @@ class PlannerTests(unittest.TestCase):
     def test_scheduler_builds_five_day_route_aware_plan_and_preserves_day_assignments(self):
         trip = copy.deepcopy(self.trip)
         trip["days"] = []
+        trip["date_range"] = {"start_date": "2026-04-10", "end_date": "2026-04-14"}
         for index, place in enumerate(trip["candidate_sets"]["places"]):
             if place["id"] in {"tpe", "fuk", "hakata-hotel", "ramen-shop"}:
                 continue
@@ -241,7 +242,6 @@ class PlannerTests(unittest.TestCase):
 
     def test_unroutable_optional_meal_is_skipped_without_failing_required_schedule(self):
         trip = copy.deepcopy(self.trip)
-        trip["days"] = []
         poi = next(place for place in trip["candidate_sets"]["places"] if place["id"] == "ohori-park")
         poi["schedule"] = {"duration_minutes": 90, "day": 1, "required": True}
         restaurant = trip["candidate_sets"]["restaurants"][0]
@@ -255,7 +255,6 @@ class PlannerTests(unittest.TestCase):
 
     def test_optional_meal_without_hotel_return_route_does_not_fail_day(self):
         trip = copy.deepcopy(self.trip)
-        trip["days"] = []
         poi = next(place for place in trip["candidate_sets"]["places"] if place["id"] == "ohori-park")
         poi["schedule"] = {"duration_minutes": 90, "day": 1, "required": True}
         restaurant = trip["candidate_sets"]["restaurants"][0]
@@ -266,6 +265,34 @@ class PlannerTests(unittest.TestCase):
         self.assertIsNotNone(result.best_trip)
         self.assertNotIn("meal", {item["kind"] for item in result.best_trip.trip["days"][0]["items"]})
         self.assertIn("meal.hotel_return_unverified", {item.code for item in result.best_trip.violations})
+
+    def test_optional_meal_uses_verified_alternative_when_primary_is_closed(self):
+        trip = copy.deepcopy(self.trip)
+        trip["days"] = []
+        trip["date_range"] = {"start_date": "2026-04-10", "end_date": "2026-04-10"}
+        trip["selected"]["hotel_place_ids"] = ["hakata-hotel"]
+        poi = next(place for place in trip["candidate_sets"]["places"] if place["id"] == "ohori-park")
+        poi["schedule"] = {"duration_minutes": 60, "day": 1, "required": True}
+        trip["candidate_sets"]["places"] = [poi]
+        primary = copy.deepcopy(trip["candidate_sets"]["restaurants"][0])
+        primary["place"]["id"] = "primary-meal"
+        primary["schedule"] = {"duration_minutes": 60, "day": 1, "meal_period": "lunch", "required": False,
+                               "fixed_start_at": "2026-04-10T12:30:00+09:00", "fixed_end_at": "2026-04-10T13:30:00+09:00",
+                               "selected": True, "alternatives": [{"place_id": "backup-meal"}]}
+        backup = copy.deepcopy(primary)
+        backup["place"]["id"] = "backup-meal"
+        backup["schedule"] = {**primary["schedule"], "selected": False}
+        trip["candidate_sets"]["restaurants"] = [primary, backup]
+        hotel = "hakata-hotel"
+        routes = {(hotel, poi["id"]): 10, (poi["id"], "primary-meal"): 10, (poi["id"], "backup-meal"): 10,
+                  ("backup-meal", hotel): 10, (poi["id"], hotel): 10}
+        hours = {poi["id"]: tuple(OpeningInterval(day, time(0), time(23, 59)) for day in range(7)),
+                 "primary-meal": tuple(OpeningInterval(day, time(0), time(0)) for day in range(7)),
+                 "backup-meal": tuple(OpeningInterval(day, time(0), time(23, 59)) for day in range(7))}
+        result = schedule(SchedulingInput(trip, ValidationContext(routes, hours)))
+        assert result.best_trip is not None
+        meals = [item["place_id"] for item in result.best_trip.trip["days"][0]["items"] if item["kind"] == "meal"]
+        self.assertEqual(["backup-meal"], meals)
 
     def test_return_fallback_removes_each_trailing_meal_until_last_route_is_verified(self):
         trip = copy.deepcopy(self.trip)
