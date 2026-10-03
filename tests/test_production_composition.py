@@ -232,8 +232,19 @@ def test_transit_scheduler_adjusts_day_start_after_last_service_and_verifies_ret
     assert adjustment.context["return_departure_at"] == "2026-04-10T19:45:00+09:00"
     assert adjustment.context["return_arrival_at"] == "2026-04-10T19:50:00+09:00"
     assert adjustment.context["mode"] == "transit"
+    assert any(item["code"] == "schedule.daily_start_adjustment"
+               for item in result.best_trip.trip["validation"])
+    validate_trip(result.best_trip.trip)
     assert any(origin == poi["id"] and destination == hotel_id and departure.hour == 20
                for origin, destination, departure in provider.departures)
+    projected = json.loads(json.dumps(result.best_trip.trip))
+    _attach_timed_transport_legs(projected, context, intent,
+                                 daily_start=adjustment.context["adjusted_daily_start"])
+    projected_legs = [leg for leg in projected["candidate_sets"]["transport_legs"]
+                      if leg["id"].startswith("transit-day1-")]
+    assert len(projected_legs) == 2
+    assert projected_legs[0]["departure_at"] == "2026-04-10T11:45:00+09:00"
+    assert projected_legs[-1]["arrival_at"] == adjustment.context["return_arrival_at"]
 
 
 def test_transit_scheduler_rejects_later_actual_service_arriving_after_daily_end():

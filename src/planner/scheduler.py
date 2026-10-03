@@ -17,16 +17,24 @@ from .contracts import ScheduledTrip, ScheduleState, SchedulingInput, Scheduling
 def schedule(request: SchedulingInput) -> SchedulingOutput:
     """Build a schedule and, when safe, try verified earlier day starts for late returns."""
     initial = _schedule_once(request)
-    if initial.best_trip is not None or not any(item.code == "schedule.hotel_return_unverified"
+    retryable_return_codes = {"schedule.hotel_return_unverified", "schedule.hotel_return_infeasible"}
+    if initial.best_trip is not None or not any(item.code in retryable_return_codes
                                                 for candidate in initial.candidates for item in candidate.violations):
         return initial
     hotel_id = request.trip.get("selected", {}).get("hotel_place_ids", [None])[0]
-    failed_return_days = {
-        departure[:10]
-        for (_, destination, departure), fact in request.validation_context.timed_route_facts.items()
-        if destination == hotel_id and fact.mode in {"transit", "mixed"}
-        and fact.status not in {"verified", "available"}
-    }
+    failed_return_days = set()
+    for (_, destination, departure), fact in request.validation_context.timed_route_facts.items():
+        if destination != hotel_id or fact.mode not in {"transit", "mixed"}:
+            continue
+        if fact.status not in {"verified", "available"}:
+            failed_return_days.add(departure[:10])
+            continue
+        if fact.arrival_at is not None:
+            query_time = datetime.fromisoformat(departure)
+            daily_close = datetime.combine(date.fromisoformat(departure[:10]),
+                                           time.fromisoformat(request.daily_end), query_time.tzinfo)
+            if fact.arrival_at > daily_close:
+                failed_return_days.add(departure[:10])
     if not failed_return_days:
         return initial
     if any(details.get("fixed_start_at") or details.get("fixed_end_at")
@@ -75,6 +83,10 @@ def schedule(request: SchedulingInput) -> SchedulingOutput:
                       "return_arrival_at": evidence.arrival_at.isoformat() if evidence else None,
                       "mode": evidence.mode if evidence else None, "provider": evidence.provider if evidence else None,
                       "source_url": evidence.source_url if evidence else None}, repairable=True)
+        candidate.trip.setdefault("validation", []).append({
+            "code": warning.code, "severity": warning.severity,
+            "message": warning.message, "path": warning.path,
+        })
         candidate = replace(candidate, violations=(*candidate.violations, warning))
         return SchedulingOutput((candidate, *initial.candidates))
     return initial

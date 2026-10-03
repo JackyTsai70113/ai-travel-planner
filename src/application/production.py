@@ -316,7 +316,9 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
             detail = ", ".join(statuses) if statuses else "no departure-time route evidence"
             raise ProductionIncompleteError(f"transit schedule is unverified ({detail}); no walking fallback was used")
         raise ProductionIncompleteError("no feasible route-aware schedule from normalized candidates")
-    _attach_timed_transport_legs(scheduled.trip, routing, intent)
+    adjusted_start = next((item.context.get("adjusted_daily_start") for item in scheduled.violations
+                           if item.code == "schedule.daily_start_adjustment"), "07:00")
+    _attach_timed_transport_legs(scheduled.trip, routing, intent, daily_start=str(adjusted_start))
     _add_unfilled_meal_warnings(scheduled.trip)
     return [scheduled.trip]
 
@@ -404,7 +406,7 @@ def _add_unfilled_meal_warnings(trip: dict) -> None:
 
 
 def _attach_timed_transport_legs(trip: dict, routing: ValidationContext, intent: TravelIntent,
-                                 daily_end: str = "20:00") -> None:
+                                 daily_end: str = "20:00", daily_start: str = "07:00") -> None:
     """Project the exact transit evidence used by scheduling into canonical legs and timeline items."""
     if routing.route_lookup is None or not routing.timed_route_facts:
         return
@@ -420,7 +422,7 @@ def _attach_timed_transport_legs(trip: dict, routing: ValidationContext, intent:
         day_end = datetime.combine(current_date, time.fromisoformat(daily_end), zone)
         route_pairs: list[tuple[str, str, datetime, dict | None]] = []
         if hotel_id:
-            departure = datetime.combine(current_date, time(7), zone)
+            departure = datetime.combine(current_date, time.fromisoformat(daily_start), zone)
             route_pairs.append((hotel_id, activities[0]["place_id"], departure, activities[0]))
         for previous, destination in zip(activities, activities[1:]):
             route_pairs.append((previous["place_id"], destination["place_id"], datetime.fromisoformat(previous["end_at"]), destination))
