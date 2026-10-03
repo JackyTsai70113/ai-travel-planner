@@ -3,6 +3,25 @@ const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(b
   headers: { "content-type": "application/json; charset=utf-8", ...headers },
 });
 const MAX_BODY_BYTES = 4 * 1024 * 1024;
+const FETCH_ERROR_CODES = new Set([
+  "ECONNRESET",
+  "ECONNREFUSED",
+  "ENOTFOUND",
+  "EAI_AGAIN",
+  "ETIMEDOUT",
+  "EHOSTUNREACH",
+  "ENETUNREACH",
+  "EPIPE",
+  "UND_ERR_CONNECT_TIMEOUT",
+  "UND_ERR_SOCKET",
+  "ERR_CONNECTION_REFUSED",
+  "ERR_CONNECTION_RESET",
+  "ERR_NAME_NOT_RESOLVED",
+  "ERR_SSL",
+  "ERR_TLS_CERT_ALTNAME_INVALID",
+  "CERT_HAS_EXPIRED",
+  "CERT_NOT_YET_VALID",
+]);
 
 async function readBoundedBody(request) {
   const reader = request.body?.getReader();
@@ -70,18 +89,25 @@ export default {
     if (sessionId) headers.set("mcp-session-id", sessionId);
 
     try {
-      return await fetch(backend, { method: "POST", headers, body, redirect: "error" });
+      const response = await fetch(backend, { method: "POST", headers, body, redirect: "error" });
+      if (!response.ok) {
+        console.error("MCP backend returned HTTP error", {
+          backendHost: backend.hostname,
+          upstreamStatus: response.status,
+        });
+      }
+      return response;
     } catch (error) {
-      const errorName = error instanceof Error ? error.name : "UnknownError";
+      const rawName = error instanceof Error ? error.name : "";
+      const errorType = rawName === "TypeError" || rawName === "AbortError" ? rawName : "FetchError";
       const cause = error && typeof error === "object" ? error.cause : null;
       const rawCode = cause && typeof cause === "object" ? cause.code : null;
-      const errorCode =
-        typeof rawCode === "string" && /^[A-Z0-9_]{1,80}$/.test(rawCode)
-          ? rawCode
-          : null;
+      const errorCode = typeof rawCode === "string" && FETCH_ERROR_CODES.has(rawCode)
+        ? rawCode
+        : null;
       console.error("MCP backend fetch failed", {
         backendHost: backend.hostname,
-        errorName,
+        errorType,
         errorCode,
       });
       return json({ error: "backend_unavailable" }, 502);
