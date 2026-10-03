@@ -1,7 +1,7 @@
 FROM python:3.13-slim
 
 WORKDIR /app
-COPY requirements-mcp-server.txt ./
+COPY requirements-mcp.txt requirements-mcp-server.txt ./
 RUN pip install --no-cache-dir -r requirements-mcp-server.txt
 COPY src ./src
 COPY trips ./trips
