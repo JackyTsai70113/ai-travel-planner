@@ -3,6 +3,21 @@ name: Deploy trip site to GitHub Pages
 on:
   push:
     branches: [main]
+    paths:
+      - '.github/workflows/deploy-pages.yml'
+      - 'web/**'
+      - 'trips/**'
+      - 'site-configs/**'
+      - 'media/**'
+      - 'fixtures/trips/**'
+      - 'src/renderer/**'
+      - 'src/golden_trip_renderer/**'
+      - 'src/web_publisher/**'
+      - 'src/schemas/**'
+      - 'src/validator/**'
+      - 'scripts/build_awaji_public_bundle.py'
+      - 'scripts/check-awaji-contamination.py'
+      - 'scripts/build_all_trip_sites.py'
   workflow_dispatch:
 
 permissions:
@@ -76,7 +91,10 @@ jobs:
       - name: Verify root is the multi-trip portal
         run: |
           test -s site/index.html
-          ! grep -q 'http-equiv="refresh"' site/index.html
+          if grep -q 'http-equiv="refresh"' site/index.html; then
+            echo "Unexpected root redirect in published site"
+            exit 1
+          fi
           test -s site/trips/awaji-2026/public-bundle.json
           test -s site/trips/wanhua-2026/public-bundle.json
           test -s site/trips/kansai-preview-2025/public-bundle.json

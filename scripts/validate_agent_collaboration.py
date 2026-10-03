@@ -126,7 +126,10 @@ def _validate_policy(policy: dict[str, Any]) -> None:
     ):
         _require(parallelism.get(gate) is True, f"parallelism gate disabled: {gate}")
     checks = policy.get("required_checks")
-    _require(checks == ["framework", "python", "website"], "required CI jobs mismatch")
+    _require(
+        checks == ["framework", "python", "pytest", "mcp-site", "website"],
+        "required CI jobs mismatch",
+    )
 
 
 def _validate_domain_agents(policy: dict[str, Any]) -> None:
@@ -171,6 +174,7 @@ def _validate_repository_contracts() -> None:
         ".github/PULL_REQUEST_TEMPLATE/agentic-checklist.md",
         ".github/ISSUE_TEMPLATE/agent-task.yml",
         ".github/workflows/ci.yml",
+        ".github/workflows/website-ci.yml",
         "agent-collaboration/overlay.json",
         "docs/agents/DEVELOPMENT.md",
     ]
@@ -192,9 +196,18 @@ def _validate_repository_contracts() -> None:
     for command in (
         "python3 scripts/validate_agent_collaboration.py",
         "python3 -m unittest discover -s tests -v",
-        "python3 -m src.renderer.build_site",
+        "npm run test:site-mcp",
+        "npm run build:site-mcp",
+        "npm run validate:site-mcp",
     ):
         _require(command in workflow, f"CI workflow command missing: {command}")
+    website_workflow = (ROOT / ".github/workflows/website-ci.yml").read_text(
+        encoding="utf-8"
+    )
+    _require(
+        "python3 -m src.renderer.build_site" in website_workflow,
+        "Website CI workflow is missing the canonical site build",
+    )
     template = (ROOT / ".github/PULL_REQUEST_TEMPLATE/agentic-checklist.md").read_text(
         encoding="utf-8"
     )

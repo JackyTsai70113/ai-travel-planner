@@ -6,3 +6,6 @@ __pycache__/
 # Frontend dependencies and generated build output
 web/node_modules/
 web/dist/
+
+# Generated Site MCP artifact
+/dist/
