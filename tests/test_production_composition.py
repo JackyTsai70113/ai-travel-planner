@@ -224,6 +224,10 @@ def test_transit_scheduler_rejects_return_after_recorded_last_service():
 
     assert result.best_trip is None
     assert any(violation.code == "schedule.route_unknown" for violation in result.candidates[0].violations)
+    adjustment = next(violation for violation in result.candidates[0].violations
+                      if violation.code == "schedule.hotel_return_adjustment")
+    assert adjustment.context["departure_at"] == "2026-04-10T19:45:00+09:00"
+    assert adjustment.context["mode"] == "transit"
     assert any(origin == poi["id"] and destination == hotel_id and departure.hour == 20
                for origin, destination, departure in provider.departures)
 

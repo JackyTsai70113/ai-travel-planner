@@ -386,6 +386,16 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
                 continue
             if back is None:
                 violations.append(_failure("schedule.route_unknown", f"route from {previous} to {hotel_id} is required for daily hotel consistency", "/days"))
+                adjustment = _verified_earlier_return(previous, hotel_id, cursor, closes, request)
+                if adjustment is not None:
+                    departure_at, fact = adjustment
+                    violations.append(Violation(
+                        "schedule.hotel_return_adjustment", "warning",
+                        f"目前結束時刻沒有已查證的回程；若將活動結束與離開時刻調整至 {departure_at.strftime('%H:%M')}，可搭乘已查證路線返回住宿。",
+                        "/days", {"departure_at": departure_at.isoformat(),
+                                  "arrival_at": fact.arrival_at.isoformat() if fact.arrival_at else None,
+                                  "mode": fact.mode, "provider": fact.provider,
+                                  "source_url": fact.source_url}, repairable=True))
             else:
                 violations.append(_failure("schedule.hotel_return_infeasible", "cannot return to selected hotel within daily end", "/days"))
             break
@@ -397,6 +407,25 @@ def _is_open(place_id: str, start: datetime, end: datetime, request: SchedulingI
     if not intervals:
         return False
     return any(interval.weekday == start.weekday() and interval.opens_at <= start.time() and end.time() <= interval.closes_at for interval in intervals)
+
+
+def _verified_earlier_return(origin: str, hotel_id: str, current_departure: datetime, closes: datetime,
+                             request: SchedulingInput) -> tuple[datetime, RouteConstraint] | None:
+    context = request.validation_context
+    if context.route_lookup is None or current_departure.tzinfo is None or closes.tzinfo is None:
+        return None
+    earliest = max(current_departure - timedelta(hours=3),
+                   datetime.combine(current_departure.date(), time.fromisoformat(request.daily_start), current_departure.tzinfo))
+    departure = current_departure - timedelta(minutes=15)
+    while departure >= earliest:
+        fact = context.route_lookup(origin, hotel_id, departure)
+        if fact is not None:
+            context.timed_route_facts[(origin, hotel_id, departure.isoformat())] = fact
+            if (fact.status in {"verified", "available"} and fact.minutes is not None
+                    and departure + timedelta(minutes=fact.minutes) <= closes):
+                return departure, fact
+        departure -= timedelta(minutes=15)
+    return None
 
 
 def _meal_period_order(period: object) -> int:
