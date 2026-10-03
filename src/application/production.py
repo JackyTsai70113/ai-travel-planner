@@ -277,7 +277,7 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
     }
     shell["candidate_sets"]["restaurants"] = restaurants
     shell["budget"]["total_status"] = "incomplete"
-    scheduled = schedule(SchedulingInput(shell, routing)).best_trip
+    scheduled = schedule(SchedulingInput(shell, routing, daily_start="07:00")).best_trip
     if scheduled is None:
         raise ProductionIncompleteError("no feasible route-aware schedule from normalized candidates")
     _add_unfilled_meal_warnings(scheduled.trip)
@@ -289,7 +289,7 @@ def _restaurant_candidates(candidates: Sequence[dict], intent: TravelIntent, sta
     timezone_name = _local_timezone(intent)
     zone = ZoneInfo(timezone_name)
     windows = {"breakfast": time(8, 0), "lunch": time(12, 30), "dinner": time(18, 30)}
-    selected: list[dict] = []
+    selected: dict[str, dict] = {}
     used: set[str] = set()
     for day_number in range(1, (end - start).days + 2):
         current_date = start + timedelta(days=day_number - 1)
@@ -305,10 +305,20 @@ def _restaurant_candidates(candidates: Sequence[dict], intent: TravelIntent, sta
             place_id = candidate.get("place", {}).get("id")
             if not isinstance(place_id, str):
                 continue
-            candidate["schedule"] = {"duration_minutes": 60, "day": day_number, "meal_period": period, "required": False}
-            selected.append(candidate)
+            candidate["schedule"] = {
+                "duration_minutes": 60, "day": day_number, "meal_period": period, "required": False,
+                "fixed_start_at": meal_start.isoformat(), "fixed_end_at": meal_end.isoformat(),
+            }
+            selected[place_id] = candidate
             used.add(place_id)
-    return selected
+    result = []
+    for candidate in candidates:
+        place_id = candidate.get("place", {}).get("id")
+        copied = dict(candidate)
+        if place_id in selected:
+            copied["schedule"] = selected[place_id]["schedule"]
+        result.append(copied)
+    return result
 
 
 def _add_unfilled_meal_warnings(trip: dict) -> None:
@@ -351,6 +361,8 @@ def _schedule_legacy_meals(trip: dict, candidates: Sequence[dict], routing: Vali
                     earliest += timedelta(minutes=route_out)
                 else:
                     earliest = max(earliest, visit_end + timedelta(minutes=route_out))
+                if period == "breakfast" and earliest + timedelta(minutes=60 + route_back) > datetime.fromisoformat(visit["start_at"]):
+                    continue
                 meal_start = earliest
                 meal_end = meal_start + timedelta(minutes=60)
                 if meal_end.time() > time(20, 0) or meal_end + timedelta(minutes=route_back) > datetime.combine(date.fromisoformat(day["date"]), time(23, 0), zone):
@@ -358,7 +370,8 @@ def _schedule_legacy_meals(trip: dict, candidates: Sequence[dict], routing: Vali
                 if meal_eligibility(candidate, meal_start, meal_end).value != "eligible":
                     continue
                 day["items"].append({"id": f"day{day_number}-{period}-{place_id}", "kind": "meal", "place_id": place_id, "start_at": meal_start.isoformat(), "end_at": meal_end.isoformat(), "selection_status": "selected"})
-                candidate["schedule"] = {"duration_minutes": 60, "day": day_number, "meal_period": period, "required": False}
+                candidate["schedule"] = {"duration_minutes": 60, "day": day_number, "meal_period": period, "required": False,
+                                          "fixed_start_at": meal_start.isoformat(), "fixed_end_at": meal_end.isoformat()}
                 used.add(place_id)
                 break
         day["items"].sort(key=lambda item: item["start_at"])

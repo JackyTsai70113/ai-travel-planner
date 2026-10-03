@@ -157,6 +157,7 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
     low_fatigue = any(preference.get("kind") in {"low_fatigue", "pace"} and preference.get("value") in {True, "low"}
                       for preference in request.trip.get("preferences", {}).get("soft_preferences", []))
     for activity in sorted(selected, key=lambda value: (
+        0 if value["schedule"].get("meal_period") == "breakfast" else 2 if value["schedule"].get("meal_period") in {"lunch", "dinner"} else 1,
         not value["schedule"].get("required", False),
         _meal_period_order(value["schedule"].get("meal_period")),
         value["schedule"].get("fatigue", 0) if low_fatigue else 0,
@@ -164,6 +165,7 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
     )):
         details = activity["schedule"]
         optional_meal = activity["kind"] == "meal" and not details.get("required", False)
+        cursor_before, previous_before = cursor, previous
         travel = request.validation_context.travel_minutes.get((previous, activity["id"])) if previous is not None else 0
         if travel is None:
             violations.append(_optional_meal_warning(activity, "schedule.route_unknown", f"route from {previous} to {activity['id']} is not verified") if optional_meal else _failure("schedule.route_unknown", f"route from {previous} to {activity['id']} is required", activity["path"]))
@@ -180,7 +182,7 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
             violations.append(Violation("schedule.origin_unknown", "warning", "每日首個活動的住宿至目的地路線尚未驗證。", activity["path"]))
         meal_period = details.get("meal_period")
         if meal_period in {"breakfast", "lunch", "dinner"}:
-            target_time = {"breakfast": time(7, 0), "lunch": time(11, 30), "dinner": time(17, 30)}[meal_period]
+            target_time = {"breakfast": time(8, 0), "lunch": time(12, 30), "dinner": time(18, 30)}[meal_period]
             cursor = max(cursor, datetime.combine(current, target_time, zone))
         fixed = details.get("fixed_start_at")
         if fixed:
@@ -190,7 +192,9 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
                 violations.append(_failure("schedule.fixed_time_invalid", "fixed_start_at must be ISO-8601", activity["path"]))
                 continue
             if fixed_start.date() != current or fixed_start < cursor:
-                violations.append(_failure("schedule.fixed_anchor_infeasible", "confirmed anchor cannot be reached without moving it", activity["path"]))
+                violations.append(_optional_meal_warning(activity, "schedule.fixed_anchor_infeasible", "restaurant cannot be reached by its meal period") if optional_meal else _failure("schedule.fixed_anchor_infeasible", "confirmed anchor cannot be reached without moving it", activity["path"]))
+                if optional_meal:
+                    cursor, previous = cursor_before, previous_before
                 continue
             cursor = fixed_start
         end_at = cursor + timedelta(minutes=details["duration_minutes"])
@@ -206,12 +210,15 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
                 continue
         if end_at > closes or not _is_open(activity["id"], cursor, end_at, request):
             violations.append(_optional_meal_warning(activity, "schedule.closed_or_unverified", "restaurant is not confirmed open for the scheduled meal interval") if optional_meal else _failure("schedule.closed_or_unverified", "activity lacks a verified open interval for its scheduled time", activity["path"]))
+            if optional_meal:
+                cursor, previous = cursor_before, previous_before
             continue
         condition_findings = _condition_findings(activity["id"], cursor, end_at, request, activity["path"])
         violations.extend(condition_findings)
         if _has_errors(condition_findings):
             if optional_meal:
                 violations[-len(condition_findings):] = [_optional_meal_warning(activity, item.code, item.message) for item in condition_findings]
+                cursor, previous = cursor_before, previous_before
             continue
         items.append({"id": f"day{day_number}-{activity['id']}", "kind": activity["kind"], "place_id": activity["id"], "start_at": cursor.isoformat(), "end_at": end_at.isoformat(), "selection_status": "selected"})
         placed_activity = True
@@ -220,10 +227,20 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
             placed.add(activity["id"])
     if placed_activity and hotel_id is not None:
         back = request.validation_context.travel_minutes.get((previous, hotel_id))
-        if back is None:
-            violations.append(_failure("schedule.route_unknown", f"route from {previous} to {hotel_id} is required for daily hotel consistency", "/days"))
-        elif cursor + timedelta(minutes=back) > closes:
-            violations.append(_failure("schedule.hotel_return_infeasible", "cannot return to selected hotel within daily end", "/days"))
+        if back is None or cursor + timedelta(minutes=back) > closes:
+            last_item = next((item for item in reversed(items) if item.get("kind") == "meal"), None)
+            if last_item is not None and items and items[-1] is last_item:
+                items.pop()
+                violations.append(Violation("meal.hotel_return_unverified", "warning", "restaurant meal omitted because the return route to lodging is unverified or too late", "/days"))
+                required_last = next((item for item in reversed(items) if item.get("kind") != "meal"), None)
+                if required_last is not None:
+                    previous = required_last["place_id"]
+                    cursor = datetime.fromisoformat(required_last["end_at"])
+                    back = request.validation_context.travel_minutes.get((previous, hotel_id))
+            if back is None:
+                violations.append(_failure("schedule.route_unknown", f"route from {previous} to {hotel_id} is required for daily hotel consistency", "/days"))
+            elif cursor + timedelta(minutes=back) > closes:
+                violations.append(_failure("schedule.hotel_return_infeasible", "cannot return to selected hotel within daily end", "/days"))
     return items, violations, placed
 
 

@@ -362,3 +362,14 @@ def test_cli_non_demo_invokes_shared_production_composition_not_configuration_re
     output = capsys.readouterr().out
     assert '"status": "complete"' in output
     assert "configuration_ready" not in output
+
+
+def test_legacy_breakfast_is_omitted_when_route_would_overlap_first_poi():
+    from src.application.production import _schedule_legacy_meals
+    from src.validator import ValidationContext
+
+    restaurant = {"place": {"id": "breakfast-shop", "name": "早餐店"}, "opening_hours": {"status": "fresh", "timezone": "Asia/Taipei", "intervals": [{"weekday": day, "opens_at": "06:00", "closes_at": "20:00"} for day in range(7)]}, "provenance": {"source_type": "provider", "provider": "recorded", "retrieved_at": "2026-01-01T00:00:00+08:00"}}
+    trip = {"local_timezone": "Asia/Taipei", "selected": {"hotel_place_ids": ["hotel"]}, "candidate_sets": {"restaurants": [restaurant]}, "days": [{"date": "2026-04-10", "items": [{"id": "poi", "kind": "visit", "place_id": "poi", "start_at": "2026-04-10T10:00:00+08:00", "end_at": "2026-04-10T12:00:00+08:00"}]}]}
+    routes = {("hotel", "breakfast-shop"): 45, ("breakfast-shop", "poi"): 45}
+    _schedule_legacy_meals(trip, [restaurant], ValidationContext(travel_minutes=routes))
+    assert all(item["kind"] != "meal" for item in trip["days"][0]["items"])
