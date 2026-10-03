@@ -11,24 +11,29 @@ backend publicly without setting a random `MCP_BACKEND_TOKEN` of at least 32
 characters.
 
 Deploy the repository's `Dockerfile` on Railway and set `MCP_BACKEND_TOKEN` to a
-random value of 32 or more characters. Set the production provider credentials
-needed by `src.application.production` in Railway's secret environment settings;
-without them `plan_trip` returns `configuration_missing`. Railway must expose its
-HTTP service on the assigned `PORT` and pass the `/health` health check.
+random value of 32 or more characters. Attach a Railway volume to the backend
+service at `/data`; both Canonical Trips (`/data/trips`) and generated site
+files (`/data/site`) live there across deployments. Run one replica because
+Railway volumes are not shared with replicas. Set the production provider
+credentials needed by `src.application.production` in Railway's secret
+environment settings; without them `plan_trip` returns `configuration_missing`.
+Railway must expose its HTTP service on the assigned `PORT` and pass the
+`/health` health check. After planning a trip, restart/redeploy the service and
+verify that `get_trip` still returns that trip.
 
 For the ChatGPT-facing Site, set `MCP_BACKEND_URL` to the Railway HTTPS origin
 (without a path) and set `MCP_BACKEND_TOKEN` to the same secret in the Sites
 runtime environment. Run `npm run build:site-mcp` and
-runtime environment (`sites_update_environment_variables`). Then follow this
-repeatable publish/connect sequence using the connected Sites and Plugin
-Management operations:
+runtime environment using `sites_update_environment_variables`. Run
+`npm run build:site-mcp` and `npm run validate:site-mcp`; the artifact is
+produced at `dist/`. Then follow this repeatable publish/connect sequence using
+the connected Sites and Plugin Management operations:
 
 1. Create a short-lived source write credential with
    `sites_create_source_repository_write_credential(project_id)`; use its
    returned remote URL, branch, and token only in the credential-safe Sites
    source workflow. Never store the token in this repository.
-2. Run `npm run build:site-mcp` and `npm run validate:site-mcp`; the artifact
-   is produced at `dist/`. Push the exact source commit to the Site source
+2. Push the exact source commit to the Site source
    branch and pass that full commit SHA and the artifact path to
    `sites_save_version_and_deploy_private`.
 3. Wait until the returned deployment status is `succeeded`. Check
