@@ -4,6 +4,7 @@ import unittest
 
 from src.intent import ConstraintCondition, ConstraintScope, RequestConstraint, TimeWindow, parse_trip_request
 from src.planner.contracts import HardConstraint, SoftPreference
+from src.request_site import parse_site_request, required_request_fields
 
 
 FIXTURES = json.loads((Path(__file__).parent / "fixtures" / "intent" / "requests.json").read_text())
@@ -54,6 +55,33 @@ class TravelIntentParserTests(unittest.TestCase):
         self.assertIsNone(intent.duration_days)
         self.assertIsNone(intent.budget_amount)
         self.assertEqual({field.field for field in intent.missing_fields}, {"dates_or_duration", "travelers", "budget"})
+
+    def test_taiwan_destination_hierarchy_and_three_days_two_nights(self):
+        text = "2026/10/20到2026/10/22，台北出發，台灣萬華西門三天兩夜，2個人，大眾運輸，晚上看得到河流與夜景"
+        intent = parse_site_request(text)
+        self.assertEqual(intent.destinations, ("台灣", "萬華", "西門町"))
+        self.assertEqual((intent.duration_days, intent.duration_nights), (3, 2))
+        self.assertEqual(intent.travelers.adults, 2)
+        self.assertNotIn("destination", required_request_fields(intent))
+        for source in intent.provenance["destinations"]:
+            self.assertEqual(text[source.start:source.end], source.text)
+        self.assertIsNone(intent.budget_amount)
+
+    def test_taiwan_aliases_and_traditional_night_counts(self):
+        variants = (
+            ("臺灣臺北市萬華西門町三天二夜", ("台灣", "台北", "萬華", "西門町"), (3, 2)),
+            ("台北西門3天2夜", ("台北", "西門町"), (3, 2)),
+            ("台北西門三天兩夜", ("台北", "西門町"), (3, 2)),
+        )
+        for text, destinations, duration in variants:
+            with self.subTest(text=text):
+                intent = parse_trip_request(text)
+                self.assertEqual(intent.destinations, destinations)
+                self.assertEqual((intent.duration_days, intent.duration_nights), duration)
+
+    def test_date_range_and_explicit_duration_conflict_is_ambiguous(self):
+        intent = parse_trip_request("2026/10/20到2026/10/23，台北三天兩夜")
+        self.assertTrue(any(item.field == "duration" for item in intent.ambiguous_fields))
 
     def test_required_and_forbidden_places_and_soft_pace(self):
         intent = parse_trip_request(FIXTURES[4]["text"])

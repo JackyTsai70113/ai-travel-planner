@@ -21,6 +21,11 @@ _KNOWN_PLACES = (
     "東京", "大阪", "京都", "神戶", "德島", "福岡", "札幌", "沖繩", "名古屋", "奈良", "熊本", "由布院", "北海道", "東京迪士尼", "環球影城",
 )
 _REGIONS = {"關西", "關東", "九州", "北海道", "四國"}
+_TAIWAN_DESTINATION_ALIASES = {
+    "台灣": "台灣", "臺灣": "台灣",
+    "台北市": "台北", "臺北市": "台北", "台北": "台北", "臺北": "台北",
+    "萬華": "萬華", "西門町": "西門町", "西門": "西門町",
+}
 
 
 def parse_trip_request(text: str) -> TripRequest:
@@ -42,7 +47,20 @@ def parse_trip_request(text: str) -> TripRequest:
         return matches
 
     places = tuple(place for place in _KNOWN_PLACES if (matches := list(re.finditer(re.escape(place), text))) and not _record_matches(provenance, "destinations", matches))
-    # _record_matches always returns False: the expression keeps ordering compact.
+    taiwan_pattern = re.compile("|".join(
+        re.escape(alias) for alias in sorted(_TAIWAN_DESTINATION_ALIASES, key=len, reverse=True)
+    ))
+    normalized_taiwan_places: list[str] = []
+    for match in taiwan_pattern.finditer(text):
+        if re.match(r"\s*出發", text[match.end():]):
+            continue
+        place = _TAIWAN_DESTINATION_ALIASES[match.group(0)]
+        if place not in normalized_taiwan_places:
+            normalized_taiwan_places.append(place)
+        provenance["destinations"].append(
+            FieldProvenance(match.group(0), match.start(), match.end(), "destinations")
+        )
+    places = (*places, *normalized_taiwan_places)
     regions = tuple(region for region in _REGIONS if region in text)
     for region in regions:
         match = re.search(re.escape(region), text)
@@ -51,9 +69,9 @@ def parse_trip_request(text: str) -> TripRequest:
     values["destinations"], values["regions"] = places, regions
 
     capture("origin", r"(?:(?:從|由|出發地[：:]?)(台北|高雄|桃園|香港|東京|大阪)(?:出發|飛|去)?|(台北|高雄|桃園|香港|東京|大阪)出發)", lambda m: m.group(1) or m.group(2))
-    capture("duration", r"([\d一二三四五六七八九十]+)天([\d一二三四五六七八九十]+)夜", lambda m: (_number(m.group(1)), _number(m.group(2))))
+    capture("duration", r"([\d一二三四五六七八九十兩]+)天([\d一二三四五六七八九十兩]+)夜", lambda m: (_number(m.group(1)), _number(m.group(2))))
     if "duration" not in values:
-        capture("duration", r"([\d一二三四五六七八九十]+)天", lambda m: (_number(m.group(1)), None))
+        capture("duration", r"([\d一二三四五六七八九十兩]+)天", lambda m: (_number(m.group(1)), None))
     date_match = capture("date_range", r"(\d{4})[/-](\d{1,2})[/-](\d{1,2})\s*(?:到|至|[-~])\s*(\d{4})?[/-]?(\d{1,2})[/-](\d{1,2})")
     start_date = end_date = None
     if date_match:
@@ -115,6 +133,12 @@ def parse_trip_request(text: str) -> TripRequest:
         ambiguous.append(AmbiguousField("child_ages", ", ".join(map(str, ages)), "兒童人數與明確年齡數量不一致"))
     if len(transport) > 1 and "mixed" not in transport:
         ambiguous.append(AmbiguousField("transport", "、".join(transport), "同時提及多種交通方式，未說明分配方式"))
+    if start_date and end_date and values.get("duration") is not None:
+        from datetime import date
+        stated_days = values["duration"][0]  # type: ignore[index]
+        date_days = (date.fromisoformat(end_date) - date.fromisoformat(start_date)).days + 1
+        if stated_days != date_days:
+            ambiguous.append(AmbiguousField("duration", str(values["duration"]), "日期範圍與明確天數不一致，需由使用者釐清"))
     days, nights = values.get("duration", (None, None))
     return TripRequest(
         raw_text=text, destinations=places, regions=regions, start_date=start_date,
@@ -380,7 +404,7 @@ def _record_matches(provenance, field, matches):
 def _number(value: str) -> int:
     if value.isdigit():
         return int(value)
-    digits = {"一": 1, "二": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9}
+    digits = {"一": 1, "二": 2, "兩": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9}
     if value == "十":
         return 10
     if "十" in value:
