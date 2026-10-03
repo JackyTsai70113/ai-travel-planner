@@ -25,3 +25,11 @@ test("forwards MCP POST with internal bearer credentials", async () => {
     assert.equal(response.status, 200);
   } finally { globalThis.fetch = originalFetch; }
 });
+
+test("refuses a non-HTTPS backend before forwarding a secret", async () => {
+  const response = await worker.fetch(
+    new Request("https://site.example/mcp", { method: "POST", body: "{}", headers: { "oai-authenticated-user-id": "user-123" } }),
+    { ...env, MCP_BACKEND_URL: "http://backend.example" },
+  );
+  assert.equal(response.status, 503);
+});

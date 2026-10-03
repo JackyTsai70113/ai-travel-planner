@@ -15,7 +15,15 @@ export default {
     if (!userId) return json({ error: "unauthenticated" }, 401);
     if (!env.MCP_BACKEND_URL || !env.MCP_BACKEND_TOKEN) return json({ error: "service_unavailable" }, 503);
 
-    const backend = new URL("/mcp", env.MCP_BACKEND_URL);
+    let backend;
+    try {
+      backend = new URL("/mcp", env.MCP_BACKEND_URL);
+      if (backend.protocol !== "https:" || backend.username || backend.password) {
+        return json({ error: "service_unavailable" }, 503);
+      }
+    } catch {
+      return json({ error: "service_unavailable" }, 503);
+    }
     const headers = new Headers({
       "content-type": request.headers.get("content-type") || "application/json",
       accept: request.headers.get("accept") || "application/json, text/event-stream",

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -26,11 +27,35 @@ from src.validator import ValidationContext, validate_itinerary
 _TRIP_ID = re.compile(r"^[a-z0-9][a-z0-9-]{0,79}$")
 _TRIPS_DIR = Path(os.environ.get("TRAVEL_PLANNER_TRIPS_DIR", "trips")).resolve()
 _SITE_DIR = Path(os.environ.get("TRAVEL_PLANNER_SITE_DIR", "site")).resolve()
+_HTTP_REQUEST_LIMIT = 120
+_HTTP_WINDOW_SECONDS = 60
+_HTTP_MAX_BODY_BYTES = 4 * 1024 * 1024
 
 mcp = MCPServer(
     "ai-travel-planner",
     instructions="Use Canonical Trip V1 as the sole trip record. Preserve unknown facts. Ask for confirmation before tools write local files.",
 )
+
+
+def _consume_remote_request(
+    user_id: str,
+    now: float,
+    windows: dict[str, tuple[int, float]],
+) -> bool:
+    """Apply a per-user fixed-window limit; state is held only in process memory."""
+    count, window_started = windows.get(user_id, (0, now))
+    if now - window_started >= _HTTP_WINDOW_SECONDS:
+        count, window_started = 0, now
+    if count >= _HTTP_REQUEST_LIMIT:
+        return False
+    if user_id not in windows and len(windows) >= 10_000:
+        expired = [key for key, (_, started) in windows.items() if now - started >= _HTTP_WINDOW_SECONDS]
+        for key in expired:
+            windows.pop(key, None)
+        if len(windows) >= 10_000:
+            return False
+    windows[user_id] = (count + 1, window_started)
+    return True
 
 
 def _trip_path(trip_id: str) -> Path:
@@ -375,6 +400,8 @@ def run_http_server() -> None:
     from starlette.middleware.base import BaseHTTPMiddleware
     from starlette.responses import JSONResponse, PlainTextResponse
 
+    request_windows: dict[str, tuple[int, float]] = {}
+
     token = os.environ.get("MCP_BACKEND_TOKEN", "")
     if len(token) < 32:
         raise SystemExit("MCP_BACKEND_TOKEN must contain at least 32 characters")
@@ -387,6 +414,19 @@ def run_http_server() -> None:
             supplied = value[7:] if value.startswith("Bearer ") else ""
             if not hmac.compare_digest(supplied, token):
                 return JSONResponse({"error": "unauthorized"}, status_code=401)
+            user_id = request.headers.get("oai-authenticated-user-id", "")
+            if not user_id.strip():
+                return JSONResponse({"error": "unauthorized"}, status_code=401)
+            content_length = request.headers.get("content-length")
+            if content_length:
+                try:
+                    if int(content_length) > _HTTP_MAX_BODY_BYTES:
+                        return JSONResponse({"error": "request_too_large"}, status_code=413)
+                except ValueError:
+                    return JSONResponse({"error": "invalid_content_length"}, status_code=400)
+            now = time.monotonic()
+            if not _consume_remote_request(user_id, now, request_windows):
+                return JSONResponse({"error": "rate_limited"}, status_code=429)
             return await call_next(request)
 
     app = mcp.streamable_http_app(

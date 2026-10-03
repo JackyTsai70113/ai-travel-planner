@@ -24,10 +24,19 @@ from src.mcp_server.server import (
     parse_trip_request_tool,
     plan_trip_tool,
     validate_trip_tool,
+    _consume_remote_request,
 )
 
 
 class MCPTravelServerTests(unittest.TestCase):
+    def test_remote_rate_limit_is_per_user_and_resets_by_window(self) -> None:
+        windows: dict[str, tuple[int, float]] = {}
+        for _ in range(120):
+            self.assertTrue(_consume_remote_request("user-a", 10.0, windows))
+        self.assertFalse(_consume_remote_request("user-a", 10.0, windows))
+        self.assertTrue(_consume_remote_request("user-b", 10.0, windows))
+        self.assertTrue(_consume_remote_request("user-a", 70.0, windows))
+
     def test_protocol_lists_tools_resources_and_prompts(self) -> None:
         async def check() -> None:
             async with Client(mcp) as client:
@@ -108,6 +117,7 @@ class MCPTravelServerTests(unittest.TestCase):
     def test_streamable_http_requires_internal_token_and_serves_tools(self) -> None:
         import urllib.error
         import urllib.request
+        import http.client
 
         project = Path(__file__).parent.parent.resolve()
         with socket.socket() as sock:
@@ -132,13 +142,24 @@ class MCPTravelServerTests(unittest.TestCase):
                 except (OSError, urllib.error.URLError):
                     time.sleep(0.05)
             with self.assertRaises(urllib.error.HTTPError) as unauthenticated:
-                urllib.request.urlopen(urllib.request.Request(endpoint, data=b"{}", method="POST"), timeout=2)
+                urllib.request.urlopen(urllib.request.Request(endpoint, data=b"{}", method="POST", headers={"Authorization": f"Bearer {token}"}), timeout=2)
             self.assertEqual(unauthenticated.exception.code, 401)
+            unauthenticated.exception.close()
+            connection = http.client.HTTPConnection("127.0.0.1", port, timeout=2)
+            connection.putrequest("POST", "/mcp")
+            connection.putheader("Authorization", f"Bearer {token}")
+            connection.putheader("oai-authenticated-user-id", "test-user")
+            connection.putheader("Content-Length", str(4 * 1024 * 1024 + 1))
+            connection.endheaders()
+            too_large = connection.getresponse()
+            self.assertEqual(too_large.status, 413)
+            too_large.read()
+            connection.close()
 
             async def list_tools():
                 import httpx2
 
-                async with httpx2.AsyncClient(headers={"Authorization": f"Bearer {token}"}) as http_client:
+                async with httpx2.AsyncClient(headers={"Authorization": f"Bearer {token}", "oai-authenticated-user-id": "test-user"}) as http_client:
                     async with streamable_http_client(endpoint, http_client=http_client) as (read, write):
                         async with ClientSession(read, write) as client:
                             await client.initialize()
