@@ -205,8 +205,18 @@ def _validate_repository_contracts() -> None:
         not re.search(r"(?m)^  website:", workflow),
         "MCP CI must not contain an unconditional website job",
     )
-    for command in ("npm ci --prefix web", "npm --prefix web run test:e2e"):
+    for command in (
+        "npm ci --prefix web",
+        "npm --prefix web run lint",
+        "npm --prefix web run typecheck",
+        "npm --prefix web run test",
+        "npm --prefix web run test:e2e",
+        "npm --prefix web run build",
+        "npx --prefix web",
+        "playwright",
+    ):
         _require(command not in workflow, f"frontend command belongs in Website CI: {command}")
+    _require("web/" not in workflow, "MCP CI must not reference frontend workspace paths")
     website_workflow = (ROOT / ".github/workflows/website-ci.yml").read_text(
         encoding="utf-8"
     )
