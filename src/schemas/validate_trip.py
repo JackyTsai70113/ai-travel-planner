@@ -354,7 +354,9 @@ def _valid_uri(value: object) -> bool:
         return False
     try:
         parsed = urlsplit(value)
-        return parsed.scheme in {"http", "https"} and bool(parsed.netloc) and bool(parsed.hostname)
+        valid = parsed.scheme in {"http", "https"} and bool(parsed.netloc) and bool(parsed.hostname)
+        parsed.port  # Accessing port validates that any explicit port is numeric and in range.
+        return valid
     except ValueError:
         return False
 

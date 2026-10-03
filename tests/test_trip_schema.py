@@ -47,9 +47,11 @@ class NightViewEvidenceSchemaTests(unittest.TestCase):
     def test_night_view_navigation_point_rejects_malformed_uri(self):
         place = self.trip["candidate_sets"]["places"][0]
         place["night_view_evidence"] = self._evidence()
-        place["night_view_evidence"]["access_point"]["navigation_point"]["google_maps_url"] = "https://"
-        with self.assertRaises(TripValidationError):
-            validate_trip(self.trip)
+        for url in ("https://", "https://example.com:bad"):
+            with self.subTest(url=url):
+                place["night_view_evidence"]["access_point"]["navigation_point"]["google_maps_url"] = url
+                with self.assertRaises(TripValidationError):
+                    validate_trip(self.trip)
 
     def test_night_view_fact_status_must_match_fact_semantics(self):
         place = self.trip["candidate_sets"]["places"][0]
