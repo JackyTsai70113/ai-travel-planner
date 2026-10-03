@@ -182,7 +182,8 @@ def _normalise_flight(offer: dict[str, Any], retrieved_at: datetime, query: Flig
 def _normalise_hotel(hotel: dict[str, Any], offer: dict[str, Any], retrieved_at: datetime, query: HotelSearchQuery) -> dict[str, Any]:
     price = offer["price"]
     total = _money(price["total"], price["currency"])
-    taxes = sum(float(item.get("amount", 0)) for item in price.get("taxes", []))
+    taxes = price.get("taxes")
+    taxes_total = sum(float(item.get("amount", 0)) for item in taxes) if isinstance(taxes, list) and taxes else None
     policy = offer.get("policies", {})
     hid = str(hotel.get("hotelId", offer.get("id")))
     canonical_hid = re.sub(r"[^a-z0-9_-]+", "-", hid.lower()).strip("-_")
@@ -190,10 +191,13 @@ def _normalise_hotel(hotel: dict[str, Any], offer: dict[str, Any], retrieved_at:
     if hotel.get("latitude") is not None and hotel.get("longitude") is not None:
         place["coordinates"] = {"latitude": float(hotel["latitude"]), "longitude": float(hotel["longitude"])}
     candidate = {"place": place, "nightly_cost": _money(float(total["amount"]) / (query.check_out_date - query.check_in_date).days, total["currency"]),
-            "total_cost": total, "taxes_fees": _money(taxes, total["currency"]), "check_in": query.check_in_date.isoformat(), "check_out": query.check_out_date.isoformat(),
+            "total_cost": total, "check_in": query.check_in_date.isoformat(), "check_out": query.check_out_date.isoformat(),
             "occupancy": {"adults": query.occupancy.adults, "child_ages": list(query.occupancy.child_ages)}, "room_type": offer.get("room", {}).get("typeEstimated", {}).get("category"),
             "cancellation_policy": policy.get("cancellations", [{}])[0].get("description", {}).get("text"), "parking_available": None,
             "child_policy": None, "provider_reference": str(offer.get("id", "")), "search_url": "https://www.amadeus.com/en/booking", "price_status": "unverified", "provenance": _provenance(retrieved_at)}
+    candidate["provenance"]["note"] = "Provider total is a search quote; tax inclusion, availability, final price, occupancy, and cancellation terms require provider confirmation."
+    if taxes_total is not None:
+        candidate["taxes_fees"] = _money(taxes_total, total["currency"])
     return {key: value for key, value in candidate.items() if value is not None}
 
 
