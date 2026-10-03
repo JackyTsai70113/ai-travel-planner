@@ -75,14 +75,17 @@ def schedule(request: SchedulingInput) -> SchedulingOutput:
                 break
         if evidence is None:
             continue
+        verification_status = evidence.source_status if evidence.source_status in {"confirmed", "estimated"} else "unverified"
+        route_description = "已確認" if verification_status == "confirmed" else "估計"
         warning = Violation(
             "schedule.daily_start_adjustment", "warning",
-            f"原每日開始時刻無可查證的末班回程；已驗證將行程開始提前至 {adjusted_start}，並依新排程查得回住宿路線。",
+            f"原每日開始時刻無可查證的末班回程；已將行程開始調整至 {adjusted_start}，新排程的回住宿路線為{route_description}時刻。",
             "/days", {"requested_daily_start": request.daily_start, "adjusted_daily_start": adjusted_start,
                       "return_departure_at": evidence.departure_at.isoformat() if evidence else None,
                       "return_arrival_at": evidence.arrival_at.isoformat() if evidence else None,
                       "mode": evidence.mode if evidence else None, "provider": evidence.provider if evidence else None,
-                      "source_url": evidence.source_url if evidence else None}, repairable=True)
+                      "source_url": evidence.source_url if evidence else None,
+                      "verification_status": verification_status}, repairable=True)
         candidate.trip.setdefault("validation", []).append({
             "code": warning.code, "severity": warning.severity,
             "message": warning.message, "path": warning.path,

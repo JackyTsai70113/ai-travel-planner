@@ -232,6 +232,7 @@ def test_transit_scheduler_adjusts_day_start_after_last_service_and_verifies_ret
     assert adjustment.context["return_departure_at"] == "2026-04-10T19:45:00+09:00"
     assert adjustment.context["return_arrival_at"] == "2026-04-10T19:50:00+09:00"
     assert adjustment.context["mode"] == "transit"
+    assert adjustment.context["verification_status"] == "estimated"
     assert any(item["code"] == "schedule.daily_start_adjustment"
                for item in result.best_trip.trip["validation"])
     validate_trip(result.best_trip.trip)
