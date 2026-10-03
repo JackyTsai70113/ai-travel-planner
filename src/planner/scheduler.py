@@ -20,6 +20,15 @@ def schedule(request: SchedulingInput) -> SchedulingOutput:
     if initial.best_trip is not None or not any(item.code == "schedule.hotel_return_unverified"
                                                 for candidate in initial.candidates for item in candidate.violations):
         return initial
+    hotel_id = request.trip.get("selected", {}).get("hotel_place_ids", [None])[0]
+    failed_return_days = {
+        departure[:10]
+        for (_, destination, departure), fact in request.validation_context.timed_route_facts.items()
+        if destination == hotel_id and fact.mode in {"transit", "mixed"}
+        and fact.status not in {"verified", "available"}
+    }
+    if not failed_return_days:
+        return initial
     if any(details.get("fixed_start_at") or details.get("fixed_end_at")
            for collection in ("places", "restaurants")
            for candidate in request.trip.get("candidate_sets", {}).get(collection, [])
@@ -41,11 +50,23 @@ def schedule(request: SchedulingInput) -> SchedulingOutput:
         candidate = adjusted.best_trip
         if candidate is None:
             continue
-        hotel_id = candidate.trip.get("selected", {}).get("hotel_place_ids", [None])[0]
-        return_facts = [fact for (origin, destination, _), fact in request.validation_context.timed_route_facts.items()
-                        if destination == hotel_id and fact.status in {"verified", "available"}
-                        and fact.mode in {"transit", "mixed"} and fact.departure_at is not None and fact.arrival_at is not None]
-        evidence = max(return_facts, key=lambda fact: fact.departure_at) if return_facts else None
+        evidence = None
+        for day in candidate.trip.get("days", []):
+            if day.get("date") not in failed_return_days or not day.get("items"):
+                continue
+            last_item = day["items"][-1]
+            fact = request.validation_context.timed_route_facts.get(
+                (last_item.get("place_id"), hotel_id, last_item.get("end_at")))
+            query_departure = datetime.fromisoformat(last_item["end_at"])
+            daily_close = datetime.combine(date.fromisoformat(day["date"]), time.fromisoformat(request.daily_end), query_departure.tzinfo)
+            if (fact is not None and fact.status in {"verified", "available"}
+                    and fact.mode in {"transit", "mixed"} and fact.departure_at is not None
+                    and fact.arrival_at is not None and fact.departure_at >= query_departure
+                    and fact.arrival_at >= fact.departure_at and fact.arrival_at <= daily_close):
+                evidence = fact
+                break
+        if evidence is None:
+            continue
         warning = Violation(
             "schedule.daily_start_adjustment", "warning",
             f"原每日開始時刻無可查證的末班回程；已驗證將行程開始提前至 {adjusted_start}，並依新排程查得回住宿路線。",

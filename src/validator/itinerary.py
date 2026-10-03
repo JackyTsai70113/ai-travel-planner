@@ -136,7 +136,17 @@ class ValidationContext:
             if fact is None:
                 return None
             self.timed_route_facts[(origin, destination, departure_at.isoformat())] = fact
-            return fact.minutes if fact.status in {"verified", "available"} else None
+            if fact.status not in {"verified", "available"} or fact.minutes is None:
+                return None
+            if fact.mode in {"transit", "mixed"}:
+                if (fact.departure_at is None or fact.arrival_at is None
+                        or fact.departure_at < departure_at or fact.arrival_at < fact.departure_at):
+                    return None
+                elapsed = (fact.arrival_at - departure_at).total_seconds()
+                if elapsed < 0:
+                    return None
+                return max(fact.minutes, int((elapsed + 59) // 60))
+            return fact.minutes
         return self.travel_minutes.get((origin, destination))
 
 

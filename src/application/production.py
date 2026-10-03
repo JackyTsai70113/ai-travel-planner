@@ -403,7 +403,8 @@ def _add_unfilled_meal_warnings(trip: dict) -> None:
                 "message": f"{day.get('date')} 有 {3-len(day_meals)} 個餐段未找到營業時間已驗證且路線可行的獨立餐廳；請選擇餐廳後再安排。", "path": f"/days/{day_number-1}"})
 
 
-def _attach_timed_transport_legs(trip: dict, routing: ValidationContext, intent: TravelIntent) -> None:
+def _attach_timed_transport_legs(trip: dict, routing: ValidationContext, intent: TravelIntent,
+                                 daily_end: str = "20:00") -> None:
     """Project the exact transit evidence used by scheduling into canonical legs and timeline items."""
     if routing.route_lookup is None or not routing.timed_route_facts:
         return
@@ -416,6 +417,7 @@ def _attach_timed_transport_legs(trip: dict, routing: ValidationContext, intent:
             continue
         zone = ZoneInfo(trip["local_timezone"])
         current_date = date.fromisoformat(day["date"])
+        day_end = datetime.combine(current_date, time.fromisoformat(daily_end), zone)
         route_pairs: list[tuple[str, str, datetime, dict | None]] = []
         if hotel_id:
             departure = datetime.combine(current_date, time(7), zone)
@@ -435,6 +437,8 @@ def _attach_timed_transport_legs(trip: dict, routing: ValidationContext, intent:
                 raise ProductionIncompleteError(f"transit route {origin_id} -> {destination_id} departs before the scheduled departure")
             if destination_item is not None and fact.arrival_at > datetime.fromisoformat(destination_item["start_at"]):
                 raise ProductionIncompleteError(f"transit route {origin_id} -> {destination_id} arrives after the scheduled activity")
+            if destination_item is None and fact.arrival_at > day_end:
+                raise ProductionIncompleteError(f"transit route {origin_id} -> {destination_id} arrives after the daily end")
             leg_id = f"transit-day{day_number}-leg{leg_number}"
             verified_status = fact.source_status if fact.source_status in {"confirmed", "estimated"} else "unverified"
             provenance = {"source_type": "provider", "provider": fact.provider or "transit provider",

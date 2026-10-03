@@ -236,6 +236,45 @@ def test_transit_scheduler_adjusts_day_start_after_last_service_and_verifies_ret
                for origin, destination, departure in provider.departures)
 
 
+def test_transit_scheduler_rejects_later_actual_service_arriving_after_daily_end():
+    class DelayedServiceProvider(RecordedTransitRoutingProvider):
+        def fetch_at(self, origin, destination, mode, departure_at):
+            if origin.place_id == "hakata-hotel":
+                return super().fetch_at(origin, destination, mode, departure_at)
+            if departure_at.hour >= 20:
+                return Route(origin, destination, mode, RouteStatus.NO_ROUTE,
+                             RouteProvenance("recorded transit", datetime(2026, 4, 10, 20, tzinfo=timezone.utc)))
+            actual_departure = datetime(2026, 4, 10, 20, 15, tzinfo=departure_at.tzinfo)
+            actual_arrival = datetime(2026, 4, 10, 21, 5, tzinfo=departure_at.tzinfo)
+            return Route(origin, destination, mode, RouteStatus.AVAILABLE,
+                         RouteProvenance("recorded transit", datetime(2026, 4, 10, 20, tzinfo=timezone.utc)),
+                         3000, 1000, actual_departure, actual_arrival,
+                         (RouteStep("bus", actual_departure, actual_arrival, "A", "B", "R1"),))
+
+    trip = json.loads((Path(__file__).parents[1] / "fixtures/trips/japan-5-day-trip-v1.json").read_text())
+    poi = next(place for place in trip["candidate_sets"]["places"] if place["id"] == "ohori-park")
+    trip["candidate_sets"]["places"] = [poi]
+    trip["days"] = []
+    poi["coordinates"] = {"latitude": 33.5932, "longitude": 130.3769}
+    poi["schedule"] = {"duration_minutes": 475, "day": 1, "required": True}
+    trip["candidate_sets"]["restaurants"] = []
+    trip["date_range"] = {"start_date": "2026-04-10", "end_date": "2026-04-10"}
+    hotel_id = trip["selected"]["hotel_place_ids"][0]
+    hotel = next(candidate["place"] for candidate in trip["candidate_sets"]["hotels"] if candidate["place"]["id"] == hotel_id)
+    hotel["coordinates"] = {"latitude": 33.5902, "longitude": 130.4207}
+    records = [SimpleNamespace(collection="places", candidate=poi),
+               SimpleNamespace(collection="hotels", candidate={"place": hotel})]
+    context = _routing_context(records, DelayedServiceProvider(),
+                               parse_trip_request("2026/4/10到2026/4/10 福岡一日，大眾運輸"))
+    context = replace(context, opening_hours={poi["id"]: tuple(OpeningInterval(day, datetime.min.time(), datetime.max.time()) for day in range(7))})
+
+    result = schedule(SchedulingInput(trip, context, daily_start="12:00", daily_end="21:00"))
+
+    assert result.best_trip is None
+    assert all(item.code != "schedule.daily_start_adjustment"
+               for candidate in result.candidates for item in candidate.violations)
+
+
 def test_transit_schedule_exports_same_timed_routes_into_canonical_trip_and_public_leg_contract():
     trip = json.loads((Path(__file__).parents[1] / "fixtures/trips/japan-5-day-trip-v1.json").read_text())
     poi_id = next(place["id"] for place in trip["candidate_sets"]["places"] if place.get("kind") == "poi")
