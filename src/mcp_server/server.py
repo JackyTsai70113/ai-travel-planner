@@ -6,10 +6,11 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any
 
 from mcp.server import MCPServer
 from mcp.types import ToolAnnotations
+from pydantic import Field
 
 from src.application.production import (
     ProductionConfigurationError,
@@ -91,7 +92,16 @@ def _public_trip_summary(trip: dict[str, Any]) -> dict[str, Any]:
     name="parse_trip_request",
     annotations=ToolAnnotations(read_only_hint=True, open_world_hint=False),
 )
-def parse_trip_request_tool(request: str) -> dict[str, Any]:
+def parse_trip_request_tool(
+    request: Annotated[
+        str,
+        Field(
+            min_length=1,
+            max_length=20_000,
+            description="Natural-language trip request; only explicit facts are parsed.",
+        ),
+    ],
+) -> dict[str, Any]:
     """Parse an explicit natural-language travel request without researching or inventing missing facts."""
     if not request.strip():
         return {"status": "invalid_input", "message": "request must not be empty"}
@@ -124,7 +134,15 @@ def validate_trip_tool(trip: dict[str, Any]) -> dict[str, Any]:
     name="get_trip",
     annotations=ToolAnnotations(read_only_hint=True, open_world_hint=False),
 )
-def get_trip_tool(trip_id: str) -> dict[str, Any]:
+def get_trip_tool(
+    trip_id: Annotated[
+        str,
+        Field(
+            pattern=r"^[a-z0-9][a-z0-9-]{0,79}$",
+            description="Lowercase letters, digits, and hyphens; resolves under TRAVEL_PLANNER_TRIPS_DIR.",
+        ),
+    ],
+) -> dict[str, Any]:
     """Read a bounded public summary of an existing Canonical Trip by safe trip ID."""
     try:
         path = _trip_path(trip_id)
@@ -153,7 +171,27 @@ def get_trip_tool(trip_id: str) -> dict[str, Any]:
     ),
 )
 def plan_trip_tool(
-    request: str, trip_id: str, confirm_write: bool = False
+    request: Annotated[
+        str,
+        Field(
+            min_length=1,
+            max_length=20_000,
+            description="Natural-language travel request.",
+        ),
+    ],
+    trip_id: Annotated[
+        str,
+        Field(
+            pattern=r"^[a-z0-9][a-z0-9-]{0,79}$",
+            description="Destination trip folder slug.",
+        ),
+    ],
+    confirm_write: Annotated[
+        bool,
+        Field(
+            description="Must be true to run live planning and write Canonical Trip and site files."
+        ),
+    ] = False,
 ) -> dict[str, Any]:
     """Run production planning; writes Canonical Trip and site files only when confirm_write is true."""
     try:
@@ -231,7 +269,21 @@ def plan_trip_tool(
         open_world_hint=False,
     ),
 )
-def build_trip_site_tool(trip_id: str, confirm_write: bool = False) -> dict[str, Any]:
+def build_trip_site_tool(
+    trip_id: Annotated[
+        str,
+        Field(
+            pattern=r"^[a-z0-9][a-z0-9-]{0,79}$",
+            description="Existing trip folder slug.",
+        ),
+    ],
+    confirm_write: Annotated[
+        bool,
+        Field(
+            description="Must be true to write the static site under TRAVEL_PLANNER_SITE_DIR."
+        ),
+    ] = False,
+) -> dict[str, Any]:
     """Build a local static site from a valid Canonical Trip; never deploys or publishes it."""
     try:
         path = _trip_path(trip_id)

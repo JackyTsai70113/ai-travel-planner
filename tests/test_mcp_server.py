@@ -30,6 +30,7 @@ class MCPTravelServerTests(unittest.TestCase):
                 tools = await client.list_tools()
                 resources = await client.list_resources()
                 prompts = await client.list_prompts()
+                by_name = {tool.name: tool for tool in tools.tools}
                 self.assertTrue(
                     {
                         "parse_trip_request",
@@ -37,7 +38,30 @@ class MCPTravelServerTests(unittest.TestCase):
                         "get_trip",
                         "plan_trip",
                         "build_trip_site",
-                    }.issubset({tool.name for tool in tools.tools})
+                    }.issubset(by_name)
+                )
+                self.assertTrue(all(tool.description for tool in by_name.values()))
+                self.assertEqual(
+                    by_name["parse_trip_request"].input_schema["properties"]["request"][
+                        "maxLength"
+                    ],
+                    20_000,
+                )
+                self.assertEqual(
+                    by_name["validate_trip"].input_schema["properties"]["trip"]["type"],
+                    "object",
+                )
+                self.assertEqual(
+                    by_name["get_trip"].input_schema["properties"]["trip_id"][
+                        "pattern"
+                    ],
+                    r"^[a-z0-9][a-z0-9-]{0,79}$",
+                )
+                self.assertEqual(
+                    by_name["plan_trip"].input_schema["properties"]["confirm_write"][
+                        "default"
+                    ],
+                    False,
                 )
                 self.assertIn(
                     "travel-planner://capabilities",
@@ -45,6 +69,12 @@ class MCPTravelServerTests(unittest.TestCase):
                 )
                 self.assertIn(
                     "plan_a_trip", {prompt.name for prompt in prompts.prompts}
+                )
+                prompt = await client.get_prompt(
+                    "plan_a_trip", {"request": "plan details"}
+                )
+                self.assertIn(
+                    "Use parse_trip_request before plan_trip", str(prompt.messages)
                 )
 
         asyncio.run(check())
@@ -80,6 +110,14 @@ class MCPTravelServerTests(unittest.TestCase):
                 self.assertIsNotNone(payload)
                 self.assertEqual(payload["status"], "parsed")
                 self.assertEqual(payload["intent"]["start_date"], "2026-04-01")
+                invalid_args = await client.call_tool(
+                    "parse_trip_request", {"request": ""}
+                )
+                self.assertTrue(invalid_args.is_error)
+                invalid_trip = await client.call_tool(
+                    "validate_trip", {"trip": {"schema_version": "wrong"}}
+                )
+                self.assertEqual(invalid_trip.structured_content["status"], "invalid")
 
         asyncio.run(check())
 
@@ -162,6 +200,9 @@ class MCPTravelServerTests(unittest.TestCase):
                     build_trip_site_tool("demo-trip")["status"], "confirmation_required"
                 )
                 self.assertFalse(sites.exists())
+                built = build_trip_site_tool("demo-trip", confirm_write=True)
+                self.assertEqual(built["status"], "built")
+                self.assertTrue((sites / "demo-trip" / "index.html").is_file())
 
     def test_plan_reports_missing_provider_configuration_without_fixture_fallback(
         self,
