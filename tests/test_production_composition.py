@@ -15,7 +15,8 @@ from src.orchestrator import StageName, StageStatus
 from src.sources import AmadeusClient, SourceAdapter
 from src.sources.routing import FixtureRoutingProvider, Route, RouteMode, RouteProvenance, RouteStatus, RouteStep
 from src.schemas import validate_trip
-from src.validator import RouteConstraint, ValidationContext
+from src.planner import SchedulingInput, ScheduleState, schedule
+from src.validator import OpeningInterval, RouteConstraint, ValidationContext
 
 
 ENVIRONMENT = {
@@ -185,6 +186,46 @@ def test_mixed_transport_uses_explicit_transit_steps_instead_of_walking_fallback
     assert context.route_lookup is not None
     assert context.travel_minutes_for("origin", "destination", datetime(2026, 4, 10, 7, tzinfo=timezone.utc)) is None
     assert provider.modes == [RouteMode.TRANSIT]
+
+
+def test_transit_scheduler_rejects_return_after_recorded_last_service():
+    class LastServiceRoutingProvider(RecordedTransitRoutingProvider):
+        def __init__(self):
+            super().__init__()
+            self.departures = []
+
+        def fetch_at(self, origin, destination, mode, departure_at):
+            self.departures.append((origin.place_id, destination.place_id, departure_at))
+            if origin.place_id != "hakata-hotel" and departure_at.hour >= 20:
+                return Route(origin, destination, mode, RouteStatus.NO_ROUTE,
+                             RouteProvenance("recorded transit", datetime(2026, 4, 10, 20, tzinfo=timezone.utc)))
+            return super().fetch_at(origin, destination, mode, departure_at)
+
+    trip = json.loads((Path(__file__).parents[1] / "fixtures/trips/japan-5-day-trip-v1.json").read_text())
+    poi = next(place for place in trip["candidate_sets"]["places"] if place["id"] == "ohori-park")
+    trip["candidate_sets"]["places"] = [poi]
+    trip["days"] = []
+    poi["coordinates"] = {"latitude": 33.5932, "longitude": 130.3769}
+    poi["schedule"] = {"duration_minutes": 60, "day": 1, "required": True,
+                        "fixed_start_at": "2026-04-10T19:00:00+09:00", "fixed_end_at": "2026-04-10T20:00:00+09:00"}
+    trip["candidate_sets"]["restaurants"] = []
+    trip["date_range"] = {"start_date": "2026-04-10", "end_date": "2026-04-10"}
+    hotel_id = trip["selected"]["hotel_place_ids"][0]
+    hotel = next(candidate["place"] for candidate in trip["candidate_sets"]["hotels"] if candidate["place"]["id"] == hotel_id)
+    hotel["coordinates"] = {"latitude": 33.5902, "longitude": 130.4207}
+    records = [SimpleNamespace(collection="places", candidate=poi),
+               SimpleNamespace(collection="hotels", candidate={"place": hotel})]
+    provider = LastServiceRoutingProvider()
+    intent = parse_trip_request("2026/4/10到2026/4/10 福岡一日，大眾運輸")
+    context = _routing_context(records, provider, intent)
+    context = replace(context, opening_hours={poi["id"]: tuple(OpeningInterval(day, datetime.min.time(), datetime.max.time()) for day in range(7))})
+
+    result = schedule(SchedulingInput(trip, context, daily_start="08:00", daily_end="22:00"))
+
+    assert result.best_trip is None
+    assert any(violation.code == "schedule.route_unknown" for violation in result.candidates[0].violations)
+    assert any(origin == poi["id"] and destination == hotel_id and departure.hour == 20
+               for origin, destination, departure in provider.departures)
 
 
 def test_transit_schedule_exports_same_timed_routes_into_canonical_trip_and_public_leg_contract():
