@@ -227,20 +227,22 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
             placed.add(activity["id"])
     if placed_activity and hotel_id is not None:
         back = request.validation_context.travel_minutes.get((previous, hotel_id))
-        if back is None or cursor + timedelta(minutes=back) > closes:
-            last_item = next((item for item in reversed(items) if item.get("kind") == "meal"), None)
-            if last_item is not None and items and items[-1] is last_item:
-                items.pop()
+        while back is None or cursor + timedelta(minutes=back) > closes:
+            if items and items[-1].get("kind") == "meal":
+                omitted = items.pop()
                 violations.append(Violation("meal.hotel_return_unverified", "warning", "restaurant meal omitted because the return route to lodging is unverified or too late", "/days"))
-                required_last = next((item for item in reversed(items) if item.get("kind") != "meal"), None)
-                if required_last is not None:
-                    previous = required_last["place_id"]
-                    cursor = datetime.fromisoformat(required_last["end_at"])
-                    back = request.validation_context.travel_minutes.get((previous, hotel_id))
+                last_item = items[-1] if items else None
+                if last_item is None:
+                    break
+                previous = last_item["place_id"]
+                cursor = datetime.fromisoformat(last_item["end_at"])
+                back = request.validation_context.travel_minutes.get((previous, hotel_id))
+                continue
             if back is None:
                 violations.append(_failure("schedule.route_unknown", f"route from {previous} to {hotel_id} is required for daily hotel consistency", "/days"))
-            elif cursor + timedelta(minutes=back) > closes:
+            else:
                 violations.append(_failure("schedule.hotel_return_infeasible", "cannot return to selected hotel within daily end", "/days"))
+            break
     return items, violations, placed
 
 

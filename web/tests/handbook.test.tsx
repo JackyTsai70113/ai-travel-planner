@@ -237,6 +237,23 @@ describe('淡路島只讀旅遊助手', () => {
     expect(screen.queryByText('華西街夜市')).not.toBeInTheDocument()
   })
 
+  it('餐段候補只顯示營業與路線均已查核的餐廳', () => {
+    const selected = placeIds[0]
+    const backup = 'backup-restaurant'
+    const mealBundle = { ...bundle,
+      places: [...(bundle.places || []), { id: backup, name: '候補食堂', maps_query: '候補食堂' }],
+      days: [{ ...bundle.days[0], items: [{ id: 'lunch', kind: 'meal', start_at: `${dates[0]}T12:30:00+09:00`, end_at: `${dates[0]}T13:30:00+09:00`, place_id: selected }] }],
+      restaurant_facts: [
+        { place_id: selected, provenance: guideSource, fields: { schedule: { day: 1, meal_period: 'lunch', selected: true, alternatives: [{ place_id: backup, meal_period: 'lunch', day: 1, hours_verified: true, route_verified: true }] } } },
+        { place_id: backup, provenance: guideSource, fields: { price_range: '¥900–1,500' } },
+      ],
+    } as Bundle
+    render(<FoodPage bundle={mealBundle} />)
+    expect(screen.getByText('同餐段候補')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '候補食堂' })).toHaveAttribute('href', expect.stringContaining(encodeURIComponent('候補食堂')))
+    expect(screen.getByText(/營業時間與行程路線已查核/)).toBeInTheDocument()
+  })
+
   it('行程結束後不把下一站跳回早餐', () => {
     expect(heroNextItem(bundle.days[0], null)?.id).toBe('move-0')
     expect(heroNextItem(bundle.days[0], 23 * 60 + 59)).toBeNull()

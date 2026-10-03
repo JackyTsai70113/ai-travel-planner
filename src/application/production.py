@@ -218,13 +218,15 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
     start, end = _travel_dates(intent)
     days_count = (end - start).days + 1
     places = [place for place in collections["places"] if place.get("kind") == "poi"]
-    restaurants = _restaurant_candidates(collections["restaurants"], intent, start, end)
+    restaurants = collections["restaurants"]
     hotels, flights = collections["hotels"], collections["flights"]
     requires_flights = _requires_flight_search(intent)
     if len(places) < days_count or (requires_flights and not flights):
         required = "POIs and flight" if requires_flights else "POIs"
         raise ProductionIncompleteError(f"live provider results are insufficient for a complete trip (need {required})")
     selected_hotel = _select_hotel_candidate(hotels, intent, start, end, flights, collections["places"])
+    restaurants = _restaurant_candidates(restaurants, intent, start, end, routing, places,
+                                         selected_hotel["place"]["id"] if selected_hotel else None)
 
     all_places = [*collections["places"], *(hotel["place"] for hotel in hotels), *(restaurant["place"] for restaurant in restaurants)]
     seen: set[str] = set()
@@ -284,7 +286,8 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
     return [scheduled.trip]
 
 
-def _restaurant_candidates(candidates: Sequence[dict], intent: TravelIntent, start: date, end: date) -> list[dict]:
+def _restaurant_candidates(candidates: Sequence[dict], intent: TravelIntent, start: date, end: date,
+                           routing: ValidationContext | None = None, places: Sequence[dict] = (), hotel_id: str | None = None) -> list[dict]:
     """Select distinct evidence-backed candidates for each feasible meal period."""
     timezone_name = _local_timezone(intent)
     zone = ZoneInfo(timezone_name)
@@ -298,7 +301,8 @@ def _restaurant_candidates(candidates: Sequence[dict], intent: TravelIntent, sta
             meal_end = meal_start + timedelta(minutes=60)
             eligible = [candidate for candidate in eligible_restaurants(candidates, meal_start, meal_end)
                         if candidate.get("place", {}).get("id") not in used
-                        and candidate.get("schedule", {}).get("duration_minutes", 60) > 0]
+                        and candidate.get("schedule", {}).get("duration_minutes", 60) > 0
+                        and _meal_route_feasible(candidate, period, meal_start, meal_end, day_number, routing, places, hotel_id)]
             if not eligible:
                 continue
             candidate = dict(eligible[(day_number + len(selected)) % len(eligible)])
@@ -308,6 +312,10 @@ def _restaurant_candidates(candidates: Sequence[dict], intent: TravelIntent, sta
             candidate["schedule"] = {
                 "duration_minutes": 60, "day": day_number, "meal_period": period, "required": False,
                 "fixed_start_at": meal_start.isoformat(), "fixed_end_at": meal_end.isoformat(),
+                "selected": True,
+                "alternatives": [{"place_id": item["place"]["id"], "meal_period": period, "day": day_number,
+                                  "hours_verified": True, "route_verified": True}
+                                 for item in eligible if item["place"]["id"] != place_id],
             }
             selected[place_id] = candidate
             used.add(place_id)
@@ -319,6 +327,23 @@ def _restaurant_candidates(candidates: Sequence[dict], intent: TravelIntent, sta
             copied["schedule"] = selected[place_id]["schedule"]
         result.append(copied)
     return result
+
+
+def _meal_route_feasible(candidate: Mapping[str, object], period: str, starts: datetime, ends: datetime,
+                         day_number: int, routing: ValidationContext | None, places: Sequence[dict], hotel_id: str | None) -> bool:
+    if routing is None or hotel_id is None or day_number > len(places):
+        return False
+    place_id = candidate.get("place", {}).get("id")
+    poi_id = places[day_number - 1].get("id")
+    if not isinstance(place_id, str) or not isinstance(poi_id, str):
+        return False
+    if period == "breakfast":
+        outbound = routing.travel_minutes.get((hotel_id, place_id))
+        onward = routing.travel_minutes.get((place_id, poi_id))
+        return outbound is not None and onward is not None and starts - timedelta(minutes=outbound) >= datetime.combine(starts.date(), time(7), starts.tzinfo) and ends + timedelta(minutes=onward) <= datetime.combine(starts.date(), time(10), starts.tzinfo)
+    outbound = routing.travel_minutes.get((poi_id, place_id))
+    returning = routing.travel_minutes.get((place_id, hotel_id))
+    return outbound is not None and returning is not None and starts >= datetime.combine(starts.date(), time(12) if period == "lunch" else time(18), starts.tzinfo) and ends + timedelta(minutes=returning) <= datetime.combine(starts.date(), time(20), starts.tzinfo)
 
 
 def _add_unfilled_meal_warnings(trip: dict) -> None:

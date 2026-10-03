@@ -373,3 +373,27 @@ def test_legacy_breakfast_is_omitted_when_route_would_overlap_first_poi():
     routes = {("hotel", "breakfast-shop"): 45, ("breakfast-shop", "poi"): 45}
     _schedule_legacy_meals(trip, [restaurant], ValidationContext(travel_minutes=routes))
     assert all(item["kind"] != "meal" for item in trip["days"][0]["items"])
+
+
+def test_restaurant_selection_keeps_open_route_verified_candidate_when_first_is_closed():
+    from src.application.production import _restaurant_candidates
+    from src.validator import ValidationContext
+
+    intent = parse_trip_request("2026/4/10到2026/4/10 台北出發德島一日，1大，自駕")
+    candidates = []
+    for index in range(4):
+        place_id = f"restaurant-{index}"
+        provenance = {"source_type": "provider", "provider": "recorded feed", "source_url": f"https://example.test/{index}", "retrieved_at": "2026-04-01T00:00:00+09:00", "status": "confirmed"}
+        closed_days = [4] if index == 0 else []
+        candidates.append({"place": {"id": place_id, "name": place_id, "kind": "restaurant", "provenance": provenance}, "provenance": provenance,
+                           "opening_hours": {"status": "fresh", "timezone": "Asia/Tokyo", "closed_weekdays": closed_days,
+                                             "intervals": [{"weekday": day, "opens_at": "07:00", "closes_at": "22:00"} for day in range(7)]}})
+    routes = {}
+    for candidate in candidates:
+        place_id = candidate["place"]["id"]
+        routes[("hotel", place_id)] = routes[(place_id, "poi")] = routes[("poi", place_id)] = routes[(place_id, "hotel")] = 5
+    selected = _restaurant_candidates(candidates, intent, date(2026, 4, 10), date(2026, 4, 10), ValidationContext(routes), [{"id": "poi"}], "hotel")
+    lunch = next(candidate for candidate in selected if candidate.get("schedule", {}).get("meal_period") == "lunch")
+    assert lunch["place"]["id"] != "restaurant-0"
+    assert lunch["schedule"]["alternatives"]
+    assert all(item["hours_verified"] and item["route_verified"] for item in lunch["schedule"]["alternatives"])

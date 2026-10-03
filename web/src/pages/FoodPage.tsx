@@ -45,6 +45,16 @@ export function FoodPage({ bundle }: FoodPageProps) {
             {record?.reservation_required !== undefined ? <div><dt>訂位</dt><dd>{record.reservation_required ? record.reservation_url ? <a href={record.reservation_url} target="_blank" rel="noreferrer">需訂位，開啟預約資訊</a> : '需訂位' : '無需訂位'}</dd></div> : null}
           </dl>
           {record?.recommended_dishes?.length ? <div className="food-picks"><strong>有來源的推薦餐點</strong><ol>{record.recommended_dishes.map((dish) => <li key={dish.name}><strong>{dish.name}</strong>{dish.note ? <span>{dish.note}</span> : null}</li>)}</ol></div> : null}
+          {record?.schedule?.alternatives?.length ? <div className="food-alternatives"><strong>同餐段候補</strong><ul>{record.schedule.alternatives.map((alternative) => {
+            const alternate = bundle.places?.find((candidate) => candidate.id === alternative.place_id)
+            const alternateName = findPlaceLabel(bundle.places, alternative.place_id)
+            const alternateFacts = facts.get(alternative.place_id)
+            return <li key={`${alternative.day}-${alternative.meal_period}-${alternative.place_id}`}>
+              <a href={googleMapsHrefForPlace(alternate, alternateName)} target="_blank" rel="noreferrer">{alternateName}</a>
+              {alternateFacts?.price_range ? <span>；{alternateFacts.price_range}</span> : null}
+              <span>；營業時間與行程路線已查核</span>
+            </li>
+          })}</ul></div> : null}
           {provenance ? <p className="food-source">資料來源：{provenance.provider || '餐廳資料來源'}{provenance.retrieved_at ? `；查核時間 ${provenance.retrieved_at}` : ''}{provenance.source_url ? <>；<a href={provenance.source_url} target="_blank" rel="noreferrer">查看來源</a></> : ''}</p> : null}
         </article>
       })}</div>

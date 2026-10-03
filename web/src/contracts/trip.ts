@@ -135,6 +135,7 @@ export interface BundleRestaurantFacts {
   place_id: string
   provenance?: BundleProvenance | null
   fields?: {
+    schedule?: { day?: number; meal_period?: 'breakfast' | 'lunch' | 'dinner'; selected?: boolean; alternatives?: Array<{ place_id: string; meal_period: string; day: number; hours_verified: boolean; route_verified: boolean }> }
     opening_hours?: { status?: string; timezone?: string; intervals?: Array<{ weekday: number; opens_at: string; closes_at: string }> }
     price_range?: string
     meal_price_signals?: Array<{ meal?: string; label?: string; provenance?: BundleProvenance }>

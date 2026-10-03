@@ -219,6 +219,8 @@ def _public_restaurant_facts(candidate_sets: Mapping[str, Any]) -> list[dict[str
             continue
         provenance = candidate.get("provenance") if isinstance(candidate.get("provenance"), Mapping) else place.get("provenance")
         fields = {}
+        if isinstance(candidate.get("schedule"), Mapping):
+            fields["schedule"] = candidate["schedule"]
         for key in ("opening_hours", "price_range", "meal_price_signals", "rating", "review_count", "cuisine", "recommended_dishes", "reservation_required", "reservation_url", "wait_risk"):
             if key in candidate:
                 fields[key] = candidate[key]

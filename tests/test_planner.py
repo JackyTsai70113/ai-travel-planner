@@ -267,6 +267,30 @@ class PlannerTests(unittest.TestCase):
         self.assertNotIn("meal", {item["kind"] for item in result.best_trip.trip["days"][0]["items"]})
         self.assertIn("meal.hotel_return_unverified", {item.code for item in result.best_trip.violations})
 
+    def test_return_fallback_removes_each_trailing_meal_until_last_route_is_verified(self):
+        trip = copy.deepcopy(self.trip)
+        trip["days"] = []
+        poi = next(place for place in trip["candidate_sets"]["places"] if place["id"] == "ohori-park")
+        poi["schedule"] = {"duration_minutes": 60, "day": 1, "required": True}
+        source = trip["candidate_sets"]["restaurants"][0]
+        lunch = copy.deepcopy(source)
+        dinner = copy.deepcopy(source)
+        lunch["place"]["id"] = "lunch-shop"
+        dinner["place"]["id"] = "dinner-shop"
+        lunch["schedule"] = {"duration_minutes": 45, "day": 1, "required": False, "meal_period": "lunch"}
+        dinner["schedule"] = {"duration_minutes": 45, "day": 1, "required": False, "meal_period": "dinner"}
+        trip["candidate_sets"]["restaurants"] = [lunch, dinner]
+        hotel = "hakata-hotel"
+        routes = {(hotel, poi["id"]): 5, (poi["id"], hotel): 5, (poi["id"], "lunch-shop"): 5,
+                  ("lunch-shop", "dinner-shop"): 5}
+        hours = {poi["id"]: tuple(OpeningInterval(day, time(0), time(23, 59)) for day in range(7)),
+                 "lunch-shop": tuple(OpeningInterval(day, time(0), time(23, 59)) for day in range(7)),
+                 "dinner-shop": tuple(OpeningInterval(day, time(0), time(23, 59)) for day in range(7))}
+        result = schedule(SchedulingInput(trip, ValidationContext(routes, hours)))
+        assert result.best_trip is not None
+        self.assertEqual(["visit"], [item["kind"] for item in result.best_trip.trip["days"][0]["items"]])
+        self.assertEqual(2, sum(item.code == "meal.hotel_return_unverified" for item in result.best_trip.violations))
+
     def test_three_day_plan_keeps_breakfast_lunch_dinner_in_verified_windows(self):
         trip = copy.deepcopy(self.trip)
         trip["days"] = []
