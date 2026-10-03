@@ -420,9 +420,9 @@ def run_http_server() -> None:
     import uvicorn
     from starlette.responses import PlainTextResponse
 
-    token = os.environ.get("MCP_BACKEND_TOKEN", "")
+    token = os.environ.get("BEARER_TOKEN", "")
     if len(token) < 32:
-        raise SystemExit("MCP_BACKEND_TOKEN must contain at least 32 characters")
+        raise SystemExit("BEARER_TOKEN must contain at least 32 characters")
 
     class InternalBearerAuth:
         def __init__(self, app):

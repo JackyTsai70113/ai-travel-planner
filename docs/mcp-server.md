@@ -3,14 +3,13 @@
 ## Remote ChatGPT deployment
 
 The repository contains a Streamable HTTP backend and a Worker artifact for a
-private ChatGPT Site. The Worker serves ChatGPT at
-`/mcp`; it requires the trusted `oai-authenticated-user-id` header, then forwards
-only MCP POST requests to the configured backend using `MCP_BACKEND_TOKEN`.
-ChatGPT Sites supplies user authentication at its edge. Do not expose the Python
-backend publicly without setting a random `MCP_BACKEND_TOKEN` of at least 32
-characters.
+private ChatGPT Site. The Worker serves ChatGPT at `/mcp`; it requires the
+trusted `oai-authenticated-user-id` header, then forwards only MCP POST requests
+to the configured backend using `BEARER_TOKEN`. ChatGPT Sites supplies user
+authentication at its edge. Do not expose the Python backend publicly without
+setting a random `BEARER_TOKEN` of at least 32 characters.
 
-Deploy the repository's `Dockerfile` on Railway and set `MCP_BACKEND_TOKEN` to a
+Deploy the repository's root `Dockerfile` on Railway and set `BEARER_TOKEN` to a
 random value of 32 or more characters. Attach a Railway volume to the backend
 service at `/data`; both Canonical Trips (`/data/trips`) and generated site
 files (`/data/site`) live there across deployments. Run one replica because
@@ -21,6 +20,15 @@ Railway must expose its HTTP service on the assigned `PORT` and pass the
 `/health` health check. After planning a trip, restart/redeploy the service and
 verify that `get_trip` still returns that trip.
 
+`railway.json` sets `builder` to `DOCKERFILE` and `dockerfilePath` to the root
+`Dockerfile`, so this service does not need `RAILWAY_DOCKERFILE_PATH`. If the
+Dockerfile is moved, update `railway.json`; the variable is an alternative way
+to configure a non-default path.
+`PUBLIC_URL` is a custom Railway service variable, not a Railway-provided
+variable. Set it to the published ChatGPT Site origin (or use the live URL
+returned by Sites), then form the public MCP address as `${PUBLIC_URL%/}/mcp`
+when needed. Do not use the Site URL as the Worker's backend address.
+
 The Streamable HTTP transport keeps DNS-rebinding protection enabled. It
 automatically allows Railway's injected `RAILWAY_PUBLIC_DOMAIN`, plus local
 loopback hosts for development. If using an additional custom hostname, set
@@ -28,8 +36,10 @@ loopback hosts for development. If using an additional custom hostname, set
 without a scheme or path); do not disable host validation.
 
 For the ChatGPT-facing Site, set `MCP_BACKEND_URL` to the Railway HTTPS origin
-(without a path) and set `MCP_BACKEND_TOKEN` to the same secret in the Sites
-runtime environment using `sites_update_environment_variables`. Then run
+(without a path) and set `BEARER_TOKEN` to the same secret in the Sites runtime
+environment using `sites_update_environment_variables`. The Worker adds `/mcp`
+when forwarding, and accepts a backend URL that already ends in `/mcp` without
+duplicating it. Then run
 `npm run build:site-mcp` and `npm run validate:site-mcp`; the artifact is
 produced at `dist/`. Follow this repeatable publish/connect sequence using
 the connected Sites and Plugin Management operations:
@@ -97,7 +107,7 @@ Example local MCP client configuration:
 }
 ```
 
-Production planning requires `GOOGLE_MAPS_API_KEY`, `YOUTUBE_API_KEY`, and `OPENROUTESERVICE_API_KEY`. Flight prices are not fetched; the Canonical Trip and rendered page show the route/date summary beside a general Google Flights search-page link. Optional Amadeus credentials are used only for hotel search if an already compatible account is available. Pass secrets through the MCP host environment; never place credentials in tool arguments. Missing required credentials return their environment variable names without attempting provider calls or substituting fixtures.
+Production planning requires `GOOGLE_MAPS_API_KEY`, `YOUTUBE_API_KEY`, and `OPENROUTESERVICE_API_KEY`. The OpenRouteService account and free Standard key setup are described in [`flight-hotel-providers.md`](flight-hotel-providers.md#openrouteservice-key). Flight prices are not fetched; the Canonical Trip and rendered page show the route/date summary beside a general Google Flights search-page link. Optional Amadeus credentials are used only for hotel search if an already compatible account is available. Pass secrets through the MCP host environment; never place credentials in tool arguments. Missing required credentials return their environment variable names without attempting provider calls or substituting fixtures.
 
 ## Tools
 
