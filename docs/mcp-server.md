@@ -57,6 +57,10 @@ Streamable HTTP. Source/configuration files alone do not mean the backend or
 ChatGPT Site is deployed: the production URL and plugin become usable only
 after both hosting operations above succeed.
 
+MCP changes run the Python, framework, and MCP Site Worker checks. Frontend lint,
+browser tests, and GitHub Pages deployment run only when website code, trip data,
+or static-site build inputs change.
+
 ## Install and run
 
 From the repository root, install the optional MCP dependency and start the server:

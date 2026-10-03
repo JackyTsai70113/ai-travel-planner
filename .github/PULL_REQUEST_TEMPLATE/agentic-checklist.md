@@ -46,7 +46,9 @@
 
 - [ ] `framework`
 - [ ] `python`
-- [ ] `website`
+- [ ] `pytest`
+- [ ] `mcp-site`
+- [ ] `website` (when website/trip-data/static-site paths change)
 
 ### Merge boundary
 
