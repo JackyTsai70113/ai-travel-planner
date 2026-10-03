@@ -165,14 +165,13 @@ def _validate_night_view_evidence(value: object, path: str) -> None:
     if not isinstance(value, dict) or set(value) != fields:
         raise TripValidationError(f"{path} requires observation, visibility, obstruction, night scene, entrance, and retrieval date")
     _require_offset(value["retrieved_at"], f"{path}.retrieved_at")
-    expected = {"observation_point": "confirmed", "river_visibility": "visible", "obstructions": "clear", "night_scene": "visible"}
-    allowed = {"confirmed", "visible", "clear", "not_visible", "obstructed", "unknown"}
-    for field, status in expected.items():
+    allowed = {"observation_point": {"confirmed", "unknown"}, "river_visibility": {"visible", "not_visible", "unknown"}, "obstructions": {"clear", "obstructed", "unknown"}, "night_scene": {"visible", "not_visible", "unknown"}}
+    for field, statuses in allowed.items():
         fact = value[field]
         fact_path = f"{path}.{field}"
         if not isinstance(fact, dict) or set(fact) != {"status", "description", "provenance"}:
             raise TripValidationError(f"{fact_path} has invalid fields")
-        if fact.get("status") not in allowed or not isinstance(fact.get("description"), str) or not fact["description"].strip():
+        if fact.get("status") not in statuses or not isinstance(fact.get("description"), str) or not fact["description"].strip():
             raise TripValidationError(f"{fact_path} requires a known status and description")
         _require_provenance(fact.get("provenance"), f"{fact_path}.provenance")
     access = value["access_point"]
@@ -185,11 +184,25 @@ def _validate_night_view_evidence(value: object, path: str) -> None:
     if access["status"] == "confirmed" and not isinstance(point, dict):
         raise TripValidationError(f"{path}.access_point requires a navigation point when confirmed")
     if point is not None:
+        point_path = f"{path}.access_point.navigation_point"
+        allowed_point_fields = {"id", "kind", "name", "coordinates", "google_maps_url", "phone", "mapcode", "provenance"}
+        if not isinstance(point, dict) or set(point) - allowed_point_fields:
+            raise TripValidationError(f"{point_path} has invalid fields")
+        _require_canonical_id(point.get("id"), f"{point_path}.id")
         if point.get("kind") != "entrance" or not any(key in point for key in ("coordinates", "google_maps_url", "phone", "mapcode")):
             raise TripValidationError(f"{path}.access_point.navigation_point must identify a routed entrance")
         if "coordinates" in point:
-            _validate_coordinates(point["coordinates"], f"{path}.access_point.navigation_point.coordinates")
-        _require_provenance(point.get("provenance"), f"{path}.access_point.navigation_point.provenance")
+            _validate_coordinates(point["coordinates"], f"{point_path}.coordinates")
+        if "google_maps_url" in point and (not isinstance(point["google_maps_url"], str) or not point["google_maps_url"].strip() or not point["google_maps_url"].startswith(("https://", "http://"))):
+            raise TripValidationError(f"{point_path}.google_maps_url must be a URI")
+        if "phone" in point and (not isinstance(point["phone"], str) or not point["phone"].strip()):
+            raise TripValidationError(f"{point_path}.phone must be non-empty")
+        if "mapcode" in point and (not isinstance(point["mapcode"], str) or not point["mapcode"].strip()):
+            raise TripValidationError(f"{point_path}.mapcode must be non-empty")
+        if "name" in point and not isinstance(point["name"], str):
+            raise TripValidationError(f"{point_path}.name must be a string")
+        if "provenance" in point:
+            _require_provenance(point["provenance"], f"{point_path}.provenance")
 
 
 def _validate_restaurant(candidate: object, index: int) -> None:

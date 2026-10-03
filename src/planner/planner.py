@@ -191,6 +191,15 @@ def _confirmed_source(provenance: object) -> bool:
 
 
 def _record_constraint_satisfaction(trip: dict, constraints: Iterable[HardConstraint]) -> None:
+    constraints = list(constraints)
+    planner_owned_ids = {constraint.id for constraint in constraints if constraint.kind == "night_river_view"}
+    for day in trip.get("days", []):
+        for item in day.get("items", []):
+            existing = item.get("satisfies_constraints", [])
+            if isinstance(existing, list):
+                item["satisfies_constraints"] = [constraint_id for constraint_id in existing if constraint_id not in planner_owned_ids]
+                if not item["satisfies_constraints"]:
+                    item.pop("satisfies_constraints")
     for constraint in constraints:
         if constraint.kind != "night_river_view":
             continue

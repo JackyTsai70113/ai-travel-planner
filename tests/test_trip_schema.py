@@ -33,6 +33,24 @@ class NightViewEvidenceSchemaTests(unittest.TestCase):
         with self.assertRaises(TripValidationError):
             validate_trip(self.trip)
 
+    def test_night_view_navigation_point_matches_canonical_navigation_point_contract(self):
+        place = self.trip["candidate_sets"]["places"][0]
+        place["night_view_evidence"] = self._evidence()
+        point = place["night_view_evidence"]["access_point"]["navigation_point"]
+        for invalid_point in ("entrance", {"kind": "entrance", "google_maps_url": ""}, {"id": "bad id", "kind": "entrance", "mapcode": "A"}):
+            with self.subTest(invalid_point=invalid_point):
+                place["night_view_evidence"]["access_point"]["navigation_point"] = invalid_point
+                with self.assertRaises(TripValidationError):
+                    validate_trip(self.trip)
+        place["night_view_evidence"]["access_point"]["navigation_point"] = point
+
+    def test_night_view_fact_status_must_match_fact_semantics(self):
+        place = self.trip["candidate_sets"]["places"][0]
+        place["night_view_evidence"] = self._evidence()
+        place["night_view_evidence"]["river_visibility"]["status"] = "clear"
+        with self.assertRaises(TripValidationError):
+            validate_trip(self.trip)
+
     def test_wanhua_night_view_is_explicitly_unknown_and_does_not_require_a_river_view_hotel(self):
         trip = json.loads(WANHUA.read_text(encoding="utf-8"))
         validate_trip(trip)
