@@ -1,5 +1,32 @@
 # MCP travel planner service
 
+## Remote ChatGPT deployment
+
+The repository includes a Streamable HTTP deployment for a private ChatGPT Site
+and a separately hosted Python backend. The Site Worker serves ChatGPT at
+`/mcp`; it requires the trusted `oai-authenticated-user-id` header, then forwards
+only MCP POST requests to the configured backend using `MCP_BACKEND_TOKEN`.
+ChatGPT Sites supplies user authentication at its edge. Do not expose the Python
+backend publicly without setting a random `MCP_BACKEND_TOKEN` of at least 32
+characters.
+
+Deploy the repository's `Dockerfile` on Railway and set `MCP_BACKEND_TOKEN` to a
+random value of 32 or more characters. Set the production provider credentials
+needed by `src.application.production` in Railway's secret environment settings;
+without them `plan_trip` returns `configuration_missing`. Railway must expose its
+HTTP service on the assigned `PORT` and pass the `/health` health check.
+
+For the ChatGPT-facing Site, set `MCP_BACKEND_URL` to the Railway HTTPS origin
+(without a path) and set `MCP_BACKEND_TOKEN` to the same secret. Run
+`npm run build:site-mcp` and `npm run validate:site-mcp`; the Site archive is
+produced at `dist/`. Publish that archive from the pushed commit using the Sites
+workflow. The artifact declares the `site-worker/index.js` module as its Worker
+entrypoint at `/mcp`. Keep the Site private and let ChatGPT Sites provide
+authentication; the worker does not implement a second OAuth flow.
+
+The default `MCP_TRANSPORT=stdio` remains for local clients. Set
+`MCP_TRANSPORT=streamable-http` for the Railway container.
+
 The repository exposes its existing travel planning boundaries through the official MCP Python SDK. The server supports local stdio transport; it is not a public hosted endpoint.
 
 ## Install and run

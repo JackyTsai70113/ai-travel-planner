@@ -3,14 +3,18 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import socket
+import subprocess
 import sys
+import time
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from mcp import Client
+from mcp import Client, ClientSession
 from mcp.client.stdio import StdioServerParameters
+from mcp.client.streamable_http import streamable_http_client
 
 from src.mcp_server.server import (
     _public_trip_summary,
@@ -100,6 +104,54 @@ class MCPTravelServerTests(unittest.TestCase):
                 self.assertEqual(result.structured_content["status"], "parsed")
 
         asyncio.run(check())
+
+    def test_streamable_http_requires_internal_token_and_serves_tools(self) -> None:
+        import urllib.error
+        import urllib.request
+
+        project = Path(__file__).parent.parent.resolve()
+        with socket.socket() as sock:
+            sock.bind(("127.0.0.1", 0))
+            port = sock.getsockname()[1]
+        token = "t" * 40
+        process = subprocess.Popen(
+            [sys.executable, "-m", "src.mcp_server.server"],
+            cwd=project,
+            env={**os.environ, "PYTHONPATH": str(project), "MCP_TRANSPORT": "streamable-http", "MCP_BACKEND_TOKEN": token, "PORT": str(port)},
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        endpoint = f"http://127.0.0.1:{port}/mcp"
+        try:
+            for _ in range(100):
+                if process.poll() is not None:
+                    self.fail("HTTP MCP server exited during startup")
+                try:
+                    urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=0.2).read()
+                    break
+                except (OSError, urllib.error.URLError):
+                    time.sleep(0.05)
+            with self.assertRaises(urllib.error.HTTPError) as unauthenticated:
+                urllib.request.urlopen(urllib.request.Request(endpoint, data=b"{}", method="POST"), timeout=2)
+            self.assertEqual(unauthenticated.exception.code, 401)
+
+            async def list_tools():
+                import httpx2
+
+                async with httpx2.AsyncClient(headers={"Authorization": f"Bearer {token}"}) as http_client:
+                    async with streamable_http_client(endpoint, http_client=http_client) as (read, write):
+                        async with ClientSession(read, write) as client:
+                            await client.initialize()
+                            return await client.list_tools()
+
+            result = asyncio.run(list_tools())
+            self.assertIn("parse_trip_request", {tool.name for tool in result.tools})
+        finally:
+            process.terminate()
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill()
 
     def test_request_parser_is_reachable_over_mcp_and_keeps_unknowns(self) -> None:
         async def check() -> None:

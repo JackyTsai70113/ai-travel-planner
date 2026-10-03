@@ -356,7 +356,50 @@ def plan_a_trip(request: str) -> str:
 
 
 def main() -> None:
-    mcp.run(transport="stdio")
+    transport = os.environ.get("MCP_TRANSPORT", "stdio").lower()
+    if transport == "stdio":
+        mcp.run(transport="stdio")
+        return
+    if transport == "streamable-http":
+        run_http_server()
+        return
+    raise SystemExit("MCP_TRANSPORT must be 'stdio' or 'streamable-http'")
+
+
+def run_http_server() -> None:
+    """Serve the MCP endpoint behind an internal bearer-token gateway."""
+    import hmac
+
+    import uvicorn
+    from starlette.middleware import Middleware
+    from starlette.middleware.base import BaseHTTPMiddleware
+    from starlette.responses import JSONResponse, PlainTextResponse
+
+    token = os.environ.get("MCP_BACKEND_TOKEN", "")
+    if len(token) < 32:
+        raise SystemExit("MCP_BACKEND_TOKEN must contain at least 32 characters")
+
+    class InternalBearerAuth(BaseHTTPMiddleware):
+        async def dispatch(self, request, call_next):
+            if request.url.path == "/health":
+                return await call_next(request)
+            value = request.headers.get("authorization", "")
+            supplied = value[7:] if value.startswith("Bearer ") else ""
+            if not hmac.compare_digest(supplied, token):
+                return JSONResponse({"error": "unauthorized"}, status_code=401)
+            return await call_next(request)
+
+    app = mcp.streamable_http_app(
+        streamable_http_path="/mcp", json_response=True, stateless_http=True
+    )
+
+    async def health(_request):
+        return PlainTextResponse("ok")
+
+    app.add_route("/health", health, methods=["GET"])
+    app.user_middleware.insert(0, Middleware(InternalBearerAuth))
+    app.middleware_stack = app.build_middleware_stack()
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", "8000")), access_log=False)
 
 
 if __name__ == "__main__":
