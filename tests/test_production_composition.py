@@ -188,7 +188,7 @@ def test_mixed_transport_uses_explicit_transit_steps_instead_of_walking_fallback
     assert provider.modes == [RouteMode.TRANSIT]
 
 
-def test_transit_scheduler_rejects_return_after_recorded_last_service():
+def test_transit_scheduler_adjusts_day_start_after_last_service_and_verifies_return():
     class LastServiceRoutingProvider(RecordedTransitRoutingProvider):
         def __init__(self):
             super().__init__()
@@ -206,8 +206,7 @@ def test_transit_scheduler_rejects_return_after_recorded_last_service():
     trip["candidate_sets"]["places"] = [poi]
     trip["days"] = []
     poi["coordinates"] = {"latitude": 33.5932, "longitude": 130.3769}
-    poi["schedule"] = {"duration_minutes": 60, "day": 1, "required": True,
-                        "fixed_start_at": "2026-04-10T19:00:00+09:00", "fixed_end_at": "2026-04-10T20:00:00+09:00"}
+    poi["schedule"] = {"duration_minutes": 475, "day": 1, "required": True}
     trip["candidate_sets"]["restaurants"] = []
     trip["date_range"] = {"start_date": "2026-04-10", "end_date": "2026-04-10"}
     hotel_id = trip["selected"]["hotel_place_ids"][0]
@@ -220,13 +219,18 @@ def test_transit_scheduler_rejects_return_after_recorded_last_service():
     context = _routing_context(records, provider, intent)
     context = replace(context, opening_hours={poi["id"]: tuple(OpeningInterval(day, datetime.min.time(), datetime.max.time()) for day in range(7))})
 
-    result = schedule(SchedulingInput(trip, context, daily_start="08:00", daily_end="22:00"))
+    result = schedule(SchedulingInput(trip, context, daily_start="12:00", daily_end="22:00"))
 
-    assert result.best_trip is None
-    assert any(violation.code == "schedule.route_unknown" for violation in result.candidates[0].violations)
-    adjustment = next(violation for violation in result.candidates[0].violations
-                      if violation.code == "schedule.hotel_return_adjustment")
-    assert adjustment.context["departure_at"] == "2026-04-10T19:45:00+09:00"
+    assert result.best_trip is not None
+    assert result.best_trip.state is ScheduleState.READY
+    assert result.candidates[1].state is ScheduleState.FAILED
+    assert any(violation.code == "schedule.hotel_return_unverified" for violation in result.candidates[1].violations)
+    adjustment = next(violation for violation in result.best_trip.violations
+                      if violation.code == "schedule.daily_start_adjustment")
+    assert adjustment.context["requested_daily_start"] == "12:00"
+    assert adjustment.context["adjusted_daily_start"] == "11:45"
+    assert adjustment.context["return_departure_at"] == "2026-04-10T19:45:00+09:00"
+    assert adjustment.context["return_arrival_at"] == "2026-04-10T19:50:00+09:00"
     assert adjustment.context["mode"] == "transit"
     assert any(origin == poi["id"] and destination == hotel_id and departure.hour == 20
                for origin, destination, departure in provider.departures)

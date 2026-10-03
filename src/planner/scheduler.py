@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+from dataclasses import replace
 from datetime import date, datetime, time, timedelta
 from typing import Iterable, Mapping
 from zoneinfo import ZoneInfo
@@ -14,6 +15,51 @@ from .contracts import ScheduledTrip, ScheduleState, SchedulingInput, Scheduling
 
 
 def schedule(request: SchedulingInput) -> SchedulingOutput:
+    """Build a schedule and, when safe, try verified earlier day starts for late returns."""
+    initial = _schedule_once(request)
+    if initial.best_trip is not None or not any(item.code == "schedule.hotel_return_unverified"
+                                                for candidate in initial.candidates for item in candidate.violations):
+        return initial
+    if any(details.get("fixed_start_at") or details.get("fixed_end_at")
+           for collection in ("places", "restaurants")
+           for candidate in request.trip.get("candidate_sets", {}).get(collection, [])
+           for details in [candidate.get("schedule", {}) if collection == "places" else candidate.get("schedule", {})]):
+        return initial
+    if any(item.get("kind") not in {"visit", "meal"}
+           for day in request.trip.get("days", []) for item in day.get("items", [])):
+        return initial
+    try:
+        local_start = time.fromisoformat(request.daily_start)
+    except ValueError:
+        return initial
+    for minutes_earlier in (15, 30, 45, 60):
+        shifted = (datetime.combine(date(2000, 1, 1), local_start) - timedelta(minutes=minutes_earlier)).time()
+        if shifted < time(6, 0):
+            continue
+        adjusted_start = shifted.strftime("%H:%M")
+        adjusted = _schedule_once(replace(request, daily_start=adjusted_start))
+        candidate = adjusted.best_trip
+        if candidate is None:
+            continue
+        hotel_id = candidate.trip.get("selected", {}).get("hotel_place_ids", [None])[0]
+        return_facts = [fact for (origin, destination, _), fact in request.validation_context.timed_route_facts.items()
+                        if destination == hotel_id and fact.status in {"verified", "available"}
+                        and fact.mode in {"transit", "mixed"} and fact.departure_at is not None and fact.arrival_at is not None]
+        evidence = max(return_facts, key=lambda fact: fact.departure_at) if return_facts else None
+        warning = Violation(
+            "schedule.daily_start_adjustment", "warning",
+            f"原每日開始時刻無可查證的末班回程；已驗證將行程開始提前至 {adjusted_start}，並依新排程查得回住宿路線。",
+            "/days", {"requested_daily_start": request.daily_start, "adjusted_daily_start": adjusted_start,
+                      "return_departure_at": evidence.departure_at.isoformat() if evidence else None,
+                      "return_arrival_at": evidence.arrival_at.isoformat() if evidence else None,
+                      "mode": evidence.mode if evidence else None, "provider": evidence.provider if evidence else None,
+                      "source_url": evidence.source_url if evidence else None}, repairable=True)
+        candidate = replace(candidate, violations=(*candidate.violations, warning))
+        return SchedulingOutput((candidate, *initial.candidates))
+    return initial
+
+
+def _schedule_once(request: SchedulingInput) -> SchedulingOutput:
     """Build one deterministic Candidate Trip without filling unknown facts.
 
     Candidate facts are read only from the canonical candidate sets.  In
@@ -385,17 +431,7 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
                 back = request.validation_context.travel_minutes_for(previous, hotel_id, cursor)
                 continue
             if back is None:
-                violations.append(_failure("schedule.route_unknown", f"route from {previous} to {hotel_id} is required for daily hotel consistency", "/days"))
-                adjustment = _verified_earlier_return(previous, hotel_id, cursor, closes, request)
-                if adjustment is not None:
-                    departure_at, fact = adjustment
-                    violations.append(Violation(
-                        "schedule.hotel_return_adjustment", "warning",
-                        f"目前結束時刻沒有已查證的回程；若將活動結束與離開時刻調整至 {departure_at.strftime('%H:%M')}，可搭乘已查證路線返回住宿。",
-                        "/days", {"departure_at": departure_at.isoformat(),
-                                  "arrival_at": fact.arrival_at.isoformat() if fact.arrival_at else None,
-                                  "mode": fact.mode, "provider": fact.provider,
-                                  "source_url": fact.source_url}, repairable=True))
+                violations.append(_failure("schedule.hotel_return_unverified", f"route from {previous} to {hotel_id} is required for daily hotel consistency", "/days"))
             else:
                 violations.append(_failure("schedule.hotel_return_infeasible", "cannot return to selected hotel within daily end", "/days"))
             break
@@ -407,25 +443,6 @@ def _is_open(place_id: str, start: datetime, end: datetime, request: SchedulingI
     if not intervals:
         return False
     return any(interval.weekday == start.weekday() and interval.opens_at <= start.time() and end.time() <= interval.closes_at for interval in intervals)
-
-
-def _verified_earlier_return(origin: str, hotel_id: str, current_departure: datetime, closes: datetime,
-                             request: SchedulingInput) -> tuple[datetime, RouteConstraint] | None:
-    context = request.validation_context
-    if context.route_lookup is None or current_departure.tzinfo is None or closes.tzinfo is None:
-        return None
-    earliest = max(current_departure - timedelta(hours=3),
-                   datetime.combine(current_departure.date(), time.fromisoformat(request.daily_start), current_departure.tzinfo))
-    departure = current_departure - timedelta(minutes=15)
-    while departure >= earliest:
-        fact = context.route_lookup(origin, hotel_id, departure)
-        if fact is not None:
-            context.timed_route_facts[(origin, hotel_id, departure.isoformat())] = fact
-            if (fact.status in {"verified", "available"} and fact.minutes is not None
-                    and departure + timedelta(minutes=fact.minutes) <= closes):
-                return departure, fact
-        departure -= timedelta(minutes=15)
-    return None
 
 
 def _meal_period_order(period: object) -> int:
