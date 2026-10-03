@@ -42,7 +42,7 @@ export default {
     // ChatGPT Sites authenticates its caller and supplies this trusted edge header.
     const userId = request.headers.get("oai-authenticated-user-id");
     if (!userId) return json({ error: "unauthenticated" }, 401);
-    if (!env.MCP_BACKEND_URL || !env.MCP_BACKEND_TOKEN) return json({ error: "service_unavailable" }, 503);
+    if (!env.MCP_BACKEND_URL || !env.BEARER_TOKEN) return json({ error: "service_unavailable" }, 503);
     const contentLength = request.headers.get("content-length");
     if (contentLength && Number(contentLength) > MAX_BODY_BYTES) return json({ error: "request_too_large" }, 413);
     const body = await readBoundedBody(request);
@@ -50,7 +50,8 @@ export default {
 
     let backend;
     try {
-      backend = new URL("/mcp", env.MCP_BACKEND_URL);
+      const backendBase = env.MCP_BACKEND_URL.replace(/\/+$/, "");
+      backend = new URL(backendBase.endsWith("/mcp") ? backendBase : `${backendBase}/mcp`);
       if (backend.protocol !== "https:" || backend.username || backend.password) {
         return json({ error: "service_unavailable" }, 503);
       }
@@ -60,7 +61,7 @@ export default {
     const headers = new Headers({
       "content-type": request.headers.get("content-type") || "application/json",
       accept: request.headers.get("accept") || "application/json, text/event-stream",
-      authorization: `Bearer ${env.MCP_BACKEND_TOKEN}`,
+      authorization: `Bearer ${env.BEARER_TOKEN}`,
       "oai-authenticated-user-id": userId,
     });
     const protocolVersion = request.headers.get("mcp-protocol-version");
