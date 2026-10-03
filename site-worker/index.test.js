@@ -40,6 +40,37 @@ test("forwards MCP POST with internal bearer credentials", async () => {
   } finally { globalThis.fetch = originalFetch; }
 });
 
+test("logs only safe backend error metadata when upstream fetch throws", async () => {
+  const originalFetch = globalThis.fetch;
+  const originalError = console.error;
+  const logEntries = [];
+  globalThis.fetch = async () => {
+    const error = new TypeError("request failed with private request content");
+    error.cause = Object.assign(new Error("internal-secret"), { code: "ECONNRESET" });
+    throw error;
+  };
+  console.error = (...args) => logEntries.push(args);
+  try {
+    const response = await worker.fetch(new Request("https://site.example/mcp", {
+      method: "POST",
+      body: "private user request",
+      headers: { "oai-authenticated-user-id": "user-123" },
+    }), env);
+    assert.equal(response.status, 502);
+    assert.deepEqual(await response.json(), { error: "backend_unavailable" });
+    assert.equal(logEntries.length, 1);
+    assert.deepEqual(logEntries[0], ["MCP backend fetch failed", {
+      backendHost: "backend.example",
+      errorName: "TypeError",
+      errorCode: "ECONNRESET",
+    }]);
+    assert.doesNotMatch(JSON.stringify(logEntries), /internal-secret|private user request/);
+  } finally {
+    globalThis.fetch = originalFetch;
+    console.error = originalError;
+  }
+});
+
 test("refuses a non-HTTPS backend before forwarding a secret", async () => {
   const response = await worker.fetch(
     new Request("https://site.example/mcp", { method: "POST", body: "{}", headers: { "oai-authenticated-user-id": "user-123" } }),

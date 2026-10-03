@@ -71,7 +71,19 @@ export default {
 
     try {
       return await fetch(backend, { method: "POST", headers, body, redirect: "error" });
-    } catch {
+    } catch (error) {
+      const errorName = error instanceof Error ? error.name : "UnknownError";
+      const cause = error && typeof error === "object" ? error.cause : null;
+      const rawCode = cause && typeof cause === "object" ? cause.code : null;
+      const errorCode =
+        typeof rawCode === "string" && /^[A-Z0-9_]{1,80}$/.test(rawCode)
+          ? rawCode
+          : null;
+      console.error("MCP backend fetch failed", {
+        backendHost: backend.hostname,
+        errorName,
+        errorCode,
+      });
       return json({ error: "backend_unavailable" }, 502);
     }
   },
