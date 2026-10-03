@@ -87,7 +87,7 @@ Example local MCP client configuration:
 }
 ```
 
-Production planning also needs the provider credentials documented in the README. Pass them through the MCP host's process environment; never place credentials in tool arguments. Missing credentials return their environment variable names without attempting provider calls or substituting fixtures.
+Production planning requires `GOOGLE_MAPS_API_KEY`, `YOUTUBE_API_KEY`, and `OPENROUTESERVICE_API_KEY`. Flight prices are not fetched; the Canonical Trip and rendered page show the route/date summary beside a general Google Flights search-page link. Optional Amadeus credentials are used only for hotel search if an already compatible account is available. Pass secrets through the MCP host environment; never place credentials in tool arguments. Missing required credentials return their environment variable names without attempting provider calls or substituting fixtures.
 
 ## Tools
 

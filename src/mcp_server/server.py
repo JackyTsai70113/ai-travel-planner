@@ -126,6 +126,8 @@ def _public_trip_summary(trip: dict[str, Any]) -> dict[str, Any]:
         "title": trip.get("title"),
         "local_timezone": trip.get("local_timezone"),
         "date_range": date_range,
+        "flight_search_url": trip.get("flight_search_url"),
+        "flight_search_summary": trip.get("flight_search_summary"),
         "days": days,
         "validation": findings,
     }

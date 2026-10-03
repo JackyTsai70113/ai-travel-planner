@@ -31,6 +31,7 @@ def build_site(trip: dict[str, Any], derived: dict[str, Any] | None = None) -> s
     budget_rows = "".join(_render_budget_row(key, value) for key, value in trip.get("budget", {}).get("categories", {}).items())
     total_budget = _money(trip.get("budget", {}).get("total"))
     flight_rows = "".join(_render_flight(flight, selected.get("flight_ids", []), places) for flight in candidate_sets.get("flights", []))
+    flight_search = _render_flight_search(trip.get("flight_search_url"), trip.get("flight_search_summary"))
     hotel_rows = "".join(_render_hotel(hotel, selected.get("hotel_place_ids", []), places) for hotel in candidate_sets.get("hotels", []))
     transport_rows = "".join(_render_leg(leg, places) for leg in candidate_sets.get("transport_legs", []))
     meal_sections = "".join(_render_meal(day, places, candidate_sets) for day in days)
@@ -112,6 +113,7 @@ def build_site(trip: dict[str, Any], derived: dict[str, Any] | None = None) -> s
       <section id="flights-hotels">
         <h2>Flights / Hotels / Transportation</h2>
         <h3>Flights</h3>
+        {flight_search}
         <table>
           <thead><tr><th>航班</th><th>起點</th><th>目的地</th><th>起飛</th><th>降落</th><th>票價</th></tr></thead>
           <tbody>{flight_rows}</tbody>
@@ -234,6 +236,13 @@ def _render_route_link(leg: dict[str, Any], places: dict[str, dict[str, Any]]) -
     url = _maps_url(leg.get("from_place_id"), leg.get("to_place_id"), places)
     status = _status_badge(leg.get("provenance", {}).get("status", "estimated"))
     return f"<p>{from_name} → {to_name}：{status} <a href=\"{url}\" target=\"_blank\" rel=\"noopener\">Google Maps 導航</a></p>"
+
+
+def _render_flight_search(url: Any, summary: Any = None) -> str:
+    if url != "https://www.google.com/travel/flights?hl=zh-TW":
+        return "<p class='quiet'>請在 Google Flights 搜尋航班與票價。</p>"
+    details = f'：{escape(summary)}' if isinstance(summary, str) and summary else ''
+    return f'<p>{details}　<a href="{escape(url, quote=True)}" target="_blank" rel="noopener">開啟 Google Flights 搜尋航班</a>（請在 Google Flights 查看當下票價）</p>'
 
 
 def _render_leg(leg: dict[str, Any], places: dict[str, dict[str, Any]]) -> str:

@@ -251,6 +251,7 @@ class MCPTravelServerTests(unittest.TestCase):
             "id": "sample",
             "title": "Sample",
             "local_timezone": "Asia/Tokyo",
+            "flight_search_url": "https://www.google.com/travel/flights?hl=zh-TW",
             "date_range": {
                 "start_date": "2026-01-01",
                 "end_date": "2026-01-01",
@@ -294,6 +295,7 @@ class MCPTravelServerTests(unittest.TestCase):
         result = _public_trip_summary(trip)
         encoded = json.dumps(result)
         self.assertIn("Park", encoded)
+        self.assertIn("google.com/travel/flights", encoded)
         self.assertNotIn("secret", encoded)
         self.assertNotIn("private", encoded)
         self.assertEqual(
@@ -340,8 +342,6 @@ class MCPTravelServerTests(unittest.TestCase):
             [
                 "GOOGLE_MAPS_API_KEY",
                 "YOUTUBE_API_KEY",
-                "AMADEUS_CLIENT_ID",
-                "AMADEUS_CLIENT_SECRET",
                 "OPENROUTESERVICE_API_KEY",
             ],
         )
