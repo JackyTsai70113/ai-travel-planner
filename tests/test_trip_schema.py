@@ -22,6 +22,10 @@ class NightViewEvidenceSchemaTests(unittest.TestCase):
     def test_restaurant_schedule_and_alternatives_reject_unknown_fields(self):
         restaurant = self.trip["candidate_sets"]["restaurants"][0]
         restaurant["schedule"] = {"duration_minutes": 60, "parking_buffer_minutes": 5, "alternatives": [{"place_id": "backup", "meal_period": "lunch", "day": 1, "hours_verified": True, "route_verified": True}]}
+        backup = copy.deepcopy(restaurant)
+        backup["place"]["id"] = "backup"
+        backup.pop("schedule")
+        self.trip["candidate_sets"]["restaurants"].append(backup)
         restaurant["field_provenance"] = {"price_range": [{"source_type": "official", "provider": "Restaurant", "source_url": "https://example.test/menu", "retrieved_at": "2026-09-01T10:00:00+09:00", "status": "confirmed"}]}
         validate_trip(self.trip)
         restaurant["schedule"]["unexpected"] = True
@@ -29,6 +33,10 @@ class NightViewEvidenceSchemaTests(unittest.TestCase):
             validate_trip(self.trip)
         restaurant["schedule"].pop("unexpected")
         restaurant["schedule"]["alternatives"][0]["unexpected"] = True
+        with self.assertRaises(TripValidationError):
+            validate_trip(self.trip)
+        restaurant["schedule"]["alternatives"][0].pop("unexpected")
+        restaurant["schedule"]["alternatives"][0]["place_id"] = "missing-backup"
         with self.assertRaises(TripValidationError):
             validate_trip(self.trip)
 

@@ -40,13 +40,16 @@ def validate_trip(trip: dict) -> None:
         _require_canonical_id(place.get("id"), "candidate_sets.places[].id")
         _validate_place(place, f"candidate_sets.places[{index}]")
     transport_ids = {leg["id"] for leg in trip["candidate_sets"].get("transport_legs", [])}
-    restaurant_ids: set[str] = set()
-    for index, candidate in enumerate(trip["candidate_sets"].get("restaurants", [])):
+    restaurants = trip["candidate_sets"].get("restaurants", [])
+    restaurant_ids = {candidate.get("place", {}).get("id") for candidate in restaurants if isinstance(candidate, dict) and isinstance(candidate.get("place"), dict)}
+    if len(restaurant_ids) != len(restaurants):
+        raise TripValidationError("candidate_sets.restaurants contains duplicate canonical place IDs")
+    for index, candidate in enumerate(restaurants):
         _validate_restaurant(candidate, index)
         place_id = candidate.get("place", {}).get("id")
-        if place_id in restaurant_ids:
-            raise TripValidationError("candidate_sets.restaurants contains duplicate canonical place IDs")
-        restaurant_ids.add(place_id)
+        for alternative_index, alternative in enumerate(candidate.get("schedule", {}).get("alternatives", [])):
+            if alternative.get("place_id") not in restaurant_ids:
+                raise TripValidationError(f"candidate_sets.restaurants[{index}].schedule.alternatives[{alternative_index}].place_id does not reference candidate_sets.restaurants")
     for index, hotel in enumerate(trip["candidate_sets"].get("hotels", [])):
         occupancy = hotel.get("occupancy") if isinstance(hotel, dict) else None
         if isinstance(occupancy, dict) and "rooms" in occupancy and (

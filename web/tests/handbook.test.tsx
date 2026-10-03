@@ -246,11 +246,12 @@ describe('淡路島只讀旅遊助手', () => {
       days: [{ ...bundle.days[0], items: [{ id: 'lunch', kind: 'meal', start_at: `${dates[0]}T12:30:00+09:00`, end_at: `${dates[0]}T13:30:00+09:00`, place_id: selected }] }],
       restaurant_facts: [
         { place_id: selected, provenance: guideSource, fields: { schedule: { day: 1, meal_period: 'lunch', selected: true, alternatives: [{ place_id: backup, meal_period: 'lunch', day: 1, hours_verified: true, route_verified: true }] } } },
-        { place_id: backup, provenance: guideSource, fields: { price_range: '¥900–1,500' } },
+        { place_id: backup, provenance: guideSource, fields: { price_range: '¥900–1,500', field_provenance: { price_range: [{ ...guideSource, provider: '候補價格來源' }] } } },
       ],
     } as Bundle
     render(<FoodPage bundle={mealBundle} />)
     expect(screen.getByText('同餐段候補')).toBeInTheDocument()
+    expect(screen.getByText((_, element) => element?.tagName === 'SMALL' && element.textContent?.includes('候補價格來源') === true)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '候補食堂' })).toHaveAttribute('href', expect.stringContaining(encodeURIComponent('候補食堂')))
     expect(screen.getByText(/營業時間已查核，行程會再依當日實際順序確認可達性/)).toBeInTheDocument()
   })
