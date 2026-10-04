@@ -126,7 +126,24 @@ export default {
     if (sessionId) headers.set("mcp-session-id", sessionId);
 
     try {
-      const response = await fetch(backend, { method: "POST", headers, body, redirect: "error" });
+      const response = await fetch(backend, { method: "POST", headers, body, redirect: "manual" });
+      if (response.status >= 300 && response.status < 400) {
+        const location = response.headers.get("location");
+        let redirectHost = null;
+        if (location) {
+          try {
+            redirectHost = new URL(location, backend).hostname;
+          } catch {
+            redirectHost = "invalid";
+          }
+        }
+        console.error("MCP backend redirect refused", {
+          backendHost: backend.hostname,
+          upstreamStatus: response.status,
+          redirectHost,
+        });
+        return json({ error: "backend_unavailable" }, 502);
+      }
       if (!response.ok) {
         console.error("MCP backend returned HTTP error", {
           backendHost: backend.hostname,

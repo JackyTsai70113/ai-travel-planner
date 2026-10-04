@@ -155,6 +155,38 @@ test("logs upstream HTTP status without logging response content", async () => {
   }
 });
 
+test("refuses upstream redirects without following or exposing their full location", async () => {
+  const originalFetch = globalThis.fetch;
+  const originalError = console.error;
+  const logEntries = [];
+  globalThis.fetch = async (url, options) => {
+    assert.equal(url.href, "https://backend.example/mcp");
+    assert.equal(options.redirect, "manual");
+    return new Response(null, {
+      status: 307,
+      headers: { location: "https://redirect.example/private?token=internal-secret" },
+    });
+  };
+  console.error = (...args) => logEntries.push(args);
+  try {
+    const response = await worker.fetch(new Request("https://site.example/mcp", {
+      method: "POST", body: "private user request",
+      headers: { "oai-authenticated-user-id": "user-123" },
+    }), env);
+    assert.equal(response.status, 502);
+    assert.deepEqual(await response.json(), { error: "backend_unavailable" });
+    assert.deepEqual(logEntries[0], ["MCP backend redirect refused", {
+      backendHost: "backend.example",
+      upstreamStatus: 307,
+      redirectHost: "redirect.example",
+    }]);
+    assert.doesNotMatch(JSON.stringify(logEntries), /private\?token=|internal-secret|private user request/);
+  } finally {
+    globalThis.fetch = originalFetch;
+    console.error = originalError;
+  }
+});
+
 test("refuses a non-HTTPS backend before forwarding a secret", async () => {
   const response = await worker.fetch(
     new Request("https://site.example/mcp", { method: "POST", body: "{}", headers: { "oai-authenticated-user-id": "user-123" } }),
