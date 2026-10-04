@@ -22,6 +22,12 @@ const FETCH_ERROR_CODES = new Set([
   "CERT_HAS_EXPIRED",
   "CERT_NOT_YET_VALID",
 ]);
+const FETCH_ERROR_MESSAGE_CODES = new Map([
+  ["Network connection lost", "NETWORK_CONNECTION_LOST"],
+  ["fetch failed", "FETCH_FAILED"],
+  ["Failed to fetch", "FETCH_FAILED"],
+  ["The operation was aborted", "FETCH_ABORTED"],
+]);
 
 async function readBoundedBody(request) {
   const reader = request.body?.getReader();
@@ -105,10 +111,13 @@ export default {
       const errorCode = typeof rawCode === "string" && FETCH_ERROR_CODES.has(rawCode)
         ? rawCode
         : null;
+      const rawMessage = error instanceof Error ? error.message : "";
+      const errorMessageCode = FETCH_ERROR_MESSAGE_CODES.get(rawMessage) || null;
       console.error("MCP backend fetch failed", {
         backendHost: backend.hostname,
         errorType,
         errorCode,
+        errorMessageCode,
       });
       return json({ error: "backend_unavailable" }, 502);
     }
