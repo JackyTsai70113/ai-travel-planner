@@ -30,6 +30,7 @@ test("forwards MCP POST with internal bearer credentials", async () => {
     assert.equal(options.headers.get("authorization"), "Bearer internal-secret");
     assert.equal(options.headers.get("oai-authenticated-user-id"), "user-123");
     assert.equal(options.headers.get("mcp-protocol-version"), "2025-06-18");
+    assert.equal(options.headers.get("mcp-method"), null);
     return new Response('{"jsonrpc":"2.0","id":1,"result":{}}', { headers: { "content-type": "application/json" } });
   };
   try {
@@ -38,6 +39,104 @@ test("forwards MCP POST with internal bearer credentials", async () => {
     }), env);
     assert.equal(response.status, 200);
   } finally { globalThis.fetch = originalFetch; }
+});
+
+test("derives modern MCP routing headers from the body", async () => {
+  const originalFetch = globalThis.fetch;
+  const name = "旅行工具";
+  globalThis.fetch = async (_url, options) => {
+    assert.equal(options.headers.get("mcp-method"), "tools/call");
+    assert.equal(options.headers.get("mcp-name"), `=?base64?${Buffer.from(name).toString("base64")}?=`);
+    return new Response("{}", { headers: { "content-type": "application/json" } });
+  };
+  try {
+    const response = await worker.fetch(new Request("https://site.example/mcp", {
+      method: "POST",
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name,
+          arguments: { request: "private user content" },
+          _meta: {
+            "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+            "io.modelcontextprotocol/clientCapabilities": {},
+          },
+        },
+      }),
+      headers: {
+        "oai-authenticated-user-id": "user-123",
+        "mcp-protocol-version": "2026-07-28",
+        "mcp-method": "wrong/method",
+        "mcp-name": "wrong-name",
+      },
+    }), env);
+    assert.equal(response.status, 200);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("derives prompt and resource routing names from the body", async (t) => {
+  const originalFetch = globalThis.fetch;
+  const namedMethods = [
+    { method: "prompts/get", params: { name: "travel-summary" }, expectedName: "travel-summary" },
+    { method: "resources/read", params: { uri: "travel://trip/123" }, expectedName: "travel://trip/123" },
+  ];
+  globalThis.fetch = async (_url, options) => {
+    const body = JSON.parse(new TextDecoder().decode(options.body));
+    const expected = namedMethods.find(({ method }) => method === body.method);
+    assert.ok(expected);
+    assert.equal(options.headers.get("mcp-method"), expected.method);
+    assert.equal(options.headers.get("mcp-name"), expected.expectedName);
+    return new Response("{}", { headers: { "content-type": "application/json" } });
+  };
+  try {
+    for (const { method, params } of namedMethods) {
+      await t.test(method, async () => {
+        const response = await worker.fetch(new Request("https://site.example/mcp", {
+          method: "POST",
+          body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+          headers: {
+            "oai-authenticated-user-id": "user-123",
+            "mcp-protocol-version": "2026-07-28",
+          },
+        }), env);
+        assert.equal(response.status, 200);
+      });
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("derives MCP Tasks routing names from taskId", async (t) => {
+  const originalFetch = globalThis.fetch;
+  const taskMethods = ["tasks/get", "tasks/update", "tasks/cancel"];
+  globalThis.fetch = async (_url, options) => {
+    const body = JSON.parse(new TextDecoder().decode(options.body));
+    assert.equal(options.headers.get("mcp-method"), body.method);
+    assert.equal(options.headers.get("mcp-name"), "task-123");
+    return new Response("{}", { headers: { "content-type": "application/json" } });
+  };
+  try {
+    for (const method of taskMethods) {
+      await t.test(method, async () => {
+        const response = await worker.fetch(new Request("https://site.example/mcp", {
+          method: "POST",
+          body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params: { taskId: "task-123" } }),
+          headers: {
+            "oai-authenticated-user-id": "user-123",
+            "mcp-protocol-version": "2026-07-28",
+          },
+        }), env);
+        assert.equal(response.status, 200);
+      });
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test("logs safe backend error metadata when upstream fetch throws", async () => {
