@@ -155,7 +155,7 @@ test("logs upstream HTTP status without logging response content", async () => {
   }
 });
 
-test("refuses upstream redirects without following or exposing their full location", async () => {
+test("refuses upstream redirects without following or exposing their location", async () => {
   const originalFetch = globalThis.fetch;
   const originalError = console.error;
   const logEntries = [];
@@ -164,7 +164,7 @@ test("refuses upstream redirects without following or exposing their full locati
     assert.equal(options.redirect, "manual");
     return new Response(null, {
       status: 307,
-      headers: { location: "https://redirect.example/private?token=internal-secret" },
+      headers: { location: "https://canary-secret.redirect.example/private?token=internal-secret" },
     });
   };
   console.error = (...args) => logEntries.push(args);
@@ -178,9 +178,9 @@ test("refuses upstream redirects without following or exposing their full locati
     assert.deepEqual(logEntries[0], ["MCP backend redirect refused", {
       backendHost: "backend.example",
       upstreamStatus: 307,
-      redirectHost: "redirect.example",
+      redirectTarget: "different_https_host",
     }]);
-    assert.doesNotMatch(JSON.stringify(logEntries), /private\?token=|internal-secret|private user request/);
+    assert.doesNotMatch(JSON.stringify(logEntries), /canary-secret|private\?token=|internal-secret|private user request/);
   } finally {
     globalThis.fetch = originalFetch;
     console.error = originalError;

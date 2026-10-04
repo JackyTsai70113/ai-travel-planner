@@ -129,18 +129,25 @@ export default {
       const response = await fetch(backend, { method: "POST", headers, body, redirect: "manual" });
       if (response.status >= 300 && response.status < 400) {
         const location = response.headers.get("location");
-        let redirectHost = null;
+        let redirectTarget = "missing";
         if (location) {
           try {
-            redirectHost = new URL(location, backend).hostname;
+            const target = new URL(location, backend);
+            if (target.protocol !== "https:") {
+              redirectTarget = "non_https";
+            } else if (target.hostname === backend.hostname) {
+              redirectTarget = "same_host";
+            } else {
+              redirectTarget = "different_https_host";
+            }
           } catch {
-            redirectHost = "invalid";
+            redirectTarget = "invalid";
           }
         }
         console.error("MCP backend redirect refused", {
           backendHost: backend.hostname,
           upstreamStatus: response.status,
-          redirectHost,
+          redirectTarget,
         });
         return json({ error: "backend_unavailable" }, 502);
       }
