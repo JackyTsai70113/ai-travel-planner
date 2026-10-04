@@ -3,6 +3,8 @@ const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(b
   headers: { "content-type": "application/json; charset=utf-8", ...headers },
 });
 const MAX_BODY_BYTES = 4 * 1024 * 1024;
+const MCP_STANDARD_HEADERS_VERSION = "2026-07-28";
+const MAX_MCP_NAME_HEADER_BYTES = 6144;
 const FETCH_ERROR_CODES = new Set([
   "ECONNRESET",
   "ECONNREFUSED",
@@ -58,6 +60,52 @@ function classifyFetchErrorCause(error) {
     current = current.cause;
   }
   return { errorCode, errorCauseType };
+}
+
+function encodeMcpNameHeader(value) {
+  if (typeof value !== "string") return null;
+  const bytes = new TextEncoder().encode(value);
+  if (bytes.byteLength > MAX_MCP_NAME_HEADER_BYTES) return null;
+
+  const sentinelValue = value.startsWith("=?base64?") && value.endsWith("?=");
+  const safeAscii = /^[\x20-\x7e]*$/.test(value) && !/^[\t ]|[\t ]$/.test(value);
+  if (safeAscii && !sentinelValue) return value;
+
+  let binary = "";
+  for (let offset = 0; offset < bytes.length; offset += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+  }
+  return `=?base64?${btoa(binary)}?=`;
+}
+
+function addModernMcpStandardHeaders(headers, body, protocolVersion) {
+  if (typeof protocolVersion !== "string" || protocolVersion < MCP_STANDARD_HEADERS_VERSION) return;
+
+  let message;
+  try {
+    message = JSON.parse(new TextDecoder().decode(body));
+  } catch {
+    return;
+  }
+  if (!message || Array.isArray(message) || typeof message.method !== "string" || !/^[A-Za-z0-9_./-]{1,128}$/.test(message.method)) return;
+
+  // Derive routing metadata from the JSON-RPC body so header/body validation
+  // cannot be bypassed by trusting a client-supplied mirror header.
+  headers.set("mcp-method", message.method);
+
+  const params = message.params && typeof message.params === "object" && !Array.isArray(message.params)
+    ? message.params
+    : {};
+  let name;
+  if ((message.method === "tools/call" || message.method === "prompts/get") && typeof params.name === "string") {
+    name = params.name;
+  } else if (message.method === "resources/read" && typeof params.uri === "string") {
+    name = params.uri;
+  }
+  if (name !== undefined) {
+    const encodedName = encodeMcpNameHeader(name);
+    if (encodedName !== null) headers.set("mcp-name", encodedName);
+  }
 }
 
 async function readBoundedBody(request) {
@@ -122,6 +170,7 @@ export default {
     });
     const protocolVersion = request.headers.get("mcp-protocol-version");
     if (protocolVersion) headers.set("mcp-protocol-version", protocolVersion);
+    addModernMcpStandardHeaders(headers, body, protocolVersion);
     const sessionId = request.headers.get("mcp-session-id");
     if (sessionId) headers.set("mcp-session-id", sessionId);
 
