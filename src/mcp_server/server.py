@@ -326,7 +326,7 @@ def _next_clarification_question(missing, ambiguous, constraint_issues) -> str:
         "destination": "你想去哪些城市或地區？",
         "dates": "請提供確切的出發與返程日期（YYYY/MM/DD）。",
         "dates_or_duration": "這趟旅行預計哪幾天出發與返程，或總共安排幾天？",
-        "travelers": "共有幾位成人與兒童？每位兒童幾歲？",
+        "travelers": "共有幾位成人、幾位兒童？",
         "budget": "你希望設定預算上限，還是明確不設預算限制？",
         "origin": "你會從哪個城市或機場出發？",
         "transport": "你希望主要使用自駕、大眾運輸，還是兩者搭配？",
@@ -435,7 +435,8 @@ def plan_a_trip(request: str) -> str:
         "ambiguous, or contradictory, ask exactly ONE concise, specific question in this turn, "
         "then wait for the answer. Choose the most important unresolved item first (destination, "
         "exact dates, party size and child ages, budget or explicit no-limit preference, origin, "
-        "transport, then useful preferences). Do not present a checklist of questions. "
+        "transport, then useful preferences). If children are included but their ages were not stated, "
+        "ask for the ages in a separate later turn. Do not present a checklist of questions. "
         "If plan_trip returns needs_clarification, ask only the returned next_question. "
         "After each answer, add it to the accumulated request and parse again; do not discard "
         "previous answers or ask the same resolved question again. If the user cannot answer, "
