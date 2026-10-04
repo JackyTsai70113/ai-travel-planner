@@ -20,18 +20,19 @@ Railway must expose its HTTP service on the assigned `PORT` and pass the
 `/health` health check. After planning a trip, restart/redeploy the service and
 verify that `get_trip` still returns that trip.
 
-`railway.json` sets `builder` to `DOCKERFILE` and `dockerfilePath` to the root
-`Dockerfile`, so this service does not need `RAILWAY_DOCKERFILE_PATH`. If the
-Dockerfile is moved, update `railway.json`; the variable is an alternative way
-to configure a non-default path.
+`.railway/railway.ts` sets `builder` to `DOCKERFILE` and `dockerfilePath` to the
+root `/Dockerfile`, so this service does not need `RAILWAY_DOCKERFILE_PATH`. If
+the Dockerfile is moved, update the IaC definition; the variable is an
+alternative way to configure a non-default path.
 `PUBLIC_URL` is a custom Railway service variable, not a Railway-provided
 variable. Set it to the published ChatGPT Site origin (or use the live URL
 returned by Sites), then form the public MCP address as `${PUBLIC_URL%/}/mcp`
 when needed. Do not use the Site URL as the Worker's backend address.
 
 The `.railway/railway.ts` project definition imports Railway's TypeScript IaC
-SDK. Install the root JavaScript development dependencies before opening or
-planning that file:
+SDK and manages the GitHub source, preserved secret variables, `/data` volume,
+Dockerfile, health check, restart policy, and replica count. Install the root
+JavaScript development dependencies before opening or planning that file:
 
 ```sh
 npm install
@@ -39,10 +40,12 @@ railway config plan
 ```
 
 `railway config plan` only previews differences. Review its output before
-running `railway config apply`. This repository currently has a root
-`railway.json`; Railway does not allow the same service to be managed by both
-Config as Code and Infrastructure as Code. Migrate that service before using
-`.railway/railway.ts` to plan or apply production configuration.
+running `railway config apply`. The root `railway.json` was migrated into
+`.railway/railway.ts` and removed so the service has one configuration source.
+The imported environment variables use `preserve()` so planning does not read
+or replace secret values. If the plan proposes deleting variables, changing
+the GitHub source, or detaching the `/data` volume, stop and reconcile the IaC
+definition before applying it.
 
 The Streamable HTTP transport keeps DNS-rebinding protection enabled. It
 automatically allows Railway's injected `RAILWAY_PUBLIC_DOMAIN`, plus local
