@@ -78,6 +78,39 @@ test("derives modern MCP routing headers from the body", async () => {
   }
 });
 
+test("derives prompt and resource routing names from the body", async (t) => {
+  const originalFetch = globalThis.fetch;
+  const namedMethods = [
+    { method: "prompts/get", params: { name: "travel-summary" }, expectedName: "travel-summary" },
+    { method: "resources/read", params: { uri: "travel://trip/123" }, expectedName: "travel://trip/123" },
+  ];
+  globalThis.fetch = async (_url, options) => {
+    const body = JSON.parse(new TextDecoder().decode(options.body));
+    const expected = namedMethods.find(({ method }) => method === body.method);
+    assert.ok(expected);
+    assert.equal(options.headers.get("mcp-method"), expected.method);
+    assert.equal(options.headers.get("mcp-name"), expected.expectedName);
+    return new Response("{}", { headers: { "content-type": "application/json" } });
+  };
+  try {
+    for (const { method, params } of namedMethods) {
+      await t.test(method, async () => {
+        const response = await worker.fetch(new Request("https://site.example/mcp", {
+          method: "POST",
+          body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+          headers: {
+            "oai-authenticated-user-id": "user-123",
+            "mcp-protocol-version": "2026-07-28",
+          },
+        }), env);
+        assert.equal(response.status, 200);
+      });
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("derives MCP Tasks routing names from taskId", async (t) => {
   const originalFetch = globalThis.fetch;
   const taskMethods = ["tasks/get", "tasks/update", "tasks/cancel"];
