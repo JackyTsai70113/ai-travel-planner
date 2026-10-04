@@ -2,6 +2,14 @@
 
 ## Remote ChatGPT deployment
 
+## 已查證的 Railway production endpoint（2026-10-05）
+
+- Railway backend origin：`https://ai-travel-planner-production-732b.up.railway.app`
+- Health endpoint：`https://ai-travel-planner-production-732b.up.railway.app/health`（實測 HTTP 200，本文回應 `ok`）
+- Streamable HTTP MCP endpoint：`https://ai-travel-planner-production-732b.up.railway.app/mcp`
+
+唯讀驗證已透過 Railway CLI 注入既有 `BEARER_TOKEN` 呼叫 `tools/list` 與 `parse_trip_request`，均回 HTTP 200。直接不帶授權呼叫 `/mcp` 回 HTTP 401 是預期行為；後端同時要求 bearer token 與 Sites Worker 提供的 `oai-authenticated-user-id`。ChatGPT 應連接私人 Site Worker；Railway backend 是 Worker 的後端目標，不是公開的 Site URL。可重複的 smoke test 指令記錄於 [Railway 部署設定](../.railway/README.md#正式服務網址與驗證)。
+
 The repository contains a Streamable HTTP backend and a Worker artifact for a
 private ChatGPT Site. The Worker serves ChatGPT at `/mcp`; it requires the
 trusted `oai-authenticated-user-id` header, then forwards only MCP POST requests
