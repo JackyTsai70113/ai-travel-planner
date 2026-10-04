@@ -240,7 +240,7 @@ def plan_trip_tool(
         ),
     ] = False,
 ) -> dict[str, Any]:
-    """Run production planning; writes Canonical Trip and site files only when confirm_write is true."""
+    """Research and plan a trip after the user has answered clarifications and confirmed local file writes."""
     try:
         _trip_path(trip_id)
     except ValueError as exc:
@@ -252,13 +252,26 @@ def plan_trip_tool(
         }
     intent = parse_trip_request(request)
     intent_data = intent.as_dict()
-    if intent.missing_fields or intent.ambiguous_fields or intent.constraint_issues:
+    missing_fields = list(intent_data["missing_fields"])
+    # A duration is enough for an initial conversation, but live provider
+    # research needs a concrete date range for openings, routing, and lodging.
+    if not intent.start_date or not intent.end_date:
+        if not any(item["field"] == "dates" for item in missing_fields):
+            insertion = 1 if missing_fields and missing_fields[0]["field"] == "destination" else 0
+            missing_fields.insert(insertion, {
+                "field": "dates",
+                "reason": "即時行程研究需要明確的出發與返程日期",
+            })
+    if missing_fields or intent.ambiguous_fields or intent.constraint_issues:
         return {
             "status": "needs_clarification",
             "intent": intent_data,
-            "missing_fields": intent_data["missing_fields"],
+            "missing_fields": missing_fields,
             "ambiguous_fields": intent_data["ambiguous_fields"],
             "constraint_issues": intent_data["constraint_issues"],
+            "next_question": _next_clarification_question(
+                missing_fields, intent_data["ambiguous_fields"], intent_data["constraint_issues"]
+            ),
         }
     missing = missing_required_configuration()
     if missing:
@@ -305,6 +318,30 @@ def plan_trip_tool(
             for warning in result.warnings
         ],
     }
+
+
+def _next_clarification_question(missing, ambiguous, constraint_issues) -> str:
+    """Return one concrete question so the MCP host can conduct a focused QA turn."""
+    questions = {
+        "destination": "你想去哪些城市或地區？",
+        "dates": "請提供確切的出發與返程日期（YYYY/MM/DD）。",
+        "dates_or_duration": "這趟旅行預計哪幾天出發與返程，或總共安排幾天？",
+        "travelers": "共有幾位成人與兒童？每位兒童幾歲？",
+        "budget": "你希望設定預算上限，還是明確不設預算限制？",
+        "origin": "你會從哪個城市或機場出發？",
+        "transport": "你希望主要使用自駕、大眾運輸，還是兩者搭配？",
+    }
+    for item in missing:
+        question = questions.get(item["field"])
+        if question:
+            return question
+    if ambiguous:
+        item = ambiguous[0]
+        return f"我需要先釐清「{item['field']}」：{item['reason']}。你希望採用哪一種？"
+    if constraint_issues:
+        item = constraint_issues[0]
+        return f"我需要先釐清「{item['field']}」：{item['reason']}。你希望如何調整？"
+    return "請補充你最希望優先滿足的行程條件。"
 
 
 @mcp.tool(
@@ -390,14 +427,26 @@ def capabilities() -> str:
 
 @mcp.prompt()
 def plan_a_trip(request: str) -> str:
-    """Guide a travel planning conversation while preserving explicit facts and uncertainty."""
+    """Guide a one-question-at-a-time travel planning conversation."""
     return (
-        "Plan a trip from this request. Preserve only facts the traveler stated; "
-        "ask about missing or ambiguous dates, travelers, budget, origin, and transport. "
-        "Use parse_trip_request before plan_trip. Never claim research, availability, "
-        "opening hours, prices, routes, or validation succeeded without tool evidence. "
-        "Before any tool writes local files, explain the exact side effect and obtain confirmation, "
-        "then call plan_trip with confirm_write=true.\n\n"
+        "Help the traveler plan through a deliberate question-and-answer conversation. "
+        "Preserve only facts the traveler stated; never fill gaps with assumptions. "
+        "Use parse_trip_request before plan_trip on the accumulated request. If information is missing, "
+        "ambiguous, or contradictory, ask exactly ONE concise, specific question in this turn, "
+        "then wait for the answer. Choose the most important unresolved item first (destination, "
+        "exact dates, party size and child ages, budget or explicit no-limit preference, origin, "
+        "transport, then useful preferences). Do not present a checklist of questions. "
+        "If plan_trip returns needs_clarification, ask only the returned next_question. "
+        "After each answer, add it to the accumulated request and parse again; do not discard "
+        "previous answers or ask the same resolved question again. If the user cannot answer, "
+        "explain briefly why that detail is needed and offer clear choices where possible. "
+        "Do not call plan_trip while required fields remain unresolved. Once the request is "
+        "complete, show a concise summary of the understood trip and ask the traveler to confirm "
+        "that summary and the planning action. Only after explicit confirmation, explain that "
+        "plan_trip performs live research and writes/overwrites the named Canonical Trip and "
+        "static site files on the MCP service; then call plan_trip with confirm_write=true. "
+        "Never claim research, availability, opening hours, prices, routes, or validation succeeded "
+        "without tool evidence. Planning does not book, pay, or publish the site.\n\n"
         f"Traveler request:\n{request}"
     )
 
