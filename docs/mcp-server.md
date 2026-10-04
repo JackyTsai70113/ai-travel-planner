@@ -29,6 +29,21 @@ variable. Set it to the published ChatGPT Site origin (or use the live URL
 returned by Sites), then form the public MCP address as `${PUBLIC_URL%/}/mcp`
 when needed. Do not use the Site URL as the Worker's backend address.
 
+The `.railway/railway.ts` project definition imports Railway's TypeScript IaC
+SDK. Install the root JavaScript development dependencies before opening or
+planning that file:
+
+```sh
+npm install
+railway config plan
+```
+
+`railway config plan` only previews differences. Review its output before
+running `railway config apply`. This repository currently has a root
+`railway.json`; Railway does not allow the same service to be managed by both
+Config as Code and Infrastructure as Code. Migrate that service before using
+`.railway/railway.ts` to plan or apply production configuration.
+
 The Streamable HTTP transport keeps DNS-rebinding protection enabled. It
 automatically allows Railway's injected `RAILWAY_PUBLIC_DOMAIN`, plus local
 loopback hosts for development. If using an additional custom hostname, set

@@ -46,7 +46,9 @@ test("logs safe backend error metadata when upstream fetch throws", async () => 
   const logEntries = [];
   globalThis.fetch = async () => {
     const error = new TypeError("request failed with private request content");
-    error.cause = Object.assign(new Error("internal-secret"), { code: "ECONNRESET" });
+    error.cause = Object.assign(new Error("internal-secret"), {
+      cause: Object.assign(new Error("private low-level detail"), { code: "ECONNRESET" }),
+    });
     throw error;
   };
   console.error = (...args) => logEntries.push(args);
@@ -62,10 +64,11 @@ test("logs safe backend error metadata when upstream fetch throws", async () => 
     assert.deepEqual(logEntries[0], ["MCP backend fetch failed", {
       backendHost: "backend.example",
       errorType: "TypeError",
+      errorCauseType: "Error",
       errorCode: "ECONNRESET",
-      errorMessageCode: null,
+      errorMessageCode: "UNCLASSIFIED",
     }]);
-    assert.doesNotMatch(JSON.stringify(logEntries), /internal-secret|private user request/);
+    assert.doesNotMatch(JSON.stringify(logEntries), /internal-secret|private low-level detail|private user request/);
   } finally {
     globalThis.fetch = originalFetch;
     console.error = originalError;
@@ -92,8 +95,9 @@ test("constrains thrown error names and codes before logging", async () => {
     assert.deepEqual(logEntries[0], ["MCP backend fetch failed", {
       backendHost: "backend.example",
       errorType: "FetchError",
+      errorCauseType: "Error",
       errorCode: null,
-      errorMessageCode: null,
+      errorMessageCode: "UNCLASSIFIED",
     }]);
     assert.doesNotMatch(JSON.stringify(logEntries), /internal-secret|private user request|TOKEN=private/);
   } finally {
@@ -106,7 +110,7 @@ test("classifies known Cloudflare fetch errors without logging raw messages", as
   const originalFetch = globalThis.fetch;
   const originalError = console.error;
   const logEntries = [];
-  globalThis.fetch = async () => { throw new TypeError("Network connection lost"); };
+  globalThis.fetch = async () => { throw new TypeError("Network connection lost while connecting to private-host"); };
   console.error = (...args) => logEntries.push(args);
   try {
     const response = await worker.fetch(new Request("https://site.example/mcp", {
@@ -117,10 +121,11 @@ test("classifies known Cloudflare fetch errors without logging raw messages", as
     assert.deepEqual(logEntries[0], ["MCP backend fetch failed", {
       backendHost: "backend.example",
       errorType: "TypeError",
+      errorCauseType: null,
       errorCode: null,
       errorMessageCode: "NETWORK_CONNECTION_LOST",
     }]);
-    assert.doesNotMatch(JSON.stringify(logEntries), /Network connection lost|internal-secret/);
+    assert.doesNotMatch(JSON.stringify(logEntries), /Network connection lost|private-host|internal-secret/);
   } finally {
     globalThis.fetch = originalFetch;
     console.error = originalError;

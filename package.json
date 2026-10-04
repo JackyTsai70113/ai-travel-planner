@@ -2,6 +2,9 @@
   "name": "ai-travel-planner-chatgpt-mcp-site",
   "private": true,
   "type": "module",
+  "devDependencies": {
+    "railway": "^3.12.0"
+  },
   "scripts": {
     "build:site-mcp": "bash scripts/build_site_mcp.sh",
     "validate:site-mcp": "node scripts/validate_site_mcp.mjs",
