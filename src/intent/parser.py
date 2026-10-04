@@ -18,9 +18,9 @@ from .contracts import (
 )
 
 _KNOWN_PLACES = (
-    "東京", "大阪", "京都", "神戶", "德島", "福岡", "札幌", "沖繩", "名古屋", "奈良", "熊本", "由布院", "北海道", "淡路島", "東京迪士尼", "環球影城",
+    "東京", "大阪", "京都", "神戶", "德島", "福岡", "札幌", "沖繩", "名古屋", "奈良", "熊本", "由布院", "北海道", "淡路島", "東京迪士尼", "環球影城", "倉敷", "岡山",
 )
-_REGIONS = {"關西", "關東", "九州", "北海道", "四國"}
+_REGIONS = {"關西", "關東", "九州", "北海道", "四國", "岡山縣"}
 _TAIWAN_DESTINATION_ALIASES = {
     "台灣": "台灣", "臺灣": "台灣",
     "台北市": "台北", "臺北市": "台北", "台北": "台北", "臺北": "台北",
@@ -63,6 +63,9 @@ def parse_trip_request(text: str) -> TripRequest:
         if matches:
             known_places.append(place)
             _record_matches(provenance, "destinations", matches)
+    # A prefecture is a parent region when a more specific city is present.
+    if "倉敷" in known_places and "岡山" in known_places:
+        known_places.remove("岡山")
     places = tuple(known_places)
     taiwan_pattern = re.compile("|".join(
         re.escape(alias) for alias in sorted(_TAIWAN_DESTINATION_ALIASES, key=len, reverse=True)
@@ -88,7 +91,7 @@ def parse_trip_request(text: str) -> TripRequest:
     capture("duration", r"([\d一二三四五六七八九十兩]+)天([\d一二三四五六七八九十兩]+)夜", lambda m: (_number(m.group(1)), _number(m.group(2))))
     if "duration" not in values:
         capture("duration", r"([\d一二三四五六七八九十兩]+)天", lambda m: (_number(m.group(1)), None))
-    date_match = capture("date_range", r"(\d{4})[/-](\d{1,2})[/-](\d{1,2})\s*(?:到|至|[-~])\s*(\d{4})?[/-]?(\d{1,2})[/-](\d{1,2})")
+    date_match = capture("date_range", r"(\d{4})[/-](\d{1,2})[/-](\d{1,2})\s*(?:到|至|[-~～〜])\s*(\d{4})?[/-]?(\d{1,2})[/-](\d{1,2})")
     start_date = end_date = None
     if date_match:
         m = date_match[0]
@@ -97,17 +100,27 @@ def parse_trip_request(text: str) -> TripRequest:
         end_year = m.group(4) or year
         end_date = f"{end_year}-{int(m.group(5)):02d}-{int(m.group(6)):02d}"
 
-    adult_match = capture("adults", r"([\d一二三四五六七八九十]+)\s*(?:大|位大人|成人)", lambda m: _number(m.group(1)))
-    child_match = capture("children", r"([\d一二三四五六七八九十]+)\s*(?:小|位小孩|位兒童|小孩|兒童)", lambda m: _number(m.group(1)))
+    adult_match = capture("adults", r"([\d一二三四五六七八九十]+)\s*(?:位\s*)?(?:大人|成人|大)", lambda m: _number(m.group(1)))
+    child_match = capture("children", r"([\d一二三四五六七八九十]+)\s*(?:位\s*)?(?:小孩|兒童|幼兒|小)", lambda m: _number(m.group(1)))
+    # In forms such as「1位2歲幼兒」the age interrupts the count and label.
+    counted_young_children = list(re.finditer(r"([\d一二三四五六七八九十]+)\s*位\s*\d{1,2}\s*歲\s*(?:幼兒|小孩|兒童)", text))
+    if counted_young_children and not child_match:
+        values["children"] = sum(_number(match.group(1)) for match in counted_young_children)
+        provenance["children"].extend(FieldProvenance(match.group(0), match.start(), match.end(), "children") for match in counted_young_children)
     capture("room_count", r"([\d一二兩三四五六七八九十]+)\s*(?:間\s*)?(?:房間|房)", lambda m: _number(m.group(1)))
     ages = tuple(int(match.group(1)) for match in re.finditer(r"(\d{1,2})\s*歲", text))
     for match in re.finditer(r"(\d{1,2})\s*歲", text):
         provenance["child_ages"].append(FieldProvenance(match.group(0), match.start(), match.end(), "child_ages"))
 
-    budget = capture("budget", r"(?:預算|花費|總共)(?:約|最多)?\s*(\d+(?:\.\d+)?)\s*(萬|千)?\s*(台幣|NTD|日圓|JPY|元)?", lambda m: _budget(m.group(1), m.group(2), m.group(3)), re.I)
+    unlimited_budget = list(re.finditer(r"(?:預算|花費|總額)\s*(?:：|:)?\s*(?:暫不設(?:定)?限制|不設(?:定)?限制|不限(?:預算|金額)?|無上限|沒有上限)", text))
+    for match in unlimited_budget:
+        provenance["budget"].append(FieldProvenance(match.group(0), match.start(), match.end(), "budget"))
+    budget = [] if unlimited_budget else capture("budget", r"(?:預算|花費|總共)(?:約|最多)?\s*(\d+(?:\.\d+)?)\s*(萬|千)?\s*(台幣|NTD|日圓|JPY|元)?", lambda m: _budget(m.group(1), m.group(2), m.group(3)), re.I)
     budget_amount = currency = None
+    budget_status = "unlimited" if unlimited_budget else "unspecified"
     if budget:
         budget_amount, currency = values["budget"]  # type: ignore[misc]
+        budget_status = "limited"
     transport = _choices(text, {"自駕": "drive", "開車": "drive", "大眾運輸": "transit", "搭電車": "transit", "火車": "transit", "混合": "mixed"}, provenance, "transport")
     request_constraints, constraint_issues = _request_constraints(text, start_date)
     extension_spans = tuple(
@@ -148,7 +161,7 @@ def parse_trip_request(text: str) -> TripRequest:
         hard.append(HardConstraint("night-river-view", "night_river_view", {"after": "18:00", "river_visibility": "visible", "obstructions": "clear", "night_scene": "visible"}))
         provenance["hard_constraints"].append(FieldProvenance(night_river_view.group(0), night_river_view.start(), night_river_view.end(), "hard_constraints"))
     soft = [SoftPreference("low-fatigue", "low_fatigue")] if pace == "relaxed" else []
-    missing = _missing(places, start_date, values.get("duration"), values.get("adults"), budget_amount)
+    missing = _missing(places, start_date, values.get("duration"), values.get("adults"), budget_status)
     ambiguous = []
     if len(ages) and values.get("children") is not None and len(ages) != values["children"]:
         ambiguous.append(AmbiguousField("child_ages", ", ".join(map(str, ages)), "兒童人數與明確年齡數量不一致"))
@@ -167,7 +180,7 @@ def parse_trip_request(text: str) -> TripRequest:
         origin=values.get("origin"),
         travelers=TravelerGroup(values.get("adults"), values.get("children"), ages),
         room_count=values.get("room_count"),
-        budget_amount=budget_amount, currency=currency, transport=transport,
+        budget_amount=budget_amount, currency=currency, budget_status=budget_status, transport=transport,
         required_places=required, forbidden_places=forbidden,
         accommodation_preferences=accommodation, food_preferences=food, pace=pace,
         hard_constraints=tuple(hard), soft_preferences=tuple(soft),
@@ -464,7 +477,7 @@ def _after_markers(text, markers, provenance, field, excluded_spans=()):
     return tuple(names)
 
 
-def _missing(destinations, start_date, duration, adults, budget):
+def _missing(destinations, start_date, duration, adults, budget_status):
     missing = []
     if not destinations:
         missing.append(MissingField("destination", "未提供目的地"))
@@ -472,6 +485,6 @@ def _missing(destinations, start_date, duration, adults, budget):
         missing.append(MissingField("dates_or_duration", "未提供日期或旅遊天數"))
     if adults is None:
         missing.append(MissingField("travelers", "未提供旅客人數"))
-    if budget is None:
+    if budget_status == "unspecified":
         missing.append(MissingField("budget", "未提供預算"))
     return missing
