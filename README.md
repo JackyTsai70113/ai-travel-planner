@@ -54,7 +54,7 @@ open site/tokushima-kobe/index.html
 
 選用的 MCP server 會將既有需求解析器、Canonical Trip 驗證器、安全行程摘要、正式規劃器與靜態網站 renderer 提供為工具。它支援本機 stdio client，且寫入行程或網站檔案前需要明確確認參數；它不會發布或部署內容。安裝與連線方式請參閱 [`MCP 旅遊規劃服務`](docs/mcp-server.md)。
 
-目前的資料來源 adapter 包含 Google Places、YouTube Data API、OpenRouteService，以及選用的 Hot Pepper Gourmet 官方 Web Service。Hot Pepper 結果必須標示
+目前的資料來源 adapter 包含 Google Places、YouTube Data API、OpenRouteService、僅用於選用住宿搜尋的 Amadeus Self-Service，以及選用的 Hot Pepper Gourmet 官方 Web Service。Hot Pepper 結果必須標示
 `Powered by ホットペッパーグルメ Webサービス`;
 其自由文字營業時間在結構化資料來源確認前仍未驗證。資料來源回應須實際取得後才能視為已查詢；系統不會自動訂位或付款。CI 使用記錄或 mock 資料，不會呼叫這些 API。
 
