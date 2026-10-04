@@ -2,7 +2,7 @@
 
 AI 旅遊規劃平台：自動研究、最佳化行程、驗證時間與預算，並產生旅遊網站。
 
-## Product goal
+## 產品目標
 
 輸入目的地、日期、人數、預算與偏好後，系統應能：
 
@@ -12,10 +12,9 @@ AI 旅遊規劃平台：自動研究、最佳化行程、驗證時間與預算�
 4. 驗證並修復不合理的 itinerary。
 5. 以單一結構化 Trip 資料生成 mobile-first 旅遊網站。
 
-## Local setup and planning command
+## 本機設定與規劃指令
 
-This project uses only the Python standard library at runtime.  For production
-research, export these provider credentials before running a plan:
+本專案執行時只使用 Python 標準函式庫。進行正式資料研究前，請設定下列資料來源憑證：
 
 ```sh
 export GOOGLE_MAPS_API_KEY='...'
@@ -25,16 +24,15 @@ export OPENROUTESERVICE_API_KEY='...'
 export HOTPEPPER_API_KEY='...'
 ```
 
-For the production OpenRouteService key, account signup, free-plan limits, and
-Railway secret setup, see [`docs/flight-hotel-providers.md`](docs/flight-hotel-providers.md#openrouteservice-key).
+OpenRouteService 正式金鑰、帳號註冊、免費方案限制與 Railway secret 設定，請參閱 [`docs/flight-hotel-providers.md`](docs/flight-hotel-providers.md#openrouteservice-key)。
 
-Run the end-user entrypoint with a natural-language request:
+使用自然語言需求執行使用者入口：
 
 ```sh
 python -m src.cli plan --request '幫我規劃 5 天 4 夜德島＋神戶，2 大 1 個 2 歲小孩，台北出發，自駕，不要太累，預算 8 萬。'
 ```
 
-若要把已驗證的 Canonical Trip 加入 registry-driven React 行程網站，請以完整日期與站點 slug 執行 `plan-site`：
+若要把已驗證的 Canonical Trip 加入 registry 驅動的 React 行程網站，請提供完整日期與網站 slug 並執行 `plan-site`：
 
 ```sh
 python3 -m src.cli plan-site \
@@ -43,59 +41,34 @@ python3 -m src.cli plan-site \
   --site-slug nagoya-autumn-2027
 ```
 
-只有月份的需求會回傳尚缺的完整日期，不會自行虛構日期。詳見 [`request-to-site`](docs/request-to-site.md)。
+只提供月份的需求會回傳尚缺的完整日期，不會自行虛構日期。詳見 [`request-to-site`](docs/request-to-site.md)。
 
-Missing credentials return an explicit `configuration_missing` result.  The
-command never silently replaces production providers with fixture data.  For a
-local recorded demonstration only, add `--demo`; it writes
-`trips/<trip-id>/trip.json` and `site/<trip-id>/index.html`:
+缺少憑證時會明確回傳 `configuration_missing`，不會靜默改用 fixture 資料取代正式資料來源。若只要在本機執行留存式展示，請加上 `--demo`；此模式會寫入 `trips/<trip-id>/trip.json` 與 `site/<trip-id>/index.html`：
 
 ```sh
 python -m src.cli plan --demo --trip-id tokushima-kobe --request '德島＋神戶五天四夜，2大1個2歲小孩，自駕，預算8萬'
 open site/tokushima-kobe/index.html
 ```
 
-## MCP service
+## MCP 服務
 
-The optional MCP server exposes the existing request parser, Canonical Trip
-validator, safe trip summary, production planner, and static site renderer as
-tools. It supports local stdio clients and requires an explicit confirmation
-argument before writing trip or site files. It does not publish or deploy.
-Install and connect it using the instructions in [`MCP travel planner service`](docs/mcp-server.md).
+選用的 MCP server 會將既有需求解析器、Canonical Trip 驗證器、安全行程摘要、正式規劃器與靜態網站 renderer 提供為工具。它支援本機 stdio client，且寫入行程或網站檔案前需要明確確認參數；它不會發布或部署內容。安裝與連線方式請參閱 [`MCP 旅遊規劃服務`](docs/mcp-server.md)。
 
-The current provider adapters are Google Places, YouTube Data API, Amadeus
-Self-Service, OpenRouteService, and the optional official Hot Pepper Gourmet
-Web Service. Hot Pepper output must be displayed with
+目前的資料來源 adapter 包含 Google Places、YouTube Data API、OpenRouteService，以及選用的 Hot Pepper Gourmet 官方 Web Service。Hot Pepper 結果必須標示
 `Powered by ホットペッパーグルメ Webサービス`;
-its free-text hours remain unverified until a structured source confirms them.
-Provider responses remain unverified
-until retrieved; no automatic booking or payment is performed.  CI uses
-recorded/mock data and never calls these APIs.
+其自由文字營業時間在結構化資料來源確認前仍未驗證。資料來源回應須實際取得後才能視為已查詢；系統不會自動訂位或付款。CI 使用記錄或 mock 資料，不會呼叫這些 API。
 
-Restaurant quality, price, dishes, and operational facts remain separate and
-retain their original provenance. Planner and validator use the same
-timezone-aware opening-hours snapshot, including split/overnight intervals,
-regular closures, last order, and date-specific exceptions. See
-[`Restaurant intelligence`](docs/restaurant-intelligence.md).
+餐廳品質、價格、菜色與營運事實分開保存，並保留各自來源。Planner 與 validator 使用同一份具時區資訊的營業時間快照，包含分段／跨日營業、固定公休、最後點餐時間與特定日期例外。詳見 [`餐廳資料判讀`](docs/restaurant-intelligence.md)。
 
-## Deployment
+## 部署
 
-GitHub Pages is deployed from the canonical fixture on every push to `main`.
-The public site is https://jackytsai70113.github.io/ai-travel-planner/ .  Pages
-must be configured with the GitHub Actions build source; the workflow enables
-that setting and uses `configure-pages`, `upload-pages-artifact`, and
-`deploy-pages`.
+每次推送至 `main` 時，GitHub Pages 都會從 canonical fixture 部署。公開網站為 https://jackytsai70113.github.io/ai-travel-planner/。Pages 必須使用 GitHub Actions 作為建置來源；workflow 會設定此選項，並使用 `configure-pages`、`upload-pages-artifact` 與 `deploy-pages`。
 
-## Frontend runtime
+## 前端執行環境
 
-The `web/` package has one production entrypoint: `web/src/main.tsx` starts the
-canonical `TripApp`. The build artifact is produced from `web/index.html` and
-the same React route used by local preview, CI, and Pages deployment. Runtime
-bundle loading is registry-driven and validates the public bundle before
-rendering it; user edits use trip-scoped local storage and never mutate the
-Canonical Trip.
+`web/` 套件只有一個正式入口：`web/src/main.tsx` 啟動 canonical `TripApp`。建置產物由 `web/index.html` 產生，並與本機預覽、CI 及 Pages 部署使用相同的 React route。執行時依 registry 載入 bundle，並在呈現前驗證公開 bundle；使用者編輯內容儲存在各行程專屬的 local storage，不會修改 Canonical Trip。
 
-Run the frontend quality gate with:
+執行前端品質檢查：
 
 ```sh
 npm --prefix web ci
@@ -107,55 +80,43 @@ npx --prefix web playwright install chromium
 npm --prefix web run test:e2e
 ```
 
-To add a page, extend `web/src/app/route-registry.ts`, add a page component,
-wire it in `web/src/app/TripApp.tsx`, and add a route regression test. See
-[`Frontend runtime architecture`](docs/architecture/frontend-runtime.md) for
-the ownership boundaries and migration inventory.
+新增頁面時，請擴充 `web/src/app/route-registry.ts`、新增頁面元件、在 `web/src/app/TripApp.tsx` 接線，並新增 route regression test。元件責任邊界與遷移清單請參閱 [`前端執行架構`](docs/architecture/frontend-runtime.md)。
 
-## Canonical Trip data contract
+## Canonical Trip 資料契約
 
 [`Trip V1`](docs/canonical-trip-v1.md) 是 planner、validator、renderer、trip storage、map 與 budget 的唯一 source of truth。候選研究資料位於 `candidate_sets`，而最終行程只透過 ID 參照並保留在 `days`，兩者不可混用。
 
-## Routing / ordering
+## 路線與排序
 
 路由與 POI 排序使用 provider-neutral 的 [`Routing and optimizer V1`](docs/routing-optimizer-v1.md)。路程查無資料會明確保留為 `unknown` 並交給 validator，不會被當成零分鐘。
 
-## Natural-language request parsing
+## 自然語言需求解析
 
-[`Travel intent contract`](docs/travel-intent-contract.md) keeps free-form user
-requests separate from research and itinerary construction. The parser extracts
-only explicit request facts and records field-level source provenance.
+[`旅遊意圖契約`](docs/travel-intent-contract.md) 將自由格式需求與資料研究、行程建構分開。解析器只擷取使用者明確提供的事實，並記錄欄位層級的來源依據。
 
-## Flight / hotel search
+## 航班與住宿搜尋
 
-Flight fares are not fetched by the planner; each Canonical Trip shows the
-requested route and dates beside a link to the Google Flights search page. Hotel search may use an
-existing compatible Amadeus Self-Service account, but it is optional and a
-replacement hotel provider is not configured. See
-[`docs/flight-hotel-providers.md`](docs/flight-hotel-providers.md).
+Planner 不會擷取機票票價；每份 Canonical Trip 會顯示需求中的航線與日期，並附上 Google Flights 搜尋頁連結。住宿搜尋可使用既有且相容的 Amadeus Self-Service 帳號，但這是選用功能，目前尚未設定替代住宿資料來源。詳見 [`航班與住宿資料來源`](docs/flight-hotel-providers.md)。
 
-## Architecture principles
+## 架構原則
 
-- **Trip data is the source of truth**：網站、地圖、預算與列印內容都從同一份 Trip schema 產生。
-- **Research != Planning != Optimization != Validation**：研究、規劃、最佳化與驗證分層，避免 LLM 同時負責所有決策。
-- **Deterministic validation first**：時間衝突、路程、營業時間、預算等盡量使用可重現規則驗證，不讓另一個 LLM 主觀判定。
-- **Evidence-backed research**：候選景點、餐廳、住宿與交通資訊應保留來源與查詢時間。
-- **Japan-first, extensible later**：第一階段優先支援日本旅遊資料源與使用情境，但核心 schema 與 planner 不綁定日本。
+1. Trip 資料是真實來源：網站、地圖、預算與列印內容都由同一份 Trip schema 產生。
+2. Research、Planning、Optimization、Validation 各自分層，避免 LLM 同時負責所有決策。
+3. 優先使用確定性驗證：時間衝突、路程、營業時間、預算等盡量以可重現規則檢查，不交由另一個 LLM 主觀判斷。
+4. 研究結果保留證據：候選景點、餐廳、住宿與交通資訊保留來源與查詢時間。
+5. 先支援日本情境並保留擴充性：第一階段優先支援日本旅遊資料來源與使用情境，核心 schema 與 planner 不綁定日本。
 
-## Multi-agent GitHub development
+## 多代理 GitHub 開發
 
-The repository includes an Issue-scoped collaboration control plane adapted
-from `agentic-dev-collaboration`. Multiple development agents can work in
-parallel through separate GitHub Issues, branches, pull requests, and external
-Git worktrees while write ownership is checked before handoff or publication.
+本 repository 包含改編自 `agentic-dev-collaboration`、以 Issue 為範圍的協作控制流程。多個開發代理可透過各自的 GitHub Issue、branch、pull request 與外部 Git worktree 平行工作，交接或發布前會檢查寫入範圍是否衝突。
 
-Validate the pinned framework and project overlay:
+驗證固定版本的 framework 與專案覆寫：
 
 ```sh
 python3 scripts/validate_agent_collaboration.py
 ```
 
-Route a proposed change, then prepare one isolated worktree per Issue:
+先判斷變更路由，再為每個 Issue 建立獨立 worktree：
 
 ```sh
 python3 -m scripts.agent.collaboration route src/intent/parser.py tests/test_travel_intent.py
@@ -166,30 +127,27 @@ python3 -m scripts.agent.collaboration prepare 28 \
   --write-path 'tests/test_travel_intent.py'
 ```
 
-The repository rejects overlapping active write scopes. After implementation,
-run `check` and `handoff` inside that Issue worktree. `publish` pushes the
-branch and opens a regular non-Draft PR; it never auto-merges.
+Repository 會拒絕重疊的有效寫入範圍。完成實作後，在該 Issue worktree 執行 `check` 與 `handoff`。`publish` 會推送 branch 並建立一般非 Draft PR，不會自動合併。
 
-The complete lifecycle, role routing, parallel ownership examples, and exact
-commands are in [`docs/agents/DEVELOPMENT.md`](docs/agents/DEVELOPMENT.md).
+完整流程、角色路由、平行工作範例與指令請參閱 [`docs/agents/DEVELOPMENT.md`](docs/agents/DEVELOPMENT.md)。
 
-## Target pipeline
+## 目標流程
 
 ```text
-User request
-  -> Orchestrator
-  -> Research agents / source adapters
-  -> Candidate store
-  -> Planner
-  -> Route / schedule optimizer
-  -> Deterministic validator
-  -> Repair loop
+使用者需求
+  -> 協調器
+  -> 研究代理／資料來源介接器
+  -> 候選資料庫
+  -> 行程規劃器
+  -> 路線／時程最佳化器
+  -> 確定性驗證器
+  -> 修復流程
   -> Trip JSON/YAML
-  -> Website renderer
-  -> GitHub Pages / PWA
+  -> 網站 renderer
+  -> GitHub Pages／PWA
 ```
 
-## Planned repository layout
+## Repository 目錄規劃
 
 ```text
 ai-travel-planner/
@@ -207,7 +165,7 @@ ai-travel-planner/
 └── tests/
 ```
 
-## Issue 52: Awaji 2026 Golden Trip (in-progress)
+## Issue 52：2026 淡路島黃金行程（進行中）
 
 ### 核心檔案
 
@@ -232,24 +190,19 @@ python3 scripts/check-awaji-contamination.py
 Issue 52 直接發布於本 repo 既有 GitHub Pages 的子路徑：
 `https://jackytsai70113.github.io/ai-travel-planner/trips/awaji-2026/`
 
-## First milestone
+## 第一階段目標
 
 > 輸入「五天四夜 XX 日本行 + 人數 + 預算 + 偏好」後，產生結構化 Trip 資料，驗證時間 / 路程 / 預算，並生成可在旅途中使用的 mobile-first 網站。
 
-`ai_kyushu` 將作為第一個 reference trip / golden output，用來定義實際旅途中需要的資訊密度與網站可用性。
+`ai_kyushu` 將作為第一份參考行程與 golden output，用來定義實際旅途中需要的資訊密度與網站可用性。
 
-## Static trip renderer
+## 靜態行程 renderer
 
-The dependency-free renderer turns Canonical Trip V1 JSON into a mobile-first
-static site. It only presents canonical fields and optional upstream derived
-read models; it does not validate, route, optimise, or calculate correctness.
+不依賴外部套件的 renderer 會將 Canonical Trip V1 JSON 轉成以手機優先的靜態網站。它只呈現 canonical 欄位與選用的上游衍生 read model，不負責驗證、路線安排、最佳化或正確性計算。
 
 ```sh
 python3 -m src.renderer.build_site fixtures/trips/japan-5-day-trip-v1.json --output site
 open site/index.html
 ```
 
-The page includes Overview, Itinerary, and Budget. It surfaces upstream
-`validation` messages, provenance status, and each source's `retrieved_at`
-value (source freshness). GitHub Pages runs this same fixture build on pushes
-to `main` via `.github/workflows/deploy-pages.yml`.
+頁面包含總覽、行程與預算，並呈現上游 `validation` 訊息、來源依據狀態，以及各來源的 `retrieved_at` 值（資料新鮮度）。推送至 `main` 時，GitHub Pages 會透過 `.github/workflows/deploy-pages.yml` 使用同一份 fixture 建置。
