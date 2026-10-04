@@ -101,6 +101,41 @@ class TravelIntentParserTests(unittest.TestCase):
             with self.subTest(destination=destination):
                 self.assertEqual(parse_trip_request(destination).destinations, (destination,))
 
+    def test_kurashiki_request_variants_parse_destination_without_fabrication(self):
+        for text in ("倉敷五天四夜", "我想安排倉敷五天四夜"):
+            with self.subTest(text=text):
+                intent = parse_trip_request(text)
+                self.assertEqual(intent.destinations, ("倉敷",))
+                self.assertEqual((intent.duration_days, intent.duration_nights), (5, 4))
+                self.assertEqual({item.field for item in intent.missing_fields}, {"travelers", "budget"})
+                source = intent.provenance["destinations"][0]
+                self.assertEqual(text[source.start:source.end], "倉敷")
+
+    def test_kurashiki_full_request_parses_dates_party_and_unlimited_budget(self):
+        text = "日本岡山縣倉敷五天四夜。日期：2026/11/01～2026/11/05。出發地：桃園國際機場。旅客：6位成人、1位2歲幼兒。預算：暫不設限制。交通方式：自駕。"
+        intent = parse_trip_request(text)
+        self.assertEqual(intent.destinations, ("倉敷",))
+        self.assertEqual(intent.regions, ("岡山縣",))
+        self.assertEqual((intent.start_date, intent.end_date), ("2026-11-01", "2026-11-05"))
+        self.assertEqual((intent.duration_days, intent.duration_nights), (5, 4))
+        self.assertEqual(intent.origin, "桃園")
+        self.assertEqual((intent.travelers.adults, intent.travelers.children, intent.travelers.child_ages), (6, 1, (2,)))
+        self.assertEqual(intent.budget_status, "unlimited")
+        self.assertIsNone(intent.budget_amount)
+        self.assertNotIn("budget", {item.field for item in intent.missing_fields})
+        self.assertEqual(intent.transport, ("drive",))
+        for field in ("destinations", "regions", "date_range", "adults", "children", "budget", "transport"):
+            for source in intent.provenance[field]:
+                self.assertEqual(text[source.start:source.end], source.text)
+
+    def test_budget_missing_and_explicitly_unlimited_are_distinct(self):
+        missing = parse_trip_request("東京三天，2大")
+        unlimited = parse_trip_request("東京三天，2大，預算不限")
+        self.assertEqual(missing.budget_status, "unspecified")
+        self.assertIn("budget", {item.field for item in missing.missing_fields})
+        self.assertEqual(unlimited.budget_status, "unlimited")
+        self.assertNotIn("budget", {item.field for item in unlimited.missing_fields})
+
     def test_taiwan_aliases_and_traditional_night_counts(self):
         variants = (
             ("臺灣臺北市萬華西門町三天二夜", ("台灣", "台北", "萬華", "西門町"), (3, 2)),

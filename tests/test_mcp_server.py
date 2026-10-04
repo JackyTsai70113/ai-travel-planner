@@ -301,6 +301,18 @@ class MCPTravelServerTests(unittest.TestCase):
                 self.assertIsNotNone(payload)
                 self.assertEqual(payload["status"], "parsed")
                 self.assertEqual(payload["intent"]["start_date"], "2026-04-01")
+                kurashiki = await client.call_tool(
+                    "parse_trip_request",
+                    {"request": "日本岡山縣倉敷五天四夜。日期：2026/11/01～2026/11/05。旅客：6位成人、1位2歲幼兒。預算：暫不設限制。"},
+                )
+                parsed_kurashiki = kurashiki.structured_content["intent"]
+                self.assertEqual(parsed_kurashiki["destinations"], ["倉敷"])
+                self.assertEqual(parsed_kurashiki["regions"], ["岡山縣"])
+                self.assertEqual(parsed_kurashiki["start_date"], "2026-11-01")
+                self.assertEqual(parsed_kurashiki["end_date"], "2026-11-05")
+                self.assertEqual(parsed_kurashiki["travelers"], {"adults": 6, "children": 1, "child_ages": [2]})
+                self.assertEqual(parsed_kurashiki["budget_status"], "unlimited")
+                self.assertEqual(parsed_kurashiki["missing_fields"], [])
                 empty_request = await client.call_tool(
                     "parse_trip_request", {"request": ""}
                 )

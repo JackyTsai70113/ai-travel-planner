@@ -111,6 +111,8 @@ class TripRequest:
     room_count: int | None = None
     budget_amount: int | None = None
     currency: str | None = None
+    # Distinguish an omitted budget from an explicit no-limit instruction.
+    budget_status: str = "unspecified"
     transport: tuple[str, ...] = ()
     required_places: tuple[str, ...] = ()
     forbidden_places: tuple[str, ...] = ()
@@ -171,6 +173,7 @@ class TripRequest:
             "room_count": self.room_count,
             "budget_amount": self.budget_amount,
             "currency": self.currency,
+            "budget_status": self.budget_status,
             "transport": list(self.transport),
             "required_places": list(self.required_places),
             "forbidden_places": list(self.forbidden_places),
