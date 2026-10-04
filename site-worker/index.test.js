@@ -63,6 +63,7 @@ test("logs safe backend error metadata when upstream fetch throws", async () => 
       backendHost: "backend.example",
       errorType: "TypeError",
       errorCode: "ECONNRESET",
+      errorMessageCode: null,
     }]);
     assert.doesNotMatch(JSON.stringify(logEntries), /internal-secret|private user request/);
   } finally {
@@ -92,8 +93,34 @@ test("constrains thrown error names and codes before logging", async () => {
       backendHost: "backend.example",
       errorType: "FetchError",
       errorCode: null,
+      errorMessageCode: null,
     }]);
     assert.doesNotMatch(JSON.stringify(logEntries), /internal-secret|private user request|TOKEN=private/);
+  } finally {
+    globalThis.fetch = originalFetch;
+    console.error = originalError;
+  }
+});
+
+test("classifies known Cloudflare fetch errors without logging raw messages", async () => {
+  const originalFetch = globalThis.fetch;
+  const originalError = console.error;
+  const logEntries = [];
+  globalThis.fetch = async () => { throw new TypeError("Network connection lost"); };
+  console.error = (...args) => logEntries.push(args);
+  try {
+    const response = await worker.fetch(new Request("https://site.example/mcp", {
+      method: "POST", body: "{}",
+      headers: { "oai-authenticated-user-id": "user-123" },
+    }), env);
+    assert.equal(response.status, 502);
+    assert.deepEqual(logEntries[0], ["MCP backend fetch failed", {
+      backendHost: "backend.example",
+      errorType: "TypeError",
+      errorCode: null,
+      errorMessageCode: "NETWORK_CONNECTION_LOST",
+    }]);
+    assert.doesNotMatch(JSON.stringify(logEntries), /Network connection lost|internal-secret/);
   } finally {
     globalThis.fetch = originalFetch;
     console.error = originalError;
