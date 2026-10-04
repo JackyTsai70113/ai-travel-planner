@@ -101,6 +101,8 @@ function addModernMcpStandardHeaders(headers, body, protocolVersion) {
     name = params.name;
   } else if (message.method === "resources/read" && typeof params.uri === "string") {
     name = params.uri;
+  } else if (["tasks/get", "tasks/update", "tasks/cancel"].includes(message.method) && typeof params.taskId === "string") {
+    name = params.taskId;
   }
   if (name !== undefined) {
     const encodedName = encodeMcpNameHeader(name);

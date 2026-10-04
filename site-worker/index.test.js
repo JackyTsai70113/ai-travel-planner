@@ -78,6 +78,34 @@ test("derives modern MCP routing headers from the body", async () => {
   }
 });
 
+test("derives MCP Tasks routing names from taskId", async (t) => {
+  const originalFetch = globalThis.fetch;
+  const taskMethods = ["tasks/get", "tasks/update", "tasks/cancel"];
+  globalThis.fetch = async (_url, options) => {
+    const body = JSON.parse(new TextDecoder().decode(options.body));
+    assert.equal(options.headers.get("mcp-method"), body.method);
+    assert.equal(options.headers.get("mcp-name"), "task-123");
+    return new Response("{}", { headers: { "content-type": "application/json" } });
+  };
+  try {
+    for (const method of taskMethods) {
+      await t.test(method, async () => {
+        const response = await worker.fetch(new Request("https://site.example/mcp", {
+          method: "POST",
+          body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params: { taskId: "task-123" } }),
+          headers: {
+            "oai-authenticated-user-id": "user-123",
+            "mcp-protocol-version": "2026-07-28",
+          },
+        }), env);
+        assert.equal(response.status, 200);
+      });
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("logs safe backend error metadata when upstream fetch throws", async () => {
   const originalFetch = globalThis.fetch;
   const originalError = console.error;
