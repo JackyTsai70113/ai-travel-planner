@@ -22,12 +22,43 @@ const FETCH_ERROR_CODES = new Set([
   "CERT_HAS_EXPIRED",
   "CERT_NOT_YET_VALID",
 ]);
-const FETCH_ERROR_MESSAGE_CODES = new Map([
-  ["Network connection lost", "NETWORK_CONNECTION_LOST"],
-  ["fetch failed", "FETCH_FAILED"],
-  ["Failed to fetch", "FETCH_FAILED"],
-  ["The operation was aborted", "FETCH_ABORTED"],
-]);
+const SAFE_ERROR_TYPES = new Set(["AbortError", "DOMException", "Error", "TypeError"]);
+const FETCH_ERROR_MESSAGE_PATTERNS = [
+  [/network connection lost/i, "NETWORK_CONNECTION_LOST"],
+  [/\b(?:fetch failed|failed to fetch)\b/i, "FETCH_FAILED"],
+  [/\b(?:connection|connect).*(?:timeout|timed out)\b/i, "CONNECT_TIMEOUT"],
+  [/\b(?:connection refused|econnrefused)\b/i, "CONNECTION_REFUSED"],
+  [/\b(?:enotfound|eai_again|dns|name not resolved)\b/i, "DNS_FAILURE"],
+  [/\b(?:certificate|cert|tls|ssl)\b/i, "TLS_FAILURE"],
+  [/\bredirect.*(?:error|disallowed)\b/i, "REDIRECT_REJECTED"],
+  [/\b(?:connection|connect)\b/i, "CONNECTION_ERROR"],
+  [/\b(?:aborted|aborterror)\b/i, "FETCH_ABORTED"],
+];
+
+function classifyFetchErrorMessage(message) {
+  for (const [pattern, code] of FETCH_ERROR_MESSAGE_PATTERNS) {
+    if (pattern.test(message)) return code;
+  }
+  return message ? "UNCLASSIFIED" : null;
+}
+
+function classifyFetchErrorCause(error) {
+  let current = error && typeof error === "object" ? error.cause : null;
+  let errorCode = null;
+  let errorCauseType = null;
+  const visited = new Set();
+  for (let depth = 0; current && typeof current === "object" && depth < 4 && !visited.has(current); depth += 1) {
+    visited.add(current);
+    if (!errorCauseType && typeof current.name === "string" && SAFE_ERROR_TYPES.has(current.name)) {
+      errorCauseType = current.name;
+    }
+    if (!errorCode && typeof current.code === "string" && FETCH_ERROR_CODES.has(current.code)) {
+      errorCode = current.code;
+    }
+    current = current.cause;
+  }
+  return { errorCode, errorCauseType };
+}
 
 async function readBoundedBody(request) {
   const reader = request.body?.getReader();
@@ -106,16 +137,13 @@ export default {
     } catch (error) {
       const rawName = error instanceof Error ? error.name : "";
       const errorType = rawName === "TypeError" || rawName === "AbortError" ? rawName : "FetchError";
-      const cause = error && typeof error === "object" ? error.cause : null;
-      const rawCode = cause && typeof cause === "object" ? cause.code : null;
-      const errorCode = typeof rawCode === "string" && FETCH_ERROR_CODES.has(rawCode)
-        ? rawCode
-        : null;
+      const { errorCode, errorCauseType } = classifyFetchErrorCause(error);
       const rawMessage = error instanceof Error ? error.message : "";
-      const errorMessageCode = FETCH_ERROR_MESSAGE_CODES.get(rawMessage) || null;
+      const errorMessageCode = classifyFetchErrorMessage(rawMessage);
       console.error("MCP backend fetch failed", {
         backendHost: backend.hostname,
         errorType,
+        errorCauseType,
         errorCode,
         errorMessageCode,
       });
