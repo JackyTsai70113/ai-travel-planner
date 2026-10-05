@@ -2,18 +2,22 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import replace
-from datetime import date, datetime, timezone
+from datetime import date, datetime, time, timezone
 import json
+import pytest
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from src.application.production import ProductionDependencies, _select_hotel_candidate, create_production_orchestrator
+from src.application.production import ProductionDependencies, ProductionIncompleteError, _candidate_trips, _google_flights_search_summary, _google_flights_search_url, _select_hotel_candidate, create_production_orchestrator
 from src.cli import plan_command
 from src.intent import parse_trip_request
 from src.orchestrator import StageName, StageStatus
+from src.planner import schedule as route_aware_schedule
+from src.schemas import validate_trip
 from src.sources import AmadeusClient, SourceAdapter
-from src.sources.routing import FixtureRoutingProvider
+from src.sources.routing import PlaceRef, Route, RouteMode, RouteProvenance, RouteStatus
+from src.validator import OpeningInterval, ValidationContext
 
 
 ENVIRONMENT = {
@@ -35,7 +39,8 @@ class RecordedGoogle(SourceAdapter):
         self.queries.append(query)
         now = "2026-01-01T00:00:00+09:00"
         provenance = {"source_type": "provider", "provider": "Recorded Google Places", "source_url": "https://example.test/places", "retrieved_at": now, "status": "confirmed"}
-        places = [("places", {"id": f"poi-{number}", "name": f"POI {number}", "kind": "poi", "coordinates": {"latitude": 34.0 + number / 100, "longitude": 134.0}, "provenance": provenance}) for number in range(5)]
+        hours = {"status": "fresh", "timezone": "Asia/Tokyo", "intervals": [{"weekday": day, "opens_at": "08:00", "closes_at": "22:00"} for day in range(7)], "provenance": provenance}
+        places = [("places", {"id": f"poi-{number}", "name": f"POI {number}", "kind": "poi", "primary_type": "museum", "coordinates": {"latitude": 34.1 + number / 10000, "longitude": 134.2}, "opening_hours": hours, "provenance": provenance}) for number in range(12)]
         restaurant = {"place": {"id": "restaurant-1", "name": "Open restaurant", "kind": "restaurant", "coordinates": {"latitude": 34.1, "longitude": 134.1}, "provenance": provenance}, "rating": 4.5, "review_count": 100, "opening_hours": {"status": "fresh", "timezone": "Asia/Tokyo", "intervals": [{"weekday": day, "opens_at": "09:00", "closes_at": "21:00"} for day in range(7)]}, "provenance": provenance}
         return [*places, ("restaurants", restaurant)]
 
@@ -58,6 +63,23 @@ class RecordedYouTube:
         return []
 
 
+class RecordedCompleteRouting:
+    def fetch(self, origin, destination, mode):
+        return self.fetch_matrix((origin, destination), mode)[(mode.value, origin.place_id, destination.place_id)]
+
+    def fetch_matrix(self, places, mode):
+        refs = tuple(places)
+        now = datetime.now(timezone.utc)
+        return {
+            (mode.value, origin.place_id, destination.place_id): Route(
+                origin, destination, mode, RouteStatus.AVAILABLE,
+                RouteProvenance("recorded-routing", now, note="Deterministic route fixture"),
+                duration_seconds=600, distance_meters=5000,
+            )
+            for origin in refs for destination in refs if origin != destination
+        }
+
+
 class BrokenYouTube(RecordedYouTube):
     def fetch_evidence(self, query):
         raise RuntimeError("recorded YouTube timeout")
@@ -78,7 +100,7 @@ def _transport(method, url, headers, body):
 def _runner(tmp_path, *, youtube=None, google=None, transport=_transport):
     dependencies = ProductionDependencies(
         google=google or RecordedGoogle(), youtube=youtube or RecordedYouTube(),
-        amadeus_client=AmadeusClient(transport, ENVIRONMENT), routing_provider=FixtureRoutingProvider(()),
+        amadeus_client=AmadeusClient(transport, ENVIRONMENT), routing_provider=RecordedCompleteRouting(),
     )
     return create_production_orchestrator(
         trip_id="recorded-trip", trips_directory=tmp_path / "trips", site_directory=tmp_path / "site",
@@ -133,7 +155,7 @@ def test_production_runs_without_youtube_key_and_reports_optional_source_unavail
         dependencies=ProductionDependencies(
             google=RecordedGoogle(),
             amadeus_client=AmadeusClient(_transport, ENVIRONMENT),
-            routing_provider=FixtureRoutingProvider(()),
+            routing_provider=RecordedCompleteRouting(),
         ),
     )
     intent = parse_trip_request("2026/4/10到2026/4/14 台北出發德島五天四夜，2大，預算8萬日圓，自駕")
@@ -151,15 +173,61 @@ def test_kurashiki_unlimited_budget_is_not_confused_with_incomplete_cost_coverag
     intent = parse_trip_request(request)
     result = _runner(tmp_path).run(intent)
 
-    assert result.succeeded
-    trip = json.loads(result.trip_path.read_text(encoding="utf-8"))
+    assert not result.succeeded
+    assert intent.budget_status == "unlimited"
+    assert any("hotel search is not available for this destination" in warning.message for warning in result.stage(StageName.RESEARCH).warnings)
+
+
+def test_kurashiki_five_day_fixture_schedules_multiple_pois_per_day_without_provider_durations():
+    request = "日本岡山縣倉敷五天四夜。日期：2026/11/01～2026/11/05。出發地：桃園國際機場。旅客：6位成人、1位2歲幼兒。預算：暫不設限制。交通方式：自駕。"
+    intent = parse_trip_request(request)
+    provenance = {"source_type": "provider", "provider": "Recorded Places", "source_url": "https://example.test/places", "retrieved_at": "2026-10-01T00:00:00+09:00", "status": "confirmed"}
+    hours = {"status": "fresh", "timezone": "Asia/Tokyo", "intervals": [{"weekday": day, "opens_at": "08:00", "closes_at": "22:00"} for day in range(7)], "provenance": provenance}
+    anchors = {
+        0: {"duration_minutes": 75, "duration_basis": "provider", "day": 1, "selected": True, "required": True, "fixed_start_at": "2026-11-01T09:30:00+09:00", "fixed_end_at": "2026-11-01T10:45:00+09:00"},
+        1: {"duration_minutes": 75, "duration_basis": "provider", "day": 1, "selected": True, "required": True, "fixed_start_at": "2026-11-01T14:00:00+09:00", "fixed_end_at": "2026-11-01T15:15:00+09:00"},
+    }
+    poi_records = [("places", {"id": f"kurashiki-poi-{number}", "name": f"倉敷景點 {number}", "kind": "poi", "primary_type": "museum", "coordinates": {"latitude": 34.6 + number / 10000, "longitude": 133.77}, "opening_hours": hours, **({"schedule": anchors[number]} if number in anchors else {}), "provenance": provenance}) for number in range(12)]
+    hotel = {"place": {"id": "kurashiki-hotel", "name": "Recorded Kurashiki hotel", "kind": "hotel", "coordinates": {"latitude": 34.6, "longitude": 133.77}, "provenance": provenance}, "total_cost": {"amount": 1000, "currency": "JPY"}, "check_in": "2026-11-01", "check_out": "2026-11-05", "occupancy": {"adults": 6, "child_ages": [2], "rooms": 1}, "price_status": "unverified", "provenance": provenance}
+    refs = [PlaceRef(candidate["id"], candidate["coordinates"]["latitude"], candidate["coordinates"]["longitude"]) for _, candidate in poi_records]
+    refs.append(PlaceRef("kurashiki-hotel", 34.6, 133.77))
+    routes = {(origin.place_id, destination.place_id): 10 for origin in refs for destination in refs if origin != destination}
+    opening = {ref.place_id: tuple(OpeningInterval(day, time(8), time(22)) for day in range(7)) for ref in refs if ref.place_id != "kurashiki-hotel"}
+
+    with patch("src.application.production.schedule", wraps=route_aware_schedule) as scheduler:
+        trip, = _candidate_trips("kurashiki-recorded", intent, [*map(lambda pair: SimpleNamespace(collection=pair[0], candidate=pair[1]), poi_records), SimpleNamespace(collection="hotels", candidate=hotel)], ValidationContext(routes, opening))
+    scheduler.assert_called_once()
+    validate_trip(trip)
+
+    visits_by_day = [[item for item in day["items"] if item["kind"] == "visit"] for day in trip["days"]]
+    assert len(poi_records) >= 10
+    assert all(len(visits) >= 2 for visits in visits_by_day)
+    assert trip["candidate_sets"]["places"][0]["schedule"]["duration_basis"] == "provider"
+    assert trip["candidate_sets"]["places"][0]["schedule"]["fixed_start_at"] == "2026-11-01T09:30:00+09:00"
+    assert trip["candidate_sets"]["places"][1]["schedule"]["fixed_start_at"] == "2026-11-01T14:00:00+09:00"
+    assert all(trip["candidate_sets"]["places"][number]["schedule"]["duration_basis"] == "planning_estimate" for number in range(2, 12))
+    assert all(item["end_at"] > item["start_at"] for day in visits_by_day for item in day)
     assert trip["budget"]["limit_status"] == "unlimited"
     assert "limit" not in trip["budget"]
     assert trip["budget"]["total_status"] == "incomplete"
-    assert any(item["code"] == "budget.incomplete" for item in trip["validation"])
-    html = result.render_path.read_text(encoding="utf-8")
-    assert "未設定預算上限" in html
-    assert "已知費用小計" in html
+
+
+
+def test_route_aware_production_fails_closed_when_poi_hours_are_missing():
+    intent = parse_trip_request("2026/11/01到2026/11/05，倉敷五天四夜，2大，自駕")
+    provenance = {"source_type": "provider", "provider": "Recorded Places", "source_url": "https://example.test/places", "retrieved_at": "2026-10-01T00:00:00+09:00", "status": "confirmed"}
+    poi_records = [("places", {"id": f"poi-{number}", "name": f"倉敷景點 {number}", "kind": "poi", "coordinates": {"latitude": 34.6, "longitude": 133.77}, "provenance": provenance}) for number in range(12)]
+    hotel = {"place": {"id": "hotel", "name": "倉敷旅館", "kind": "hotel", "coordinates": {"latitude": 34.6, "longitude": 133.77}, "provenance": provenance}, "total_cost": {"amount": 1000, "currency": "JPY"}, "check_in": "2026-11-01", "check_out": "2026-11-05", "occupancy": {"adults": 2, "child_ages": [], "rooms": 1}, "provenance": provenance}
+    records = [SimpleNamespace(collection=collection, candidate=candidate) for collection, candidate in poi_records]
+    records.append(SimpleNamespace(collection="hotels", candidate=hotel))
+
+    with pytest.raises(ProductionIncompleteError, match="verified opening hours"):
+        _candidate_trips("kurashiki-missing-hours", intent, records, ValidationContext())
+
+    opening = {f"poi-{number}": tuple(OpeningInterval(day, time(8), time(22)) for day in range(7)) for number in range(12)}
+    with pytest.raises(ProductionIncompleteError, match="no feasible pair"):
+        _candidate_trips("kurashiki-missing-routes", intent, records, ValidationContext({}, opening))
+
 
 
 def test_taiwan_domestic_trip_uses_taiwan_context_without_flight_search(tmp_path):
@@ -247,16 +315,8 @@ def test_hotel_over_budget_or_unverified_preference_remains_unselected(tmp_path)
 
     intent = parse_trip_request("2026/10/20到2026/10/22，台灣萬華三天兩夜，2大，預算8千元")
     result = _runner(tmp_path, google=RecordedTaiwanGoogle(), transport=hotels_transport).run(intent)
-    assert result.succeeded
-    trip = json.loads(result.trip_path.read_text(encoding="utf-8"))
-    assert trip["selected"]["hotel_place_ids"] == []
-    assert trip["candidate_sets"]["hotels"]
-    assert "hotel" not in trip["budget"]["categories"]
-    assert trip["budget"]["total_status"] == "incomplete"
-    assert "remains unselected" in trip["provenance"]["note"]
-    rendered_budget = result.render_path.read_text(encoding="utf-8")
-    assert "預算上限 TWD 8,000" in rendered_budget
-    assert "已知費用小計" in rendered_budget
+    assert not result.succeeded
+    assert any("selected lodging candidate" in error.message for error in result.stage(StageName.PLANNER).errors)
 
     def untyped_room_transport(method, url, headers, body):
         if url.endswith("/v1/security/oauth2/token"):
@@ -269,10 +329,8 @@ def test_hotel_over_budget_or_unverified_preference_remains_unselected(tmp_path)
 
     room_intent = parse_trip_request("2026/10/20到2026/10/22，台灣萬華三天兩夜，2大，雙床房，預算8千元")
     room_result = _runner(tmp_path / "room-type", google=RecordedTaiwanGoogle(), transport=untyped_room_transport).run(room_intent)
-    assert room_result.succeeded
-    room_trip = json.loads(room_result.trip_path.read_text(encoding="utf-8"))
-    assert room_trip["selected"]["hotel_place_ids"] == []
-    assert room_trip["candidate_sets"]["hotels"]
+    assert not room_result.succeeded
+    assert any("selected lodging candidate" in error.message for error in room_result.stage(StageName.PLANNER).errors)
 
 
 def test_hotel_selection_compares_distance_to_requested_destination_places():
@@ -342,18 +400,19 @@ def test_cross_border_trip_links_to_google_flights_without_provider_search(tmp_p
 def test_unmapped_origin_falls_back_to_google_flights_search_page(tmp_path):
     intent = parse_trip_request("2026/10/20到2026/10/22，台灣萬華三天兩夜，2大")
     intent = replace(intent, origin="未知出發地")
+    start, end = date.fromisoformat(intent.start_date), date.fromisoformat(intent.end_date)
+    assert _google_flights_search_url(intent, start, end) == "https://www.google.com/travel/flights?hl=zh-TW"
+    assert "未知出發地" in _google_flights_search_summary(intent, start, end)
     result = _runner(tmp_path, google=RecordedTaiwanGoogle()).run(intent)
-    assert result.succeeded
-    trip = json.loads(result.trip_path.read_text(encoding="utf-8"))
-    assert trip["flight_search_url"] == "https://www.google.com/travel/flights?hl=zh-TW"
-    assert "未知出發地" in trip["flight_search_summary"]
+    assert not result.succeeded
+    assert any("selected lodging candidate" in error.message for error in result.stage(StageName.PLANNER).errors)
 
 
 def test_unsupported_hotel_destination_reports_provider_capability_limit(tmp_path):
     intent = parse_trip_request("2026/10/20到2026/10/22，北海道三天兩夜，2大")
     result = _runner(tmp_path).run(intent)
 
-    assert result.succeeded
+    assert not result.succeeded
     research = result.stage(StageName.RESEARCH)
     assert research.status is StageStatus.INCOMPLETE
     assert any("hotel search is not available for this destination" in warning.message for warning in research.warnings)

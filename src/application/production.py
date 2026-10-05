@@ -239,26 +239,11 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
             seen.add(place["id"]); canonical_places.append(place)
     _record_unknown_night_view_evidence(canonical_places, intent)
 
-    if any(not candidate.get("schedule") for candidate in places):
-        # Backward-compatible path for normalized providers that predate the
-        # scheduler metadata contract.  New production candidates take the
-        # route-aware branch below; this path remains only until those source
-        # adapters publish explicit visit-duration facts.
-        tz = ZoneInfo(_local_timezone(intent))
-        itinerary_days = []
-        for index in range(days_count):
-            current_date = start + timedelta(days=index)
-            visit_start = datetime.combine(current_date, time(10), tz)
-            visit_end = datetime.combine(current_date, time(12), tz)
-            poi = places[index]
-            itinerary_days.append({"date": current_date.isoformat(), "summary": poi["name"], "items": [
-                {"id": f"day{index + 1}-visit", "kind": "visit", "place_id": poi["id"], "start_at": visit_start.isoformat(), "end_at": visit_end.isoformat(), "selection_status": "selected"},
-            ]})
-        trip = _legacy_trip(trip_id, intent, collections, canonical_places, start, end, selected_hotel, flights, itinerary_days)
-        trip["candidate_sets"]["restaurants"] = restaurants
-        _schedule_legacy_meals(trip, restaurants, routing)
-        _add_unfilled_meal_warnings(trip)
-        return [trip]
+    hotel_id = selected_hotel["place"]["id"] if selected_hotel else None
+    _assign_route_aware_poi_schedule(
+        places, days_count, start, _local_timezone(intent), hotel_id, routing,
+        low_fatigue=intent.pace == "relaxed" or any(preference.kind == "low_fatigue" for preference in intent.soft_preferences),
+    )
 
     currency = _budget_currency(intent, flights[0] if flights else None, selected_hotel)
     flight_cost = _money_amount(flights[0].get("cost"), currency) if flights else 0.0
@@ -283,11 +268,166 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
         "provenance": {"source_type": "derived", "provider": "production composition", "retrieved_at": datetime.now(timezone.utc).isoformat(), "status": "estimated", "note": _lodging_note(selected_hotel)},
     }
     shell["candidate_sets"]["restaurants"] = restaurants
-    scheduled = schedule(SchedulingInput(shell, routing, daily_start="07:00")).best_trip
+    schedule_output = schedule(SchedulingInput(shell, routing, daily_start="07:00"))
+    scheduled = schedule_output.best_trip
     if scheduled is None:
-        raise ProductionIncompleteError("no feasible route-aware schedule from normalized candidates")
+        reasons = [violation.message for candidate in schedule_output.candidates for violation in candidate.violations]
+        detail = "; ".join(dict.fromkeys(reasons))
+        raise ProductionIncompleteError(
+            "no feasible route-aware schedule from normalized candidates; "
+            + (detail or "verified opening hours, visit durations, and directed routes are required")
+        )
+    if scheduled.state.value != "ready":
+        raise ProductionIncompleteError("route-aware schedule is partial because required hotel or route facts are unavailable")
+    scheduled.trip["validation"].extend(
+        {"code": finding.code, "severity": finding.severity, "message": finding.message, "path": finding.path}
+        for finding in scheduled.violations
+        if finding.severity != "error"
+    )
+    _add_unselected_poi_warnings(scheduled.trip, places)
     _add_unfilled_meal_warnings(scheduled.trip)
     return [scheduled.trip]
+
+
+def _assign_route_aware_poi_schedule(
+    places: Sequence[dict], days_count: int, start: date, timezone_name: str,
+    hotel_id: str | None, routing: ValidationContext, *, low_fatigue: bool = False,
+) -> None:
+    """Assign two POIs per day only when verified hours and directed routes fit.
+
+    Visit lengths are explicit planning estimates, never provider or opening-hour
+    facts. A missing provider schedule receives a labeled estimate; missing
+    hours or routes remain unavailable and can make the result incomplete.
+    """
+    if hotel_id is None:
+        raise ProductionIncompleteError("route-aware daily scheduling requires a selected lodging candidate to verify each day's outbound and return routes")
+    eligible: list[dict] = []
+    unavailable: list[str] = []
+    selected_ids: set[str] = set()
+    anchored_days: set[int] = set()
+    for place in places:
+        details = place.get("schedule")
+        if not isinstance(details, dict):
+            details = {}
+        if not isinstance(details.get("duration_minutes"), int) or details["duration_minutes"] <= 0:
+            details.update({
+                "duration_minutes": _estimated_visit_duration(place),
+                "duration_basis": "planning_estimate",
+            })
+        else:
+            details.setdefault("duration_basis", "planning_estimate")
+        place["schedule"] = details
+        anchor_fields = {"day", "fixed_start_at", "fixed_end_at"} & details.keys()
+        if anchor_fields:
+            if not {"day", "fixed_start_at", "fixed_end_at"} <= details.keys():
+                raise ProductionIncompleteError(f"fixed visit anchor for {place.get('name', place['id'])} requires day, start, and end values")
+            if not isinstance(details["day"], int) or not 1 <= details["day"] <= days_count:
+                raise ProductionIncompleteError(f"fixed visit anchor for {place.get('name', place['id'])} has a day outside this trip")
+            details.update({"selected": True, "required": True})
+            selected_ids.add(place["id"])
+            anchored_days.add(details["day"])
+        else:
+            details["selected"] = False
+        hours = routing.opening_hours.get(place["id"])
+        if not hours:
+            unavailable.append(f"{place.get('name', place['id'])}: missing verified opening hours")
+            continue
+        eligible.append(place)
+
+    zone = ZoneInfo(timezone_name)
+    failures: list[str] = []
+    for day_number in range(1, days_count + 1):
+        if day_number in anchored_days:
+            continue
+        current = start + timedelta(days=day_number - 1)
+        options: list[tuple[int, float, int, int, datetime, datetime]] = []
+        day_start = datetime.combine(current, time(9, 0), zone)
+        day_end = datetime.combine(current, time(20, 0), zone)
+        for first_index, first in enumerate(eligible):
+            if first["id"] in selected_ids:
+                continue
+            out_minutes = routing.travel_minutes.get((hotel_id, first["id"]))
+            return_first = routing.travel_minutes.get((first["id"], hotel_id))
+            if out_minutes is None or return_first is None:
+                continue
+            first_details = first["schedule"]
+            first_duration = first_details["duration_minutes"]
+            first_buffer = first_details.get("parking_buffer_minutes", 0) + first_details.get("walking_buffer_minutes", 0)
+            for first_interval in routing.opening_hours.get(first["id"], ()):
+                if first_interval.weekday != current.weekday():
+                    continue
+                first_open = datetime.combine(current, first_interval.opens_at, zone)
+                first_close = datetime.combine(current, first_interval.closes_at, zone)
+                first_start = max(day_start + timedelta(minutes=out_minutes + first_buffer), first_open)
+                first_end = first_start + timedelta(minutes=first_duration)
+                if first_end > first_close:
+                    continue
+                for second_index, second in enumerate(eligible):
+                    if second["id"] in selected_ids or second_index == first_index:
+                        continue
+                    between = routing.travel_minutes.get((first["id"], second["id"]))
+                    return_second = routing.travel_minutes.get((second["id"], hotel_id))
+                    if between is None or return_second is None:
+                        continue
+                    second_details = second["schedule"]
+                    second_duration = second_details["duration_minutes"]
+                    second_buffer = second_details.get("parking_buffer_minutes", 0) + second_details.get("walking_buffer_minutes", 0)
+                    for second_interval in routing.opening_hours.get(second["id"], ()):
+                        if second_interval.weekday != current.weekday():
+                            continue
+                        second_open = datetime.combine(current, second_interval.opens_at, zone)
+                        second_close = datetime.combine(current, second_interval.closes_at, zone)
+                        # Keep a protected midday break so the shared scheduler can
+                        # place a verified lunch candidate without overlapping visits.
+                        second_start = max(first_end + timedelta(minutes=between + second_buffer), second_open,
+                                           datetime.combine(current, time(14, 0), zone))
+                        second_end = second_start + timedelta(minutes=second_duration)
+                        if second_end <= second_close and second_end + timedelta(minutes=return_second) <= day_end:
+                            route_minutes = out_minutes + between + return_second
+                            fatigue = float(first_details.get("fatigue", 0)) + float(second_details.get("fatigue", 0))
+                            options.append((route_minutes, fatigue, first_index, second_index, first_start, second_start))
+        if not options:
+            failures.append(current.isoformat())
+            continue
+        _, _, first_index, second_index, first_start, second_start = min(
+            options, key=lambda item: (item[1] if low_fatigue else 0, item[0], item[2], item[3])
+        )
+        first, second = eligible[first_index], eligible[second_index]
+        for place, slot in ((first, first_start), (second, second_start)):
+            place["schedule"].update({
+                "day": day_number, "selected": True, "required": True,
+                "fixed_start_at": slot.isoformat(),
+                "fixed_end_at": (slot + timedelta(minutes=place["schedule"]["duration_minutes"])).isoformat(),
+            })
+            selected_ids.add(place["id"])
+
+    if failures:
+        missing = "; ".join(unavailable[:5]) or "verified outbound, inter-POI, return routes and opening intervals"
+        raise ProductionIncompleteError(
+            f"route-aware scheduling requires two feasible POIs per day; no feasible pair for {', '.join(failures)}. Missing facts include: {missing}"
+        )
+
+
+def _estimated_visit_duration(place: Mapping[str, object]) -> int:
+    """Return a labeled planning estimate, not a claim about actual dwell time."""
+    primary_type = str(place.get("primary_type", "")).casefold()
+    if any(term in primary_type for term in ("amusement_park", "theme_park", "zoo", "aquarium")):
+        return 150
+    if any(term in primary_type for term in ("museum", "art_gallery", "botanical_garden")):
+        return 120
+    return 90
+
+
+def _add_unselected_poi_warnings(trip: dict, places: Sequence[dict]) -> None:
+    for place in places:
+        if place.get("schedule", {}).get("selected") is True:
+            continue
+        if not any(item.get("place_id") == place.get("id") for day in trip.get("days", []) for item in day.get("items", [])):
+            trip.setdefault("validation", []).append({
+                "code": "schedule.poi_candidate_unselected", "severity": "warning",
+                "message": f"候選景點「{place.get('name', place.get('id', ''))}」未排入：未能驗證所需的營業時間或路線。",
+                "path": f"/candidate_sets/places/{place.get('id', '')}/schedule",
+            })
 
 
 def _restaurant_candidates(candidates: Sequence[dict], intent: TravelIntent, start: date, end: date,
@@ -575,29 +715,61 @@ def _record_unknown_night_view_evidence(places: Sequence[dict], intent: TravelIn
 
 
 def _routing_context(records: Iterable[object], routing_provider: object, intent: TravelIntent) -> ValidationContext:
-    places = []
+    poi_places = []
+    hotel_places = []
     restaurants = []
+    hotel_candidates = []
+    destination_candidates = []
+    flight_candidates = []
     opening_hours = {}
     for record in records:
         candidate = record.candidate
         if record.collection == "restaurants":
             restaurants.append(candidate); place = candidate["place"]
-        elif record.collection in {"places", "hotels"}:
-            place = candidate if record.collection == "places" else candidate["place"]
+        elif record.collection == "places":
+            destination_candidates.append(candidate)
+            place = candidate
+            if place.get("kind") == "poi":
+                poi_places.append(place)
+        elif record.collection == "hotels":
+            hotel_candidates.append(candidate)
+            place = candidate["place"]
+            hotel_places.append(place)
+        elif record.collection == "flights":
+            flight_candidates.append(candidate)
+            continue
         else:
             continue
         coordinates = place.get("coordinates", {})
         if isinstance(coordinates, Mapping) and isinstance(coordinates.get("latitude"), (int, float)) and isinstance(coordinates.get("longitude"), (int, float)):
-            places.append(PlaceRef(place["id"], coordinates["latitude"], coordinates["longitude"]))
+            ref = PlaceRef(place["id"], coordinates["latitude"], coordinates["longitude"])
+            if record.collection == "hotels":
+                hotel_places[-1] = {**place, "_route_ref": ref}
+            elif record.collection == "places" and place.get("kind") == "poi":
+                poi_places[-1] = {**place, "_route_ref": ref}
+            elif record.collection == "restaurants":
+                restaurants[-1] = {**candidate, "_route_ref": ref}
         hours = candidate.get("opening_hours")
-        if record.collection == "places" and isinstance(hours, Mapping) and hours.get("status") == "fresh":
+        if record.collection in {"places", "restaurants"} and isinstance(hours, Mapping) and hours.get("status") == "fresh":
             try:
                 opening_hours[place["id"]] = tuple(OpeningInterval(int(entry["weekday"]), time.fromisoformat(entry["opens_at"]), time.fromisoformat(entry["closes_at"])) for entry in hours["intervals"])
             except (KeyError, TypeError, ValueError):
                 pass
-    # ORS has a 50-location request limit; a bounded planning snapshot avoids
-    # hidden batching/guessing and makes omitted routes unverified downstream.
-    unique = list({place.place_id: place for place in places}.values())[:50]
+    start, end = _travel_dates(intent)
+    selected_hotel = _select_hotel_candidate(
+        hotel_candidates, intent, start, end, flight_candidates, destination_candidates
+    ) if hotel_candidates else None
+    selected_hotel_id = selected_hotel.get("place", {}).get("id") if selected_hotel else None
+    selected_hotel_ref = next((place.get("_route_ref") for place in hotel_places if place.get("id") == selected_hotel_id), None)
+    poi_limit = min(40, max(2, ((end - start).days + 1) * 4))
+    ordered_refs = ([selected_hotel_ref] if selected_hotel_ref is not None else [])
+    ordered_refs.extend(place["_route_ref"] for place in poi_places if "_route_ref" in place and place.get("_route_ref") is not None)
+    ordered_refs = ordered_refs[:1] + ordered_refs[1:1 + poi_limit]
+    ordered_refs.extend(
+        candidate["_route_ref"] for candidate in restaurants
+        if "_route_ref" in candidate and candidate.get("_route_ref") is not None
+    )
+    unique = list({place.place_id: place for place in ordered_refs[:50]}.values())
     minutes: dict[tuple[str, str], int] = {}
     if len(unique) > 1:
         matrix = RouteMatrix(routing_provider, ttl=timedelta(minutes=15))

@@ -315,10 +315,10 @@ def plan_trip_tool(
             "status": "configuration_missing",
             "missing": missing_required_configuration(),
         }
-    except (ProductionIncompleteError, ValueError):
+    except (ProductionIncompleteError, ValueError) as exc:
         return {
             "status": "incomplete",
-            "message": "Planning could not complete; check local configuration and trip feasibility.",
+            "message": str(exc),
         }
     canonical_trip = getattr(result, "trip", None)
     trip_budget = canonical_trip.get("budget") if isinstance(canonical_trip, dict) else None
@@ -338,6 +338,7 @@ def plan_trip_tool(
                     ("code", warning.code),
                     ("stage", warning.stage.value),
                     ("path", warning.path),
+                    ("message", warning.message),
                 )
                 if value
             }
