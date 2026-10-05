@@ -21,6 +21,7 @@ from src.application.production import (
     missing_required_configuration,
 )
 from src.intent import parse_trip_request
+from src.orchestrator import StageStatus
 from src.renderer.build_site import build_site
 from src.schemas.validate_trip import TripValidationError, validate_trip
 from src.validator import ValidationContext, validate_itinerary
@@ -76,6 +77,16 @@ async def _read_limited_asgi_body(receive, limit: int) -> list[dict[str, Any]] |
         messages.append(message)
         if not message.get("more_body", False):
             return messages
+
+
+def _is_complete_plan_result(result: Any) -> bool:
+    """A produced trip is complete only when every reported stage succeeded."""
+    stages = tuple(result.stages)
+    return bool(
+        result.succeeded
+        and stages
+        and all(stage.status is StageStatus.SUCCEEDED for stage in stages)
+    )
 
 
 def _trip_path(trip_id: str) -> Path:
@@ -299,7 +310,7 @@ def plan_trip_tool(
             "message": "Planning could not complete; check local configuration and trip feasibility.",
         }
     return {
-        "status": "complete" if result.succeeded else "incomplete",
+        "status": "complete" if _is_complete_plan_result(result) else "incomplete",
         "trip_id": trip_id,
         "stages": [
             {"name": stage.name.value, "status": stage.status.value}
