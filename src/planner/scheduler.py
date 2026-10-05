@@ -176,15 +176,21 @@ def _anchors(trip: dict, violations: list[Violation]) -> dict[str, tuple[dict, .
             if item.get("kind") in {"visit", "meal"}:
                 continue
             try:
-                datetime.fromisoformat(item["start_at"])
-                datetime.fromisoformat(item["end_at"])
+                anchor_start = datetime.fromisoformat(item["start_at"])
+                anchor_end = datetime.fromisoformat(item["end_at"])
+                if (anchor_start.tzinfo is None or anchor_start.utcoffset() is None
+                        or anchor_end.tzinfo is None or anchor_end.utcoffset() is None
+                        or _utc_instant(anchor_end) <= _utc_instant(anchor_start)):
+                    raise ValueError
                 if not item.get("place_id"):
                     raise ValueError
             except (KeyError, TypeError, ValueError):
                 violations.append(_failure("schedule.anchor_invalid", "confirmed anchor requires place and timestamps", f"/days/{day_index}/items/{item_index}"))
                 continue
             items.append(copy.deepcopy(item))
-        anchors[current_date] = tuple(sorted(items, key=lambda item: item["start_at"]))
+        anchors[current_date] = tuple(
+            sorted(items, key=lambda item: _utc_instant(datetime.fromisoformat(item["start_at"])))
+        )
     return anchors
 
 

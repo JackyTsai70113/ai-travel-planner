@@ -17,7 +17,7 @@ from src.planner import (
     plan,
     schedule,
 )
-from src.planner.scheduler import _is_open
+from src.planner.scheduler import _anchors, _is_open
 from src.validator import BudgetLimit, OpeningInterval, ValidationContext
 from src.conditions import ConditionPolicy, ConditionSnapshot, ConditionStatus, load_condition_snapshot
 
@@ -312,6 +312,18 @@ class PlannerTests(unittest.TestCase):
              - datetime.fromisoformat(visit["start_at"]).astimezone(timezone.utc)).total_seconds(),
             3600,
         )
+
+    def test_scheduler_orders_immutable_anchors_by_absolute_time_across_dst_fold(self):
+        trip = {"days": [{"date": "2026-11-01", "items": [
+            {"kind": "event", "place_id": "first", "start_at": "2026-11-01T01:45:00-04:00", "end_at": "2026-11-01T01:50:00-04:00"},
+            {"kind": "event", "place_id": "second", "start_at": "2026-11-01T01:15:00-05:00", "end_at": "2026-11-01T01:20:00-05:00"},
+        ]}]}
+        violations = []
+
+        anchors = _anchors(trip, violations)
+
+        self.assertEqual(violations, [])
+        self.assertEqual([item["place_id"] for item in anchors["2026-11-01"]], ["first", "second"])
 
     def test_unroutable_optional_meal_is_skipped_without_failing_required_schedule(self):
         trip = copy.deepcopy(self.trip)
