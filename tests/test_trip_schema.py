@@ -13,6 +13,27 @@ class NightViewEvidenceSchemaTests(unittest.TestCase):
     def setUp(self):
         self.trip = json.loads(TRIP.read_text(encoding="utf-8"))
 
+    def test_budget_limit_intent_is_separate_from_cost_coverage(self):
+        self.trip["budget"].update({"limit_status": "unlimited", "total_status": "incomplete"})
+        validate_trip(self.trip)
+
+        self.trip["budget"].update({"limit_status": "limited", "limit": {"amount": 80000, "currency": "JPY"}})
+        validate_trip(self.trip)
+
+        for budget in (
+            {"limit_status": "limited"},
+            {"limit_status": "unlimited", "limit": {"amount": 80000, "currency": "JPY"}},
+            {"limit_status": "unspecified", "limit": {"amount": 80000, "currency": "USD"}},
+            {"limit_status": "invalid"},
+        ):
+            with self.subTest(budget=budget):
+                candidate = copy.deepcopy(self.trip)
+                candidate["budget"].pop("limit_status", None)
+                candidate["budget"].pop("limit", None)
+                candidate["budget"].update(budget)
+                with self.assertRaises(TripValidationError):
+                    validate_trip(candidate)
+
     def _evidence(self):
         source = {"source_type": "official", "provider": "Official Park Guide", "source_url": "https://example.test/park", "retrieved_at": "2026-09-01T10:00:00+09:00", "status": "confirmed"}
         fact = lambda status, description: {"status": status, "description": description, "provenance": source}

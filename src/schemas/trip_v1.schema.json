@@ -1447,6 +1447,42 @@
         "total"
       ],
       "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "limit_status": {
+                "const": "limited"
+              }
+            },
+            "required": [
+              "limit_status"
+            ]
+          },
+          "then": {
+            "required": [
+              "limit"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "limit"
+            ]
+          },
+          "then": {
+            "properties": {
+              "limit_status": {
+                "const": "limited"
+              }
+            },
+            "required": [
+              "limit_status"
+            ]
+          }
+        }
+      ],
       "properties": {
         "currency": {
           "$ref": "#/$defs/currency"
@@ -1465,6 +1501,18 @@
             "complete",
             "incomplete"
           ]
+        },
+        "limit_status": {
+          "enum": [
+            "unspecified",
+            "unlimited",
+            "limited"
+          ],
+          "description": "Whether the requester omitted a budget ceiling, explicitly set no ceiling, or supplied one. This is separate from total_status, which describes cost coverage."
+        },
+        "limit": {
+          "$ref": "#/$defs/money",
+          "description": "The explicit user-supplied spending ceiling. Present only when limit_status is limited."
         }
       }
     },

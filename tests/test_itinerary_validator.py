@@ -67,6 +67,24 @@ class ItineraryValidatorTests(unittest.TestCase):
         self.assertEqual(result.outcome, Outcome.INVALID)
         self.assertEqual({item.code for item in result.violations}, {"opening_hours.closed", "budget.exceeded"})
 
+    def test_unlimited_budget_does_not_hide_incomplete_cost_coverage(self):
+        trip = copy.deepcopy(self.trip)
+        trip["budget"].update({"limit_status": "unlimited", "total_status": "incomplete"})
+
+        result = validate_itinerary(trip, with_context(budget_limit=BudgetLimit(1, "JPY")))
+
+        self.assertIn("budget.incomplete", {item.code for item in result.violations})
+        self.assertNotIn("budget.exceeded", {item.code for item in result.violations})
+        self.assertNotIn("budget.unverified", {item.code for item in result.violations})
+
+    def test_canonical_budget_limit_is_enforced_without_external_context(self):
+        trip = copy.deepcopy(self.trip)
+        trip["budget"].update({"limit_status": "limited", "limit": {"amount": 100000, "currency": "JPY"}})
+
+        result = validate_itinerary(trip)
+
+        self.assertIn("budget.exceeded", {item.code for item in result.violations})
+
     def test_unknown_derived_facts_are_incomplete(self):
         result = validate_itinerary(self.trip)
         self.assertEqual(result.outcome, Outcome.INCOMPLETE)

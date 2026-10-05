@@ -278,12 +278,11 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
         "candidate_sets": {**collections, "places": canonical_places},
         "selected": {"hotel_place_ids": [selected_hotel["place"]["id"]] if selected_hotel else [], "flight_ids": [flight["id"] for flight in flights[:1]]},
         "days": [],
-        "budget": {"currency": currency, "categories": categories, "total": {"amount": flight_cost + hotel_cost, "currency": currency}, "total_status": "incomplete"},
+        "budget": _canonical_budget(intent, currency, categories, flight_cost + hotel_cost),
         "validation": [],
         "provenance": {"source_type": "derived", "provider": "production composition", "retrieved_at": datetime.now(timezone.utc).isoformat(), "status": "estimated", "note": _lodging_note(selected_hotel)},
     }
     shell["candidate_sets"]["restaurants"] = restaurants
-    shell["budget"]["total_status"] = "incomplete"
     scheduled = schedule(SchedulingInput(shell, routing, daily_start="07:00")).best_trip
     if scheduled is None:
         raise ProductionIncompleteError("no feasible route-aware schedule from normalized candidates")
@@ -430,8 +429,23 @@ def _legacy_trip(trip_id, intent, collections, canonical_places, start, end, sel
         categories.pop("hotel")
     if flights:
         categories["flights"] = {"amount": flight_cost, "currency": currency}
-    trip = {"schema_version": "trip-v1", "id": trip_id, "title": " + ".join(intent.destinations) + " 行程", "flight_search_url": _google_flights_search_url(intent, start, end), "flight_search_summary": _google_flights_search_summary(intent, start, end), "local_timezone": _local_timezone(intent), "date_range": {"start_date": start.isoformat(), "end_date": end.isoformat()}, "traveler_profile": {"adults": _adults(intent), "children": [{"age": age} for age in intent.travelers.child_ages]}, "preferences": {"hard_constraints": _canonical_hard_constraints(intent), "soft_preferences": []}, "candidate_sets": {**collections, "places": canonical_places}, "selected": {"hotel_place_ids": [selected_hotel["place"]["id"]] if selected_hotel else [], "flight_ids": [flight["id"] for flight in flights[:1]]}, "days": days, "budget": {"currency": currency, "categories": categories, "total": {"amount": flight_cost + hotel_cost, "currency": currency}, "total_status": "incomplete"}, "validation": [], "provenance": {"source_type": "derived", "provider": "production composition", "retrieved_at": datetime.now(timezone.utc).isoformat(), "status": "estimated", "note": _lodging_note(selected_hotel)}}
+    trip = {"schema_version": "trip-v1", "id": trip_id, "title": " + ".join(intent.destinations) + " 行程", "flight_search_url": _google_flights_search_url(intent, start, end), "flight_search_summary": _google_flights_search_summary(intent, start, end), "local_timezone": _local_timezone(intent), "date_range": {"start_date": start.isoformat(), "end_date": end.isoformat()}, "traveler_profile": {"adults": _adults(intent), "children": [{"age": age} for age in intent.travelers.child_ages]}, "preferences": {"hard_constraints": _canonical_hard_constraints(intent), "soft_preferences": []}, "candidate_sets": {**collections, "places": canonical_places}, "selected": {"hotel_place_ids": [selected_hotel["place"]["id"]] if selected_hotel else [], "flight_ids": [flight["id"] for flight in flights[:1]]}, "days": days, "budget": _canonical_budget(intent, currency, categories, flight_cost + hotel_cost), "validation": [], "provenance": {"source_type": "derived", "provider": "production composition", "retrieved_at": datetime.now(timezone.utc).isoformat(), "status": "estimated", "note": _lodging_note(selected_hotel)}}
     return trip
+
+
+def _canonical_budget(intent: TravelIntent, currency: str, categories: Mapping[str, object], known_total: float) -> dict:
+    """Keep user ceiling intent separate from how much trip cost is priced."""
+    status = intent.budget_status if intent.budget_status in {"unspecified", "unlimited", "limited"} else "unspecified"
+    budget = {
+        "currency": currency,
+        "categories": dict(categories),
+        "total": {"amount": known_total, "currency": currency},
+        "total_status": "incomplete",
+        "limit_status": status,
+    }
+    if status == "limited" and intent.budget_amount is not None:
+        budget["limit"] = {"amount": intent.budget_amount, "currency": intent.currency or currency}
+    return budget
 
 
 def _canonical_hard_constraints(intent: TravelIntent) -> list[dict]:

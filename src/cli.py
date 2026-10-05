@@ -6,6 +6,7 @@ import json
 import sys
 from pathlib import Path
 
+from src.budget import format_budget_summary
 from src.intent import parse_trip_request
 from src.application.production import (
     ProductionConfigurationError,
@@ -34,6 +35,7 @@ def plan_command(args: argparse.Namespace) -> int:
             print(json.dumps({"status": "incomplete", "intent": intent.as_dict(), "message": str(exc)}, ensure_ascii=False), file=sys.stderr)
             return 1
         status = "complete" if result.succeeded else "incomplete"
+        canonical_trip = getattr(result, "trip", None)
         payload = {
             "status": status,
             "intent": intent.as_dict(),
@@ -41,6 +43,8 @@ def plan_command(args: argparse.Namespace) -> int:
             "site": str(result.render_path) if result.render_path else None,
             "stages": [{"name": stage.name.value, "status": stage.status.value} for stage in result.stages],
             "warnings": [warning.as_dict() for warning in result.warnings],
+            "budget": canonical_trip.get("budget") if isinstance(canonical_trip, dict) else None,
+            "budget_summary": format_budget_summary(canonical_trip["budget"]) if isinstance(canonical_trip, dict) and isinstance(canonical_trip.get("budget"), dict) else None,
         }
         print(json.dumps(payload, ensure_ascii=False))
         return 0 if result.succeeded else 1
@@ -87,10 +91,13 @@ def plan_site_command(args: argparse.Namespace) -> int:
     except ValueError as exc:
         print(json.dumps({"status": "incomplete", "intent": intent.as_dict(), "message": str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 1
+    canonical_trip = getattr(result, "trip", None)
     print(json.dumps({
         "status": "complete", "intent": intent.as_dict(), "trip": str(result.trip_path) if result.trip_path else None,
         "site": str(published.bundle_path), "canonical_url": published.canonical_url,
         "readiness": "preview", "warnings": [warning.as_dict() for warning in result.warnings],
+        "budget": canonical_trip.get("budget") if isinstance(canonical_trip, dict) else None,
+        "budget_summary": format_budget_summary(canonical_trip["budget"]) if isinstance(canonical_trip, dict) and isinstance(canonical_trip.get("budget"), dict) else None,
     }, ensure_ascii=False))
     return 0
 

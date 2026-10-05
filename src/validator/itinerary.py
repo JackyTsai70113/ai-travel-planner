@@ -590,6 +590,12 @@ def budget_rule(trip: dict, context: ValidationContext) -> Sequence[Violation]:
     category_values = budget.get("categories", {}).values()
     if budget.get("total_status", "complete") not in {"complete", "incomplete"}:
         return [_error("budget.status_invalid", "budget total_status must be complete or incomplete", path)]
+    limit_status = budget.get("limit_status", "unspecified")
+    if not isinstance(limit_status, str) or limit_status not in {"unspecified", "unlimited", "limited"}:
+        return [_error("budget.limit_status_invalid", "budget limit_status must be unspecified, unlimited, or limited", path)]
+    canonical_limit = budget.get("limit")
+    if (limit_status == "limited") != isinstance(canonical_limit, Mapping):
+        return [_error("budget.limit_invalid", "a limited budget requires a monetary limit and other statuses must not include one", path)]
     if not total or currency is None:
         return [_warning("budget.unverified", "budget data is incomplete", path, {"reason": "budget_missing"})]
     if total.get("currency") != currency or any(value.get("currency") != currency for value in category_values):
@@ -597,12 +603,22 @@ def budget_rule(trip: dict, context: ValidationContext) -> Sequence[Violation]:
     category_total = sum(value["amount"] for value in category_values)
     if category_total != total["amount"]:
         return [_error("budget.total_mismatch", "budget total does not equal category total", path)]
+    limit_amount = canonical_limit.get("amount") if isinstance(canonical_limit, Mapping) else None
+    limit_currency = canonical_limit.get("currency") if isinstance(canonical_limit, Mapping) else None
+    if canonical_limit is not None and (limit_currency != currency or not isinstance(limit_amount, (int, float)) or isinstance(limit_amount, bool) or limit_amount < 0):
+        return [_error("budget.limit_invalid", "budget limit must be a non-negative amount in the trip budget currency", path)]
+    effective_limit = (
+        BudgetLimit(limit_amount, limit_currency)
+        if canonical_limit is not None
+        else None if limit_status == "unlimited"
+        else context.budget_limit
+    )
+    if effective_limit is not None and effective_limit.currency != currency:
+        return [_warning("budget.unverified", "budget limit currency differs from trip budget currency", path, {"limit_currency": effective_limit.currency, "trip_currency": currency})]
+    if effective_limit is not None and total["amount"] > effective_limit.amount:
+        return [_error("budget.exceeded", "budget total exceeds the supplied budget limit", path)]
     if context.budget_limit is None:
         return [_warning("budget.incomplete", "known cost subtotal excludes unpriced trip categories", path)] if budget.get("total_status") == "incomplete" else []
-    if context.budget_limit.currency != currency:
-        return [_warning("budget.unverified", "budget limit currency differs from trip budget currency", path, {"limit_currency": context.budget_limit.currency, "trip_currency": currency})]
-    if total["amount"] > context.budget_limit.amount:
-        return [_error("budget.exceeded", "budget total exceeds the supplied budget limit", path)]
     return [_warning("budget.incomplete", "known cost subtotal excludes unpriced trip categories", path)] if budget.get("total_status") == "incomplete" else []
 
 

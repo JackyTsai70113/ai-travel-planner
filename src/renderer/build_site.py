@@ -14,6 +14,8 @@ import re
 from typing import Any
 from urllib.parse import urlsplit
 
+from src.budget import format_budget_summary
+
 
 def build_site(trip: dict[str, Any], derived: dict[str, Any] | None = None) -> str:
     """Render a self-contained mobile-first HTML document."""
@@ -37,10 +39,10 @@ def build_site(trip: dict[str, Any], derived: dict[str, Any] | None = None) -> s
         if flight_search_url == "https://www.google.com/travel/flights?hl=zh-TW"
         else ""
     )
-    if budget_data.get("total_status") == "incomplete":
-        total = "總額待確認（僅列已知費用小計）"
-    else:
-        total = derived.get("budget", {}).get("total_label") or _money(budget_data.get("total", {}))
+    total = format_budget_summary(
+        budget_data,
+        known_total_label=derived.get("budget", {}).get("total_label"),
+    )
     sources = "".join(_render_source(x) for x in _sources(trip)) or '<p class="quiet">沒有未確認來源資料。</p>'
     attributions = "".join(_render_attribution(value) for value in _attributions(trip))
     return f'''<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{title}</title><style>{_CSS}</style></head><body><main>
@@ -211,6 +213,7 @@ def _time(value: str) -> str:
 def _money(value: Any) -> str:
     if not isinstance(value, dict): return "—"
     amount, currency = value.get("amount", "—"), value.get("currency", "")
+    if isinstance(amount, float) and amount.is_integer(): amount = int(amount)
     return f"{currency} {amount:,}" if isinstance(amount, (int, float)) else f"{currency} {amount}"
 
 

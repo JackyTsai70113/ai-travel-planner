@@ -27,6 +27,27 @@ def test_renderer_does_not_show_false_zero_when_trip_budget_is_incomplete():
     assert f'{trip["budget"]["currency"]} 0' not in html
 
 
+def test_renderer_separates_unlimited_ceiling_from_partial_known_costs():
+    trip = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    trip["budget"].update({"limit_status": "unlimited", "total_status": "incomplete"})
+
+    html = build_site(trip)
+
+    assert "未設定預算上限" in html
+    assert "已知費用小計" in html
+    assert "部分費用尚未取得" in html
+
+
+def test_renderer_shows_explicit_limit_separately_from_incomplete_costs():
+    trip = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    trip["budget"].update({"limit_status": "limited", "limit": {"amount": 80000, "currency": "JPY"}, "total_status": "incomplete"})
+
+    html = build_site(trip)
+
+    assert "預算上限 JPY 80,000" in html
+    assert "已知費用小計" in html
+
+
 def test_renderer_displays_upstream_validation_without_evaluating_it():
     trip = json.loads(FIXTURE.read_text(encoding="utf-8"))
     trip["validation"] = [{"code": "schedule_conflict", "message": "由 validator 提供"}]
