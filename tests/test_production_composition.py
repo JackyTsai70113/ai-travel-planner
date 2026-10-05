@@ -113,13 +113,34 @@ def test_nested_provider_failure_is_visible_to_orchestrator_without_losing_trip(
 
     assert result.succeeded
     research = result.stage(StageName.RESEARCH)
-    assert research.status is StageStatus.INCOMPLETE
+    assert research.status is StageStatus.SUCCEEDED
     assert any(
         warning.code == "research.provider_failed"
         and "recorded-youtube" in warning.message
         and "recorded YouTube timeout" in warning.message
         for warning in research.warnings
     )
+
+
+def test_production_runs_without_youtube_key_and_reports_optional_source_unavailable(tmp_path):
+    environment = {key: value for key, value in ENVIRONMENT.items() if key != "YOUTUBE_API_KEY"}
+    runner = create_production_orchestrator(
+        trip_id="without-youtube", trips_directory=tmp_path / "trips", site_directory=tmp_path / "site",
+        environment=environment,
+        dependencies=ProductionDependencies(
+            google=RecordedGoogle(),
+            amadeus_client=AmadeusClient(_transport, ENVIRONMENT),
+            routing_provider=FixtureRoutingProvider(()),
+        ),
+    )
+    intent = parse_trip_request("2026/4/10到2026/4/14 台北出發德島五天四夜，2大，預算8萬日圓，自駕")
+
+    result = runner.run(intent)
+
+    assert result.succeeded
+    research = result.stage(StageName.RESEARCH)
+    assert research.status is StageStatus.SUCCEEDED
+    assert any("YOUTUBE_API_KEY is not configured" in warning.message for warning in research.warnings)
 
 
 def test_taiwan_domestic_trip_uses_taiwan_context_without_flight_search(tmp_path):

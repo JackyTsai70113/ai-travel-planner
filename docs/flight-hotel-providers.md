@@ -14,7 +14,7 @@ Hotel adapter results, when available from an existing compatible account, remai
 
 ## Other production credentials
 
-The following remain required by `src.application.production`: `GOOGLE_MAPS_API_KEY` for Places research, `YOUTUBE_API_KEY` for community video evidence, and `OPENROUTESERVICE_API_KEY` for driving/walking route matrices. Keep provider keys in the backend's secret environment and restrict them in each provider console.
+`GOOGLE_MAPS_API_KEY` is required for Places research and `OPENROUTESERVICE_API_KEY` is required for driving/walking route matrices. `YOUTUBE_API_KEY` is optional and enables supplementary community video evidence. YouTube uses a single request with a five-second timeout and no retries. A timeout, quota/authentication error, malformed response, or missing key is reported as a research warning; it does not block core planning or mark the Research stage incomplete. YouTube evidence remains community-only and cannot establish operational facts. Keep configured provider keys in the backend's secret environment and restrict them in each provider console.
 
 ### OpenRouteService key
 

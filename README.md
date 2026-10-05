@@ -18,6 +18,7 @@ AI 旅遊規劃平台：自動研究、最佳化行程、驗證時間與預算�
 
 ```sh
 export GOOGLE_MAPS_API_KEY='...'
+# Optional: supplementary community video evidence
 export YOUTUBE_API_KEY='...'
 export OPENROUTESERVICE_API_KEY='...'
 # Optional Japan restaurant discovery source:

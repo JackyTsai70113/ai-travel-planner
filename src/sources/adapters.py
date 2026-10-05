@@ -26,6 +26,7 @@ class AdapterFailure:
 
     adapter: str
     message: str
+    optional: bool = False
 
 
 class SourceAdapter(ABC):
