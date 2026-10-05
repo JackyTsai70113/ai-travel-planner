@@ -248,6 +248,10 @@ def test_production_preserves_overnight_opening_interval_offset_in_routing_conte
 
     assert context.opening_hours["overnight-poi"] == (OpeningInterval(6, time(18), time(1), 1),)
 
+    poi["opening_hours"]["intervals"][0]["opens_at"] = "18:00+09:00"
+    malformed_context = _routing_context([record], RecordedCompleteRouting(), intent)
+    assert "overnight-poi" not in malformed_context.opening_hours
+
 
 def test_route_aware_production_accepts_visit_inside_next_day_closing_interval():
     intent = parse_trip_request("2026/11/01到2026/11/02 倉敷兩天一夜，2大，自駕")

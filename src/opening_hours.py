@@ -8,7 +8,7 @@ needs to know whether a period came from Google, an official feed, or a fixture.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime, time, timedelta
+from datetime import date, datetime, time, timedelta, timezone
 from enum import Enum
 from typing import Any, Mapping, Sequence
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -170,9 +170,9 @@ def evaluate_opening_hours(
     parsed = snapshot_from_mapping(snapshot, default_timezone=default_timezone)
     if parsed.status is not HoursStatus.FRESH:
         return EligibilityResult(Eligibility.UNVERIFIED, f"opening hours are {parsed.status.value}")
-    if start.tzinfo is None or end.tzinfo is None:
+    if start.tzinfo is None or end.tzinfo is None or start.utcoffset() is None or end.utcoffset() is None:
         return EligibilityResult(Eligibility.UNVERIFIED, "scheduled interval lacks timezone offset")
-    if end <= start:
+    if _as_utc(end) <= _as_utc(start):
         return EligibilityResult(Eligibility.CLOSED, "scheduled interval is invalid")
     local_zone = ZoneInfo(parsed.timezone)
     local_start, local_end = start.astimezone(local_zone), end.astimezone(local_zone)
@@ -228,23 +228,33 @@ def opening_interval_contains(interval: object, start: datetime, end: datetime, 
         last_order_offset = getattr(interval, "last_order_day_offset", 0)
     except (AttributeError, TypeError, ValueError):
         return False
-    if (not isinstance(opens_at, time) or not isinstance(closes_at, time)
-            or (last_order_at is not None and not isinstance(last_order_at, time))
+    if (not _is_local_wall_clock(opens_at) or not _is_local_wall_clock(closes_at)
+            or (last_order_at is not None and not _is_local_wall_clock(last_order_at))
             or type(close_offset) is not int or close_offset not in (0, 1)
             or type(last_order_offset) is not int or last_order_offset not in (0, 1)
             or start.tzinfo is None or end.tzinfo is None
-            or start.utcoffset() is None or end.utcoffset() is None or end <= start):
+            or start.utcoffset() is None or end.utcoffset() is None
+            or _as_utc(end) <= _as_utc(start)):
         return False
     open_at = datetime.combine(anchor_date, opens_at, start.tzinfo)
     close_at = datetime.combine(anchor_date + timedelta(days=close_offset), closes_at, start.tzinfo)
-    if close_offset == 0 and close_at <= open_at:
+    if close_offset == 0 and _as_utc(close_at) <= _as_utc(open_at):
         return False
-    if not open_at <= start or end > close_at:
+    if not _as_utc(open_at) <= _as_utc(start) or _as_utc(end) > _as_utc(close_at):
         return False
     if last_order_at is None:
         return True
     cutoff = datetime.combine(anchor_date + timedelta(days=last_order_offset), last_order_at, start.tzinfo)
-    return start <= cutoff
+    return _as_utc(start) <= _as_utc(cutoff)
+
+
+def _is_local_wall_clock(value: object) -> bool:
+    return isinstance(value, time) and value.tzinfo is None
+
+
+def _as_utc(value: datetime) -> datetime:
+    """Compare instants rather than same-ZoneInfo wall times (which ignore fold)."""
+    return value.astimezone(timezone.utc)
 
 
 def _parse_interval(value: Mapping[str, Any], weekday: int | None = None) -> OpeningInterval:
