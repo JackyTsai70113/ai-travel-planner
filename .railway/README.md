@@ -72,5 +72,5 @@ railway run --service ai-travel-planner --environment production -- node -e 'con
 只核對變數名稱且不顯示值的指令：
 
 ```sh
-railway variable list --service ai-travel-planner --environment production --json | jq -r 'if type == "array" then .[] | if type == "object" then (.name // .key) else . end else keys[] end' | sort
+railway variable list --service ai-travel-planner --environment production --json | jq -r 'if type == "array" then .[] | if type == "object" then ((.name // .key) | strings) else empty end else keys[] end' | sort
 ```
