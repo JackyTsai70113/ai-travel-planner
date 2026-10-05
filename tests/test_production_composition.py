@@ -8,7 +8,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from src.application.production import ProductionDependencies, ProductionIncompleteError, _candidate_trips, _google_flights_search_summary, _google_flights_search_url, _select_hotel_candidate, create_production_orchestrator
+from src.application.production import ProductionDependencies, ProductionIncompleteError, _assign_route_aware_poi_schedule, _candidate_trips, _google_flights_search_summary, _google_flights_search_url, _select_hotel_candidate, create_production_orchestrator
 from src.cli import plan_command
 from src.intent import parse_trip_request
 from src.orchestrator import StageName, StageStatus
@@ -190,17 +190,22 @@ def test_kurashiki_five_day_fixture_schedules_multiple_pois_per_day_without_prov
     hotel = {"place": {"id": "kurashiki-hotel", "name": "Recorded Kurashiki hotel", "kind": "hotel", "coordinates": {"latitude": 34.6, "longitude": 133.77}, "provenance": provenance}, "total_cost": {"amount": 1000, "currency": "JPY"}, "check_in": "2026-11-01", "check_out": "2026-11-05", "occupancy": {"adults": 6, "child_ages": [2], "rooms": 1}, "price_status": "unverified", "provenance": provenance}
     refs = [PlaceRef(candidate["id"], candidate["coordinates"]["latitude"], candidate["coordinates"]["longitude"]) for _, candidate in poi_records]
     refs.append(PlaceRef("kurashiki-hotel", 34.6, 133.77))
+    restaurant = {"place": {"id": "kurashiki-restaurant", "name": "倉敷餐廳", "kind": "restaurant", "coordinates": {"latitude": 34.6, "longitude": 133.77}, "provenance": provenance}, "opening_hours": {"status": "fresh", "timezone": "Asia/Tokyo", "intervals": [{"weekday": day, "opens_at": "09:00", "closes_at": "21:00"} for day in range(7)]}, "rating": 4.5, "review_count": 50, "provenance": provenance}
+    refs.append(PlaceRef("kurashiki-restaurant", 34.6, 133.77))
     routes = {(origin.place_id, destination.place_id): 10 for origin in refs for destination in refs if origin != destination}
+    routes[("kurashiki-restaurant", "kurashiki-poi-1")] = 45
     opening = {ref.place_id: tuple(OpeningInterval(day, time(8), time(22)) for day in range(7)) for ref in refs if ref.place_id != "kurashiki-hotel"}
 
+    records = [*map(lambda pair: SimpleNamespace(collection=pair[0], candidate=pair[1]), poi_records), SimpleNamespace(collection="hotels", candidate=hotel), SimpleNamespace(collection="restaurants", candidate=restaurant)]
     with patch("src.application.production.schedule", wraps=route_aware_schedule) as scheduler:
-        trip, = _candidate_trips("kurashiki-recorded", intent, [*map(lambda pair: SimpleNamespace(collection=pair[0], candidate=pair[1]), poi_records), SimpleNamespace(collection="hotels", candidate=hotel)], ValidationContext(routes, opening))
+        trip, = _candidate_trips("kurashiki-recorded", intent, records, ValidationContext(routes, opening))
     scheduler.assert_called_once()
     validate_trip(trip)
 
     visits_by_day = [[item for item in day["items"] if item["kind"] == "visit"] for day in trip["days"]]
     assert len(poi_records) >= 10
     assert all(len(visits) >= 2 for visits in visits_by_day)
+    assert not any(candidate.get("schedule", {}).get("day") == 1 and candidate.get("schedule", {}).get("meal_period") == "lunch" for candidate in trip["candidate_sets"]["restaurants"])
     assert trip["candidate_sets"]["places"][0]["schedule"]["duration_basis"] == "provider"
     assert trip["candidate_sets"]["places"][0]["schedule"]["fixed_start_at"] == "2026-11-01T09:30:00+09:00"
     assert trip["candidate_sets"]["places"][1]["schedule"]["fixed_start_at"] == "2026-11-01T14:00:00+09:00"
@@ -209,6 +214,27 @@ def test_kurashiki_five_day_fixture_schedules_multiple_pois_per_day_without_prov
     assert trip["budget"]["limit_status"] == "unlimited"
     assert "limit" not in trip["budget"]
     assert trip["budget"]["total_status"] == "incomplete"
+
+
+
+def test_route_aware_assignment_reserves_weekday_limited_pois_for_constrained_days():
+    start = date(2026, 11, 2)  # Monday
+    places = [{"id": name, "name": name, "kind": "poi", "schedule": {"duration_minutes": 60, "duration_basis": "provider"}}
+              for name in ("common-a", "common-b", "monday-c", "monday-d")]
+    hours = {
+        "common-a": tuple(OpeningInterval(day, time(8), time(22)) for day in (0, 1)),
+        "common-b": tuple(OpeningInterval(day, time(8), time(22)) for day in (0, 1)),
+        "monday-c": (OpeningInterval(0, time(8), time(22)),),
+        "monday-d": (OpeningInterval(0, time(8), time(22)),),
+    }
+    ids = ["hotel", *(place["id"] for place in places)]
+    routes = {(origin, destination): 10 for origin in ids for destination in ids if origin != destination}
+    routes.update({("hotel", "common-a"): 1, ("common-a", "common-b"): 1, ("common-b", "hotel"): 1})
+
+    _assign_route_aware_poi_schedule(places, 2, start, "Asia/Tokyo", "hotel", ValidationContext(routes, hours))
+
+    assert {place["id"] for place in places if place["schedule"]["day"] == 1} == {"monday-c", "monday-d"}
+    assert {place["id"] for place in places if place["schedule"]["day"] == 2} == {"common-a", "common-b"}
 
 
 
@@ -222,7 +248,7 @@ def test_route_aware_production_fails_closed_when_poi_hours_are_missing():
 
     for context, expected in (
         (ValidationContext(), "verified opening hours"),
-        (ValidationContext({}, {f"poi-{number}": tuple(OpeningInterval(day, time(8), time(22)) for day in range(7)) for number in range(12)}), "no feasible pair"),
+        (ValidationContext({}, {f"poi-{number}": tuple(OpeningInterval(day, time(8), time(22)) for day in range(7)) for number in range(12)}), "no feasible assignment"),
     ):
         try:
             _candidate_trips("kurashiki-missing-facts", intent, records, context)
@@ -461,17 +487,6 @@ def test_cli_non_demo_invokes_shared_production_composition_not_configuration_re
     assert '"status": "complete"' in output
     assert '"budget_summary": "未設定預算上限；已知費用小計 JPY 0（部分費用尚未取得）"' in output
     assert "configuration_ready" not in output
-
-
-def test_legacy_breakfast_is_omitted_when_route_would_overlap_first_poi():
-    from src.application.production import _schedule_legacy_meals
-    from src.validator import ValidationContext
-
-    restaurant = {"place": {"id": "breakfast-shop", "name": "早餐店"}, "opening_hours": {"status": "fresh", "timezone": "Asia/Taipei", "intervals": [{"weekday": day, "opens_at": "06:00", "closes_at": "20:00"} for day in range(7)]}, "provenance": {"source_type": "provider", "provider": "recorded", "retrieved_at": "2026-01-01T00:00:00+08:00"}}
-    trip = {"local_timezone": "Asia/Taipei", "selected": {"hotel_place_ids": ["hotel"]}, "candidate_sets": {"restaurants": [restaurant]}, "days": [{"date": "2026-04-10", "items": [{"id": "poi", "kind": "visit", "place_id": "poi", "start_at": "2026-04-10T10:00:00+08:00", "end_at": "2026-04-10T12:00:00+08:00"}]}]}
-    routes = {("hotel", "breakfast-shop"): 45, ("breakfast-shop", "poi"): 45}
-    _schedule_legacy_meals(trip, [restaurant], ValidationContext(travel_minutes=routes))
-    assert all(item["kind"] != "meal" for item in trip["days"][0]["items"])
 
 
 def test_restaurant_selection_keeps_open_route_verified_candidate_when_first_is_closed():
