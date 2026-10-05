@@ -7,8 +7,9 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
+from zoneinfo import ZoneInfo
 
-from src.application.production import ProductionDependencies, ProductionIncompleteError, _assign_route_aware_poi_schedule, _candidate_trips, _google_flights_search_summary, _google_flights_search_url, _select_hotel_candidate, create_production_orchestrator
+from src.application.production import ProductionDependencies, ProductionIncompleteError, _add_elapsed_minutes, _assign_route_aware_poi_schedule, _candidate_trips, _google_flights_search_summary, _google_flights_search_url, _routing_context, _select_hotel_candidate, create_production_orchestrator
 from src.cli import plan_command
 from src.intent import parse_trip_request
 from src.orchestrator import StageName, StageStatus
@@ -235,6 +236,56 @@ def test_route_aware_assignment_reserves_weekday_limited_pois_for_constrained_da
 
     assert {place["id"] for place in places if place["schedule"]["day"] == 1} == {"monday-c", "monday-d"}
     assert {place["id"] for place in places if place["schedule"]["day"] == 2} == {"common-a", "common-b"}
+
+
+def test_production_preserves_overnight_opening_interval_offset_in_routing_context():
+    intent = parse_trip_request("2026/11/01到2026/11/01 倉敷一日，2大")
+    poi = {"id": "overnight-poi", "name": "Night Museum", "kind": "poi", "coordinates": {"latitude": 34.6, "longitude": 133.77},
+           "opening_hours": {"status": "fresh", "timezone": "Asia/Tokyo", "intervals": [{"weekday": 6, "opens_at": "18:00", "closes_at": "01:00", "closes_day_offset": 1}]},
+           "provenance": {"source_type": "provider", "provider": "Recorded Places", "retrieved_at": "2026-10-01T00:00:00+09:00", "status": "confirmed"}}
+    record = SimpleNamespace(collection="places", candidate=poi)
+
+    context = _routing_context([record], RecordedCompleteRouting(), intent)
+
+    assert context.opening_hours["overnight-poi"] == (OpeningInterval(6, time(18), time(1), 1),)
+
+    poi["opening_hours"]["intervals"][0]["opens_at"] = "18:00+09:00"
+    malformed_context = _routing_context([record], RecordedCompleteRouting(), intent)
+    assert "overnight-poi" not in malformed_context.opening_hours
+
+
+def test_production_visit_end_uses_elapsed_time_across_dst_fold():
+    start = datetime.fromisoformat("2026-11-01T01:30:00-04:00").astimezone(ZoneInfo("America/New_York"))
+
+    end = _add_elapsed_minutes(start, 60)
+
+    assert end.isoformat() == "2026-11-01T01:30:00-05:00"
+
+
+def test_route_aware_production_accepts_visit_inside_next_day_closing_interval():
+    intent = parse_trip_request("2026/11/01到2026/11/02 倉敷兩天一夜，2大，自駕")
+    provenance = {"source_type": "provider", "provider": "Recorded Places", "source_url": "https://example.test/places", "retrieved_at": "2026-10-01T00:00:00+09:00", "status": "confirmed"}
+    regular_hours = {"status": "fresh", "timezone": "Asia/Tokyo", "intervals": [{"weekday": day, "opens_at": "08:00", "closes_at": "20:00"} for day in range(7)], "provenance": provenance}
+    overnight_hours = {"status": "fresh", "timezone": "Asia/Tokyo", "intervals": [{"weekday": day, "opens_at": "18:00", "closes_at": "01:00", "closes_day_offset": 1} for day in range(7)], "provenance": provenance}
+    places = [
+        {"id": "overnight-first", "name": "First POI", "kind": "poi", "coordinates": {"latitude": 34.6, "longitude": 133.77}, "opening_hours": regular_hours,
+         "schedule": {"duration_minutes": 75, "duration_basis": "provider", "day": 1, "selected": True, "required": True, "fixed_start_at": "2026-11-01T09:30:00+09:00", "fixed_end_at": "2026-11-01T10:45:00+09:00"}, "provenance": provenance},
+        {"id": "overnight-second", "name": "Night Museum", "kind": "poi", "coordinates": {"latitude": 34.6001, "longitude": 133.77}, "opening_hours": overnight_hours,
+         "schedule": {"duration_minutes": 75, "duration_basis": "provider", "day": 1, "selected": True, "required": True, "fixed_start_at": "2026-11-01T18:00:00+09:00", "fixed_end_at": "2026-11-01T19:15:00+09:00"}, "provenance": provenance},
+        *[{"id": f"overnight-extra-{index}", "name": f"Extra {index}", "kind": "poi", "coordinates": {"latitude": 34.61 + index / 10000, "longitude": 133.77}, "opening_hours": regular_hours, "provenance": provenance} for index in range(2)],
+    ]
+    hotel = {"place": {"id": "overnight-hotel", "name": "Recorded hotel", "kind": "hotel", "coordinates": {"latitude": 34.6, "longitude": 133.77}, "provenance": provenance}, "total_cost": {"amount": 10000, "currency": "JPY"}, "check_in": "2026-11-01", "check_out": "2026-11-02", "occupancy": {"adults": 2, "child_ages": [], "rooms": 1}, "price_status": "unverified", "provenance": provenance}
+    refs = [PlaceRef(item["id"], item["coordinates"]["latitude"], item["coordinates"]["longitude"]) for item in places]
+    refs.append(PlaceRef("overnight-hotel", 34.6, 133.77))
+    routes = {(origin.place_id, destination.place_id): 10 for origin in refs for destination in refs if origin != destination}
+    opening = {item["id"]: tuple(OpeningInterval(entry["weekday"], time.fromisoformat(entry["opens_at"]), time.fromisoformat(entry["closes_at"]), entry.get("closes_day_offset", 0)) for entry in item["opening_hours"]["intervals"]) for item in places}
+    records = [*(SimpleNamespace(collection="places", candidate=item) for item in places), SimpleNamespace(collection="hotels", candidate=hotel)]
+
+    trip, = _candidate_trips("overnight-visit", intent, records, ValidationContext(routes, opening))
+
+    scheduled = next(item for day in trip["days"] for item in day["items"] if item["place_id"] == "overnight-second")
+    assert scheduled["start_at"] == "2026-11-01T18:00:00+09:00"
+    assert scheduled["end_at"] == "2026-11-01T19:15:00+09:00"
 
 
 

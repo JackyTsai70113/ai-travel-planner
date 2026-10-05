@@ -1,9 +1,11 @@
 import copy
 import json
 from dataclasses import replace
-from datetime import datetime, time, timedelta
+from datetime import datetime, time, timedelta, timezone
 from pathlib import Path
 import unittest
+from types import SimpleNamespace
+from zoneinfo import ZoneInfo
 
 from src.planner import (
     HardConstraint,
@@ -16,6 +18,7 @@ from src.planner import (
     plan,
     schedule,
 )
+from src.planner.scheduler import _add_elapsed_minutes, _anchors, _in_trip_timezone, _is_open
 from src.validator import BudgetLimit, OpeningInterval, ValidationContext
 from src.conditions import ConditionPolicy, ConditionSnapshot, ConditionStatus, load_condition_snapshot
 
@@ -40,6 +43,44 @@ def verified_context(limit=200000):
 class PlannerTests(unittest.TestCase):
     def setUp(self):
         self.trip = json.loads(TRIP_FIXTURE.read_text(encoding="utf-8"))
+
+    def test_scheduler_sequence_opening_hours_use_trip_timezone_and_fail_closed_on_malformed_values(self):
+        request = SimpleNamespace(
+            trip={"local_timezone": "Asia/Tokyo"},
+            validation_context=ValidationContext(opening_hours={"night-poi": [OpeningInterval(6, time(9), time(11))]}),
+        )
+        start = datetime.fromisoformat("2026-11-01T00:30:00+00:00")
+        end = datetime.fromisoformat("2026-11-01T01:30:00+00:00")
+
+        self.assertTrue(_is_open("night-poi", start, end, request))
+
+        self.assertFalse(_is_open("night-poi", datetime.fromisoformat("2026-11-01T09:30:00"), datetime.fromisoformat("2026-11-01T10:30:00"), request))
+
+        for invalid_offset in (True, 1.5, 2):
+            invalid_interval = SimpleNamespace(weekday=6, opens_at=time(9), closes_at=time(11), closes_day_offset=invalid_offset)
+            invalid_request = SimpleNamespace(trip={"local_timezone": "Asia/Tokyo"}, validation_context=ValidationContext(opening_hours={"night-poi": [invalid_interval]}))
+            self.assertFalse(_is_open("night-poi", start, end, invalid_request))
+
+        malformed = SimpleNamespace(
+            trip={"local_timezone": "Asia/Tokyo"},
+            validation_context=ValidationContext(opening_hours={"night-poi": [{"weekday": 6, "opens_at": "bad", "closes_at": "bad"}]}),
+        )
+        self.assertFalse(_is_open("night-poi", start, end, malformed))
+        malformed.trip["local_timezone"] = "not/a-real-zone"
+        self.assertFalse(_is_open("night-poi", start, end, malformed))
+        for malformed_interval in (
+            {"weekday": 6, "opens_at": "bad", "closes_at": "bad"},
+            {"weekday": True, "opens_at": "09:00", "closes_at": "11:00"},
+            {"weekday": 6, "opens_at": "09:00", "closes_at": "11:00", "closes_day_offset": True},
+            {"weekday": 6, "opens_at": "09:00", "closes_at": "11:00", "closes_day_offset": 1.5},
+        ):
+            bad_snapshot = SimpleNamespace(
+                trip={"local_timezone": "Asia/Tokyo"},
+                validation_context=ValidationContext(opening_hours={"night-poi": {
+                    "status": "fresh", "timezone": "Asia/Tokyo", "intervals": [malformed_interval],
+                }}),
+            )
+            self.assertFalse(_is_open("night-poi", start, end, bad_snapshot))
 
     def _scenario(self, name):
         return json.loads((SCENARIOS / f"{name}.json").read_text(encoding="utf-8"))
@@ -239,6 +280,59 @@ class PlannerTests(unittest.TestCase):
         result = schedule(SchedulingInput(trip, ValidationContext()))
         self.assertIsNone(result.best_trip)
         self.assertIn("schedule.route_unknown", {violation.code for violation in result.candidates[0].violations})
+
+    def test_scheduler_uses_elapsed_time_across_dst_fold(self):
+        trip = copy.deepcopy(self.trip)
+        trip["days"] = [{"date": "2026-11-01", "items": [{
+            "id": "fold-anchor", "kind": "event", "place_id": "anchor-station",
+            "start_at": "2026-11-01T01:30:00-04:00", "end_at": "2026-11-01T01:50:00-04:00",
+        }]}]
+        trip["date_range"] = {"start_date": "2026-11-01", "end_date": "2026-11-01"}
+        trip["local_timezone"] = "America/New_York"
+        poi = next(place for place in trip["candidate_sets"]["places"] if place["id"] == "ohori-park")
+        poi["schedule"] = {"duration_minutes": 15, "day": 1, "required": True}
+        for place in trip["candidate_sets"]["places"]:
+            if place["id"] != "ohori-park":
+                place["schedule"] = {"selected": False}
+        for meal in trip["candidate_sets"]["restaurants"]:
+            meal["schedule"] = {"selected": False}
+        context = ValidationContext(
+            travel_minutes={("anchor-station", "ohori-park"): 30, ("ohori-park", "hakata-hotel"): 0},
+            opening_hours={"ohori-park": [OpeningInterval(6, time(1), time(2))]},
+        )
+
+        result = schedule(SchedulingInput(trip, context, daily_start="00:00", daily_end="23:00"))
+
+        self.assertIsNotNone(result.best_trip)
+        assert result.best_trip is not None
+        visit = next(item for item in result.best_trip.trip["days"][0]["items"] if item["place_id"] == "ohori-park")
+        self.assertEqual(visit["start_at"], "2026-11-01T01:20:00-05:00")
+        self.assertEqual(visit["end_at"], "2026-11-01T01:35:00-05:00")
+        self.assertEqual(
+            (datetime.fromisoformat(visit["end_at"]).astimezone(timezone.utc)
+             - datetime.fromisoformat(visit["start_at"]).astimezone(timezone.utc)).total_seconds(),
+            900,
+        )
+
+    def test_scheduler_orders_immutable_anchors_by_absolute_time_across_dst_fold(self):
+        trip = {"days": [{"date": "2026-11-01", "items": [
+            {"kind": "event", "place_id": "first", "start_at": "2026-11-01T01:45:00-04:00", "end_at": "2026-11-01T01:50:00-04:00"},
+            {"kind": "event", "place_id": "second", "start_at": "2026-11-01T01:15:00-05:00", "end_at": "2026-11-01T01:20:00-05:00"},
+        ]}]}
+        violations = []
+
+        anchors = _anchors(trip, violations)
+
+        self.assertEqual(violations, [])
+        self.assertEqual([item["place_id"] for item in anchors["2026-11-01"]], ["first", "second"])
+
+    def test_scheduler_converts_parsed_prior_item_to_trip_zone_before_elapsed_route(self):
+        zone = ZoneInfo("America/New_York")
+        previous_end = _in_trip_timezone("2026-11-01T01:50:00-04:00", zone)
+
+        arrival = _add_elapsed_minutes(previous_end, 30)
+
+        self.assertEqual(arrival.isoformat(), "2026-11-01T01:20:00-05:00")
 
     def test_unroutable_optional_meal_is_skipped_without_failing_required_schedule(self):
         trip = copy.deepcopy(self.trip)

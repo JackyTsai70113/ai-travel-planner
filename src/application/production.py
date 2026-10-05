@@ -15,6 +15,7 @@ from typing import Callable, Iterable, Mapping, Sequence
 from zoneinfo import ZoneInfo
 
 from src.intent import TravelIntent
+from src.opening_hours import parse_clock
 from src.orchestrator import OrchestrationResult, TravelOrchestrator, TravelOrchestratorConfig
 from src.planner import SchedulingInput, schedule
 from src.restaurant_intelligence import eligible_restaurants, meal_eligibility, reconcile_restaurant_candidates, validation_opening_hours
@@ -361,13 +362,17 @@ def _assign_route_aware_poi_schedule(
             first_duration = first_details["duration_minutes"]
             first_buffer = first_details.get("parking_buffer_minutes", 0) + first_details.get("walking_buffer_minutes", 0)
             for first_interval in routing.opening_hours.get(first["id"], ()):
-                if first_interval.weekday != current.weekday():
+                if (type(first_interval.weekday) is not int or first_interval.weekday not in range(7)
+                        or type(first_interval.closes_day_offset) is not int or first_interval.closes_day_offset not in (0, 1)
+                        or not isinstance(first_interval.opens_at, time) or not isinstance(first_interval.closes_at, time)
+                        or first_interval.weekday != current.weekday()):
                     continue
                 first_open = datetime.combine(current, first_interval.opens_at, zone)
-                first_close = datetime.combine(current, first_interval.closes_at, zone)
-                first_start = max(day_start + timedelta(minutes=out_minutes + first_buffer), first_open)
-                first_end = first_start + timedelta(minutes=first_duration)
-                if first_end > first_close:
+                first_close = datetime.combine(current + timedelta(days=first_interval.closes_day_offset), first_interval.closes_at, zone)
+                first_start = max(_add_elapsed_minutes(day_start, out_minutes + first_buffer), first_open,
+                                  key=lambda value: value.astimezone(timezone.utc))
+                first_end = _add_elapsed_minutes(first_start, first_duration)
+                if first_end.astimezone(timezone.utc) > first_close.astimezone(timezone.utc):
                     continue
                 for second_index, second in enumerate(eligible):
                     if second["id"] in selected_ids or second_index == first_index:
@@ -380,16 +385,22 @@ def _assign_route_aware_poi_schedule(
                     second_duration = second_details["duration_minutes"]
                     second_buffer = second_details.get("parking_buffer_minutes", 0) + second_details.get("walking_buffer_minutes", 0)
                     for second_interval in routing.opening_hours.get(second["id"], ()):
-                        if second_interval.weekday != current.weekday():
+                        if (type(second_interval.weekday) is not int or second_interval.weekday not in range(7)
+                                or type(second_interval.closes_day_offset) is not int or second_interval.closes_day_offset not in (0, 1)
+                                or not isinstance(second_interval.opens_at, time) or not isinstance(second_interval.closes_at, time)
+                                or second_interval.weekday != current.weekday()):
                             continue
                         second_open = datetime.combine(current, second_interval.opens_at, zone)
-                        second_close = datetime.combine(current, second_interval.closes_at, zone)
+                        second_close = datetime.combine(current + timedelta(days=second_interval.closes_day_offset), second_interval.closes_at, zone)
                         # Keep a protected midday break so the shared scheduler can
                         # place a verified lunch candidate without overlapping visits.
-                        second_start = max(first_end + timedelta(minutes=between + second_buffer), second_open,
-                                           datetime.combine(current, time(14, 0), zone))
-                        second_end = second_start + timedelta(minutes=second_duration)
-                        if second_end <= second_close and second_end + timedelta(minutes=return_second) <= day_end:
+                        second_start = max(_add_elapsed_minutes(first_end, between + second_buffer), second_open,
+                                           datetime.combine(current, time(14, 0), zone),
+                                           key=lambda value: value.astimezone(timezone.utc))
+                        second_end = _add_elapsed_minutes(second_start, second_duration)
+                        if (second_end.astimezone(timezone.utc) <= second_close.astimezone(timezone.utc)
+                                and _add_elapsed_minutes(second_end, return_second).astimezone(timezone.utc)
+                                <= day_end.astimezone(timezone.utc)):
                             route_minutes = out_minutes + between + return_second
                             fatigue = float(first_details.get("fatigue", 0)) + float(second_details.get("fatigue", 0))
                             options.append((route_minutes, fatigue, first_index, second_index, first_start, second_start))
@@ -434,7 +445,7 @@ def _assign_route_aware_poi_schedule(
                 place["schedule"].update({
                     "day": day_number, "selected": True, "required": True,
                     "fixed_start_at": slot.isoformat(),
-                    "fixed_end_at": (slot + timedelta(minutes=place["schedule"]["duration_minutes"])).isoformat(),
+                    "fixed_end_at": _add_elapsed_minutes(slot, place["schedule"]["duration_minutes"]).isoformat(),
                 })
                 selected_ids.add(place["id"])
 
@@ -480,7 +491,7 @@ def _restaurant_candidates(candidates: Sequence[dict], intent: TravelIntent, sta
         current_date = start + timedelta(days=day_number - 1)
         for period, start_time in windows.items():
             meal_start = datetime.combine(current_date, start_time, zone)
-            meal_end = meal_start + timedelta(minutes=60)
+            meal_end = _add_elapsed_minutes(meal_start, 60)
             eligible = [candidate for candidate in eligible_restaurants(candidates, meal_start, meal_end)
                         if candidate.get("place", {}).get("id") not in used
                         and candidate.get("schedule", {}).get("duration_minutes", 60) > 0
@@ -545,9 +556,9 @@ def _meal_route_feasible(candidate: Mapping[str, object], period: str, starts: d
         scheduled.append((visit_start, visit_end, place["id"], details))
 
     if scheduled:
-        scheduled.sort(key=lambda item: item[0])
-        before = [item for item in scheduled if item[1] <= starts]
-        after = [item for item in scheduled if item[0] >= ends]
+        scheduled.sort(key=lambda item: item[0].astimezone(timezone.utc))
+        before = [item for item in scheduled if item[1].astimezone(timezone.utc) <= starts.astimezone(timezone.utc)]
+        after = [item for item in scheduled if item[0].astimezone(timezone.utc) >= ends.astimezone(timezone.utc)]
         if before:
             _, previous_end, previous_id, _ = before[-1]
         else:
@@ -561,9 +572,9 @@ def _meal_route_feasible(candidate: Mapping[str, object], period: str, starts: d
         outgoing = routing.travel_minutes.get((place_id, next_id))
         if incoming is None or outgoing is None:
             return False
-        if starts - timedelta(minutes=incoming) < previous_end:
+        if _add_elapsed_minutes(starts, -incoming).astimezone(timezone.utc) < previous_end.astimezone(timezone.utc):
             return False
-        return ends + timedelta(minutes=outgoing + next_buffer) <= next_start
+        return _add_elapsed_minutes(ends, outgoing + next_buffer).astimezone(timezone.utc) <= next_start.astimezone(timezone.utc)
 
     # Compatibility for callers that evaluate meal candidates before assigning
     # POI dates; production passes a route-aware scheduled POI set above.
@@ -575,10 +586,14 @@ def _meal_route_feasible(candidate: Mapping[str, object], period: str, starts: d
     if period == "breakfast":
         outbound = routing.travel_minutes.get((hotel_id, place_id))
         onward = routing.travel_minutes.get((place_id, poi_id))
-        return outbound is not None and onward is not None and starts - timedelta(minutes=outbound) >= datetime.combine(starts.date(), time(7), starts.tzinfo) and ends + timedelta(minutes=onward) <= datetime.combine(starts.date(), time(10), starts.tzinfo)
+        return (outbound is not None and onward is not None
+                and _add_elapsed_minutes(starts, -outbound).astimezone(timezone.utc) >= datetime.combine(starts.date(), time(7), starts.tzinfo).astimezone(timezone.utc)
+                and _add_elapsed_minutes(ends, onward).astimezone(timezone.utc) <= datetime.combine(starts.date(), time(10), starts.tzinfo).astimezone(timezone.utc))
     outbound = routing.travel_minutes.get((poi_id, place_id))
     returning = routing.travel_minutes.get((place_id, hotel_id))
-    return outbound is not None and returning is not None and starts >= datetime.combine(starts.date(), time(12) if period == "lunch" else time(18), starts.tzinfo) and ends + timedelta(minutes=returning) <= datetime.combine(starts.date(), time(20), starts.tzinfo)
+    return (outbound is not None and returning is not None
+            and starts.astimezone(timezone.utc) >= datetime.combine(starts.date(), time(12) if period == "lunch" else time(18), starts.tzinfo).astimezone(timezone.utc)
+            and _add_elapsed_minutes(ends, returning).astimezone(timezone.utc) <= datetime.combine(starts.date(), time(20), starts.tzinfo).astimezone(timezone.utc))
 
 
 
@@ -769,7 +784,18 @@ def _routing_context(records: Iterable[object], routing_provider: object, intent
         hours = candidate.get("opening_hours")
         if record.collection in {"places", "restaurants"} and isinstance(hours, Mapping) and hours.get("status") == "fresh":
             try:
-                opening_hours[place["id"]] = tuple(OpeningInterval(int(entry["weekday"]), time.fromisoformat(entry["opens_at"]), time.fromisoformat(entry["closes_at"])) for entry in hours["intervals"])
+                parsed = []
+                for entry in hours["intervals"]:
+                    weekday = entry["weekday"]
+                    close_offset = entry.get("closes_day_offset", 0)
+                    if (type(weekday) is not int or weekday not in range(7)
+                            or type(close_offset) is not int or close_offset not in (0, 1)):
+                        raise ValueError("opening interval weekday or close offset is invalid")
+                    parsed.append(OpeningInterval(
+                        weekday, parse_clock(entry["opens_at"], field="opens_at"),
+                        parse_clock(entry["closes_at"], field="closes_at"), close_offset,
+                    ))
+                opening_hours[place["id"]] = tuple(parsed)
             except (KeyError, TypeError, ValueError):
                 pass
     start, end = _travel_dates(intent)
@@ -795,6 +821,11 @@ def _routing_context(records: Iterable[object], routing_provider: object, intent
             if route.status is RouteStatus.AVAILABLE and route.duration_seconds is not None:
                 minutes[(route.origin.place_id, route.destination.place_id)] = max(1, round(route.duration_seconds / 60))
     return ValidationContext(travel_minutes=minutes, opening_hours={**validation_opening_hours(restaurants), **opening_hours})
+
+
+def _add_elapsed_minutes(value: datetime, minutes: int) -> datetime:
+    """Add real elapsed time across DST changes, preserving the local zone."""
+    return (value.astimezone(timezone.utc) + timedelta(minutes=minutes)).astimezone(value.tzinfo)
 
 
 def _require_plannable_intent(intent: TravelIntent) -> None:

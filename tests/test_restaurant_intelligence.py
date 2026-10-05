@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, time, timezone
 import json
 from pathlib import Path
 from unittest import TestCase
+from zoneinfo import ZoneInfo
 
-from src.opening_hours import Eligibility, evaluate_opening_hours
+from src.opening_hours import Eligibility, evaluate_opening_hours, opening_interval_contains
+from src.validator import OpeningInterval
 from src.restaurant_intelligence import eligible_restaurants, meal_eligibility, reconcile_restaurant_candidates
 from src.schemas import TripValidationError, validate_trip
 from src.validator import Outcome, validate_itinerary
@@ -109,6 +111,33 @@ def test_overnight_and_24_hour_intervals_do_not_use_nonstandard_clock_values():
     ).eligible
     always = candidate(intervals=[{"weekday": 2, "opens_at": "00:00", "closes_at": "00:00", "closes_day_offset": 1}])
     assert meal_eligibility(always, datetime.fromisoformat("2026-08-26T00:00:00+09:00"), datetime.fromisoformat("2026-08-26T23:59:00+09:00")) is Eligibility.ELIGIBLE
+
+
+def test_opening_hours_compare_absolute_instants_across_dst_fold():
+    snapshot = {
+        "status": "fresh", "timezone": "America/New_York",
+        "intervals": [{"weekday": 6, "opens_at": "01:00", "closes_at": "02:00"}],
+    }
+    start = datetime.fromisoformat("2026-11-01T01:30:00-04:00")
+    end = datetime.fromisoformat("2026-11-01T01:15:00-05:00")
+
+    assert evaluate_opening_hours(snapshot, start, end).eligible
+    assert opening_interval_contains(
+        OpeningInterval(6, time(1), time(2)),
+        start.astimezone(ZoneInfo("America/New_York")),
+        end.astimezone(ZoneInfo("America/New_York")),
+        start.date(),
+    )
+
+
+def test_sequence_opening_hours_reject_timezone_aware_wall_clock():
+    interval = OpeningInterval(6, time(9, tzinfo=timezone.utc), time(11))
+    assert not opening_interval_contains(
+        interval,
+        datetime.fromisoformat("2026-11-01T09:30:00+00:00"),
+        datetime.fromisoformat("2026-11-01T10:30:00+00:00"),
+        datetime.fromisoformat("2026-11-01T09:30:00+00:00").date(),
+    )
 
 
 def test_previous_special_closure_overrides_regular_overnight_hours():
