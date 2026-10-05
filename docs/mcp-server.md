@@ -2,6 +2,8 @@
 
 ## Remote ChatGPT deployment
 
+最新正式環境連線證據、倉敷 production run 實測結果與未解 issues，整理於[ChatGPT MCP 正式環境現況](mcp-production-status.md)。
+
 ## 已查證的 Railway production endpoint（2026-10-05）
 
 - Railway backend origin：`https://ai-travel-planner-production-732b.up.railway.app`
