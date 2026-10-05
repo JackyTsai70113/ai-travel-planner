@@ -18,6 +18,7 @@ from mcp.client.stdio import StdioServerParameters
 from mcp.client.streamable_http import streamable_http_client
 
 from src.application.production import ProductionIncompleteError
+from src.mcp_server.github_pages import PublishResult
 from src.orchestrator import StageName, StageReport, StageStatus, WarningRecord
 
 from src.mcp_server.server import (
@@ -27,6 +28,7 @@ from src.mcp_server.server import (
     mcp,
     parse_trip_request_tool,
     plan_trip_tool,
+    publish_trip_site_tool,
     validate_trip_tool,
     _consume_remote_request,
     _read_limited_asgi_body,
@@ -70,6 +72,7 @@ class MCPTravelServerTests(unittest.TestCase):
                         "get_trip",
                         "plan_trip",
                         "build_trip_site",
+                        "publish_trip_site",
                     }.issubset(by_name)
                 )
                 self.assertTrue(all(tool.description for tool in by_name.values()))
@@ -93,6 +96,14 @@ class MCPTravelServerTests(unittest.TestCase):
                     by_name["plan_trip"].input_schema["properties"]["confirm_write"][
                         "default"
                     ],
+                    False,
+                )
+                self.assertIs(
+                    by_name["publish_trip_site"].input_schema["properties"]["confirm_public_publish"]["default"],
+                    False,
+                )
+                self.assertIs(
+                    by_name["publish_trip_site"].input_schema["properties"]["confirm_overwrite"]["default"],
                     False,
                 )
                 self.assertIn(
@@ -439,6 +450,39 @@ class MCPTravelServerTests(unittest.TestCase):
                 built = build_trip_site_tool("demo-trip", confirm_write=True)
                 self.assertEqual(built["status"], "built")
                 self.assertTrue((sites / "demo-trip" / "index.html").is_file())
+
+    def test_public_trip_publish_requires_separate_consent_and_github_credential(self) -> None:
+        consent = publish_trip_site_tool("demo-trip")
+        self.assertEqual(consent["status"], "confirmation_required")
+        self.assertIn("publicly accessible", consent["message"])
+
+        with patch.dict(os.environ, {"GITHUB_TOKEN": ""}):
+            missing = publish_trip_site_tool("demo-trip", confirm_public_publish=True)
+        self.assertEqual(missing, {"status": "configuration_missing", "missing": ["GITHUB_TOKEN"]})
+
+    def test_public_trip_publish_returns_pages_url_after_explicit_confirmation(self) -> None:
+        fixture = json.loads((Path(__file__).parent.parent / "fixtures/trips/japan-5-day-trip-v1.json").read_text(encoding="utf-8"))
+        trip_id = fixture["id"]
+        result_value = PublishResult(
+            "publish_accepted", "JackyTsai70113/ai-travel-planner", "family-trip",
+            "https://jackytsai70113.github.io/ai-travel-planner/trips/family-trip/", "commit-sha",
+        )
+        with tempfile.TemporaryDirectory() as temp:
+            trips = Path(temp) / "trips"
+            trip_path = trips / trip_id / "trip.json"
+            trip_path.parent.mkdir(parents=True)
+            trip_path.write_text(json.dumps(fixture), encoding="utf-8")
+            with (
+                patch("src.mcp_server.server._TRIPS_DIR", trips.resolve()),
+                patch.dict(os.environ, {"GITHUB_TOKEN": "private-test-token"}),
+                patch("src.mcp_server.server.GitHubPagesPublisher.publish", return_value=result_value) as publish,
+            ):
+                published = publish_trip_site_tool(
+                    trip_id, "family-trip", confirm_public_publish=True
+                )
+        self.assertEqual(published["status"], "publish_accepted")
+        self.assertEqual(published["url"], result_value.url)
+        publish.assert_called_once()
 
     def test_plan_status_is_incomplete_when_any_stage_is_incomplete(self) -> None:
         request = "2026/4/10到2026/4/14 台北出發德島五天四夜，2大，預算8萬日圓，自駕"

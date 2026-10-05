@@ -30,6 +30,36 @@ Railway must expose its HTTP service on the assigned `PORT` and pass the
 `/health` health check. After planning a trip, restart/redeploy the service and
 verify that `get_trip` still returns that trip.
 
+若要由 ChatGPT 發布已完成的行程網站，需另外設定 Railway secret
+`GITHUB_TOKEN`。此值必須是只授予此 repository `Contents: Read and write`
+的 fine-grained personal access token；不要使用寬權限 classic token，也不要
+把 token 放進程式碼、MCP arguments 或 GitHub issue。GitHub branch protection
+若禁止此 token 更新 `main`，工具會回報發布失敗，不會強制覆寫 branch。
+此處的 Railway `GITHUB_TOKEN` 是由維護者建立的 fine-grained PAT，不能填
+GitHub Actions 每次執行時自動產生的 `GITHUB_TOKEN`；後者發出的 push event
+不會啟動另一個 workflow。請先在 GitHub 為此 repository 建立 fine-grained
+PAT，將唯一必要的 repository permission 設為 Contents: Read and write，然後
+只把它加入 Railway secret manager。可參閱 [fine-grained token API 權限表](https://docs.github.com/en/rest/authentication/permissions-required-for-fine-grained-personal-access-tokens)
+與 [GITHUB_TOKEN 對 workflow 觸發的限制](https://docs.github.com/en/actions/concepts/security/github_token#when-github_token-triggers-workflow-runs)。
+
+以下變數有預設值，只有 repository、branch 或 Pages 網址不同時才需要加到
+Railway：
+
+| Railway 變數 | 預設值 | 用途 |
+| --- | --- | --- |
+| `GITHUB_REPOSITORY` | `JackyTsai70113/ai-travel-planner` | 要寫入 Pages 資料的 repository。 |
+| `GITHUB_PAGES_BRANCH` | `main` | 現有 Pages workflow 部署的分支。 |
+| `GITHUB_PAGES_BASE_URL` | `https://jackytsai70113.github.io/ai-travel-planner` | 工具回傳的 Pages 網址根目錄。 |
+
+只有獨立呼叫 `publish_trip_site` 並傳入 `confirm_public_publish=true` 才會
+把行程公開。只有 registry readiness 為 `ready` 的 Canonical Trip 可發布；
+有 validation finding、缺少住宿等造成的 incomplete trip 會拒絕。現有 slug
+若已屬於別的 trip 會拒絕；同一 trip 的內容更新還需
+`confirm_overwrite=true`。網站 bundle 與 registry 會由同一 Git commit 原子
+更新。成功回應的 `status=publish_accepted` 代表 GitHub 已接受 commit，
+`deployment_status=pending` 代表 Pages Actions 部署仍在進行；待 workflow
+成功後該網址才會提供新版內容。這個工具不訂房、不付款，也不會自動發布。
+
 `.railway/railway.ts` sets `builder` to `DOCKERFILE` and `dockerfilePath` to the
 root `/Dockerfile`, so this service does not need `RAILWAY_DOCKERFILE_PATH`. If
 the Dockerfile is moved, update the IaC definition; the variable is an
@@ -146,6 +176,7 @@ Production planning requires `GOOGLE_MAPS_API_KEY` and `OPENROUTESERVICE_API_KEY
 | `get_trip` | Returns an allowlisted summary for a safe trip ID; omits raw provider records, booking details, free-form notes, and arbitrary fields. | None |
 | `plan_trip` | Runs the existing production orchestrator; returns clarification or configuration status before attempting planning. | Requires `confirm_write=true`; then writes the Canonical Trip and static site locally. Never publishes. |
 | `build_trip_site` | Validates and renders an existing Canonical Trip. | Requires `confirm_write=true`; writes a local static site only. Never publishes. |
+| `publish_trip_site` | Publishes a ready Canonical Trip to this repository's GitHub Pages site. | Requires explicit `confirm_public_publish=true`; updates repository content and starts the Pages workflow. Existing-trip replacement separately requires `confirm_overwrite=true`. |
 
 ## Tool contract
 
@@ -223,6 +254,32 @@ Output statuses:
 - MCP schema rejection (`isError=true`): malformed arguments.
 
 Side effects and retries: `confirm_write=true` writes or replaces only the local `index.html`; it never deploys. Repeating with the same trip is idempotent if the trip data has not changed. The MCP layer performs no automatic retry.
+
+### `publish_trip_site`
+
+輸入包含 `trip_id`、可選的 `site_slug`、`confirm_public_publish`（預設
+`false`）與 `confirm_overwrite`（預設 `false`）。公開旅程可能揭露目的地、
+日期、同行人數與行程內容；只有使用者明確要求公開並確認後，才將
+`confirm_public_publish` 設為 `true`。
+
+輸出狀態：
+
+- `confirmation_required`：尚未確認公開；不讀取 trip，也不呼叫 GitHub。
+- `configuration_missing`：Railway 缺少 `GITHUB_TOKEN`。
+- `not_found`、`invalid`、`not_ready`：trip 不存在、Canonical schema 無效，
+  或 registry readiness 不是 `ready`；不會寫入 repository。
+- `conflict`：slug 指向另一個 Pages 來源或另一個 trip；不會覆寫。
+- `overwrite_confirmation_required`：同一 trip 已有公開網站但內容不同，需在
+  使用者同意更新後再傳入 `confirm_overwrite=true`。
+- `publish_accepted`：GitHub 已接受單一 commit，回傳網站網址與 commit SHA；
+  Pages workflow 尚未完成時 `deployment_status` 為 `pending`。
+- `already_published`：同一 trip 的公開 bundle 已完全一致，沒有新 commit。
+- `publish_failed`：GitHub API 拒絕或無法連線；錯誤不會包含 token 或 response body。
+
+Side effects：以非 force update 更新 `GITHUB_PAGES_BRANCH`。bundle 與 registry
+在同一 tree/commit 中寫入。內容採用 `src.request_site` 的 public allowlist，
+不提交 Canonical Trip 原始 JSON、provider payload 或 MCP secrets。相同內容重試
+不會再建立 commit；改變已公開內容必須明確設 `confirm_overwrite=true`。
 
 The resource `travel-planner://capabilities` returns the schema version, stage list, Canonical Trip source-of-truth statement, and a concise side-effect summary for each tool. The `plan_a_trip(request)` prompt instructs the host to resolve ambiguity and preserve unknown values before using `plan_trip`.
 

@@ -22,6 +22,7 @@ from src.application.production import (
     missing_required_configuration,
 )
 from src.intent import parse_trip_request
+from src.mcp_server.github_pages import GitHubPagesPublisher, GitHubPublishError
 from src.orchestrator import StageStatus
 from src.renderer.build_site import build_site
 from src.schemas.validate_trip import TripValidationError, validate_trip
@@ -37,7 +38,10 @@ _MCP_LOCAL_ALLOWED_HOSTS = ("127.0.0.1:*", "localhost:*", "[::1]:*")
 
 mcp = MCPServer(
     "ai-travel-planner",
-    instructions="Use Canonical Trip V1 as the sole trip record. Preserve unknown facts. Ask for confirmation before tools write local files.",
+    instructions=(
+        "Use Canonical Trip V1 as the sole trip record. Preserve unknown facts. Ask for confirmation before tools write local files. "
+        "Publishing a trip to GitHub Pages is a separate public action and requires explicit confirm_public_publish=true."
+    ),
 )
 
 
@@ -426,6 +430,82 @@ def build_trip_site_tool(
     return {"status": "built", "trip_id": trip_id, "site_path": str(output)}
 
 
+@mcp.tool(
+    name="publish_trip_site",
+    annotations=ToolAnnotations(
+        read_only_hint=False,
+        destructive_hint=True,
+        idempotent_hint=False,
+        open_world_hint=True,
+    ),
+)
+def publish_trip_site_tool(
+    trip_id: Annotated[str, Field(pattern=r"^[a-z0-9][a-z0-9-]{0,79}$")],
+    site_slug: Annotated[str | None, Field(pattern=r"^[a-z0-9][a-z0-9-]{0,79}$")] = None,
+    confirm_public_publish: Annotated[
+        bool,
+        Field(description="Must be true to publish this trip publicly to the repository's GitHub Pages site."),
+    ] = False,
+    confirm_overwrite: Annotated[
+        bool,
+        Field(description="Must be true to replace an existing public page for the same trip."),
+    ] = False,
+) -> dict[str, Any]:
+    """Explicitly publish a ready Canonical Trip to this repository's public GitHub Pages site."""
+    if not confirm_public_publish:
+        return {
+            "status": "confirmation_required",
+            "message": "This action makes itinerary details publicly accessible. Call again with confirm_public_publish=true only after the traveler explicitly approves public publication.",
+        }
+    token = os.environ.get("GITHUB_TOKEN", "")
+    if not token:
+        return {"status": "configuration_missing", "missing": ["GITHUB_TOKEN"]}
+    try:
+        path = _trip_path(trip_id)
+        trip = json.loads(path.read_text(encoding="utf-8"))
+        validate_trip(trip)
+        if trip.get("id") != trip_id:
+            return {"status": "invalid", "message": "trip_id does not match the Canonical Trip id"}
+    except FileNotFoundError:
+        return {"status": "not_found", "trip_id": trip_id}
+    except (OSError, json.JSONDecodeError, TripValidationError, ValueError, TypeError) as exc:
+        return {"status": "invalid", "message": str(exc)}
+    repository = os.environ.get("GITHUB_REPOSITORY", "JackyTsai70113/ai-travel-planner")
+    branch = os.environ.get("GITHUB_PAGES_BRANCH", "main")
+    pages_base_url = os.environ.get("GITHUB_PAGES_BASE_URL", "https://jackytsai70113.github.io/ai-travel-planner")
+    try:
+        result = GitHubPagesPublisher(
+            token=token,
+            repository=repository,
+            branch=branch,
+            pages_base_url=pages_base_url,
+        ).publish(trip, slug=site_slug or trip_id, confirm_overwrite=confirm_overwrite)
+    except ValueError as exc:
+        message = str(exc)
+        status = "not_ready" if "not ready for public publication" in message else "invalid_input"
+        return {"status": status, "message": message}
+    except GitHubPublishError as exc:
+        if "confirm_overwrite=true" in str(exc):
+            status = "overwrite_confirmation_required"
+        elif exc.status_code == 409:
+            status = "conflict"
+        else:
+            status = "publish_failed"
+        result: dict[str, Any] = {"status": status, "message": str(exc)}
+        if exc.status_code is not None:
+            result["http_status"] = exc.status_code
+        return result
+    return {
+        "status": result.status,
+        "trip_id": trip_id,
+        "site_slug": result.slug,
+        "url": result.url,
+        "repository": result.repository,
+        "commit_sha": result.commit_sha,
+        "deployment_status": result.deployment_status,
+    }
+
+
 @mcp.resource("travel-planner://capabilities")
 def capabilities() -> str:
     """Describe tool side effects and the canonical planning stages."""
@@ -446,6 +526,7 @@ def capabilities() -> str:
                 "get_trip": "read-only; returns allowlisted public fields",
                 "plan_trip": "requires confirm_write=true; performs live provider research and writes local trip/site files",
                 "build_trip_site": "requires confirm_write=true; writes a local static site; never deploys",
+                "publish_trip_site": "publishes only after explicit confirm_public_publish=true; requires a ready Canonical Trip; public overwrite requires confirm_overwrite=true",
             },
         },
         ensure_ascii=False,
@@ -474,7 +555,8 @@ def plan_a_trip(request: str) -> str:
         "plan_trip performs live research and writes/overwrites the named Canonical Trip and "
         "static site files on the MCP service; then call plan_trip with confirm_write=true. "
         "Never claim research, availability, opening hours, prices, routes, or validation succeeded "
-        "without tool evidence. Planning does not book, pay, or publish the site.\n\n"
+        "without tool evidence. Planning does not book, pay, or publish the site. Publishing exposes trip details publicly; "
+        "only call publish_trip_site after the traveler separately asks for public publication and confirms the action.\n\n"
         f"Traveler request:\n{request}"
     )
 
