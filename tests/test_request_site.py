@@ -10,7 +10,7 @@ import unittest
 from unittest.mock import patch
 
 from src.cli import plan_site_command
-from src.request_site import RequestNotReadyError, assert_request_ready, parse_site_request, publish_request_site, required_request_fields
+from src.request_site import RequestNotReadyError, assert_request_ready, parse_site_request, publish_request_site, required_request_fields, trip_to_registry_entry
 
 
 def _trip() -> dict:
@@ -25,7 +25,10 @@ def _trip() -> dict:
             "transport_legs": [{"id": "leg-1", "mode": "driving", "from_place_id": "hotel", "to_place_id": "castle", "status": "confirmed", "estimated_duration_minutes": 20}],
         },
         "selected": {"hotel_place_ids": ["hotel"], "flight_ids": []},
-        "days": [{"date": "2027-10-20", "summary": "名古屋城與味噌料理", "items": [{"id": "visit", "kind": "visit", "place_id": "castle", "start_at": "2027-10-20T10:00:00+09:00", "end_at": "2027-10-20T12:00:00+09:00"}]}],
+        "days": [{"date": "2027-10-20", "summary": "名古屋城與味噌料理", "items": [
+            {"id": "visit", "kind": "visit", "place_id": "castle", "start_at": "2027-10-20T10:00:00+09:00", "end_at": "2027-10-20T12:00:00+09:00"},
+            {"id": "lunch", "kind": "meal", "place_id": "restaurant", "start_at": "2027-10-20T12:30:00+09:00", "end_at": "2027-10-20T13:30:00+09:00"},
+        ]}],
         "preferences": {"hard_constraints": [], "soft_preferences": []},
         "budget": {"currency": "JPY", "categories": {"hotel": {"amount": 30000, "currency": "JPY"}}, "total": {"amount": 30000, "currency": "JPY"}},
         "validation": [],
@@ -33,6 +36,15 @@ def _trip() -> dict:
 
 
 class RequestSiteTests(unittest.TestCase):
+    def test_registry_does_not_call_missing_lodging_or_meals_ready(self):
+        trip = _trip()
+        trip["selected"]["hotel_place_ids"] = []
+        trip["days"][0]["items"] = [item for item in trip["days"][0]["items"] if item["kind"] != "meal"]
+
+        entry = trip_to_registry_entry(trip, slug="nagoya-autumn-2027", source_slug="requested/nagoya-autumn-2027")
+
+        self.assertEqual(entry["readiness"], "incomplete")
+
     def test_incomplete_month_only_request_is_blocked_without_inventing_dates(self):
         intent = parse_site_request("我要兩個人 10月去名古屋賞楓")
         self.assertEqual(required_request_fields(intent), ["exact_date_range"])

@@ -7,7 +7,7 @@ import unittest
 from unittest.mock import patch
 
 from src.mcp_server.github_pages import GitHubPagesPublisher, GitHubPublishError, PublishResult
-from src.request_site import trip_to_public_bundle
+from src.request_site import trip_to_public_bundle, trip_to_registry_entry
 
 
 FIXTURE = Path(__file__).parents[1] / "fixtures/trips/japan-5-day-trip-v1.json"
@@ -56,6 +56,12 @@ class FakeGitHub:
 class GitHubPagesPublisherTests(unittest.TestCase):
     def setUp(self):
         self.trip = json.loads(FIXTURE.read_text(encoding="utf-8"))
+        for index, day in enumerate(self.trip["days"], start=1):
+            day["items"].append({
+                "id": f"lunch-day-{index}", "kind": "meal", "place_id": "ramen-shop",
+                "start_at": f"{day['date']}T12:00:00+09:00", "end_at": f"{day['date']}T13:00:00+09:00",
+                "selection_status": "selected",
+            })
 
     def publisher(self, fake):
         return GitHubPagesPublisher(
@@ -96,6 +102,22 @@ class GitHubPagesPublisherTests(unittest.TestCase):
             self.publisher(fake).publish(trip, slug="demo-trip")
         self.assertEqual(fake.calls, [])
 
+    def test_refuses_overnight_trip_without_selected_lodging(self):
+        trip = json.loads(json.dumps(self.trip))
+        trip["selected"]["hotel_place_ids"] = []
+        fake = FakeGitHub()
+        with self.assertRaisesRegex(ValueError, "no selected lodging"):
+            self.publisher(fake).publish(trip, slug="demo-trip")
+        self.assertEqual(fake.calls, [])
+
+    def test_refuses_day_without_scheduled_meal(self):
+        trip = json.loads(json.dumps(self.trip))
+        trip["days"][2]["items"] = [item for item in trip["days"][2]["items"] if item["kind"] != "meal"]
+        fake = FakeGitHub()
+        with self.assertRaisesRegex(ValueError, "day 3 has no scheduled meal"):
+            self.publisher(fake).publish(trip, slug="demo-trip")
+        self.assertEqual(fake.calls, [])
+
     def test_rejects_slug_collision_with_a_different_trip(self):
         fake = FakeGitHub(bundle={"trip_id": "someone-elses-trip"})
         with self.assertRaisesRegex(GitHubPublishError, "different trip"):
@@ -119,6 +141,34 @@ class GitHubPagesPublisherTests(unittest.TestCase):
 
         self.assertEqual(result.status, "publish_accepted")
         self.assertEqual(fake.ref_update["force"], False)
+
+    def test_idempotent_publish_requires_bundle_and_registry_to_match(self):
+        bundle = trip_to_public_bundle(self.trip)
+        entry = trip_to_registry_entry(self.trip, slug="demo-trip", source_slug="requested/demo-trip")
+        fake = FakeGitHub(registry=[entry], bundle=bundle)
+
+        result = self.publisher(fake).publish(self.trip, slug="demo-trip")
+
+        self.assertEqual(result.status, "already_published")
+        self.assertFalse(any(call[0] in {"POST", "PATCH"} for call in fake.calls))
+
+    def test_same_bundle_with_missing_registry_entry_repairs_the_registry(self):
+        fake = FakeGitHub(bundle=trip_to_public_bundle(self.trip))
+
+        result = self.publisher(fake).publish(self.trip, slug="demo-trip")
+
+        self.assertEqual(result.status, "publish_accepted")
+        self.assertEqual([item["path"] for item in fake.tree["tree"]], ["web/public/trip-registry.json"])
+
+    def test_same_bundle_with_stale_registry_entry_repairs_metadata(self):
+        entry = trip_to_registry_entry(self.trip, slug="demo-trip", source_slug="requested/demo-trip")
+        entry["title"] = "舊標題"
+        fake = FakeGitHub(registry=[entry], bundle=trip_to_public_bundle(self.trip))
+
+        result = self.publisher(fake).publish(self.trip, slug="demo-trip")
+
+        self.assertEqual(result.status, "publish_accepted")
+        self.assertEqual([item["path"] for item in fake.tree["tree"]], ["web/public/trip-registry.json"])
 
 
 if __name__ == "__main__":

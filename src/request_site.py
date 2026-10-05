@@ -6,7 +6,7 @@ orchestrator 與其 Canonical Trip output 負責。
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 import json
 from pathlib import Path
 import re
@@ -149,7 +149,9 @@ def trip_to_registry_entry(trip: Mapping[str, Any], *, slug: str, source_slug: s
     children = len(_sequence(profile.get("children")))
     date_range = _mapping(trip.get("date_range"))
     validation = [_public_validation(value) for value in _sequence(trip.get("validation")) if isinstance(value, Mapping)]
-    readiness = "blocked" if any(item["severity"] in {"error", "critical"} for item in validation) else ("incomplete" if validation else "ready")
+    completeness_findings = _trip_completeness_findings(trip)
+    has_errors = any(item["severity"] in {"error", "critical"} for item in validation)
+    readiness = "blocked" if has_errors else "incomplete" if validation or completeness_findings else "ready"
     destinations = _destination_regions(trip)
     generated = datetime.now(timezone.utc).date().isoformat()
     return {
@@ -183,6 +185,36 @@ def _require_trip_basics(trip: Mapping[str, Any]) -> None:
         missing.append("date_range.start_date/end_date")
     if missing:
         raise ValueError("Canonical Trip 資料不完整：" + ", ".join(missing))
+
+
+def trip_publication_findings(trip: Mapping[str, Any]) -> list[str]:
+    """Return required itinerary sections missing before a trip can be called ready."""
+    validation = [_public_validation(value) for value in _sequence(trip.get("validation")) if isinstance(value, Mapping)]
+    findings = _trip_completeness_findings(trip)
+    if validation:
+        findings.extend(f"Canonical Trip validation: {item['code']}" for item in validation)
+    return findings
+
+
+def _trip_completeness_findings(trip: Mapping[str, Any]) -> list[str]:
+    findings: list[str] = []
+    selected = _mapping(trip.get("selected"))
+    hotel_ids = _sequence(selected.get("hotel_place_ids"))
+    date_range = _mapping(trip.get("date_range"))
+    try:
+        start = date.fromisoformat(str(date_range.get("start_date", "")))
+        end = date.fromisoformat(str(date_range.get("end_date", "")))
+    except ValueError:
+        start = end = None
+    if start is not None and end is not None and end > start and not hotel_ids:
+        findings.append("overnight itinerary has no selected lodging")
+
+    days = [day for day in _sequence(trip.get("days")) if isinstance(day, Mapping)]
+    for index, day in enumerate(days, start=1):
+        items = [item for item in _sequence(day.get("items")) if isinstance(item, Mapping)]
+        if not any(item.get("kind") == "meal" for item in items):
+            findings.append(f"day {index} has no scheduled meal")
+    return findings
 
 
 def _public_places(candidate_sets: Mapping[str, Any]) -> list[dict[str, Any]]:

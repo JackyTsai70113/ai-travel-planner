@@ -10,7 +10,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
-from src.request_site import trip_to_public_bundle, trip_to_registry_entry
+from src.request_site import trip_publication_findings, trip_to_public_bundle, trip_to_registry_entry
 from src.schemas.validate_trip import validate_trip
 
 
@@ -70,16 +70,18 @@ class GitHubPagesPublisher:
             raise ValueError("site slug must use lowercase letters, digits, and hyphens")
         validate_trip(dict(trip))
         bundle = trip_to_public_bundle(trip)
+        findings = trip_publication_findings(trip)
         entry = trip_to_registry_entry(trip, slug=slug, source_slug=f"requested/{slug}")
         if entry["readiness"] != "ready":
-            raise ValueError("trip is not ready for public publication; resolve its validation findings first")
+            details = "; ".join(findings) or "Canonical Trip is not ready"
+            raise ValueError(f"trip is not ready for public publication: {details}")
 
         ref = self._request("GET", f"git/ref/heads/{quote(self.branch, safe='')}")
         parent_sha = _required_text(ref.get("object", {}).get("sha"), "branch commit")
         parent = self._request("GET", f"git/commits/{parent_sha}")
         base_tree = _required_text(parent.get("tree", {}).get("sha"), "branch tree")
         registry_file = self._get_contents(_REGISTRY_PATH, parent_sha)
-        registry_sha, registry_bytes = registry_file
+        _, registry_bytes = registry_file
         try:
             registry = json.loads(registry_bytes)
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
@@ -93,6 +95,7 @@ class GitHubPagesPublisher:
         if existing_entry is not None and existing_entry.get("bundle_source_slug") != source_slug:
             raise GitHubPublishError(409, "site slug is already assigned to another Pages source")
         existing_file = self._get_contents_optional(bundle_path, parent_sha)
+        bundle_is_current = False
         if existing_file is not None:
             _, existing_bytes = existing_file
             try:
@@ -103,19 +106,20 @@ class GitHubPagesPublisher:
                 raise GitHubPublishError(None, "existing public trip bundle has an invalid format")
             if existing_bundle.get("trip_id") != trip.get("id"):
                 raise GitHubPublishError(409, "site slug is already used by a different trip")
-            if _same_public_bundle(existing_bundle, bundle):
-                return PublishResult("already_published", self.repository, slug, self._url(slug), None, "not_required")
-            if not confirm_overwrite:
+            bundle_is_current = _same_public_bundle(existing_bundle, bundle)
+            if not bundle_is_current and not confirm_overwrite:
                 raise GitHubPublishError(409, "this trip already has a public site; call again with confirm_overwrite=true to replace it")
         elif existing_entry is not None:
             raise GitHubPublishError(409, "registry entry exists but its public bundle is missing")
 
+        if bundle_is_current and existing_entry is not None and _same_registry_entry(existing_entry, entry):
+            return PublishResult("already_published", self.repository, slug, self._url(slug), None, "not_required")
+
         registry = [item for item in registry if not (isinstance(item, dict) and item.get("slug") == slug)]
         registry.append(entry)
-        changes = (
-            (bundle_path, _json_bytes(bundle)),
-            (_REGISTRY_PATH, _json_bytes(registry)),
-        )
+        changes = [(_REGISTRY_PATH, _json_bytes(registry))]
+        if not bundle_is_current:
+            changes.insert(0, (bundle_path, _json_bytes(bundle)))
         tree = []
         for path, content in changes:
             blob = self._request("POST", "git/blobs", {"content": base64.b64encode(content).decode("ascii"), "encoding": "base64"})
@@ -182,6 +186,17 @@ def _same_public_bundle(existing: Any, proposed: Mapping[str, Any]) -> bool:
         meta = value.get("meta")
         if isinstance(meta, dict):
             meta.pop("generated_at", None)
+    return existing == candidate
+
+
+def _same_registry_entry(existing: Any, proposed: Mapping[str, Any]) -> bool:
+    if not isinstance(existing, dict):
+        return False
+    existing = json.loads(json.dumps(existing))
+    candidate = json.loads(json.dumps(proposed))
+    for value in (existing, candidate):
+        value.pop("last_generated", None)
+        value.pop("last_verified", None)
     return existing == candidate
 
 
