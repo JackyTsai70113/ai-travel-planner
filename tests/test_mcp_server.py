@@ -351,6 +351,13 @@ class MCPTravelServerTests(unittest.TestCase):
             "title": "Sample",
             "local_timezone": "Asia/Tokyo",
             "flight_search_url": "https://www.google.com/travel/flights?hl=zh-TW",
+            "budget": {
+                "currency": "JPY",
+                "categories": {"hotel": {"amount": 0, "currency": "JPY"}},
+                "total": {"amount": 0, "currency": "JPY"},
+                "total_status": "incomplete",
+                "limit_status": "unlimited",
+            },
             "date_range": {
                 "start_date": "2026-01-01",
                 "end_date": "2026-01-01",
@@ -395,6 +402,9 @@ class MCPTravelServerTests(unittest.TestCase):
         encoded = json.dumps(result)
         self.assertIn("Park", encoded)
         self.assertIn("google.com/travel/flights", encoded)
+        self.assertEqual(result["budget"]["limit_status"], "unlimited")
+        self.assertEqual(result["budget"]["total_status"], "incomplete")
+        self.assertEqual(result["budget"]["summary"], "未設定預算上限；已知費用小計 JPY 0（部分費用尚未取得）")
         self.assertNotIn("secret", encoded)
         self.assertNotIn("private", encoded)
         self.assertEqual(
@@ -440,6 +450,7 @@ class MCPTravelServerTests(unittest.TestCase):
         ):
             result = SimpleNamespace(
                 succeeded=True,
+                trip={"budget": {"currency": "JPY", "categories": {}, "total": {"amount": 0, "currency": "JPY"}, "total_status": "incomplete", "limit_status": "unlimited"}},
                 stages=tuple(
                     StageReport(
                         stage_name,
@@ -469,6 +480,7 @@ class MCPTravelServerTests(unittest.TestCase):
                 output = plan_trip_tool(request, "mcp-plan-status", confirm_write=True)
 
             self.assertEqual(output["status"], expected_status)
+            self.assertEqual(output["budget_summary"], "未設定預算上限；已知費用小計 JPY 0（部分費用尚未取得）")
             self.assertEqual(len(output["stages"]), len(StageName))
             self.assertEqual(output["stages"][0]["status"], stage_status.value)
 

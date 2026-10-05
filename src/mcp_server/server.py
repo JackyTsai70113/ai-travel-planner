@@ -14,6 +14,7 @@ from mcp.server.transport_security import TransportSecuritySettings
 from mcp.types import ToolAnnotations
 from pydantic import Field
 
+from src.budget import format_budget_summary
 from src.application.production import (
     ProductionConfigurationError,
     ProductionIncompleteError,
@@ -133,6 +134,15 @@ def _public_trip_summary(trip: dict[str, Any]) -> dict[str, Any]:
         for entry in trip.get("validation", [])
         if isinstance(entry, dict)
     ]
+    raw_budget = trip.get("budget")
+    budget = None
+    if isinstance(raw_budget, dict):
+        budget = {
+            key: raw_budget[key]
+            for key in ("currency", "categories", "total", "total_status", "limit_status", "limit")
+            if key in raw_budget
+        }
+        budget["summary"] = format_budget_summary(raw_budget)
     return {
         "schema_version": trip.get("schema_version"),
         "id": trip.get("id"),
@@ -142,6 +152,7 @@ def _public_trip_summary(trip: dict[str, Any]) -> dict[str, Any]:
         "flight_search_url": trip.get("flight_search_url"),
         "flight_search_summary": trip.get("flight_search_summary"),
         "days": days,
+        "budget": budget,
         "validation": findings,
     }
 
@@ -309,9 +320,13 @@ def plan_trip_tool(
             "status": "incomplete",
             "message": "Planning could not complete; check local configuration and trip feasibility.",
         }
+    canonical_trip = getattr(result, "trip", None)
+    trip_budget = canonical_trip.get("budget") if isinstance(canonical_trip, dict) else None
     return {
         "status": "complete" if _is_complete_plan_result(result) else "incomplete",
         "trip_id": trip_id,
+        "budget": trip_budget,
+        "budget_summary": format_budget_summary(trip_budget) if isinstance(trip_budget, dict) else None,
         "stages": [
             {"name": stage.name.value, "status": stage.status.value}
             for stage in result.stages

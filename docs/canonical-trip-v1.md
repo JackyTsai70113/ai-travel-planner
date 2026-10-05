@@ -16,6 +16,7 @@ The machine-readable contract is [`src/schemas/trip_v1.schema.json`](../src/sche
 - `local_timezone` is an IANA timezone, such as `Asia/Tokyo`.
 - Scheduled timestamps are ISO 8601 values with an explicit UTC offset. This makes their local interpretation unambiguous even when a trip crosses timezones.
 - Every monetary object is `{ "amount": number, "currency": "ISO-4217 code" }`; the trip budget also declares its default currency.
+- `budget.limit_status` records whether the requester omitted a ceiling (`unspecified`), explicitly set no ceiling (`unlimited`), or supplied one (`limited`). A limited request stores its amount in `budget.limit`. `budget.total_status` is independent and records whether known costs cover the trip (`complete` or `incomplete`); an unlimited request can still have incomplete cost coverage.
 - Dynamic or researched facts carry `retrieved_at`, `provider`, `source_type`, and a `status`. Critical facts can also retain a source URL and confidence score.
 
 ## Validation and example

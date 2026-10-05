@@ -26,6 +26,17 @@ def validate_trip(trip: dict) -> None:
     budget = trip.get("budget")
     if isinstance(budget, dict) and budget.get("total_status", "complete") not in {"complete", "incomplete"}:
         raise TripValidationError("budget.total_status must be complete or incomplete")
+    if isinstance(budget, dict):
+        limit_status = budget.get("limit_status")
+        if limit_status is not None and (not isinstance(limit_status, str) or limit_status not in {"unspecified", "unlimited", "limited"}):
+            raise TripValidationError("budget.limit_status must be unspecified, unlimited, or limited")
+        if (limit_status == "limited") != ("limit" in budget):
+            raise TripValidationError("budget.limit must be present exactly when budget.limit_status is limited")
+        if "limit" in budget:
+            if not isinstance(budget["limit"], dict):
+                raise TripValidationError("budget.limit must be a monetary object")
+            if budget["limit"].get("currency") != budget.get("currency"):
+                raise TripValidationError("budget.limit currency must match budget currency")
     try:
         ZoneInfo(trip["local_timezone"])
     except (ZoneInfoNotFoundError, TypeError) as exc:

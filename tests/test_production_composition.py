@@ -102,6 +102,9 @@ def test_recorded_production_composition_runs_pipeline_and_persists_canonical_ou
     assert "台北 → 德島" in trip["flight_search_summary"]
     assert trip["local_timezone"] == "Asia/Tokyo"
     assert trip["budget"]["currency"] == "JPY"
+    assert trip["budget"]["limit_status"] == "limited"
+    assert trip["budget"]["limit"] == {"amount": 80000, "currency": "JPY"}
+    assert "預算上限 JPY 80,000" in result.render_path.read_text(encoding="utf-8")
     assert "google-secret" not in persisted
     assert "amadeus-secret" not in persisted
     assert result.render_path.exists()
@@ -141,6 +144,22 @@ def test_production_runs_without_youtube_key_and_reports_optional_source_unavail
     research = result.stage(StageName.RESEARCH)
     assert research.status is StageStatus.SUCCEEDED
     assert any("YOUTUBE_API_KEY is not configured" in warning.message for warning in research.warnings)
+
+
+def test_kurashiki_unlimited_budget_is_not_confused_with_incomplete_cost_coverage(tmp_path):
+    request = "日本岡山縣倉敷五天四夜。日期：2026/11/01～2026/11/05。出發地：桃園國際機場。旅客：6位成人、1位2歲幼兒。預算：暫不設限制。交通方式：自駕。"
+    intent = parse_trip_request(request)
+    result = _runner(tmp_path).run(intent)
+
+    assert result.succeeded
+    trip = json.loads(result.trip_path.read_text(encoding="utf-8"))
+    assert trip["budget"]["limit_status"] == "unlimited"
+    assert "limit" not in trip["budget"]
+    assert trip["budget"]["total_status"] == "incomplete"
+    assert any(item["code"] == "budget.incomplete" for item in trip["validation"])
+    html = result.render_path.read_text(encoding="utf-8")
+    assert "未設定預算上限" in html
+    assert "已知費用小計" in html
 
 
 def test_taiwan_domestic_trip_uses_taiwan_context_without_flight_search(tmp_path):
@@ -235,7 +254,9 @@ def test_hotel_over_budget_or_unverified_preference_remains_unselected(tmp_path)
     assert "hotel" not in trip["budget"]["categories"]
     assert trip["budget"]["total_status"] == "incomplete"
     assert "remains unselected" in trip["provenance"]["note"]
-    assert "總額待確認" in result.render_path.read_text(encoding="utf-8")
+    rendered_budget = result.render_path.read_text(encoding="utf-8")
+    assert "預算上限 TWD 8,000" in rendered_budget
+    assert "已知費用小計" in rendered_budget
 
     def untyped_room_transport(method, url, headers, body):
         if url.endswith("/v1/security/oauth2/token"):
@@ -361,7 +382,7 @@ def test_international_japan_trip_completes_without_live_flight_provider(tmp_pat
 def test_cli_non_demo_invokes_shared_production_composition_not_configuration_ready(monkeypatch, capsys, tmp_path):
     monkeypatch.setattr("src.cli.missing_required_configuration", lambda: [])
     called = {}
-    fake_result = SimpleNamespace(succeeded=True, trip_path=tmp_path / "trips/x/trip.json", render_path=tmp_path / "site/x/index.html", stages=(), warnings=())
+    fake_result = SimpleNamespace(succeeded=True, trip_path=tmp_path / "trips/x/trip.json", render_path=tmp_path / "site/x/index.html", stages=(), warnings=(), trip={"budget": {"currency": "JPY", "categories": {}, "total": {"amount": 0, "currency": "JPY"}, "total_status": "incomplete", "limit_status": "unlimited"}})
 
     class Runner:
         def run(self, intent):
@@ -376,6 +397,7 @@ def test_cli_non_demo_invokes_shared_production_composition_not_configuration_re
     factory.assert_called_once()
     output = capsys.readouterr().out
     assert '"status": "complete"' in output
+    assert '"budget_summary": "未設定預算上限；已知費用小計 JPY 0（部分費用尚未取得）"' in output
     assert "configuration_ready" not in output
 
 
