@@ -15,6 +15,7 @@ from src.validator import (
     ValidationContext,
     validate_itinerary,
 )
+from src.validator.itinerary import opening_hours_rule
 
 
 FIXTURE = Path(__file__).parents[1] / "fixtures/trips/japan-5-day-trip-v1.json"
@@ -66,6 +67,19 @@ class ItineraryValidatorTests(unittest.TestCase):
         result = validate_itinerary(self.trip, context)
         self.assertEqual(result.outcome, Outcome.INVALID)
         self.assertEqual({item.code for item in result.violations}, {"opening_hours.closed", "budget.exceeded"})
+
+    def test_overnight_interval_accepts_previous_day_opening_and_rejects_after_close(self):
+        trip = copy.deepcopy(self.trip)
+        trip["days"][0]["items"].append({
+            "id": "overnight-visit", "kind": "visit", "place_id": "overnight-only",
+            "start_at": "2026-04-11T00:30:00+09:00", "end_at": "2026-04-11T00:50:00+09:00",
+        })
+        context = with_context(opening_hours={"overnight-only": [OpeningInterval(4, time(18), time(1), 1)]})
+
+        self.assertNotIn("opening_hours.closed", {item.code for item in opening_hours_rule(trip, context)})
+
+        trip["days"][0]["items"][-1]["end_at"] = "2026-04-11T01:20:00+09:00"
+        self.assertIn("opening_hours.closed", {item.code for item in opening_hours_rule(trip, context)})
 
     def test_unlimited_budget_does_not_hide_incomplete_cost_coverage(self):
         trip = copy.deepcopy(self.trip)

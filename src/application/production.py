@@ -364,7 +364,7 @@ def _assign_route_aware_poi_schedule(
                 if first_interval.weekday != current.weekday():
                     continue
                 first_open = datetime.combine(current, first_interval.opens_at, zone)
-                first_close = datetime.combine(current, first_interval.closes_at, zone)
+                first_close = datetime.combine(current + timedelta(days=first_interval.closes_day_offset), first_interval.closes_at, zone)
                 first_start = max(day_start + timedelta(minutes=out_minutes + first_buffer), first_open)
                 first_end = first_start + timedelta(minutes=first_duration)
                 if first_end > first_close:
@@ -383,7 +383,7 @@ def _assign_route_aware_poi_schedule(
                         if second_interval.weekday != current.weekday():
                             continue
                         second_open = datetime.combine(current, second_interval.opens_at, zone)
-                        second_close = datetime.combine(current, second_interval.closes_at, zone)
+                        second_close = datetime.combine(current + timedelta(days=second_interval.closes_day_offset), second_interval.closes_at, zone)
                         # Keep a protected midday break so the shared scheduler can
                         # place a verified lunch candidate without overlapping visits.
                         second_start = max(first_end + timedelta(minutes=between + second_buffer), second_open,
@@ -769,7 +769,10 @@ def _routing_context(records: Iterable[object], routing_provider: object, intent
         hours = candidate.get("opening_hours")
         if record.collection in {"places", "restaurants"} and isinstance(hours, Mapping) and hours.get("status") == "fresh":
             try:
-                opening_hours[place["id"]] = tuple(OpeningInterval(int(entry["weekday"]), time.fromisoformat(entry["opens_at"]), time.fromisoformat(entry["closes_at"])) for entry in hours["intervals"])
+                opening_hours[place["id"]] = tuple(OpeningInterval(
+                    int(entry["weekday"]), time.fromisoformat(entry["opens_at"]),
+                    time.fromisoformat(entry["closes_at"]), int(entry.get("closes_day_offset", 0)),
+                ) for entry in hours["intervals"])
             except (KeyError, TypeError, ValueError):
                 pass
     start, end = _travel_dates(intent)

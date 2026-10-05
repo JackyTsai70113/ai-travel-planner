@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import copy
 from datetime import date, datetime, time, timedelta
-from typing import Iterable, Mapping
+from typing import Iterable, Mapping, Sequence
 from zoneinfo import ZoneInfo
 
 from src.conditions import evaluate_conditions
+from src.opening_hours import Eligibility, evaluate_opening_hours, opening_interval_contains
 from src.validator import OpeningInterval, Violation
 
 from .contracts import ScheduledTrip, ScheduleState, SchedulingInput, SchedulingOutput
@@ -396,7 +397,21 @@ def _is_open(place_id: str, start: datetime, end: datetime, request: SchedulingI
     intervals = request.validation_context.opening_hours.get(place_id)
     if not intervals:
         return False
-    return any(interval.weekday == start.weekday() and interval.opens_at <= start.time() and end.time() <= interval.closes_at for interval in intervals)
+    if isinstance(intervals, Mapping) or not isinstance(intervals, Sequence):
+        return evaluate_opening_hours(
+            intervals, start, end, default_timezone=request.trip.get("local_timezone", "UTC")
+        ).status is Eligibility.ELIGIBLE
+    return any(
+        opening_interval_contains(
+            interval,
+            start,
+            end,
+            start.date() if interval.weekday == start.weekday() else start.date() - timedelta(days=1),
+        )
+        for interval in intervals
+        if interval.weekday == start.weekday()
+        or (interval.closes_day_offset == 1 and interval.weekday == (start.weekday() - 1) % 7)
+    )
 
 
 def _meal_period_order(period: object) -> int:

@@ -8,11 +8,11 @@ passed in as a :class:`ValidationContext`, making every result reproducible.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 from enum import Enum
 from typing import Callable, Mapping, Sequence
 
-from src.opening_hours import Eligibility, evaluate_opening_hours
+from src.opening_hours import Eligibility, evaluate_opening_hours, opening_interval_contains
 
 from src.conditions import ConditionPolicy, ConditionSnapshot, evaluate_conditions
 
@@ -52,6 +52,7 @@ class OpeningInterval:
     weekday: int
     opens_at: time
     closes_at: time
+    closes_day_offset: int = 0
 
 
 @dataclass(frozen=True)
@@ -565,11 +566,16 @@ def opening_hours_rule(trip: dict, context: ValidationContext) -> Sequence[Viola
                 if result.status is not Eligibility.ELIGIBLE:
                     code = "opening_hours.closed" if result.status is Eligibility.CLOSED else "opening_hours.unverified"
                     violations.append(Violation(code, "error" if code == "opening_hours.closed" else "warning", result.reason, path))
-            elif start.date() != end.date() or not any(
-                interval.weekday == start.weekday()
-                and interval.opens_at <= start.timetz().replace(tzinfo=None)
-                and end.timetz().replace(tzinfo=None) <= interval.closes_at
+            elif not any(
+                opening_interval_contains(
+                    interval,
+                    start,
+                    end,
+                    start.date() if interval.weekday == start.weekday() else start.date() - timedelta(days=1),
+                )
                 for interval in intervals
+                if interval.weekday == start.weekday()
+                or (interval.closes_day_offset == 1 and interval.weekday == (start.weekday() - 1) % 7)
             ):
                 violations.append(
                     _error(

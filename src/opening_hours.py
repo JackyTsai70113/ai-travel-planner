@@ -215,19 +215,30 @@ def legacy_snapshot(intervals: Sequence[OpeningInterval], timezone_name: str) ->
 
 
 def _contains(interval: OpeningInterval, start: datetime, end: datetime, anchor_date: date) -> bool:
-    open_at = datetime.combine(anchor_date, interval.opens_at, start.tzinfo)
-    close_at = datetime.combine(anchor_date + timedelta(days=interval.closes_day_offset), interval.closes_at, start.tzinfo)
-    if interval.closes_day_offset == 0 and close_at <= open_at:
+    return opening_interval_contains(interval, start, end, anchor_date)
+
+
+def opening_interval_contains(interval: object, start: datetime, end: datetime, anchor_date: date) -> bool:
+    """Check whether one local weekly interval contains a complete aware visit."""
+    try:
+        opens_at = interval.opens_at
+        closes_at = interval.closes_at
+        close_offset = int(getattr(interval, "closes_day_offset", 0))
+        last_order_at = getattr(interval, "last_order_at", None)
+        last_order_offset = int(getattr(interval, "last_order_day_offset", 0))
+    except (AttributeError, TypeError, ValueError):
         return False
-    if not (open_at <= start and end <= close_at):
+    if close_offset not in (0, 1) or last_order_offset not in (0, 1):
         return False
-    if interval.last_order_at is None:
+    open_at = datetime.combine(anchor_date, opens_at, start.tzinfo)
+    close_at = datetime.combine(anchor_date + timedelta(days=close_offset), closes_at, start.tzinfo)
+    if close_offset == 0 and close_at <= open_at:
+        return False
+    if not open_at <= start or end > close_at:
+        return False
+    if last_order_at is None:
         return True
-    cutoff = datetime.combine(
-        anchor_date + timedelta(days=interval.last_order_day_offset),
-        interval.last_order_at,
-        start.tzinfo,
-    )
+    cutoff = datetime.combine(anchor_date + timedelta(days=last_order_offset), last_order_at, start.tzinfo)
     return start <= cutoff
 
 
