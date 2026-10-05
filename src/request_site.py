@@ -202,12 +202,29 @@ def _trip_completeness_findings(trip: Mapping[str, Any]) -> list[str]:
     hotel_ids = _sequence(selected.get("hotel_place_ids"))
     date_range = _mapping(trip.get("date_range"))
     try:
-        start = date.fromisoformat(str(date_range.get("start_date", "")))
-        end = date.fromisoformat(str(date_range.get("end_date", "")))
+        start_text = date_range.get("start_date")
+        end_text = date_range.get("end_date")
+        if not isinstance(start_text, str) or not isinstance(end_text, str):
+            raise ValueError("date range must use YYYY-MM-DD strings")
+        start = date.fromisoformat(start_text)
+        end = date.fromisoformat(end_text)
+        if start.isoformat() != start_text or end.isoformat() != end_text or end < start:
+            raise ValueError("date range is not a valid forward YYYY-MM-DD range")
     except ValueError:
+        findings.append("date range is invalid")
         start = end = None
-    if start is not None and end is not None and end > start and not hotel_ids:
-        findings.append("overnight itinerary has no selected lodging")
+    if start is not None and end is not None and end > start:
+        hotel_candidates = set()
+        for candidate in _sequence(_mapping(trip.get("candidate_sets")).get("hotels")):
+            if isinstance(candidate, Mapping):
+                place = candidate.get("place")
+                if isinstance(place, Mapping) and isinstance(place.get("id"), str):
+                    hotel_candidates.add(place["id"])
+        valid_selected_hotels = [hotel_id for hotel_id in hotel_ids if isinstance(hotel_id, str) and hotel_id in hotel_candidates]
+        if not valid_selected_hotels:
+            findings.append("overnight itinerary has no selected hotel candidate")
+        if any(not isinstance(hotel_id, str) or hotel_id not in hotel_candidates for hotel_id in hotel_ids):
+            findings.append("selected lodging does not match a hotel candidate")
 
     days = [day for day in _sequence(trip.get("days")) if isinstance(day, Mapping)]
     for index, day in enumerate(days, start=1):

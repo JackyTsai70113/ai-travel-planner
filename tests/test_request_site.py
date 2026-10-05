@@ -45,6 +45,17 @@ class RequestSiteTests(unittest.TestCase):
 
         self.assertEqual(entry["readiness"], "incomplete")
 
+    def test_registry_marks_invalid_or_reversed_date_range_incomplete(self):
+        for date_range in (
+            {"start_date": "tomorrow", "end_date": "2027-10-22"},
+            {"start_date": "2027-10-23", "end_date": "2027-10-22"},
+        ):
+            with self.subTest(date_range=date_range):
+                trip = _trip()
+                trip["date_range"] = date_range
+                entry = trip_to_registry_entry(trip, slug="nagoya-autumn-2027", source_slug="requested/nagoya-autumn-2027")
+                self.assertEqual(entry["readiness"], "incomplete")
+
     def test_incomplete_month_only_request_is_blocked_without_inventing_dates(self):
         intent = parse_site_request("我要兩個人 10月去名古屋賞楓")
         self.assertEqual(required_request_fields(intent), ["exact_date_range"])

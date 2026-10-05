@@ -106,7 +106,15 @@ class GitHubPagesPublisherTests(unittest.TestCase):
         trip = json.loads(json.dumps(self.trip))
         trip["selected"]["hotel_place_ids"] = []
         fake = FakeGitHub()
-        with self.assertRaisesRegex(ValueError, "no selected lodging"):
+        with self.assertRaisesRegex(ValueError, "no selected hotel candidate"):
+            self.publisher(fake).publish(trip, slug="demo-trip")
+        self.assertEqual(fake.calls, [])
+
+    def test_refuses_selected_lodging_not_found_in_hotel_candidates(self):
+        trip = json.loads(json.dumps(self.trip))
+        trip["selected"]["hotel_place_ids"] = ["ghost-hotel"]
+        fake = FakeGitHub()
+        with self.assertRaisesRegex(ValueError, "no selected hotel candidate"):
             self.publisher(fake).publish(trip, slug="demo-trip")
         self.assertEqual(fake.calls, [])
 
