@@ -222,7 +222,7 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
         # confirmed arrival/check-in/reservation boundary for that day.
         items.extend(anchor_items)
         previous = anchor_items[-1]["place_id"]
-        cursor = datetime.fromisoformat(anchor_items[-1]["end_at"])
+        cursor = _in_trip_timezone(anchor_items[-1]["end_at"], zone)
     placed: set[str] = set()
     placed_activity = False
     low_fatigue = any(preference.get("kind") in {"low_fatigue", "pace"} and preference.get("value") in {True, "low"}
@@ -359,7 +359,7 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
                 if primary is not None:
                     alternative_list = alternatives_by_primary.get(primary["id"], [])
                     origin = last_item["place_id"] if last_item is not None else hotel_id
-                    alternative_cursor = (datetime.fromisoformat(last_item["end_at"]) if last_item is not None
+                    alternative_cursor = (_in_trip_timezone(last_item["end_at"], zone) if last_item is not None
                                           else datetime.combine(current, time.fromisoformat(request.daily_start), zone))
                     for alternative in alternative_list:
                         if alternative["id"] in used_meal_ids:
@@ -410,7 +410,7 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
                 if last_item is None:
                     break
                 previous = last_item["place_id"]
-                cursor = datetime.fromisoformat(last_item["end_at"])
+                cursor = _in_trip_timezone(last_item["end_at"], zone)
                 back = request.validation_context.travel_minutes.get((previous, hotel_id))
                 continue
             if back is None:
@@ -462,6 +462,13 @@ def _is_open(place_id: str, start: datetime, end: datetime, request: SchedulingI
 
 def _utc_instant(value: datetime) -> datetime:
     return value.astimezone(timezone.utc)
+
+
+def _in_trip_timezone(value: str, zone: ZoneInfo) -> datetime:
+    parsed = datetime.fromisoformat(value)
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        raise ValueError("scheduled timestamps require an explicit timezone offset")
+    return parsed.astimezone(zone)
 
 
 def _add_elapsed_minutes(value: datetime, minutes: int) -> datetime:

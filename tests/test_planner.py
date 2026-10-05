@@ -5,6 +5,7 @@ from datetime import datetime, time, timedelta, timezone
 from pathlib import Path
 import unittest
 from types import SimpleNamespace
+from zoneinfo import ZoneInfo
 
 from src.planner import (
     HardConstraint,
@@ -17,7 +18,7 @@ from src.planner import (
     plan,
     schedule,
 )
-from src.planner.scheduler import _anchors, _is_open
+from src.planner.scheduler import _add_elapsed_minutes, _anchors, _in_trip_timezone, _is_open
 from src.validator import BudgetLimit, OpeningInterval, ValidationContext
 from src.conditions import ConditionPolicy, ConditionSnapshot, ConditionStatus, load_condition_snapshot
 
@@ -282,22 +283,21 @@ class PlannerTests(unittest.TestCase):
 
     def test_scheduler_uses_elapsed_time_across_dst_fold(self):
         trip = copy.deepcopy(self.trip)
-        trip["days"] = []
+        trip["days"] = [{"date": "2026-11-01", "items": [{
+            "id": "fold-anchor", "kind": "event", "place_id": "anchor-station",
+            "start_at": "2026-11-01T01:30:00-04:00", "end_at": "2026-11-01T01:50:00-04:00",
+        }]}]
         trip["date_range"] = {"start_date": "2026-11-01", "end_date": "2026-11-01"}
         trip["local_timezone"] = "America/New_York"
         poi = next(place for place in trip["candidate_sets"]["places"] if place["id"] == "ohori-park")
-        poi["schedule"] = {
-            "duration_minutes": 60, "day": 1, "required": True,
-            "fixed_start_at": "2026-11-01T01:30:00-04:00",
-            "fixed_end_at": "2026-11-01T01:30:00-05:00",
-        }
+        poi["schedule"] = {"duration_minutes": 15, "day": 1, "required": True}
         for place in trip["candidate_sets"]["places"]:
             if place["id"] != "ohori-park":
                 place["schedule"] = {"selected": False}
         for meal in trip["candidate_sets"]["restaurants"]:
             meal["schedule"] = {"selected": False}
         context = ValidationContext(
-            travel_minutes={("hakata-hotel", "ohori-park"): 0, ("ohori-park", "hakata-hotel"): 0},
+            travel_minutes={("anchor-station", "ohori-park"): 30, ("ohori-park", "hakata-hotel"): 0},
             opening_hours={"ohori-park": [OpeningInterval(6, time(1), time(2))]},
         )
 
@@ -306,11 +306,12 @@ class PlannerTests(unittest.TestCase):
         self.assertIsNotNone(result.best_trip)
         assert result.best_trip is not None
         visit = next(item for item in result.best_trip.trip["days"][0]["items"] if item["place_id"] == "ohori-park")
-        self.assertEqual(visit["end_at"], "2026-11-01T01:30:00-05:00")
+        self.assertEqual(visit["start_at"], "2026-11-01T01:20:00-05:00")
+        self.assertEqual(visit["end_at"], "2026-11-01T01:35:00-05:00")
         self.assertEqual(
             (datetime.fromisoformat(visit["end_at"]).astimezone(timezone.utc)
              - datetime.fromisoformat(visit["start_at"]).astimezone(timezone.utc)).total_seconds(),
-            3600,
+            900,
         )
 
     def test_scheduler_orders_immutable_anchors_by_absolute_time_across_dst_fold(self):
@@ -324,6 +325,14 @@ class PlannerTests(unittest.TestCase):
 
         self.assertEqual(violations, [])
         self.assertEqual([item["place_id"] for item in anchors["2026-11-01"]], ["first", "second"])
+
+    def test_scheduler_converts_parsed_prior_item_to_trip_zone_before_elapsed_route(self):
+        zone = ZoneInfo("America/New_York")
+        previous_end = _in_trip_timezone("2026-11-01T01:50:00-04:00", zone)
+
+        arrival = _add_elapsed_minutes(previous_end, 30)
+
+        self.assertEqual(arrival.isoformat(), "2026-11-01T01:20:00-05:00")
 
     def test_unroutable_optional_meal_is_skipped_without_failing_required_schedule(self):
         trip = copy.deepcopy(self.trip)
