@@ -114,6 +114,25 @@ class ProductionProviderAdapterTests(unittest.TestCase):
         self.assertEqual({"ja"}, {call[3]["languageCode"] for call in client.calls})
         self.assertNotIn("test-key", str(client.calls[0][3]))
 
+    def test_google_places_normalizes_poi_opening_hours_and_primary_type(self):
+        recording = {"places": [{
+            "id": "ChIJ-kurashiki", "displayName": {"text": "倉敷美觀地區"},
+            "primaryType": "tourist_attraction", "timeZone": {"id": "Asia/Tokyo"},
+            "regularOpeningHours": {"periods": [
+                {"open": {"day": day, "hour": 8}, "close": {"day": day, "hour": 20}}
+                for day in range(7)
+            ]},
+        }]}
+        client = RecordedHttpClient([recording, recording])
+
+        poi = list(GooglePlacesAdapter("test-key", http_client=client, now=NOW).fetch(QUERY))[0][1]
+
+        self.assertEqual("tourist_attraction", poi["primary_type"])
+        self.assertEqual("fresh", poi["opening_hours"]["status"])
+        self.assertEqual("Asia/Tokyo", poi["opening_hours"]["timezone"])
+        self.assertEqual(7, len(poi["opening_hours"]["intervals"]))
+        self.assertNotIn("regularOpeningHours", str(poi))
+
     def test_google_places_uses_traditional_chinese_for_taiwan_destinations(self):
         client = RecordedHttpClient([self.google_recording, self.google_recording])
         adapter = GooglePlacesAdapter("test-key", http_client=client, now=NOW)

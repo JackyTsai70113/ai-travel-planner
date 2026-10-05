@@ -17,7 +17,8 @@ from mcp import Client, ClientSession
 from mcp.client.stdio import StdioServerParameters
 from mcp.client.streamable_http import streamable_http_client
 
-from src.orchestrator import StageName, StageReport, StageStatus
+from src.application.production import ProductionIncompleteError
+from src.orchestrator import StageName, StageReport, StageStatus, WarningRecord
 
 from src.mcp_server.server import (
     _public_trip_summary,
@@ -460,7 +461,7 @@ class MCPTravelServerTests(unittest.TestCase):
                     )
                     for stage_name in StageName
                 ),
-                warnings=(),
+                warnings=(WarningRecord("schedule.route_unknown", "每日首段路線尚未驗證。", StageName.PLANNER, "/days/0"),),
             )
 
             class Runner:
@@ -483,6 +484,18 @@ class MCPTravelServerTests(unittest.TestCase):
             self.assertEqual(output["budget_summary"], "未設定預算上限；已知費用小計 JPY 0（部分費用尚未取得）")
             self.assertEqual(len(output["stages"]), len(StageName))
             self.assertEqual(output["stages"][0]["status"], stage_status.value)
+            self.assertEqual(output["warnings"][0]["message"], "每日首段路線尚未驗證。")
+
+    def test_plan_returns_specific_production_incomplete_reason(self) -> None:
+        request = "2026/4/10到2026/4/14 台北出發德島五天四夜，2大，預算不限，自駕"
+        reason = "route-aware scheduling requires verified opening hours"
+        with (
+            patch("src.mcp_server.server.missing_required_configuration", return_value=[]),
+            patch("src.mcp_server.server.create_production_orchestrator", side_effect=ProductionIncompleteError(reason)),
+        ):
+            output = plan_trip_tool(request, "mcp-incomplete-reason", confirm_write=True)
+        self.assertEqual(output["status"], "incomplete")
+        self.assertEqual(output["message"], reason)
 
     def test_plan_reports_missing_provider_configuration_without_fixture_fallback(
         self,

@@ -152,6 +152,9 @@ class GooglePlacesAdapter(SourceAdapter):
         candidate: dict[str, Any] = {"id": canonical_provider_id("google", place_id), "name": display_name["text"], "kind": "restaurant" if restaurant else "poi", "provenance": provenance}
         if isinstance(raw.get("formattedAddress"), str):
             candidate["address"] = raw["formattedAddress"]
+        primary_type = raw.get("primaryType")
+        if isinstance(primary_type, str) and primary_type:
+            candidate["primary_type"] = primary_type
         location = raw.get("location")
         if isinstance(location, Mapping) and isinstance(location.get("latitude"), (int, float)) and isinstance(location.get("longitude"), (int, float)):
             candidate["coordinates"] = {"latitude": location["latitude"], "longitude": location["longitude"]}
@@ -159,6 +162,11 @@ class GooglePlacesAdapter(SourceAdapter):
         if isinstance(hours, Mapping) and isinstance(hours.get("weekdayDescriptions"), list):
             candidate["opening_hours_note"] = "; ".join(value for value in hours["weekdayDescriptions"] if isinstance(value, str))
         if not restaurant:
+            timezone_value = raw.get("timeZone")
+            timezone_name = timezone_value.get("id") if isinstance(timezone_value, Mapping) else None
+            candidate["opening_hours"] = _google_opening_hours(
+                hours, current=raw.get("currentOpeningHours"), timezone_name=timezone_name, provenance=provenance
+            )
             return candidate
         restaurant_candidate = {"place": candidate, "provenance": provenance, "wait_risk": "unknown"}
         if isinstance(raw.get("rating"), (int, float)):

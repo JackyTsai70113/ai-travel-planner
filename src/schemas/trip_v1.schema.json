@@ -558,6 +558,62 @@
         "opening_hours_note": {
           "type": "string"
         },
+        "primary_type": {
+          "type": "string"
+        },
+        "opening_hours": {
+          "$ref": "#/$defs/openingHours"
+        },
+        "schedule": {
+          "type": "object",
+          "required": [
+            "duration_minutes",
+            "duration_basis"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "duration_minutes": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "duration_basis": {
+              "enum": [
+                "provider",
+                "planning_estimate"
+              ]
+            },
+            "day": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "selected": {
+              "type": "boolean"
+            },
+            "required": {
+              "type": "boolean"
+            },
+            "fixed_start_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "fixed_end_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "parking_buffer_minutes": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "walking_buffer_minutes": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "fatigue": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
         "accessibility_notes": {
           "type": "string"
         },
