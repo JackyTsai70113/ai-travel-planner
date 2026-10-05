@@ -7,8 +7,9 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
+from zoneinfo import ZoneInfo
 
-from src.application.production import ProductionDependencies, ProductionIncompleteError, _assign_route_aware_poi_schedule, _candidate_trips, _google_flights_search_summary, _google_flights_search_url, _routing_context, _select_hotel_candidate, create_production_orchestrator
+from src.application.production import ProductionDependencies, ProductionIncompleteError, _add_elapsed_minutes, _assign_route_aware_poi_schedule, _candidate_trips, _google_flights_search_summary, _google_flights_search_url, _routing_context, _select_hotel_candidate, create_production_orchestrator
 from src.cli import plan_command
 from src.intent import parse_trip_request
 from src.orchestrator import StageName, StageStatus
@@ -251,6 +252,14 @@ def test_production_preserves_overnight_opening_interval_offset_in_routing_conte
     poi["opening_hours"]["intervals"][0]["opens_at"] = "18:00+09:00"
     malformed_context = _routing_context([record], RecordedCompleteRouting(), intent)
     assert "overnight-poi" not in malformed_context.opening_hours
+
+
+def test_production_visit_end_uses_elapsed_time_across_dst_fold():
+    start = datetime.fromisoformat("2026-11-01T01:30:00-04:00").astimezone(ZoneInfo("America/New_York"))
+
+    end = _add_elapsed_minutes(start, 60)
+
+    assert end.isoformat() == "2026-11-01T01:30:00-05:00"
 
 
 def test_route_aware_production_accepts_visit_inside_next_day_closing_interval():

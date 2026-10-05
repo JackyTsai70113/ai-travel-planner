@@ -445,7 +445,7 @@ def _assign_route_aware_poi_schedule(
                 place["schedule"].update({
                     "day": day_number, "selected": True, "required": True,
                     "fixed_start_at": slot.isoformat(),
-                    "fixed_end_at": (slot + timedelta(minutes=place["schedule"]["duration_minutes"])).isoformat(),
+                    "fixed_end_at": _add_elapsed_minutes(slot, place["schedule"]["duration_minutes"]).isoformat(),
                 })
                 selected_ids.add(place["id"])
 

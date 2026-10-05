@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import copy
-from datetime import date, datetime, time, timedelta
+from datetime import date, datetime, time, timedelta, timezone
 from typing import Iterable, Mapping, Sequence
 from zoneinfo import ZoneInfo
 
@@ -259,13 +259,13 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
             if not isinstance(buffers, int) or buffers < 0:
                 violations.append(_failure("schedule.buffer_invalid", "parking/walking buffers must be non-negative integers", activity["path"]))
                 continue
-            cursor += timedelta(minutes=travel + buffers)
+            cursor = _add_elapsed_minutes(cursor, travel + buffers)
             if previous is None:
                 violations.append(Violation("schedule.origin_unknown", "warning", "每日首個活動的住宿至目的地路線尚未驗證。", activity["path"]))
             meal_period = details.get("meal_period")
             if meal_period in {"breakfast", "lunch", "dinner"}:
                 target_time = {"breakfast": time(8, 0), "lunch": time(12, 30), "dinner": time(18, 30)}[meal_period]
-                cursor = max(cursor, datetime.combine(current, target_time, zone))
+                cursor = max(cursor, datetime.combine(current, target_time, zone), key=_utc_instant)
             fixed = details.get("fixed_start_at")
             if fixed:
                 try:
@@ -273,7 +273,15 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
                 except ValueError:
                     violations.append(_failure("schedule.fixed_time_invalid", "fixed_start_at must be ISO-8601", activity["path"]))
                     continue
-                if fixed_start.date() != current or fixed_start < cursor:
+                if fixed_start.tzinfo is None or fixed_start.utcoffset() is None:
+                    violations.append(_failure("schedule.fixed_time_invalid", "fixed_start_at must include a timezone offset", activity["path"]))
+                    if optional_meal:
+                        cursor, previous = cursor_before, previous_before
+                        if attempt_index < len(attempts) - 1:
+                            continue
+                    continue
+                fixed_start = fixed_start.astimezone(zone)
+                if fixed_start.date() != current or _utc_instant(fixed_start) < _utc_instant(cursor):
                     violations.append(_optional_meal_warning(activity, "schedule.fixed_anchor_infeasible", "restaurant cannot be reached by its meal period") if optional_meal else _failure("schedule.fixed_anchor_infeasible", "confirmed anchor cannot be reached without moving it", activity["path"]))
                     if optional_meal:
                         cursor, previous = cursor_before, previous_before
@@ -281,7 +289,7 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
                             continue
                     continue
                 cursor = fixed_start
-            end_at = cursor + timedelta(minutes=details["duration_minutes"])
+            end_at = _add_elapsed_minutes(cursor, details["duration_minutes"])
             fixed_end = details.get("fixed_end_at")
             if fixed_end:
                 try:
@@ -293,14 +301,21 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
                         if attempt_index < len(attempts) - 1:
                             continue
                     continue
-                if confirmed_end != end_at:
+                if confirmed_end.tzinfo is None or confirmed_end.utcoffset() is None:
+                    violations.append(_failure("schedule.fixed_time_invalid", "fixed_end_at must include a timezone offset", activity["path"]))
+                    if optional_meal:
+                        cursor, previous = cursor_before, previous_before
+                        if attempt_index < len(attempts) - 1:
+                            continue
+                    continue
+                if _utc_instant(confirmed_end) != _utc_instant(end_at):
                     violations.append(_optional_meal_warning(activity, "schedule.fixed_anchor_infeasible", "meal duration does not fit its confirmed end time") if optional_meal else _failure("schedule.fixed_anchor_infeasible", "confirmed anchor end cannot be moved or re-durationed", activity["path"]))
                     if optional_meal:
                         cursor, previous = cursor_before, previous_before
                         if attempt_index < len(attempts) - 1:
                             continue
                     continue
-            if end_at > closes or not _is_open(activity["id"], cursor, end_at, request):
+            if _utc_instant(end_at) > _utc_instant(closes) or not _is_open(activity["id"], cursor, end_at, request):
                 violations.append(_optional_meal_warning(activity, "schedule.closed_or_unverified", "restaurant is not confirmed open for the scheduled meal interval") if optional_meal else _failure("schedule.closed_or_unverified", "activity lacks a verified open interval for its scheduled time", activity["path"]))
                 if optional_meal:
                     cursor, previous = cursor_before, previous_before
@@ -329,7 +344,7 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
             break
     if placed_activity and hotel_id is not None:
         back = request.validation_context.travel_minutes.get((previous, hotel_id))
-        while back is None or cursor + timedelta(minutes=back) > closes:
+        while back is None or _utc_instant(_add_elapsed_minutes(cursor, back)) > _utc_instant(closes):
             if items and items[-1].get("kind") == "meal":
                 omitted = items.pop()
                 used_meal_ids.discard(omitted["place_id"])
@@ -347,22 +362,29 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
                         if incoming is None or incoming < 0:
                             continue
                         details = alternative["schedule"]
-                        start_at = alternative_cursor + timedelta(minutes=incoming + details.get("parking_buffer_minutes", 0) + details.get("walking_buffer_minutes", 0))
+                        start_at = _add_elapsed_minutes(alternative_cursor, incoming + details.get("parking_buffer_minutes", 0) + details.get("walking_buffer_minutes", 0))
                         period = details.get("meal_period")
                         if period in {"breakfast", "lunch", "dinner"}:
                             meal_time = {"breakfast": time(8), "lunch": time(12, 30), "dinner": time(18, 30)}[period]
-                            start_at = max(start_at, datetime.combine(current, meal_time, zone))
+                            start_at = max(start_at, datetime.combine(current, meal_time, zone), key=_utc_instant)
                         fixed_start = details.get("fixed_start_at")
                         if fixed_start:
                             fixed_start_dt = datetime.fromisoformat(fixed_start)
-                            if fixed_start_dt < start_at or fixed_start_dt.date() != current:
+                            if fixed_start_dt.tzinfo is None or fixed_start_dt.utcoffset() is None:
+                                continue
+                            fixed_start_dt = fixed_start_dt.astimezone(zone)
+                            if _utc_instant(fixed_start_dt) < _utc_instant(start_at) or fixed_start_dt.date() != current:
                                 continue
                             start_at = fixed_start_dt
-                        end_at = start_at + timedelta(minutes=details["duration_minutes"])
-                        if details.get("fixed_end_at") and datetime.fromisoformat(details["fixed_end_at"]) != end_at:
-                            continue
+                        end_at = _add_elapsed_minutes(start_at, details["duration_minutes"])
+                        if details.get("fixed_end_at"):
+                            fixed_end_dt = datetime.fromisoformat(details["fixed_end_at"])
+                            if (fixed_end_dt.tzinfo is None or fixed_end_dt.utcoffset() is None
+                                    or _utc_instant(fixed_end_dt) != _utc_instant(end_at)):
+                                continue
                         return_minutes = request.validation_context.travel_minutes.get((alternative["id"], hotel_id))
-                        if return_minutes is None or end_at > closes or end_at + timedelta(minutes=return_minutes) > closes:
+                        if (return_minutes is None or _utc_instant(end_at) > _utc_instant(closes)
+                                or _utc_instant(_add_elapsed_minutes(end_at, return_minutes)) > _utc_instant(closes)):
                             continue
                         if not _is_open(alternative["id"], start_at, end_at, request):
                             continue
@@ -430,6 +452,14 @@ def _is_open(place_id: str, start: datetime, end: datetime, request: SchedulingI
         if opening_interval_contains(interval, local_start, local_end, anchor_date):
             return True
     return False
+
+
+def _utc_instant(value: datetime) -> datetime:
+    return value.astimezone(timezone.utc)
+
+
+def _add_elapsed_minutes(value: datetime, minutes: int) -> datetime:
+    return (_utc_instant(value) + timedelta(minutes=minutes)).astimezone(value.tzinfo)
 
 
 def _meal_period_order(period: object) -> int:

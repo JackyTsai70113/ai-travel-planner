@@ -280,6 +280,38 @@ class PlannerTests(unittest.TestCase):
         self.assertIsNone(result.best_trip)
         self.assertIn("schedule.route_unknown", {violation.code for violation in result.candidates[0].violations})
 
+    def test_scheduler_uses_elapsed_time_across_dst_fold(self):
+        trip = copy.deepcopy(self.trip)
+        trip["days"] = []
+        trip["date_range"] = {"start_date": "2026-11-01", "end_date": "2026-11-01"}
+        trip["local_timezone"] = "America/New_York"
+        poi = next(place for place in trip["candidate_sets"]["places"] if place["id"] == "ohori-park")
+        poi["schedule"] = {
+            "duration_minutes": 60, "day": 1, "required": True,
+            "fixed_start_at": "2026-11-01T01:30:00-04:00",
+            "fixed_end_at": "2026-11-01T01:30:00-05:00",
+        }
+        for place in trip["candidate_sets"]["places"]:
+            if place["id"] != "ohori-park":
+                place["schedule"] = {"selected": False}
+        for meal in trip["candidate_sets"]["restaurants"]:
+            meal["schedule"] = {"selected": False}
+        context = ValidationContext(
+            travel_minutes={("hakata-hotel", "ohori-park"): 0, ("ohori-park", "hakata-hotel"): 0},
+            opening_hours={"ohori-park": [OpeningInterval(6, time(1), time(2))]},
+        )
+
+        result = schedule(SchedulingInput(trip, context, daily_start="00:00", daily_end="23:00"))
+
+        self.assertIsNotNone(result.best_trip)
+        assert result.best_trip is not None
+        visit = next(item for item in result.best_trip.trip["days"][0]["items"] if item["place_id"] == "ohori-park")
+        self.assertEqual(visit["end_at"], "2026-11-01T01:30:00-05:00")
+        self.assertEqual(
+            (datetime.fromisoformat(visit["end_at"]) - datetime.fromisoformat(visit["start_at"])).total_seconds(),
+            3600,
+        )
+
     def test_unroutable_optional_meal_is_skipped_without_failing_required_schedule(self):
         trip = copy.deepcopy(self.trip)
         poi = next(place for place in trip["candidate_sets"]["places"] if place["id"] == "ohori-park")
