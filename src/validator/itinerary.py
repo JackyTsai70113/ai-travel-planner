@@ -569,6 +569,8 @@ def opening_hours_rule(trip: dict, context: ValidationContext) -> Sequence[Viola
                     violations.append(Violation(code, "error" if code == "opening_hours.closed" else "warning", result.reason, path))
             else:
                 try:
+                    if start.tzinfo is None or end.tzinfo is None or start.utcoffset() is None or end.utcoffset() is None:
+                        raise ValueError("scheduled interval requires explicit timezone offsets")
                     local_start, local_end = start.astimezone(ZoneInfo(trip_timezone)), end.astimezone(ZoneInfo(trip_timezone))
                 except (KeyError, TypeError, ValueError):
                     local_start = local_end = start
@@ -577,7 +579,7 @@ def opening_hours_rule(trip: dict, context: ValidationContext) -> Sequence[Viola
                 for interval in intervals:
                     weekday = getattr(interval, "weekday", None)
                     close_offset = getattr(interval, "closes_day_offset", 0)
-                    if not isinstance(weekday, int) or isinstance(weekday, bool) or weekday not in range(7) or close_offset not in (0, 1):
+                    if type(weekday) is not int or weekday not in range(7) or type(close_offset) is not int or close_offset not in (0, 1):
                         continue
                     if weekday == local_start.weekday():
                         anchor_date = local_start.date()

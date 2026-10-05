@@ -53,6 +53,13 @@ class PlannerTests(unittest.TestCase):
 
         self.assertTrue(_is_open("night-poi", start, end, request))
 
+        self.assertFalse(_is_open("night-poi", datetime.fromisoformat("2026-11-01T09:30:00"), datetime.fromisoformat("2026-11-01T10:30:00"), request))
+
+        for invalid_offset in (True, 1.5, 2):
+            invalid_interval = SimpleNamespace(weekday=6, opens_at=time(9), closes_at=time(11), closes_day_offset=invalid_offset)
+            invalid_request = SimpleNamespace(trip={"local_timezone": "Asia/Tokyo"}, validation_context=ValidationContext(opening_hours={"night-poi": [invalid_interval]}))
+            self.assertFalse(_is_open("night-poi", start, end, invalid_request))
+
         malformed = SimpleNamespace(
             trip={"local_timezone": "Asia/Tokyo"},
             validation_context=ValidationContext(opening_hours={"night-poi": [{"weekday": 6, "opens_at": "bad", "closes_at": "bad"}]}),
@@ -60,14 +67,19 @@ class PlannerTests(unittest.TestCase):
         self.assertFalse(_is_open("night-poi", start, end, malformed))
         malformed.trip["local_timezone"] = "not/a-real-zone"
         self.assertFalse(_is_open("night-poi", start, end, malformed))
-        bad_snapshot = SimpleNamespace(
-            trip={"local_timezone": "Asia/Tokyo"},
-            validation_context=ValidationContext(opening_hours={"night-poi": {
-                "status": "fresh", "timezone": "Asia/Tokyo",
-                "intervals": [{"weekday": 6, "opens_at": "bad", "closes_at": "bad"}],
-            }}),
-        )
-        self.assertFalse(_is_open("night-poi", start, end, bad_snapshot))
+        for malformed_interval in (
+            {"weekday": 6, "opens_at": "bad", "closes_at": "bad"},
+            {"weekday": True, "opens_at": "09:00", "closes_at": "11:00"},
+            {"weekday": 6, "opens_at": "09:00", "closes_at": "11:00", "closes_day_offset": True},
+            {"weekday": 6, "opens_at": "09:00", "closes_at": "11:00", "closes_day_offset": 1.5},
+        ):
+            bad_snapshot = SimpleNamespace(
+                trip={"local_timezone": "Asia/Tokyo"},
+                validation_context=ValidationContext(opening_hours={"night-poi": {
+                    "status": "fresh", "timezone": "Asia/Tokyo", "intervals": [malformed_interval],
+                }}),
+            )
+            self.assertFalse(_is_open("night-poi", start, end, bad_snapshot))
 
     def _scenario(self, name):
         return json.loads((SCENARIOS / f"{name}.json").read_text(encoding="utf-8"))

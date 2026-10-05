@@ -405,6 +405,11 @@ def _is_open(place_id: str, start: datetime, end: datetime, request: SchedulingI
         except (AttributeError, KeyError, TypeError, ValueError):
             return False
     try:
+        if start.tzinfo is None or end.tzinfo is None or start.utcoffset() is None or end.utcoffset() is None:
+            return False
+    except (TypeError, ValueError):
+        return False
+    try:
         zone = ZoneInfo(request.trip.get("local_timezone", "UTC"))
         local_start, local_end = start.astimezone(zone), end.astimezone(zone)
     except (KeyError, TypeError, ValueError):
@@ -414,7 +419,7 @@ def _is_open(place_id: str, start: datetime, end: datetime, request: SchedulingI
         close_offset = getattr(interval, "closes_day_offset", 0)
         if not isinstance(weekday, int) or isinstance(weekday, bool) or weekday not in range(7):
             continue
-        if close_offset not in (0, 1):
+        if type(close_offset) is not int or close_offset not in (0, 1):
             continue
         if weekday == local_start.weekday():
             anchor_date = local_start.date()

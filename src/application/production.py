@@ -361,7 +361,10 @@ def _assign_route_aware_poi_schedule(
             first_duration = first_details["duration_minutes"]
             first_buffer = first_details.get("parking_buffer_minutes", 0) + first_details.get("walking_buffer_minutes", 0)
             for first_interval in routing.opening_hours.get(first["id"], ()):
-                if first_interval.weekday != current.weekday():
+                if (type(first_interval.weekday) is not int or first_interval.weekday not in range(7)
+                        or type(first_interval.closes_day_offset) is not int or first_interval.closes_day_offset not in (0, 1)
+                        or not isinstance(first_interval.opens_at, time) or not isinstance(first_interval.closes_at, time)
+                        or first_interval.weekday != current.weekday()):
                     continue
                 first_open = datetime.combine(current, first_interval.opens_at, zone)
                 first_close = datetime.combine(current + timedelta(days=first_interval.closes_day_offset), first_interval.closes_at, zone)
@@ -380,7 +383,10 @@ def _assign_route_aware_poi_schedule(
                     second_duration = second_details["duration_minutes"]
                     second_buffer = second_details.get("parking_buffer_minutes", 0) + second_details.get("walking_buffer_minutes", 0)
                     for second_interval in routing.opening_hours.get(second["id"], ()):
-                        if second_interval.weekday != current.weekday():
+                        if (type(second_interval.weekday) is not int or second_interval.weekday not in range(7)
+                                or type(second_interval.closes_day_offset) is not int or second_interval.closes_day_offset not in (0, 1)
+                                or not isinstance(second_interval.opens_at, time) or not isinstance(second_interval.closes_at, time)
+                                or second_interval.weekday != current.weekday()):
                             continue
                         second_open = datetime.combine(current, second_interval.opens_at, zone)
                         second_close = datetime.combine(current + timedelta(days=second_interval.closes_day_offset), second_interval.closes_at, zone)
@@ -769,10 +775,18 @@ def _routing_context(records: Iterable[object], routing_provider: object, intent
         hours = candidate.get("opening_hours")
         if record.collection in {"places", "restaurants"} and isinstance(hours, Mapping) and hours.get("status") == "fresh":
             try:
-                opening_hours[place["id"]] = tuple(OpeningInterval(
-                    int(entry["weekday"]), time.fromisoformat(entry["opens_at"]),
-                    time.fromisoformat(entry["closes_at"]), int(entry.get("closes_day_offset", 0)),
-                ) for entry in hours["intervals"])
+                parsed = []
+                for entry in hours["intervals"]:
+                    weekday = entry["weekday"]
+                    close_offset = entry.get("closes_day_offset", 0)
+                    if (type(weekday) is not int or weekday not in range(7)
+                            or type(close_offset) is not int or close_offset not in (0, 1)):
+                        raise ValueError("opening interval weekday or close offset is invalid")
+                    parsed.append(OpeningInterval(
+                        weekday, time.fromisoformat(entry["opens_at"]),
+                        time.fromisoformat(entry["closes_at"]), close_offset,
+                    ))
+                opening_hours[place["id"]] = tuple(parsed)
             except (KeyError, TypeError, ValueError):
                 pass
     start, end = _travel_dates(intent)
