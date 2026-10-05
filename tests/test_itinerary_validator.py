@@ -81,6 +81,20 @@ class ItineraryValidatorTests(unittest.TestCase):
         trip["days"][0]["items"][-1]["end_at"] = "2026-04-11T01:20:00+09:00"
         self.assertIn("opening_hours.closed", {item.code for item in opening_hours_rule(trip, context)})
 
+    def test_sequence_opening_hours_are_compared_in_trip_timezone(self):
+        trip = copy.deepcopy(self.trip)
+        trip["days"][0]["items"].append({
+            "id": "timezone-visit", "kind": "visit", "place_id": "timezone-only",
+            "start_at": "2026-11-01T00:30:00+00:00", "end_at": "2026-11-01T01:30:00+00:00",
+        })
+        context = with_context(opening_hours={"timezone-only": [OpeningInterval(6, time(9), time(11))]})
+
+        self.assertNotIn("opening_hours.closed", {item.code for item in opening_hours_rule(trip, context)})
+
+        trip["days"][0]["items"][-1]["start_at"] = "2026-11-01T02:00:00+00:00"
+        trip["days"][0]["items"][-1]["end_at"] = "2026-11-01T03:00:00+00:00"
+        self.assertIn("opening_hours.closed", {item.code for item in opening_hours_rule(trip, context)})
+
     def test_unlimited_budget_does_not_hide_incomplete_cost_coverage(self):
         trip = copy.deepcopy(self.trip)
         trip["budget"].update({"limit_status": "unlimited", "total_status": "incomplete"})

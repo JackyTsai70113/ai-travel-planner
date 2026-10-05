@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, time, timedelta
 from enum import Enum
 from typing import Callable, Mapping, Sequence
+from zoneinfo import ZoneInfo
 
 from src.opening_hours import Eligibility, evaluate_opening_hours, opening_interval_contains
 
@@ -566,25 +567,36 @@ def opening_hours_rule(trip: dict, context: ValidationContext) -> Sequence[Viola
                 if result.status is not Eligibility.ELIGIBLE:
                     code = "opening_hours.closed" if result.status is Eligibility.CLOSED else "opening_hours.unverified"
                     violations.append(Violation(code, "error" if code == "opening_hours.closed" else "warning", result.reason, path))
-            elif not any(
-                opening_interval_contains(
-                    interval,
-                    start,
-                    end,
-                    start.date() if interval.weekday == start.weekday() else start.date() - timedelta(days=1),
-                )
-                for interval in intervals
-                if interval.weekday == start.weekday()
-                or (interval.closes_day_offset == 1 and interval.weekday == (start.weekday() - 1) % 7)
-            ):
-                violations.append(
-                    _error(
-                        "opening_hours.closed",
-                        "scheduled time falls outside opening hours",
-                        path,
-                        {"place_id": item["place_id"], "start_at": item["start_at"], "end_at": item["end_at"]},
+            else:
+                try:
+                    local_start, local_end = start.astimezone(ZoneInfo(trip_timezone)), end.astimezone(ZoneInfo(trip_timezone))
+                except (KeyError, TypeError, ValueError):
+                    local_start = local_end = start
+                    intervals = ()
+                is_open = False
+                for interval in intervals:
+                    weekday = getattr(interval, "weekday", None)
+                    close_offset = getattr(interval, "closes_day_offset", 0)
+                    if not isinstance(weekday, int) or isinstance(weekday, bool) or weekday not in range(7) or close_offset not in (0, 1):
+                        continue
+                    if weekday == local_start.weekday():
+                        anchor_date = local_start.date()
+                    elif close_offset == 1 and weekday == (local_start.weekday() - 1) % 7:
+                        anchor_date = local_start.date() - timedelta(days=1)
+                    else:
+                        continue
+                    if opening_interval_contains(interval, local_start, local_end, anchor_date):
+                        is_open = True
+                        break
+                if not is_open:
+                    violations.append(
+                        _error(
+                            "opening_hours.closed",
+                            "scheduled time falls outside opening hours",
+                            path,
+                            {"place_id": item["place_id"], "start_at": item["start_at"], "end_at": item["end_at"]},
+                        )
                     )
-                )
     return violations
 
 

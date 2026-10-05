@@ -4,6 +4,7 @@ from dataclasses import replace
 from datetime import datetime, time, timedelta
 from pathlib import Path
 import unittest
+from types import SimpleNamespace
 
 from src.planner import (
     HardConstraint,
@@ -16,6 +17,7 @@ from src.planner import (
     plan,
     schedule,
 )
+from src.planner.scheduler import _is_open
 from src.validator import BudgetLimit, OpeningInterval, ValidationContext
 from src.conditions import ConditionPolicy, ConditionSnapshot, ConditionStatus, load_condition_snapshot
 
@@ -40,6 +42,32 @@ def verified_context(limit=200000):
 class PlannerTests(unittest.TestCase):
     def setUp(self):
         self.trip = json.loads(TRIP_FIXTURE.read_text(encoding="utf-8"))
+
+    def test_scheduler_sequence_opening_hours_use_trip_timezone_and_fail_closed_on_malformed_values(self):
+        request = SimpleNamespace(
+            trip={"local_timezone": "Asia/Tokyo"},
+            validation_context=ValidationContext(opening_hours={"night-poi": [OpeningInterval(6, time(9), time(11))]}),
+        )
+        start = datetime.fromisoformat("2026-11-01T00:30:00+00:00")
+        end = datetime.fromisoformat("2026-11-01T01:30:00+00:00")
+
+        self.assertTrue(_is_open("night-poi", start, end, request))
+
+        malformed = SimpleNamespace(
+            trip={"local_timezone": "Asia/Tokyo"},
+            validation_context=ValidationContext(opening_hours={"night-poi": [{"weekday": 6, "opens_at": "bad", "closes_at": "bad"}]}),
+        )
+        self.assertFalse(_is_open("night-poi", start, end, malformed))
+        malformed.trip["local_timezone"] = "not/a-real-zone"
+        self.assertFalse(_is_open("night-poi", start, end, malformed))
+        bad_snapshot = SimpleNamespace(
+            trip={"local_timezone": "Asia/Tokyo"},
+            validation_context=ValidationContext(opening_hours={"night-poi": {
+                "status": "fresh", "timezone": "Asia/Tokyo",
+                "intervals": [{"weekday": 6, "opens_at": "bad", "closes_at": "bad"}],
+            }}),
+        )
+        self.assertFalse(_is_open("night-poi", start, end, bad_snapshot))
 
     def _scenario(self, name):
         return json.loads((SCENARIOS / f"{name}.json").read_text(encoding="utf-8"))

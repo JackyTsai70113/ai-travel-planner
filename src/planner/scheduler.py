@@ -398,20 +398,33 @@ def _is_open(place_id: str, start: datetime, end: datetime, request: SchedulingI
     if not intervals:
         return False
     if isinstance(intervals, Mapping) or not isinstance(intervals, Sequence):
-        return evaluate_opening_hours(
-            intervals, start, end, default_timezone=request.trip.get("local_timezone", "UTC")
-        ).status is Eligibility.ELIGIBLE
-    return any(
-        opening_interval_contains(
-            interval,
-            start,
-            end,
-            start.date() if interval.weekday == start.weekday() else start.date() - timedelta(days=1),
-        )
-        for interval in intervals
-        if interval.weekday == start.weekday()
-        or (interval.closes_day_offset == 1 and interval.weekday == (start.weekday() - 1) % 7)
-    )
+        try:
+            return evaluate_opening_hours(
+                intervals, start, end, default_timezone=request.trip.get("local_timezone", "UTC")
+            ).status is Eligibility.ELIGIBLE
+        except (AttributeError, KeyError, TypeError, ValueError):
+            return False
+    try:
+        zone = ZoneInfo(request.trip.get("local_timezone", "UTC"))
+        local_start, local_end = start.astimezone(zone), end.astimezone(zone)
+    except (KeyError, TypeError, ValueError):
+        return False
+    for interval in intervals:
+        weekday = getattr(interval, "weekday", None)
+        close_offset = getattr(interval, "closes_day_offset", 0)
+        if not isinstance(weekday, int) or isinstance(weekday, bool) or weekday not in range(7):
+            continue
+        if close_offset not in (0, 1):
+            continue
+        if weekday == local_start.weekday():
+            anchor_date = local_start.date()
+        elif close_offset == 1 and weekday == (local_start.weekday() - 1) % 7:
+            anchor_date = local_start.date() - timedelta(days=1)
+        else:
+            continue
+        if opening_interval_contains(interval, local_start, local_end, anchor_date):
+            return True
+    return False
 
 
 def _meal_period_order(period: object) -> int:

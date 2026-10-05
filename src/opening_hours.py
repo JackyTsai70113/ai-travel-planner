@@ -228,7 +228,10 @@ def opening_interval_contains(interval: object, start: datetime, end: datetime, 
         last_order_offset = int(getattr(interval, "last_order_day_offset", 0))
     except (AttributeError, TypeError, ValueError):
         return False
-    if close_offset not in (0, 1) or last_order_offset not in (0, 1):
+    if (not isinstance(opens_at, time) or not isinstance(closes_at, time)
+            or (last_order_at is not None and not isinstance(last_order_at, time))
+            or close_offset not in (0, 1) or last_order_offset not in (0, 1)
+            or start.tzinfo is None or end.tzinfo is None or end <= start):
         return False
     open_at = datetime.combine(anchor_date, opens_at, start.tzinfo)
     close_at = datetime.combine(anchor_date + timedelta(days=close_offset), closes_at, start.tzinfo)
