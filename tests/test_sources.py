@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 import unittest
+from urllib.error import URLError
 
 from src.sources import (
     AdapterFailure,
@@ -277,6 +278,17 @@ class ProductionProviderAdapterTests(unittest.TestCase):
         ]))
         with self.assertRaisesRegex(ProviderRequestError, "malformed response"):
             malformed.fetch_evidence(QUERY)
+
+        missing_items = YouTubeEvidenceAdapter("youtube-key", http_client=RecordedHttpClient([{}]))
+        with self.assertRaisesRegex(ProviderRequestError, "items must be present"):
+            missing_items.fetch_evidence(QUERY)
+
+        dns_failure = YouTubeEvidenceAdapter("youtube-key", http_client=RecordedHttpClient([
+            URLError("name or service not known"),
+        ]))
+        with self.assertRaisesRegex(ProviderRequestError, "network error") as failure:
+            dns_failure.fetch_evidence(QUERY)
+        self.assertNotIn("network timeout", str(failure.exception))
 
     def test_youtube_requires_no_key_when_not_configured_and_uses_bounded_timeout(self):
         from src.application.production import REQUIRED_ENVIRONMENT, missing_required_configuration
