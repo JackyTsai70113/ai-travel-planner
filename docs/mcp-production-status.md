@@ -36,15 +36,21 @@
 
 本次輸出暴露「頂層 complete 與未完成 stage/內容並存」的狀態問題。不可只憑 `status=complete` 宣稱行程完整。
 
-## 尚待處理的 GitHub Issues
+## 目前開啟的 Issues 與可推進範圍
 
-- [#153 遠端 ChatGPT MCP hosting 與連線](https://github.com/JackyTsai70113/ai-travel-planner/issues/153)：issue 尚未關閉；現有私人連線與使用者 chat 呼叫證據記錄於上方，剩餘 acceptance 仍需逐項核對。
-- [#174 每日只有一個景點的 legacy fallback](https://github.com/JackyTsai70113/ai-travel-planner/issues/174)。
-- [#175 Amadeus 退役後沒有可用住宿搜尋來源](https://github.com/JackyTsai70113/ai-travel-planner/issues/175)。
-- [#176 不設預算上限卻標示 budget incomplete](https://github.com/JackyTsai70113/ai-travel-planner/issues/176)。
-- [#177 YouTube timeout 與 research 穩定性](https://github.com/JackyTsai70113/ai-travel-planner/issues/177)。
-- [#178 `plan_trip` 將有未完成階段的輸出標示為 complete](https://github.com/JackyTsai70113/ai-travel-planner/issues/178)。
-- [#179 MCP 規劃結果沒有對應的 GitHub Pages 網址](https://github.com/JackyTsai70113/ai-travel-planner/issues/179)。
-- [#180 餐廳候選沒有排入每日用餐行程](https://github.com/JackyTsai70113/ai-travel-planner/issues/180)。
+以下狀態已於 2026-10-05 依 GitHub issue list 和正式環境證據核對：
 
-以上 issues 記錄已觀察到的問題；尚未宣稱有解法，也沒有在本次變更中修改規劃器或發布倉敷頁面。
+- [#153 遠端 ChatGPT MCP hosting 與連線](https://github.com/JackyTsai70113/ai-travel-planner/issues/153)：MCP hosted connection 與 ChatGPT chat 呼叫曾成功；整體規劃驗收仍受下列住宿、餐食與 Pages 發布條件影響。
+- [#175 Amadeus 退役後沒有可用住宿搜尋來源](https://github.com/JackyTsai70113/ai-travel-planner/issues/175)：目前沒有已核准的 lodging inventory provider 或 partner credentials。Booking.com Demand API 與 Expedia Rapid 有 partner/launch 准入條件；Google Places 不提供日期型房間 availability 與住宿總價。未取得合法供應商存取前，無法完成真實住宿候選的 acceptance。
+- [#180 餐廳候選沒有排入每日用餐行程](https://github.com/JackyTsai70113/ai-travel-planner/issues/180)：production run 有 20 筆餐廳候選，但無可選住宿；目前每日往返住宿路線無法驗證，因此不可把餐廳硬塞進日程。需有住宿候選後重跑真實情境。
+- [#179 MCP 規劃結果沒有對應的 GitHub Pages 網址](https://github.com/JackyTsai70113/ai-travel-planner/issues/179)：PR #189 已合併至 `main`（merge commit `2915ca44609bdc2812e38d7a35c20e1251d4f800`），加入有明確公開確認的 `publish_trip_site` MCP tool、GitHub Pages 寫入與衝突保護。Issue 保持開啟，直到 Railway 設定最小權限 `GITHUB_TOKEN`，並從 ChatGPT 執行真實發布 smoke test、確認 Pages URL 可用。
+
+### Issue #179 驗收流程
+
+1. 維護者在 GitHub 建立 fine-grained PAT，只授權 `JackyTsai70113/ai-travel-planner` repository 的 `Contents: Read and write`，將其設為 Railway service secret `GITHUB_TOKEN`。不得將 token 寫入 repo、issue、聊天工具參數或 CI log。
+2. 確認 Railway deployment 使用包含 PR #189 的版本，且新增 secret 後完成 redeploy。
+3. 在 ChatGPT chat 先完成行程規劃。只有使用者明確要求公開分享並確認公開範圍後，才呼叫 `publish_trip_site`，傳入既有 `trip_id`、`confirm_public_publish=true`；更新現有公開內容時還要明確傳 `confirm_overwrite=true`。
+4. 工具回傳 `publish_accepted` 與 Pages URL 後，等待 Pages Actions 部署完成，實際開啟網址確認對應行程內容。僅工具接受寫入或回 `pending` 不算完成驗收。
+5. 將 deployment 結果、HTTP/瀏覽器可用證據與 commit SHA 記錄回 #179；驗收全部完成後才關閉 issue。
+
+以上只列已觀察問題與外部依賴，不宣稱 #175/#180 已解決；本次沒有以 fixture 代替正式資料，也沒有發布倉敷頁面。
