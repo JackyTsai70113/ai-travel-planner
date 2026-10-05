@@ -130,11 +130,12 @@ class TravelOrchestrator:
             WarningRecord("research.provider_failed", f"{failure.adapter}: {failure.message}", StageName.RESEARCH)
             for failure in failures
         )
+        blocking_failures = tuple(failure for failure in failures if not failure.optional)
         if not research:
             error = WarningRecord("research.unavailable", "no research candidates were collected", StageName.RESEARCH)
             reports[StageName.RESEARCH] = StageReport(StageName.RESEARCH, StageStatus.FAILED, 1, research_warnings, (error,))
             return self._result(intent, reports, [*aggregate_warnings, *research_warnings, error])
-        research_status = StageStatus.INCOMPLETE if failures else StageStatus.SUCCEEDED
+        research_status = StageStatus.INCOMPLETE if blocking_failures else StageStatus.SUCCEEDED
         reports[StageName.RESEARCH] = StageReport(StageName.RESEARCH, research_status, 1, research_warnings)
         aggregate_warnings.extend(research_warnings)
 

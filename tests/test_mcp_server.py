@@ -152,7 +152,6 @@ class MCPTravelServerTests(unittest.TestCase):
         }
         for name in (
             "GOOGLE_MAPS_API_KEY",
-            "YOUTUBE_API_KEY",
             "OPENROUTESERVICE_API_KEY",
         ):
             server_env.pop(name, None)
@@ -280,7 +279,6 @@ class MCPTravelServerTests(unittest.TestCase):
                 missing_configuration.structured_content["missing"],
                 [
                     "GOOGLE_MAPS_API_KEY",
-                    "YOUTUBE_API_KEY",
                     "OPENROUTESERVICE_API_KEY",
                 ],
             )
@@ -485,7 +483,6 @@ class MCPTravelServerTests(unittest.TestCase):
             result["missing"],
             [
                 "GOOGLE_MAPS_API_KEY",
-                "YOUTUBE_API_KEY",
                 "OPENROUTESERVICE_API_KEY",
             ],
         )

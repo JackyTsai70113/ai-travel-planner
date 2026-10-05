@@ -29,7 +29,6 @@ from src.validator import OpeningInterval, ValidationContext
 
 REQUIRED_ENVIRONMENT = (
     "GOOGLE_MAPS_API_KEY",
-    "YOUTUBE_API_KEY",
     "OPENROUTESERVICE_API_KEY",
 )
 
@@ -64,26 +63,37 @@ class _ProductionResearchAdapter(SourceAdapter):
 
     name = "production-research"
 
-    def __init__(self, intent: TravelIntent, google: SourceAdapter, youtube: YouTubeEvidenceAdapter,
+    def __init__(self, intent: TravelIntent, google: SourceAdapter, youtube: YouTubeEvidenceAdapter | None,
                  hotel_client: AmadeusClient | None, optional_restaurants: Sequence[SourceAdapter] = ()) -> None:
         self.intent, self.google, self.youtube = intent, google, youtube
         self.optional_restaurants = tuple(optional_restaurants)
         self.hotel_search = AmadeusHotelAdapter(hotel_client) if hotel_client else None
         self.evidence: list[object] = []
         self.failures: list[AdapterFailure] = []
+        self.optional_failures: list[AdapterFailure] = []
 
     def fetch(self, query: SourceQuery):
         self.failures = []
+        self.optional_failures = []
         query = replace(query, destination=_research_destination(self.intent))
         # Evidence is deliberately not converted into an operational candidate.
-        try:
-            self.evidence = list(self.youtube.fetch_evidence(query))
-        except Exception as exc:
-            self.failures.append(AdapterFailure(
-                adapter=str(getattr(self.youtube, "name", type(self.youtube).__name__)),
-                message=str(exc),
+        self.evidence = []
+        if self.youtube is not None:
+            try:
+                self.evidence = list(self.youtube.fetch_evidence(query))
+            except Exception as exc:
+                failure = AdapterFailure(
+                    adapter=str(getattr(self.youtube, "name", type(self.youtube).__name__)),
+                    message=str(exc),
+                    optional=True,
+                )
+                self.optional_failures.append(failure)
+        else:
+            self.optional_failures.append(AdapterFailure(
+                adapter="youtube-data",
+                message="YOUTUBE_API_KEY is not configured; optional community evidence is unavailable",
+                optional=True,
             ))
-            self.evidence = []
         candidates, failures = collect_from_adapters((self.google, *self.optional_restaurants), query)
         self.failures.extend(failures)
         start, end = _travel_dates(self.intent)
@@ -109,8 +119,10 @@ class _ProductionResearchAdapter(SourceAdapter):
 
     def drain_failures(self) -> tuple[AdapterFailure, ...]:
         failures = tuple(self.failures)
+        optional_failures = tuple(self.optional_failures)
         self.failures.clear()
-        return failures
+        self.optional_failures.clear()
+        return (*failures, *optional_failures)
 
 
 class ProductionPlanningRunner:
@@ -146,7 +158,9 @@ def create_production_orchestrator(*, trip_id: str, trips_directory: Path = Path
         raise ProductionConfigurationError("missing required environment: " + ", ".join(missing))
     dependencies = dependencies or ProductionDependencies()
     google = dependencies.google or GooglePlacesAdapter(api_key=environment["GOOGLE_MAPS_API_KEY"])
-    youtube = dependencies.youtube or YouTubeEvidenceAdapter(api_key=environment["YOUTUBE_API_KEY"])
+    youtube = dependencies.youtube
+    if youtube is None and environment.get("YOUTUBE_API_KEY"):
+        youtube = YouTubeEvidenceAdapter(api_key=environment["YOUTUBE_API_KEY"])
     hotel_client = dependencies.amadeus_client
     if hotel_client is None and environment.get("AMADEUS_CLIENT_ID") and environment.get("AMADEUS_CLIENT_SECRET"):
         hotel_client = AmadeusClient(environment=dict(environment))
@@ -172,7 +186,7 @@ def create_production_orchestrator(*, trip_id: str, trips_directory: Path = Path
 
 class _IntentBoundRunner(ProductionPlanningRunner):
     def __init__(self, *, trip_id: str, trips_directory: Path, site_directory: Path,
-                 google: SourceAdapter, youtube: YouTubeEvidenceAdapter, hotel_client: AmadeusClient | None,
+                 google: SourceAdapter, youtube: YouTubeEvidenceAdapter | None, hotel_client: AmadeusClient | None,
                  routing_provider: object, progress_callback: Callable[[str], None] | None,
                  optional_restaurants: Sequence[SourceAdapter] = ()) -> None:
         self.trip_id, self.trips_directory, self.site_directory = _safe_trip_id(trip_id), trips_directory, site_directory

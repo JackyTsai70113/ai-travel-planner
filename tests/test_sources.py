@@ -16,6 +16,7 @@ from src.sources.providers import (
     GooglePlacesAdapter,
     HotPepperGourmetAdapter,
     OfficialRestaurantFeedAdapter,
+    ProviderHttpError,
     ProviderConfigurationError,
     ProviderRequestError,
     YouTubeEvidenceAdapter,
@@ -250,6 +251,45 @@ class ProductionProviderAdapterTests(unittest.TestCase):
         self.assertIn("abc", evidence[0].provenance["source_url"])
         self.assertEqual("GET", client.calls[0][0])
         self.assertIn("key=youtube-key", client.calls[0][1])
+
+    def test_youtube_classifies_quota_and_authorization_failures(self):
+        quota = YouTubeEvidenceAdapter("youtube-key", http_client=RecordedHttpClient([
+            ProviderHttpError(403, "quotaExceeded: daily limit"),
+        ]))
+        with self.assertRaisesRegex(ProviderRequestError, "quota"):
+            quota.fetch_evidence(QUERY)
+
+        unauthorized = YouTubeEvidenceAdapter("youtube-key", http_client=RecordedHttpClient([
+            ProviderHttpError(403, "accessNotConfigured"),
+        ]))
+        with self.assertRaisesRegex(ProviderRequestError, "authorization"):
+            unauthorized.fetch_evidence(QUERY)
+
+    def test_youtube_classifies_timeout_and_malformed_payload(self):
+        timed_out = YouTubeEvidenceAdapter("youtube-key", http_client=RecordedHttpClient([
+            ProviderRequestError("The read operation timed out"),
+        ]))
+        with self.assertRaisesRegex(ProviderRequestError, "network timeout"):
+            timed_out.fetch_evidence(QUERY)
+
+        malformed = YouTubeEvidenceAdapter("youtube-key", http_client=RecordedHttpClient([
+            {"items": {"unexpected": "object"}},
+        ]))
+        with self.assertRaisesRegex(ProviderRequestError, "malformed response"):
+            malformed.fetch_evidence(QUERY)
+
+    def test_youtube_requires_no_key_when_not_configured_and_uses_bounded_timeout(self):
+        from src.application.production import REQUIRED_ENVIRONMENT, missing_required_configuration
+
+        self.assertNotIn("YOUTUBE_API_KEY", REQUIRED_ENVIRONMENT)
+        self.assertEqual([], missing_required_configuration({
+            "GOOGLE_MAPS_API_KEY": "google", "OPENROUTESERVICE_API_KEY": "ors",
+        }))
+        with self.assertRaisesRegex(ProviderConfigurationError, "not configured"):
+            YouTubeEvidenceAdapter(api_key="", http_client=RecordedHttpClient([])).fetch_evidence(QUERY)
+
+        adapter = YouTubeEvidenceAdapter("youtube-key")
+        self.assertEqual(5, adapter.http_client.timeout_seconds)
 
     def test_authority_priority_preserves_independent_records(self):
         community = list(FixtureCommunityRestaurantAdapter(NOW).fetch(QUERY))[0]

@@ -28,6 +28,14 @@ class ProviderRequestError(RuntimeError):
     """A documented provider API could not complete a request."""
 
 
+class ProviderHttpError(ProviderRequestError):
+    """An HTTP response rejected a provider request, with its status retained."""
+
+    def __init__(self, status_code: int, message: str) -> None:
+        self.status_code = status_code
+        super().__init__(f"HTTP {status_code}: {message}")
+
+
 class JsonHttpClient(Protocol):
     def request_json(
         self, method: str, url: str, *, headers: Mapping[str, str], body: Mapping[str, Any] | None = None
@@ -46,7 +54,10 @@ class UrllibJsonHttpClient:
         try:
             with urlopen(request, timeout=self.timeout_seconds) as response:
                 decoded = json.loads(response.read().decode("utf-8"))
-        except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as exc:
+        except HTTPError as exc:
+            detail = exc.read().decode("utf-8", errors="replace")[:500]
+            raise ProviderHttpError(exc.code, detail or exc.reason) from exc
+        except (URLError, TimeoutError, json.JSONDecodeError) as exc:
             raise ProviderRequestError(str(exc)) from exc
         if not isinstance(decoded, dict):
             raise ProviderRequestError("provider response must be a JSON object")
@@ -330,18 +341,32 @@ class YouTubeEvidenceAdapter:
 
     name = "youtube-data"
     endpoint = "https://www.googleapis.com/youtube/v3/search"
+    request_timeout_seconds = 5
 
     def __init__(self, api_key: str | None = None, *, http_client: JsonHttpClient | None = None, now: datetime | None = None) -> None:
         self.api_key = api_key or os.getenv("YOUTUBE_API_KEY")
-        self.http_client = http_client or UrllibJsonHttpClient()
+        self.http_client = http_client or UrllibJsonHttpClient(self.request_timeout_seconds)
         self.now = now
 
     def fetch_evidence(self, query: SourceQuery) -> list[ResearchEvidence]:
         if not self.api_key:
-            raise ProviderConfigurationError("YOUTUBE_API_KEY is required for YouTube research")
+            raise ProviderConfigurationError("YOUTUBE_API_KEY is not configured; YouTube community evidence is unavailable")
         encoded_query = f"{query.destination} travel parking queue stroller"
         from urllib.parse import urlencode
-        payload = self.http_client.request_json("GET", f"{self.endpoint}?{urlencode({'part': 'snippet', 'type': 'video', 'maxResults': 10, 'q': encoded_query, 'key': self.api_key})}", headers={})
+        try:
+            payload = self.http_client.request_json("GET", f"{self.endpoint}?{urlencode({'part': 'snippet', 'type': 'video', 'maxResults': 10, 'q': encoded_query, 'key': self.api_key})}", headers={})
+        except ProviderHttpError as exc:
+            reason = "quota" if exc.status_code == 403 and any(word in str(exc).lower() for word in ("quota", "daily limit", "rate limit")) else "authorization" if exc.status_code in (401, 403) else "http"
+            raise ProviderRequestError(f"YouTube {reason} error ({exc})") from exc
+        except (TimeoutError, URLError) as exc:
+            raise ProviderRequestError(f"YouTube network timeout: {exc}") from exc
+        except ProviderRequestError as exc:
+            message = str(exc).lower()
+            if "timed out" in message or "timeout" in message:
+                raise ProviderRequestError(f"YouTube network timeout: {exc}") from exc
+            raise ProviderRequestError(f"YouTube request failed: {exc}") from exc
+        if not isinstance(payload.get("items", []), list):
+            raise ProviderRequestError("YouTube malformed response: items must be an array")
         evidence: list[ResearchEvidence] = []
         for item in result_or_empty(payload, "items"):
             video_id = item.get("id", {}).get("videoId") if isinstance(item.get("id"), Mapping) else None
