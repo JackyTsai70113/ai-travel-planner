@@ -8,7 +8,8 @@
 - Railway backend origin：`https://ai-travel-planner-production-732b.up.railway.app`。
 - MCP endpoint：`https://ai-travel-planner-production-732b.up.railway.app/mcp`。
 - `/health` 的最近記錄驗證為 HTTP 200；未帶授權直接呼叫 `/mcp` 回 HTTP 401 是預期行為。
-- Railway CLI 注入正式環境 `BEARER_TOKEN` 後，遠端 MCP `tools/list`、`parse_trip_request` 可回 HTTP 200。完整可重複命令見 [Railway 驗證紀錄](../.railway/README.md#正式服務網址與驗證)。
+- 2026-10-05 在 PR #191 合併後重新驗證：最新 Railway deployment `SUCCESS`、`/health` HTTP 200、帶既有 `BEARER_TOKEN` 的遠端 MCP `tools/list` HTTP 200。工具清單已包含 `publish_trip_site`。完整可重複命令見 [Railway 驗證紀錄](../.railway/README.md#正式服務網址與驗證)。
+- 同日只列出 Railway 正式服務變數名稱以確認缺漏，未讀取或輸出 secret 值；清單沒有 `GITHUB_TOKEN`。尚未執行任何公開行程寫入。
 - 不在 repo、Issue 或文件記錄任何 secret 值。使用者在 ChatGPT 的工具呼叫驗收，仍由使用者本人於 chat 操作；其餘 backend 驗證由維護者執行。
 
 ## Provider 實測
@@ -43,7 +44,7 @@
 - [#153 遠端 ChatGPT MCP hosting 與連線](https://github.com/JackyTsai70113/ai-travel-planner/issues/153)：MCP hosted connection 與 ChatGPT chat 呼叫曾成功；整體規劃驗收仍受下列住宿、餐食與 Pages 發布條件影響。
 - [#175 Amadeus 退役後沒有可用住宿搜尋來源](https://github.com/JackyTsai70113/ai-travel-planner/issues/175)：目前沒有已核准的 lodging inventory provider 或 partner credentials。Booking.com Demand API 與 Expedia Rapid 有 partner/launch 准入條件；Google Places 不提供日期型房間 availability 與住宿總價。未取得合法供應商存取前，無法完成真實住宿候選的 acceptance。
 - [#180 餐廳候選沒有排入每日用餐行程](https://github.com/JackyTsai70113/ai-travel-planner/issues/180)：production run 有 20 筆餐廳候選，但無可選住宿；目前每日往返住宿路線無法驗證，因此不可把餐廳硬塞進日程。需有住宿候選後重跑真實情境。
-- [#179 MCP 規劃結果沒有對應的 GitHub Pages 網址](https://github.com/JackyTsai70113/ai-travel-planner/issues/179)：PR #189 已合併至 `main`（merge commit `2915ca44609bdc2812e38d7a35c20e1251d4f800`），加入有明確公開確認的 `publish_trip_site` MCP tool、GitHub Pages 寫入與衝突保護。Issue 保持開啟，直到 Railway 設定最小權限 `GITHUB_TOKEN`，並從 ChatGPT 執行真實發布 smoke test、確認 Pages URL 可用。
+- [#179 MCP 規劃結果沒有對應的 GitHub Pages 網址](https://github.com/JackyTsai70113/ai-travel-planner/issues/179)：PR #189 已合併至 `main`（merge commit `2915ca44609bdc2812e38d7a35c20e1251d4f800`），加入有明確公開確認的 `publish_trip_site` MCP tool、GitHub Pages 寫入與衝突保護。PR #191（merge commit `0a948bcfb8dcb6089e9f1daf16adad1e469b1b15`）再加入發布 readiness gate：多日行程需有對應真實 hotel candidate 的選定住宿、每一天需有餐點、日期範圍需有效、validation 不得有 findings；相同 bundle 的 registry 缺項或過期會被修復。2026-10-05 Railway 已部署並在 `tools/list` 顯示此工具，但正式變數清單仍缺 `GITHUB_TOKEN`。Issue 保持開啟，直到設定最小權限 token，並從 ChatGPT 執行真實發布 smoke test、確認 Pages URL 可用。
 
 ### Issue #179 驗收流程
 

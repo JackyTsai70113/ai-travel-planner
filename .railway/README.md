@@ -43,7 +43,7 @@ railway config apply
 railway run --service ai-travel-planner --environment production -- node -e 'const r = await fetch("https://ai-travel-planner-production-732b.up.railway.app/mcp", {method:"POST", headers:{"Authorization":`Bearer ${process.env.BEARER_TOKEN}`, "oai-authenticated-user-id":"diagnostic-readonly-check", "Content-Type":"application/json", "Accept":"application/json, text/event-stream"}, body:JSON.stringify({jsonrpc:"2.0",id:1,method:"tools/list",params:{}})}); const body = await r.json(); console.log(JSON.stringify({httpStatus:r.status,tools:(body.result?.tools||[]).map(tool=>tool.name)}));'
 ```
 
-已實測回傳 HTTP 200，並列出 `parse_trip_request`、`validate_trip`、`get_trip`、`plan_trip`、`build_trip_site`。實際 ChatGPT 使用者應透過私人 Site Worker 呼叫 MCP，不要把 Railway 後端網址當作公開的 Site Worker 網址。
+已於 2026-10-05 在 PR #191 合併後重新實測：Railway deployment 狀態為 `SUCCESS`，`/health` 回 HTTP 200；`tools/list` 回 HTTP 200，列出 `parse_trip_request`、`validate_trip`、`get_trip`、`plan_trip`、`build_trip_site`、`publish_trip_site`。此次只做工具探索，沒有呼叫會公開行程的發布工具。實際 ChatGPT 使用者應透過私人 Site Worker 呼叫 MCP，不要把 Railway 後端網址當作公開的 Site Worker 網址。
 
 也可直接透過後端唯讀測試 parser：
 
@@ -62,3 +62,10 @@ railway run --service ai-travel-planner --environment production -- node -e 'con
 結果為倉敷、岡山縣、2026-11-01 至 2026-11-05、5 天 4 夜、桃園、6 位成人與 1 位 2 歲幼兒、預算不限、自駕，`missing_fields` 與 `ambiguous_fields` 都是空陣列。以相同需求呼叫 `plan_trip` 並設定 `confirm_write=false`，實測回傳 `confirmation_required`；這是無寫入的安全檢查，不會開始 provider research 或建立行程檔案。
 
 之後的 repo 驗證由維護者直接執行上述 health 與 MCP smoke test，並檢查工具回應；只有 ChatGPT 對話中的 prompt 驗收需要 ChatGPT 使用者操作，不要把 curl 或後端 smoke test 留給使用者代跑。
+
+
+### GitHub Pages 發布工具狀態
+
+`publish_trip_site` 已部署並出現在遠端 `tools/list`。發布前會要求 ChatGPT 使用者明確確認公開；多日行程必須有對應到實際 hotel candidate 的住宿，每日都須有餐點，日期必須有效，Canonical Trip validation 也不可有 findings。相同 bundle 的 registry 缺項或過期時，工具只修復 registry。
+
+2026-10-05 已用 `railway variable list` 只輸出變數名稱核對正式服務設定，沒有讀取或列印 secret 值。清單尚無 `GITHUB_TOKEN`，因此未執行真實 Pages 發布，Issue #179 仍待維護者設定最小權限 fine-grained PAT，並在 ChatGPT 明確要求公開後完成部署與網址驗證。
