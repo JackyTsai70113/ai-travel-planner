@@ -8,7 +8,7 @@ export default defineRailway(() => {
     build: { builder: "DOCKERFILE", dockerfilePath: "/Dockerfile" },
     deploy: { healthcheckPath: "/health", healthcheckTimeout: 120, restartPolicyType: "ON_FAILURE", restartPolicyMaxRetries: 10 },
     volumeMounts: { "/data": aiTravelPlannerVolume },
-    env: { BEARER_TOKEN: preserve(), GOOGLE_MAPS_API_KEY: preserve(), OPENROUTESERVICE_API_KEY: preserve(), PUBLIC_URL: preserve(), YOUTUBE_API_KEY: preserve() },
+    env: { BEARER_TOKEN: preserve(), GITHUB_PAGES_BASE_URL: preserve(), GITHUB_PAGES_BRANCH: preserve(), GITHUB_REPOSITORY: preserve(), GITHUB_TOKEN: preserve(), GOOGLE_MAPS_API_KEY: preserve(), OPENROUTESERVICE_API_KEY: preserve(), PUBLIC_URL: preserve(), YOUTUBE_API_KEY: preserve() },
   });
 
   return project("gregarious-warmth", {
