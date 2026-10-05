@@ -1,7 +1,7 @@
 import copy
 import json
 from dataclasses import replace
-from datetime import datetime, time, timedelta
+from datetime import datetime, time, timedelta, timezone
 from pathlib import Path
 import unittest
 from types import SimpleNamespace
@@ -308,7 +308,8 @@ class PlannerTests(unittest.TestCase):
         visit = next(item for item in result.best_trip.trip["days"][0]["items"] if item["place_id"] == "ohori-park")
         self.assertEqual(visit["end_at"], "2026-11-01T01:30:00-05:00")
         self.assertEqual(
-            (datetime.fromisoformat(visit["end_at"]) - datetime.fromisoformat(visit["start_at"])).total_seconds(),
+            (datetime.fromisoformat(visit["end_at"]).astimezone(timezone.utc)
+             - datetime.fromisoformat(visit["start_at"]).astimezone(timezone.utc)).total_seconds(),
             3600,
         )
 

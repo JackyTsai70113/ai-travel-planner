@@ -491,7 +491,7 @@ def _restaurant_candidates(candidates: Sequence[dict], intent: TravelIntent, sta
         current_date = start + timedelta(days=day_number - 1)
         for period, start_time in windows.items():
             meal_start = datetime.combine(current_date, start_time, zone)
-            meal_end = meal_start + timedelta(minutes=60)
+            meal_end = _add_elapsed_minutes(meal_start, 60)
             eligible = [candidate for candidate in eligible_restaurants(candidates, meal_start, meal_end)
                         if candidate.get("place", {}).get("id") not in used
                         and candidate.get("schedule", {}).get("duration_minutes", 60) > 0
@@ -556,9 +556,9 @@ def _meal_route_feasible(candidate: Mapping[str, object], period: str, starts: d
         scheduled.append((visit_start, visit_end, place["id"], details))
 
     if scheduled:
-        scheduled.sort(key=lambda item: item[0])
-        before = [item for item in scheduled if item[1] <= starts]
-        after = [item for item in scheduled if item[0] >= ends]
+        scheduled.sort(key=lambda item: item[0].astimezone(timezone.utc))
+        before = [item for item in scheduled if item[1].astimezone(timezone.utc) <= starts.astimezone(timezone.utc)]
+        after = [item for item in scheduled if item[0].astimezone(timezone.utc) >= ends.astimezone(timezone.utc)]
         if before:
             _, previous_end, previous_id, _ = before[-1]
         else:
@@ -572,9 +572,9 @@ def _meal_route_feasible(candidate: Mapping[str, object], period: str, starts: d
         outgoing = routing.travel_minutes.get((place_id, next_id))
         if incoming is None or outgoing is None:
             return False
-        if starts - timedelta(minutes=incoming) < previous_end:
+        if _add_elapsed_minutes(starts, -incoming).astimezone(timezone.utc) < previous_end.astimezone(timezone.utc):
             return False
-        return ends + timedelta(minutes=outgoing + next_buffer) <= next_start
+        return _add_elapsed_minutes(ends, outgoing + next_buffer).astimezone(timezone.utc) <= next_start.astimezone(timezone.utc)
 
     # Compatibility for callers that evaluate meal candidates before assigning
     # POI dates; production passes a route-aware scheduled POI set above.
@@ -586,10 +586,14 @@ def _meal_route_feasible(candidate: Mapping[str, object], period: str, starts: d
     if period == "breakfast":
         outbound = routing.travel_minutes.get((hotel_id, place_id))
         onward = routing.travel_minutes.get((place_id, poi_id))
-        return outbound is not None and onward is not None and starts - timedelta(minutes=outbound) >= datetime.combine(starts.date(), time(7), starts.tzinfo) and ends + timedelta(minutes=onward) <= datetime.combine(starts.date(), time(10), starts.tzinfo)
+        return (outbound is not None and onward is not None
+                and _add_elapsed_minutes(starts, -outbound).astimezone(timezone.utc) >= datetime.combine(starts.date(), time(7), starts.tzinfo).astimezone(timezone.utc)
+                and _add_elapsed_minutes(ends, onward).astimezone(timezone.utc) <= datetime.combine(starts.date(), time(10), starts.tzinfo).astimezone(timezone.utc))
     outbound = routing.travel_minutes.get((poi_id, place_id))
     returning = routing.travel_minutes.get((place_id, hotel_id))
-    return outbound is not None and returning is not None and starts >= datetime.combine(starts.date(), time(12) if period == "lunch" else time(18), starts.tzinfo) and ends + timedelta(minutes=returning) <= datetime.combine(starts.date(), time(20), starts.tzinfo)
+    return (outbound is not None and returning is not None
+            and starts.astimezone(timezone.utc) >= datetime.combine(starts.date(), time(12) if period == "lunch" else time(18), starts.tzinfo).astimezone(timezone.utc)
+            and _add_elapsed_minutes(ends, returning).astimezone(timezone.utc) <= datetime.combine(starts.date(), time(20), starts.tzinfo).astimezone(timezone.utc))
 
 
 
