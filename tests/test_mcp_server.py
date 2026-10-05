@@ -436,13 +436,20 @@ class MCPTravelServerTests(unittest.TestCase):
 
         for stage_status, expected_status in (
             (StageStatus.INCOMPLETE, "incomplete"),
+            (StageStatus.PENDING, "incomplete"),
+            (StageStatus.FAILED, "incomplete"),
             (StageStatus.SUCCEEDED, "complete"),
         ):
             result = SimpleNamespace(
                 succeeded=True,
-                stages=(
-                    StageReport(StageName.RESEARCH, stage_status),
-                    StageReport(StageName.RENDERER, StageStatus.SUCCEEDED),
+                stages=tuple(
+                    StageReport(
+                        stage_name,
+                        stage_status
+                        if stage_name is StageName.RESEARCH
+                        else StageStatus.SUCCEEDED,
+                    )
+                    for stage_name in StageName
                 ),
                 warnings=(),
             )
@@ -464,9 +471,8 @@ class MCPTravelServerTests(unittest.TestCase):
                 output = plan_trip_tool(request, "mcp-plan-status", confirm_write=True)
 
             self.assertEqual(output["status"], expected_status)
-            self.assertEqual(
-                output["stages"][0]["status"], stage_status.value,
-            )
+            self.assertEqual(len(output["stages"]), len(StageName))
+            self.assertEqual(output["stages"][0]["status"], stage_status.value)
 
     def test_plan_reports_missing_provider_configuration_without_fixture_fallback(
         self,
