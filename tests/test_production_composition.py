@@ -4,7 +4,6 @@ import argparse
 from dataclasses import replace
 from datetime import date, datetime, time, timezone
 import json
-import pytest
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -221,12 +220,16 @@ def test_route_aware_production_fails_closed_when_poi_hours_are_missing():
     records = [SimpleNamespace(collection=collection, candidate=candidate) for collection, candidate in poi_records]
     records.append(SimpleNamespace(collection="hotels", candidate=hotel))
 
-    with pytest.raises(ProductionIncompleteError, match="verified opening hours"):
-        _candidate_trips("kurashiki-missing-hours", intent, records, ValidationContext())
-
-    opening = {f"poi-{number}": tuple(OpeningInterval(day, time(8), time(22)) for day in range(7)) for number in range(12)}
-    with pytest.raises(ProductionIncompleteError, match="no feasible pair"):
-        _candidate_trips("kurashiki-missing-routes", intent, records, ValidationContext({}, opening))
+    for context, expected in (
+        (ValidationContext(), "verified opening hours"),
+        (ValidationContext({}, {f"poi-{number}": tuple(OpeningInterval(day, time(8), time(22)) for day in range(7)) for number in range(12)}), "no feasible pair"),
+    ):
+        try:
+            _candidate_trips("kurashiki-missing-facts", intent, records, context)
+        except ProductionIncompleteError as exc:
+            assert expected in str(exc)
+        else:
+            raise AssertionError(f"expected incomplete schedule for missing {expected}")
 
 
 
