@@ -63,9 +63,14 @@ railway run --service ai-travel-planner --environment production -- node -e 'con
 
 之後的 repo 驗證由維護者直接執行上述 health 與 MCP smoke test，並檢查工具回應；只有 ChatGPT 對話中的 prompt 驗收需要 ChatGPT 使用者操作，不要把 curl 或後端 smoke test 留給使用者代跑。
 
-
 ### GitHub Pages 發布工具狀態
 
 `publish_trip_site` 已部署並出現在遠端 `tools/list`。發布前會要求 ChatGPT 使用者明確確認公開；多日行程必須有對應到實際 hotel candidate 的住宿，每日都須有餐點，日期必須有效，Canonical Trip validation 也不可有 findings。相同 bundle 的 registry 缺項或過期時，工具只修復 registry。
 
 2026-10-05 已用 `railway variable list` 只輸出變數名稱核對正式服務設定，沒有讀取或列印 secret 值。清單尚無 `GITHUB_TOKEN`，因此未執行真實 Pages 發布，Issue #179 仍待維護者設定最小權限 fine-grained PAT，並在 ChatGPT 明確要求公開後完成部署與網址驗證。
+
+只核對變數名稱且不顯示值的指令：
+
+```sh
+railway variable list --service ai-travel-planner --environment production --json | jq -r 'if type == "array" then .[] | if type == "object" then (.name // .key) else . end else keys[] end' | sort
+```
