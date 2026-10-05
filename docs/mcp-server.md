@@ -203,8 +203,8 @@ Output statuses (checked in this order when the arguments pass the published JSO
 - `needs_clarification`: includes parsed `intent`, `missing_fields`, `ambiguous_fields`, and `constraint_issues`; no provider calls or writes.
 - `configuration_missing`: lists missing environment variable names only; no provider call or fixture fallback.
 - `confirmation_required`: configuration is present but `confirm_write` is false; no provider call or write.
-- `complete`: includes `trip_id`, stage names/statuses, and warning `code`/`stage`/`path` only.
-- `incomplete`: includes a generic message; provider exception text and warning message text are deliberately omitted.
+- `complete`: returned only when the orchestrator produced trip and site outputs and every reported stage is `succeeded`; includes `trip_id`, stage names/statuses, and warning `code`/`stage`/`path` only.
+- `incomplete`: returned when the orchestrator cannot produce outputs or any reported stage is not `succeeded`. A produced but degraded trip still includes `trip_id`, stage statuses, and warning `code`/`stage`/`path`; provider exception text and warning message text are deliberately omitted.
 - MCP schema rejection (`isError=true`): missing/wrong argument types, empty or more than 20,000 character request, malformed `trip_id`, or non-boolean `confirm_write`. These inputs do not reach the tool function.
 
 Side effects and retries: with `confirm_write=true`, performs live provider research and may create or replace `trips/<trip_id>/trip.json` and `site/<trip_id>/index.html`. MCP adds no automatic retry. A client retry repeats live provider calls and can replace those files; the tool is non-idempotent. `confirm_write` is an explicit tool argument, not an authorization mechanism.

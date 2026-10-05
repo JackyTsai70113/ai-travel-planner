@@ -10,11 +10,14 @@ import time
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from mcp import Client, ClientSession
 from mcp.client.stdio import StdioServerParameters
 from mcp.client.streamable_http import streamable_http_client
+
+from src.orchestrator import StageName, StageReport, StageStatus
 
 from src.mcp_server.server import (
     _public_trip_summary,
@@ -427,6 +430,43 @@ class MCPTravelServerTests(unittest.TestCase):
                 built = build_trip_site_tool("demo-trip", confirm_write=True)
                 self.assertEqual(built["status"], "built")
                 self.assertTrue((sites / "demo-trip" / "index.html").is_file())
+
+    def test_plan_status_is_incomplete_when_any_stage_is_incomplete(self) -> None:
+        request = "2026/4/10到2026/4/14 台北出發德島五天四夜，2大，預算8萬日圓，自駕"
+
+        for stage_status, expected_status in (
+            (StageStatus.INCOMPLETE, "incomplete"),
+            (StageStatus.SUCCEEDED, "complete"),
+        ):
+            result = SimpleNamespace(
+                succeeded=True,
+                stages=(
+                    StageReport(StageName.RESEARCH, stage_status),
+                    StageReport(StageName.RENDERER, StageStatus.SUCCEEDED),
+                ),
+                warnings=(),
+            )
+
+            class Runner:
+                def run(self, _intent):
+                    return result
+
+            with (
+                patch(
+                    "src.mcp_server.server.missing_required_configuration",
+                    return_value=[],
+                ),
+                patch(
+                    "src.mcp_server.server.create_production_orchestrator",
+                    return_value=Runner(),
+                ),
+            ):
+                output = plan_trip_tool(request, "mcp-plan-status", confirm_write=True)
+
+            self.assertEqual(output["status"], expected_status)
+            self.assertEqual(
+                output["stages"][0]["status"], stage_status.value,
+            )
 
     def test_plan_reports_missing_provider_configuration_without_fixture_fallback(
         self,
