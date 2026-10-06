@@ -12,8 +12,8 @@
 
 ## 部署後操作
 
-1. 確認 GitHub Actions 中此變更所需的 CI 全部通過，並記下部署所對應的 `main` commit SHA。
-2. 在 Railway 確認最新正式環境 deployment 為成功狀態，記下 deployment ID、狀態及完成時間。使用既有 Railway 驗證文件中的正式服務資訊；不要在紀錄中抄錄變數值或憑證。
+1. 確認 GitHub Actions 中此變更所需的 CI 全部通過，並記下預期部署的 `main` commit SHA。
+2. 在 Railway 確認最新正式環境 deployment 為成功狀態，記下 deployment ID、狀態、完成時間，以及 Railway 顯示的 deployed/source commit SHA。確認它與預期的 `main` SHA 完全一致。若 Railway 沒有提供 commit SHA，必須保存可稽核且能明確連結該 deployment 與該 `main` SHA 的部署紀錄或 workflow 證據；沒有此對應證據就標記「未驗收」。使用既有 Railway 驗證文件中的正式服務資訊；不要在紀錄中抄錄變數值或憑證。
 3. 使用 Computer Use 開啟 ChatGPT 的實際 Chat 介面，建立一個新對話，選取私人 `AI Travel Planner MCP` Site/plugin。
 4. 在 ChatGPT 介面確認 MCP 工具可用。若工具沒有出現，停止並記錄 discovery/authentication 失敗，不要把 HTTP 測試視作替代通過。
 5. 在 Chat 中送出以下唯讀 smoke test，要求 ChatGPT 明確使用 `parse_trip_request`，不要改用模型自行解析：
@@ -21,14 +21,14 @@
    `請使用 AI Travel Planner MCP 的 parse_trip_request 工具解析「我想安排倉敷五天四夜」。請直接呼叫工具，不要自行回答或呼叫其他工具。`
 
 6. 在 ChatGPT 的工具呼叫 UI 確認實際呼叫的是 `AI Travel Planner MCP` 的 `parse_trip_request`，並檢視工具回應。確認呼叫成功、回應包含解析狀態與行程意圖，目的地和五天四夜資訊符合輸入；不可只根據模型在工具呼叫之外的文字敘述判定成功。
-7. 若此變更影響其他特定工具或資料路徑，再依變更範圍增加一個安全、唯讀的 ChatGPT Chat 工具呼叫；不得略過上述基本 smoke test，也不得用寫入型工具作部署健康檢查。
+7. 若此變更影響其他特定工具或資料路徑，再依變更範圍增加一個安全、唯讀的 ChatGPT Chat 工具呼叫；不得略過上述基本 smoke test，也不得用寫入型工具作部署健康檢查。若受影響行為只有寫入型工具可觀察，未經本次任務明確授權不得呼叫該工具；該項受影響行為維持「未驗收」，直到能在無副作用的方式下驗證或取得明確授權。
 8. 保存足以核對結果的 ChatGPT Chat 截圖或短錄影，以及以下驗收紀錄。截圖需避免顯示帳戶敏感資訊、secret 或無關私人對話。
 
 ## 通過條件
 
 以下條件須全部成立：
 
-1. 目標 Railway deployment 是成功狀態，且對應此次待驗收的 `main` SHA。
+1. 目標 Railway deployment 是成功狀態，且有可稽核證據證明 deployed/source commit SHA 與此次待驗收的 `main` SHA 完全一致；若平台未提供 SHA，須有等價的明確部署對應證據。
 2. ChatGPT Chat 中的私人 Site/plugin 可被選取，MCP 工具可見。
 3. ChatGPT Chat UI 顯示真實的 `parse_trip_request` 工具呼叫與成功回應。
 4. 工具回應的解析意圖符合 smoke test 中的倉敷與五天四夜需求。
@@ -43,7 +43,9 @@
 ```text
 驗收日期（含時區）：
 main commit SHA：
-Railway deployment ID / 狀態：
+Railway deployment ID / 狀態 / 完成時間：
+Railway deployed/source commit SHA：
+SHA 對應證據：
 ChatGPT Site/plugin：AI Travel Planner MCP（私人）
 ChatGPT 實際呼叫工具：parse_trip_request
 工具呼叫結果：通過 / 未通過 / 未驗收
