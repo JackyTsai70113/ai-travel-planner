@@ -37,11 +37,14 @@
 
 本次輸出暴露「頂層 complete 與未完成 stage/內容並存」的狀態問題。不可只憑 `status=complete` 宣稱行程完整。
 
+## 已關閉的 Issue
+
+- [#153 遠端 ChatGPT MCP hosting 與連線](https://github.com/JackyTsai70113/ai-travel-planner/issues/153) 已於 2026-10-06 關閉：Railway MCP 可連線、工具探索成功，且 ChatGPT 對話已直接呼叫唯讀 parser 成功。這只結束 hosting／connection 範圍，不代表規劃、住宿或公開頁面功能已全部驗收。
+
 ## 目前開啟的 Issues 與可推進範圍
 
 以下狀態已於 2026-10-06 依 GitHub issue list 和正式環境證據核對。目前開啟的 Issue 共三張：
 
-- [#153 遠端 ChatGPT MCP hosting 與連線](https://github.com/JackyTsai70113/ai-travel-planner/issues/153) 已於 2026-10-06 關閉：Railway MCP 可連線、工具探索成功，且 ChatGPT 對話已直接呼叫唯讀 parser 成功。這只結束 hosting／connection 範圍，不代表規劃、住宿或公開頁面功能已全部驗收。
 - [#175 Amadeus 退役後沒有可用住宿搜尋來源](https://github.com/JackyTsai70113/ai-travel-planner/issues/175)：目前沒有已核准的 lodging inventory provider 或 partner credentials。Booking.com Demand API 與 Expedia Rapid 有 partner/launch 准入條件；Google Places 不提供日期型房間 availability 與住宿總價。未取得合法供應商存取前，無法完成真實住宿候選的 acceptance。
 - [#180 餐廳候選沒有排入每日用餐行程](https://github.com/JackyTsai70113/ai-travel-planner/issues/180)：production run 有 20 筆餐廳候選，但無可選住宿；目前每日往返住宿路線無法驗證，因此不可把餐廳硬塞進日程。需有住宿候選後重跑真實情境。
 - [#179 MCP 規劃結果沒有對應的 GitHub Pages 網址](https://github.com/JackyTsai70113/ai-travel-planner/issues/179)：PR #189 已合併至 `main`（merge commit `2915ca44609bdc2812e38d7a35c20e1251d4f800`），加入有明確公開確認的 `publish_trip_site` MCP tool、GitHub Pages 寫入與衝突保護。PR #191（merge commit `0a948bcfb8dcb6089e9f1daf16adad1e469b1b15`）再加入發布 readiness gate：多日行程需有對應真實 hotel candidate 的選定住宿、每一天需有餐點、日期範圍需有效、validation 不得有 findings；相同 bundle 的 registry 缺項或過期會被修復。2026-10-06 Railway `SUCCESS` deployment 的 `tools/list` 有此工具，但正式變數清單仍缺 `GITHUB_TOKEN`。Issue 保持開啟，直到設定最小權限 token，並由使用者在 ChatGPT 明確確認真實發布、確認 Pages deployment 完成與 URL 可用。

@@ -35,7 +35,7 @@ railway config apply
 - 健康檢查端點：`https://ai-travel-planner-production-732b.up.railway.app/health`
 - 後端 MCP endpoint：`https://ai-travel-planner-production-732b.up.railway.app/mcp`
 
-健康端點實測回傳 HTTP 200 與 `ok`。未帶授權資料直接呼叫 `/mcp` 會回 HTTP 401，這是預期行為：後端要求 `BEARER_TOKEN` 與 Sites Worker 傳入的 `oai-authenticated-user-id`。Railway 的 IaC 已設定 `/health` 與 120 秒 timeout，但 plan 尚未 apply；端點本身目前已可正常回應。
+健康端點實測回傳 HTTP 200 與 `ok`。未帶授權資料直接呼叫 `/mcp` 會回 HTTP 401，這是預期行為：後端要求 `BEARER_TOKEN` 與 Sites Worker 傳入的 `oai-authenticated-user-id`。2026-10-05 的設定紀錄指出 `.railway/railway.ts` plan 當時尚未 apply。2026-10-06 Railway connector 回報服務沒有 staged/pending 變更，但該檢查沒有重新執行 `railway config plan`，因此不能據此判定 IaC plan 已 apply；端點目前可正常回應。
 
 以下只讀 smoke test 透過 Railway CLI 將 `BEARER_TOKEN` 注入子程序，不會印出 token；測試用識別值只用來模擬 Sites Worker 的必要標頭：
 
@@ -67,7 +67,7 @@ railway run --service ai-travel-planner --environment production -- node -e 'con
 
 `publish_trip_site` 已部署並出現在遠端 `tools/list`。發布前會要求 ChatGPT 使用者明確確認公開；多日行程必須有對應到實際 hotel candidate 的住宿，每日都須有餐點，日期必須有效，Canonical Trip validation 也不可有 findings。相同 bundle 的 registry 缺項或過期時，工具只修復 registry。
 
-2026-10-06 透過 Railway connector 只核對正式服務變數名稱（`valuesRedacted=true`），沒有讀取或列印 secret 值。清單仍無 `GITHUB_TOKEN`；deployment 為 `SUCCESS`，沒有待套用的 Railway 變更。因此尚未執行真實 Pages 發布，Issue #179 仍待維護者設定最小權限 fine-grained PAT，並在 ChatGPT 明確要求公開後完成部署與網址驗證。
+2026-10-06 透過 Railway connector 只核對正式服務變數名稱（`valuesRedacted=true`），沒有讀取或列印 secret 值。清單仍無 `GITHUB_TOKEN`；deployment 為 `SUCCESS`。Railway connector 回報服務沒有 staged/pending 變更；這不代表 `.railway/railway.ts` 的 plan 已 apply。因此尚未執行真實 Pages 發布，Issue #179 仍待維護者設定最小權限 fine-grained PAT，並在 ChatGPT 明確要求公開後完成部署與網址驗證。
 
 只核對變數名稱且不顯示值的指令：
 
