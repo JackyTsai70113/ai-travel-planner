@@ -9,7 +9,7 @@
 - MCP endpoint：`https://ai-travel-planner-production-732b.up.railway.app/mcp`。
 - `/health` 的最近記錄驗證為 HTTP 200；未帶授權直接呼叫 `/mcp` 回 HTTP 401 是預期行為。
 - 2026-10-06 重新驗證：Railway deployment `SUCCESS`、`/health` HTTP 200 與 `ok`、帶既有 `BEARER_TOKEN` 的遠端 MCP `tools/list` HTTP 200；六項工具清單包含 `publish_trip_site`。遠端 `parse_trip_request` 對「我想安排倉敷五天四夜」回傳 `status=parsed`、目的地倉敷、5 天 4 夜；本次 ChatGPT 對話也直接呼叫私人 MCP 的唯讀 parser 工具成功。完整 backend 驗證命令見 [Railway 驗證紀錄](../.railway/README.md#正式服務網址與驗證)。
-- 同日以 Railway connector 列出正式服務變數名稱（`valuesRedacted=true`），未讀取或輸出 secret 值；清單沒有 `GITHUB_TOKEN`。Deployment 為 `SUCCESS`，沒有待套用設定；尚未執行任何公開行程寫入。
+- 同日以 Railway connector 列出正式服務變數名稱（`valuesRedacted=true`），未讀取或輸出 secret 值；清單沒有 `GITHUB_TOKEN`。Deployment 為 `SUCCESS`；connector 回報服務沒有 staged/pending 變更，但此檢查沒有重新執行 `railway config plan`，不能據此判定 `.railway/railway.ts` 的 IaC plan 已 apply。尚未執行任何公開行程寫入。
 - 不在 repo、Issue 或文件記錄任何 secret 值。使用者在 ChatGPT 的工具呼叫驗收，仍由使用者本人於 chat 操作；其餘 backend 驗證由維護者執行。
 
 ## Provider 實測
