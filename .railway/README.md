@@ -21,7 +21,8 @@ railway config apply
 
 ## 重要設定
 
-- 來源：`JackyTsai70113/ai-travel-planner`
+- Railway 專案：`ai-traveller`。服務與 `/data` volume：`ai-traveller`、`ai-traveller-volume`。
+- GitHub 來源 repo：`JackyTsai70113/ai-travel-planner`（repo 名稱保持不變）。
 - 建置：repo 根目錄的 `/Dockerfile`
 - 健康檢查：`/health`，逾時 120 秒
 - 重啟：失敗時重試，最多 10 次（與 Railway 目前服務設定一致）
@@ -29,18 +30,18 @@ railway config apply
 
 ## 正式服務網址與驗證
 
-2026-10-05 已查證 Railway production domain：
+2026-10-07 Railway project、service、volume 與 Railway 提供的 service domain 已改名為 `ai-traveller` 系列，並確認 service、volume 與 Site MCP 仍可用：
 
-- 服務網址：`https://ai-travel-planner-production-732b.up.railway.app`
-- 健康檢查端點：`https://ai-travel-planner-production-732b.up.railway.app/health`
-- 後端 MCP endpoint：`https://ai-travel-planner-production-732b.up.railway.app/mcp`
+- 服務網址：`https://ai-traveller-production-732b.up.railway.app`
+- 健康檢查端點：`https://ai-traveller-production-732b.up.railway.app/health`
+- 後端 MCP endpoint：`https://ai-traveller-production-732b.up.railway.app/mcp`
 
-健康端點實測回傳 HTTP 200 與 `ok`。未帶授權資料直接呼叫 `/mcp` 會回 HTTP 401，這是預期行為：後端要求 `BEARER_TOKEN` 與 Sites Worker 傳入的 `oai-authenticated-user-id`。Railway 的 IaC 已設定 `/health` 與 120 秒 timeout，但 plan 尚未 apply；端點本身目前已可正常回應。
+改名後因舊 deployment 的 Host allowlist 暫時回 HTTP 421；重新部署後已恢復。新 domain 的 `/health` 回 HTTP 200 與 `ok`；帶有效 `BEARER_TOKEN` 及測試用 Sites 身分呼叫 `/mcp` 回 HTTP 200，並列出 6 個工具。私人 ChatGPT Site 更新 backend origin 後，`parse_trip_request` 也已實際成功。IaC plan 仍顯示 Dockerfile 與 healthcheck 設定差異，未套用該設定變更。
 
 以下只讀 smoke test 透過 Railway CLI 將 `BEARER_TOKEN` 注入子程序，不會印出 token；測試用識別值只用來模擬 Sites Worker 的必要標頭：
 
 ```sh
-railway run --service ai-travel-planner --environment production -- node -e 'const r = await fetch("https://ai-travel-planner-production-732b.up.railway.app/mcp", {method:"POST", headers:{"Authorization":`Bearer ${process.env.BEARER_TOKEN}`, "oai-authenticated-user-id":"diagnostic-readonly-check", "Content-Type":"application/json", "Accept":"application/json, text/event-stream"}, body:JSON.stringify({jsonrpc:"2.0",id:1,method:"tools/list",params:{}})}); const body = await r.json(); console.log(JSON.stringify({httpStatus:r.status,tools:(body.result?.tools||[]).map(tool=>tool.name)}));'
+railway run --service ai-traveller --environment production -- node -e 'const r = await fetch("https://ai-traveller-production-732b.up.railway.app/mcp", {method:"POST", headers:{"Authorization":`Bearer ${process.env.BEARER_TOKEN}`, "oai-authenticated-user-id":"diagnostic-readonly-check", "Content-Type":"application/json", "Accept":"application/json, text/event-stream"}, body:JSON.stringify({jsonrpc:"2.0",id:1,method:"tools/list",params:{}})}); const body = await r.json(); console.log(JSON.stringify({httpStatus:r.status,tools:(body.result?.tools||[]).map(tool=>tool.name)}));'
 ```
 
 已於 2026-10-05 在 PR #191 合併後重新實測：Railway deployment 狀態為 `SUCCESS`，`/health` 回 HTTP 200；`tools/list` 回 HTTP 200，列出 `parse_trip_request`、`validate_trip`、`get_trip`、`plan_trip`、`build_trip_site`、`publish_trip_site`。此次只做工具探索，沒有呼叫會公開行程的發布工具。實際 ChatGPT 使用者應透過私人 Site Worker 呼叫 MCP，不要把 Railway 後端網址當作公開的 Site Worker 網址。
@@ -48,7 +49,7 @@ railway run --service ai-travel-planner --environment production -- node -e 'con
 也可直接透過後端唯讀測試 parser：
 
 ```sh
-railway run --service ai-travel-planner --environment production -- node -e 'const r = await fetch("https://ai-travel-planner-production-732b.up.railway.app/mcp", {method:"POST", headers:{"Authorization":`Bearer ${process.env.BEARER_TOKEN}`, "oai-authenticated-user-id":"diagnostic-readonly-check", "Content-Type":"application/json", "Accept":"application/json, text/event-stream"}, body:JSON.stringify({jsonrpc:"2.0",id:2,method:"tools/call",params:{name:"parse_trip_request",arguments:{request:"我想安排倉敷五天四夜"}}})}); const body = await r.json(); const result = body.result?.structuredContent; console.log(JSON.stringify({httpStatus:r.status,status:result?.status,destinations:result?.intent?.destinations,duration_days:result?.intent?.duration_days,duration_nights:result?.intent?.duration_nights}));'
+railway run --service ai-traveller --environment production -- node -e 'const r = await fetch("https://ai-traveller-production-732b.up.railway.app/mcp", {method:"POST", headers:{"Authorization":`Bearer ${process.env.BEARER_TOKEN}`, "oai-authenticated-user-id":"diagnostic-readonly-check", "Content-Type":"application/json", "Accept":"application/json, text/event-stream"}, body:JSON.stringify({jsonrpc:"2.0",id:2,method:"tools/call",params:{name:"parse_trip_request",arguments:{request:"我想安排倉敷五天四夜"}}})}); const body = await r.json(); const result = body.result?.structuredContent; console.log(JSON.stringify({httpStatus:r.status,status:result?.status,destinations:result?.intent?.destinations,duration_days:result?.intent?.duration_days,duration_nights:result?.intent?.duration_nights}));'
 ```
 
 預期 HTTP 200，結果包含 `status: "parsed"`、`destinations: ["倉敷"]`、`duration_days: 5`、`duration_nights: 4`。
@@ -72,5 +73,5 @@ railway run --service ai-travel-planner --environment production -- node -e 'con
 只核對變數名稱且不顯示值的指令：
 
 ```sh
-railway variable list --service ai-travel-planner --environment production --json | jq -r 'if type == "array" then .[] | if type == "object" then ((.name // .key) | strings) else empty end else keys[] end' | sort
+railway variable list --service ai-traveller --environment production --json | jq -r 'if type == "array" then .[] | if type == "object" then ((.name // .key) | strings) else empty end else keys[] end' | sort
 ```
