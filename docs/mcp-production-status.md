@@ -5,8 +5,8 @@
 ## ChatGPT 連線狀態
 
 - 私人 ChatGPT Site 已連到此 repo 的 Railway MCP backend；使用者曾在自己的 ChatGPT chat 中選取並呼叫 AI Travel Planner MCP 工具。
-- Railway backend origin：`https://ai-travel-planner-production-732b.up.railway.app`。
-- MCP endpoint：`https://ai-travel-planner-production-732b.up.railway.app/mcp`。
+- Railway backend origin：`https://ai-traveller-production-732b.up.railway.app`。
+- MCP endpoint：`https://ai-traveller-production-732b.up.railway.app/mcp`。
 - `/health` 的最近記錄驗證為 HTTP 200；未帶授權直接呼叫 `/mcp` 回 HTTP 401 是預期行為。
 - 2026-10-05 在 PR #191 合併後重新驗證：最新 Railway deployment `SUCCESS`、`/health` HTTP 200、帶既有 `BEARER_TOKEN` 的遠端 MCP `tools/list` HTTP 200。工具清單已包含 `publish_trip_site`。完整可重複命令見 [Railway 驗證紀錄](../.railway/README.md#正式服務網址與驗證)。
 - 同日只列出 Railway 正式服務變數名稱以確認缺漏，未讀取或輸出 secret 值；清單沒有 `GITHUB_TOKEN`。尚未執行任何公開行程寫入。
