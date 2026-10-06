@@ -70,6 +70,7 @@ MR-first 模式將 `28` 替換成 `mr:request-constraints`。
 9. 檢查 CI；修正範圍內的 repository、實作、測試、build 或 workflow 失敗，直到綠燈或確認是外部阻塞。
 10. 將精確 pushed head SHA、變更檔案、驗收條件與測試證據交給獨立 reviewer。
 11. 每次重大修正後重新 review，因為舊 verdict 不涵蓋新 SHA。
+12. 涉及 MCP 部署或 MCP 連線、工具、認證與 ChatGPT Site 設定的變更，部署後必須依 `docs/chatgpt-mcp-live-verification.md`，使用 Computer Use 在 ChatGPT Chat 實際呼叫 MCP 工具。CI、health check、curl、MCP Inspector 或直接呼叫 Site connector 均不能取代這項驗收；若無法執行，必須標示為未完成並記錄阻塞，不得宣稱 MCP 已通過 ChatGPT 實測。
 
 如果 push、PR、CI 或 review 仍在範圍內，不得只完成本地實作就停止。除非使用者或 repository policy 明確授權，不得自動 merge。
 
@@ -86,6 +87,8 @@ Handoff 必須包含：
 7. 已知警告、尚未驗證的行為與阻塞事項。
 
 「已實作」、「已測試」、「CI 通過」或「已 review」等聲明，都必須有綁定精確 head SHA 的最新證據。
+
+MCP 的 ChatGPT Chat 實測證據另須記錄 Railway deployment、ChatGPT 實際工具呼叫結果與檢查日期；不得記錄 token、credential 或不必要的個人資料。詳細步驟見 `docs/chatgpt-mcp-live-verification.md`。
 
 ## CI 失敗處理
 
