@@ -43,7 +43,7 @@ railway config apply
 railway run --service ai-travel-planner --environment production -- node -e 'const r = await fetch("https://ai-travel-planner-production-732b.up.railway.app/mcp", {method:"POST", headers:{"Authorization":`Bearer ${process.env.BEARER_TOKEN}`, "oai-authenticated-user-id":"diagnostic-readonly-check", "Content-Type":"application/json", "Accept":"application/json, text/event-stream"}, body:JSON.stringify({jsonrpc:"2.0",id:1,method:"tools/list",params:{}})}); const body = await r.json(); console.log(JSON.stringify({httpStatus:r.status,tools:(body.result?.tools||[]).map(tool=>tool.name)}));'
 ```
 
-已於 2026-10-05 在 PR #191 合併後重新實測：Railway deployment 狀態為 `SUCCESS`，`/health` 回 HTTP 200；`tools/list` 回 HTTP 200，列出 `parse_trip_request`、`validate_trip`、`get_trip`、`plan_trip`、`build_trip_site`、`publish_trip_site`。此次只做工具探索，沒有呼叫會公開行程的發布工具。實際 ChatGPT 使用者應透過私人 Site Worker 呼叫 MCP，不要把 Railway 後端網址當作公開的 Site Worker 網址。
+2026-10-06 重新核對正式環境：Railway deployment 狀態為 `SUCCESS`，`/health` 回 HTTP 200 與 `ok`；已授權的 `tools/list` 回 HTTP 200，列出 `parse_trip_request`、`validate_trip`、`get_trip`、`plan_trip`、`build_trip_site`、`publish_trip_site`。同日以遠端 parser 查詢「我想安排倉敷五天四夜」，回傳 `status=parsed`、`destinations=["倉敷"]`、5 天 4 夜；本次 ChatGPT 對話也直接呼叫私人 `AI Travel Planner MCP` 的唯讀 parser 工具成功。以上驗證未呼叫會公開行程的發布工具。Issue #153 的遠端 hosting／連線驗收已於 2026-10-06 關閉；#175、#179、#180 仍有各自記錄的阻塞條件。實際 ChatGPT 使用者應透過私人 Site Worker 呼叫 MCP，不要把 Railway 後端網址當作公開的 Site Worker 網址。
 
 也可直接透過後端唯讀測試 parser：
 
@@ -67,7 +67,7 @@ railway run --service ai-travel-planner --environment production -- node -e 'con
 
 `publish_trip_site` 已部署並出現在遠端 `tools/list`。發布前會要求 ChatGPT 使用者明確確認公開；多日行程必須有對應到實際 hotel candidate 的住宿，每日都須有餐點，日期必須有效，Canonical Trip validation 也不可有 findings。相同 bundle 的 registry 缺項或過期時，工具只修復 registry。
 
-2026-10-05 已用 `railway variable list` 只輸出變數名稱核對正式服務設定，沒有讀取或列印 secret 值。清單尚無 `GITHUB_TOKEN`，因此未執行真實 Pages 發布，Issue #179 仍待維護者設定最小權限 fine-grained PAT，並在 ChatGPT 明確要求公開後完成部署與網址驗證。
+2026-10-06 透過 Railway connector 只核對正式服務變數名稱（`valuesRedacted=true`），沒有讀取或列印 secret 值。清單仍無 `GITHUB_TOKEN`；deployment 為 `SUCCESS`，沒有待套用的 Railway 變更。因此尚未執行真實 Pages 發布，Issue #179 仍待維護者設定最小權限 fine-grained PAT，並在 ChatGPT 明確要求公開後完成部署與網址驗證。
 
 只核對變數名稱且不顯示值的指令：
 
