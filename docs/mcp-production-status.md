@@ -7,7 +7,15 @@
 - ChatGPT Chat 使用已連線的私人 `AI Travel Planner MCP` 呼叫 `parse_trip_request`，輸入「岡山縣倉敷五天四夜，6 位成人、1 位 2 歲幼兒，預算不設限制」。回應解析出目的地倉敷、區域岡山縣、5 天 4 夜、6 位成人、1 位 2 歲幼兒、`budget_status=unlimited`，`missing_fields=[]`。此為唯讀呼叫，未執行研究、寫入或公開行程。
 - Railway OAuth connector 對正式 project `ai-traveller` / `production` 以遮蔽值模式列出變數名稱。已存在 `BEARER_TOKEN`、`GOOGLE_MAPS_API_KEY`、`OPENROUTESERVICE_API_KEY`、`PUBLIC_URL`、`YOUTUBE_API_KEY`；沒有 `GITHUB_TOKEN`。沒有讀取任何 secret 值。
 - PR #204 已合併至 `8fbe0639d5fd341cbcc764979ff9e19cae30c6c2`，CI、Website CI、GitHub Pages deploy 均成功。首次檢視舊分頁仍顯示舊內容；強制重新載入後，GitHub Pages 首頁顯示新文案「頁面公開狀態與行程完成度分開呈現；公開預覽不代表行程已確認。」及「公開預覽」狀態。這只驗證公開目錄標籤，沒有改動或發布任何行程。
-- 四張仍開啟 issue 的最新外部依賴：#175 沒有已核准住宿庫存供應商；#179 沒有 Railway `GITHUB_TOKEN`；#180 的真實倉敷紀錄沒有可選住宿，無法驗證每日餐點往返路線；#199 的 Places 資料生命週期與網站條款／歸屬標示仍未完成確認。四張均不能以本輪唯讀解析驗收當作完成。
+- 四張仍開啟 issue 的最新外部依賴：#175 沒有已核准住宿庫存供應商；#179 沒有 Railway `GITHUB_TOKEN`；#180 的真實倉敷紀錄沒有可選住宿，無法驗證每日餐點往返路線；#199 的 Places 資料生命週期與公開再託管仍未完成確認。四張均不能以本輪唯讀解析驗收當作完成。
+
+## 2026-10-08 後續正式環境與網站檢查
+
+- Railway `ai-traveller` production deployment `55396464-1724-47db-b4ae-5bb53c815cd2` 狀態為 `SUCCESS`；正式 `/health` 回 HTTP 200、內文 `ok`。未帶認證的 `/mcp` 回 HTTP 401，符合 MCP 端點認證要求。
+- 重新檢查 Railway production 變數名稱時，沒有 `GITHUB_TOKEN`。因此不能完成真實 GitHub Pages 發布；本次沒有執行公開寫入。
+- 以 Chrome 開啟正式 `terms.html` 與 `privacy.html`，兩頁均正常載入且互有連結。首頁與既有淡路島行程頁的政策連結已在 PR #208 部署後確認。
+- 現有 ChatGPT 對話紀錄包含透過私人 `AI Travel Planner MCP` 成功呼叫 `parse_trip_request` 的倉敷結果。依維護者要求，本輪只讀取該既有結果，沒有在 ChatGPT 輸入或送出新 prompt。
+- #199 的公開條款／隱私頁工作已完成；剩餘範圍是 Google Places provider facts 寫入持久化 Canonical Trip、既有資料保存／處置與公開再託管的政策盤點。公開頁上線本身不等於 Places 資料生命週期已解決。
 
 ## ChatGPT 連線狀態
 
@@ -53,20 +61,20 @@
 - [#175 Amadeus 退役後沒有可用住宿搜尋來源](https://github.com/JackyTsai70113/ai-travel-planner/issues/175)：目前沒有已核准的 lodging inventory provider 或 partner credentials。Google Places 不提供日期型房間 availability 與住宿總價。未取得合法供應商存取前，無法完成真實住宿候選的 acceptance。
 - [#180 餐廳候選沒有排入每日用餐行程](https://github.com/JackyTsai70113/ai-travel-planner/issues/180)：production run 有 20 筆餐廳候選，但無可選住宿；目前每日往返住宿路線無法驗證，因此不可把餐廳硬塞進日程。需有住宿候選後重跑真實情境。
 - [#179 MCP 規劃結果沒有對應的 GitHub Pages 網址](https://github.com/JackyTsai70113/ai-travel-planner/issues/179)：PR #189、#191 已加入並部署 `publish_trip_site` 與發布 readiness gate。2026-10-08 正式環境變數名稱清單仍沒有 `GITHUB_TOKEN`，也未執行真實 Pages 發布，因此 issue 保持開啟。
-- [#199 Google Places 資料保存與公開展示政策待確認](https://github.com/JackyTsai70113/ai-travel-planner/issues/199)：本 PR 新增可公開直達的使用條款與隱私權政策頁面，並把入口加入首頁與每個行程頁；這只完成公開揭露頁，不表示 Places 資料保存與公開重用已合規。Places provider facts 仍進入可持久化 Canonical Trip；仍需完成呼叫前告知／同意、各欄位資料生命週期與既有資料處置盤點，才能確認 production 使用方式符合政策。
+- [#199 Google Places 資料保存與公開展示政策待確認](https://github.com/JackyTsai70113/ai-travel-planner/issues/199)：PR #208 已新增並部署可公開直達的使用條款與隱私權政策頁面，Chrome 已確認正式頁可載入；這完成公開揭露頁，不表示 Places 資料保存與公開重用已合規。Places provider facts 仍進入可持久化 Canonical Trip；各欄位資料生命週期、既有資料處置與公開再託管仍待盤點。
 
 #### #199 公開條款與隱私頁
 
 - 預定正式網址：`https://jackytsai70113.github.io/ai-travel-planner/terms.html` 與 `https://jackytsai70113.github.io/ai-travel-planner/privacy.html`。
 - 使用條款說明服務用途、行程資訊限制、明確公開確認流程及 Google Maps／Google Earth End User Additional Terms 與 Google Privacy Policy。
 - 隱私權政策說明旅行需求與生成行程的後端保存、使用 Google／OpenRouteService／YouTube 的用途、公開 Pages 資料及第三方安全紀錄；Google Places 內容保存限制仍依 Google 現行政策。
-- 合併及 Pages 部署後，需用瀏覽器開啟以上兩個正式網址並檢查首頁與行程頁頁尾連結。即使頁面可用，#199 仍須等資料處理與公開展示盤點完成再驗收。
+- PR #208 合併及 Pages 部署後，已用 Chrome 開啟以上兩個正式網址，並檢查首頁與行程頁頁尾連結。#199 仍須等資料處理與公開展示盤點完成再驗收。
 
 #### #199 attribution re-check after PR #206
 
 - PR #206 was merged as `e9a189c9e90c5981659ef26e34a6abbbd158195a`. It adds a visible, untranslated `Google Maps` label to map links in the itinerary and lodging candidate views, using 12px normal-weight text.
 - Post-deployment Chrome check on `https://jackytsai70113.github.io/ai-travel-planner/trips/awaji-2026/` opened the `每日行程` section and confirmed the map link is visible with label `Google Maps`, exact case, computed 12px/400 styling, and no horizontal overflow at 1200px.
-- This fixes the previously observed absence of visible map-link attribution in those views. It does not establish that every displayed place fact came from Places API or that all Places-derived content has compliant retention, public Terms/Privacy pages, and rehosting behavior. #199 remains open pending that full data-lifecycle and product review.
+- This fixes the previously observed absence of visible map-link attribution in those views. PR #208 later added and deployed public Terms/Privacy pages, which were opened in Chrome. Neither change establishes that every displayed place fact came from Places API or that Places-derived content has compliant retention and rehosting behavior. #199 remains open pending that data-lifecycle review.
 
 ### Issue #179 驗收流程
 
