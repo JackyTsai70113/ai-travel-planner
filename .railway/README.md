@@ -36,7 +36,7 @@ railway config apply
 - 健康檢查端點：`https://ai-traveller-production-732b.up.railway.app/health`
 - 後端 MCP endpoint：`https://ai-traveller-production-732b.up.railway.app/mcp`
 
-改名後因舊 deployment 的 Host allowlist 暫時回 HTTP 421；重新部署後已恢復。2026-10-08 核對 production 最新 deployment `40eb0368-dd4e-40eb-9346-c244033064db` 為 `SUCCESS`、replica 為 `RUNNING`，服務設定含 DOCKERFILE `/Dockerfile`、`/health`（120 秒）、失敗重啟最多 10 次，`/data` volume 仍掛載。`/health` 回 HTTP 200 與 `ok`。最新一次 `railway config plan` 為 0 add、1 change、0 destroy，只列出重啟政策欄位差異；因此 IaC plan 尚未乾淨，部署服務本身在線。帶有效 `BEARER_TOKEN` 的 MCP 呼叫列出 6 個工具；私人 ChatGPT Site 中的 `parse_trip_request` 也已在部署後實際成功。
+改名後因舊 deployment 的 Host allowlist 暫時回 HTTP 421；重新部署後已恢復。2026-10-08 核對 production 最新 deployment `43e50dcb-1631-499f-ad88-16be89221f1a` 為 `SUCCESS`、replica 為 `RUNNING`，服務設定含 DOCKERFILE `/Dockerfile`、`/health`（120 秒）、失敗重啟最多 10 次，`/data` volume 仍掛載。部署切換期間曾短暫回 HTTP 502，部署完成後 `/health` 恢復 HTTP 200 與 `ok`。最新一次 `railway config plan` 為 0 add、1 change、0 destroy，只列出重啟政策欄位差異；因此 IaC plan 尚未乾淨，部署服務本身在線。帶有效 `BEARER_TOKEN` 的 MCP 呼叫列出 6 個工具；私人 ChatGPT Site 中的 `parse_trip_request` 也已在部署後實際成功。
 
 以下只讀 smoke test 透過 Railway CLI 將 `BEARER_TOKEN` 注入子程序，不會印出 token；測試用識別值只用來模擬 Sites Worker 的必要標頭：
 

@@ -8,7 +8,7 @@
 - Railway backend origin：`https://ai-traveller-production-732b.up.railway.app`。
 - MCP endpoint：`https://ai-traveller-production-732b.up.railway.app/mcp`。
 - `/health` 的最近記錄驗證為 HTTP 200；未帶授權直接呼叫 `/mcp` 回 HTTP 401 是預期行為。
-- 2026-10-08 在 Railway config apply 後重新驗證：deployment `40eb0368-dd4e-40eb-9346-c244033064db` 為 `SUCCESS`、replica `RUNNING`、`/health` HTTP 200；服務設定包含 Dockerfile `/Dockerfile`、healthcheck `/health`、重啟政策與 `/data` volume。`railway config plan` 尚列一項重啟政策差異，故 IaC plan 不是乾淨狀態。部署後已在 ChatGPT Chat 經私人 Site 實際呼叫 `parse_trip_request`，取得成功的倉敷 5 天 4 夜解析結果。完整驗證方式見 [Railway 驗證紀錄](../.railway/README.md#正式服務網址與驗證)。
+- 2026-10-08 在 Railway config apply 後重新驗證：deployment `43e50dcb-1631-499f-ad88-16be89221f1a` 為 `SUCCESS`、replica `RUNNING`、`/health` HTTP 200；服務設定包含 Dockerfile `/Dockerfile`、healthcheck `/health`、重啟政策與 `/data` volume。`railway config plan` 尚列一項重啟政策差異，故 IaC plan 不是乾淨狀態。部署切換中曾短暫回 HTTP 502，deployment 成功後 `/health` 恢復 HTTP 200。部署後已在 ChatGPT Chat 經私人 Site 實際呼叫 `parse_trip_request`，取得 `status=parsed`、倉敷、5 天 4 夜的解析結果。完整驗證方式見 [Railway 驗證紀錄](../.railway/README.md#正式服務網址與驗證)。
 - 同日只列出 Railway 正式服務變數名稱以確認缺漏，未讀取或輸出 secret 值；清單沒有 `GITHUB_TOKEN`。尚未執行任何公開行程寫入。
 - 不在 repo、Issue 或文件記錄任何 secret 值。ChatGPT Chat 呼叫由維護者使用已連線的使用者環境實際執行；其餘 backend 驗證亦由維護者執行。
 
