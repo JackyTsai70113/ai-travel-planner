@@ -55,6 +55,12 @@
 - [#179 MCP 規劃結果沒有對應的 GitHub Pages 網址](https://github.com/JackyTsai70113/ai-travel-planner/issues/179)：PR #189、#191 已加入並部署 `publish_trip_site` 與發布 readiness gate。2026-10-08 正式環境變數名稱清單仍沒有 `GITHUB_TOKEN`，也未執行真實 Pages 發布，因此 issue 保持開啟。
 - [#199 Google Places 資料保存與公開展示政策待確認](https://github.com/JackyTsai70113/ai-travel-planner/issues/199)：Places provider facts 進入可持久化 Canonical Trip；Google 官方政策對資料保存、條款／隱私揭露與 attribution 有要求。repo 尚未完成資料生命週期與網站呈現的合規盤點，因此不能宣稱目前 Places 使用方式已確認符合政策。
 
+#### #199 attribution re-check after PR #206
+
+- PR #206 was merged as `e9a189c9e90c5981659ef26e34a6abbbd158195a`. It adds a visible, untranslated `Google Maps` label to map links in the itinerary and lodging candidate views, using 12px normal-weight text.
+- Post-deployment Chrome check on `https://jackytsai70113.github.io/ai-travel-planner/trips/awaji-2026/` opened the `每日行程` section and confirmed the map link is visible with label `Google Maps`, exact case, computed 12px/400 styling, and no horizontal overflow at 1200px.
+- This fixes the previously observed absence of visible map-link attribution in those views. It does not establish that every displayed place fact came from Places API or that all Places-derived content has compliant retention, public Terms/Privacy pages, and rehosting behavior. #199 remains open pending that full data-lifecycle and product review.
+
 ### Issue #179 驗收流程
 
 1. 維護者在 GitHub 建立 fine-grained PAT，只授權 `JackyTsai70113/ai-travel-planner` repository 的 `Contents: Read and write`，將其設為 Railway service secret `GITHUB_TOKEN`。目前缺少此變數；不得將 token 寫入 repo、issue、聊天工具參數或 CI log。
