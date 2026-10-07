@@ -1,16 +1,17 @@
 /* global document, getComputedStyle */
 
 import { chromium } from 'playwright'
-import { copyFileSync, cpSync, mkdirSync, readdirSync } from 'node:fs'
+import { copyFileSync, cpSync, existsSync, mkdirSync, readdirSync } from 'node:fs'
 import { startPreviewServer } from './preview-server.mjs'
 
 for (const slug of ['wanhua-2026', 'awaji-2026', 'kansai-preview-2025', 'japan-archive-example', 'japan-blocked-example']) {
   mkdirSync(`dist/trips/${slug}`, { recursive: true })
   copyFileSync('dist/index.html', `dist/trips/${slug}/index.html`)
   for (const item of readdirSync('dist')) {
-    if (item === 'index.html' || item === 'trips') continue
+    if (item === 'index.html' || item === 'trips' || item === 'terms.html' || item === 'privacy.html') continue
     cpSync(`dist/${item}`, `dist/trips/${slug}/${item}`, { recursive: true })
   }
+  if (existsSync(`dist/trips/${slug}/terms.html`) || existsSync(`dist/trips/${slug}/privacy.html`)) throw new Error(`Global legal pages were copied under the ${slug} trip path`)
   const sourceSlug = slug === 'japan-archive-example' || slug === 'japan-blocked-example' ? 'kansai-preview-2025' : slug
   copyFileSync(`public/trips/${sourceSlug}/public-bundle.json`, `dist/trips/${slug}/public-bundle.json`)
 }

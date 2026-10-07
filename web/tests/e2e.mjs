@@ -6,7 +6,7 @@ copyFileSync(new URL('../public/trips/awaji-2026/public-bundle.json', import.met
 mkdirSync(new URL('../dist/trips/awaji-2026/', import.meta.url), { recursive: true })
 copyFileSync(new URL('../public/trips/awaji-2026/public-bundle.json', import.meta.url), new URL('../dist/trips/awaji-2026/public-bundle.json', import.meta.url))
 for (const item of readdirSync(new URL('../dist/', import.meta.url))) {
-  if (item === 'trips') continue
+  if (item === 'trips' || item === 'terms.html' || item === 'privacy.html') continue
   cpSync(new URL(`../dist/${item}`, import.meta.url), new URL(`../dist/trips/awaji-2026/${item}`, import.meta.url), { recursive: true })
 }
 const staleWorkerSource = "self.addEventListener('install', (event) => event.waitUntil(self.skipWaiting()))"
