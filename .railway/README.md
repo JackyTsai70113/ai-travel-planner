@@ -36,7 +36,7 @@ railway config apply
 - 健康檢查端點：`https://ai-traveller-production-732b.up.railway.app/health`
 - 後端 MCP endpoint：`https://ai-traveller-production-732b.up.railway.app/mcp`
 
-改名後因舊 deployment 的 Host allowlist 暫時回 HTTP 421；重新部署後已恢復。新 domain 的 `/health` 回 HTTP 200 與 `ok`；帶有效 `BEARER_TOKEN` 及測試用 Sites 身分呼叫 `/mcp` 回 HTTP 200，並列出 6 個工具。私人 ChatGPT Site 更新 backend origin 後，`parse_trip_request` 也已實際成功。IaC plan 仍顯示 Dockerfile 與 healthcheck 設定差異，未套用該設定變更。
+改名後因舊 deployment 的 Host allowlist 暫時回 HTTP 421；重新部署後已恢復。2026-10-08 核對 production 最新 deployment `40eb0368-dd4e-40eb-9346-c244033064db` 為 `SUCCESS`、replica 為 `RUNNING`，服務設定含 DOCKERFILE `/Dockerfile`、`/health`（120 秒）、失敗重啟最多 10 次，`/data` volume 仍掛載。`/health` 回 HTTP 200 與 `ok`。最新一次 `railway config plan` 為 0 add、1 change、0 destroy，只列出重啟政策欄位差異；因此 IaC plan 尚未乾淨，部署服務本身在線。帶有效 `BEARER_TOKEN` 的 MCP 呼叫列出 6 個工具；私人 ChatGPT Site 中的 `parse_trip_request` 也已在部署後實際成功。
 
 以下只讀 smoke test 透過 Railway CLI 將 `BEARER_TOKEN` 注入子程序，不會印出 token；測試用識別值只用來模擬 Sites Worker 的必要標頭：
 
@@ -44,7 +44,7 @@ railway config apply
 railway run --service ai-traveller --environment production -- node -e 'const r = await fetch("https://ai-traveller-production-732b.up.railway.app/mcp", {method:"POST", headers:{"Authorization":`Bearer ${process.env.BEARER_TOKEN}`, "oai-authenticated-user-id":"diagnostic-readonly-check", "Content-Type":"application/json", "Accept":"application/json, text/event-stream"}, body:JSON.stringify({jsonrpc:"2.0",id:1,method:"tools/list",params:{}})}); const body = await r.json(); console.log(JSON.stringify({httpStatus:r.status,tools:(body.result?.tools||[]).map(tool=>tool.name)}));'
 ```
 
-已於 2026-10-05 在 PR #191 合併後重新實測：Railway deployment 狀態為 `SUCCESS`，`/health` 回 HTTP 200；`tools/list` 回 HTTP 200，列出 `parse_trip_request`、`validate_trip`、`get_trip`、`plan_trip`、`build_trip_site`、`publish_trip_site`。此次只做工具探索，沒有呼叫會公開行程的發布工具。實際 ChatGPT 使用者應透過私人 Site Worker 呼叫 MCP，不要把 Railway 後端網址當作公開的 Site Worker 網址。
+已於 2026-10-08 重驗：Railway deployment 狀態為 `SUCCESS`，`/health` 回 HTTP 200；先前的 `tools/list` 回 HTTP 200，列出 `parse_trip_request`、`validate_trip`、`get_trip`、`plan_trip`、`build_trip_site`、`publish_trip_site`。部署後再由 ChatGPT Chat 對私人 Site 呼叫 `parse_trip_request`，實際得到倉敷、5 天 4 夜的解析結果。此次沒有呼叫會寫入或公開行程的工具。實際 ChatGPT 使用者應透過私人 Site Worker 呼叫 MCP，不要把 Railway 後端網址當作公開的 Site Worker 網址。
 
 也可直接透過後端唯讀測試 parser：
 

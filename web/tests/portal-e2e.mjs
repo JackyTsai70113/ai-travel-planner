@@ -104,7 +104,8 @@ try {
   if (!page.url().includes('/trips/wanhua-2026/')) throw new Error(`Wanhua URL was not canonical: ${page.url()}`)
   const wanhuaOverviewText = await page.locator('body').innerText()
   if (!wanhuaOverviewText.includes('18:00 後：河景夜色與華中河濱備選')) throw new Error('Wanhua night-only day one summary did not render')
-  if (!wanhuaOverviewText.includes('符合河景房門檻：0 間')) throw new Error('Wanhua verified river-view lodging result did not render')
+  if (!wanhuaOverviewText.includes('住宿候選與查核狀態')) throw new Error('Wanhua lodging candidates did not render')
+  if (wanhuaOverviewText.includes('不適用本萬華路線')) throw new Error('Shared lodging UI contains trip-specific route copy')
   const wanhuaErrors = []
   page.on('pageerror', (error) => wanhuaErrors.push(error.message))
   const wanhuaRoutes = [
@@ -197,6 +198,10 @@ try {
   await page.locator('.overview-day-grid').waitFor({ state: 'visible' })
   if (!page.url().includes('/trips/awaji-2026/')) throw new Error(`Awaji URL was not canonical: ${page.url()}`)
   if ((await page.title()).includes('Trip Planner')) throw new Error('trip metadata was not updated')
+  const awajiOverviewText = await page.locator('body').innerText()
+  if (awajiOverviewText.includes('符合河景房門檻') || awajiOverviewText.includes('近華中的河景房') || awajiOverviewText.includes('不適用本萬華路線')) {
+    throw new Error('Awaji overview contains Wanhua-only lodging text')
+  }
   await page.goto(`${baseUrl}trips/kansai-preview-2025/`, { waitUntil: 'domcontentloaded' })
   await page.locator('.overview-day-grid').waitFor({ state: 'visible' })
   if (await page.locator('.status-preview, .status-ready, .status-incomplete').count()) throw new Error('internal publication or readiness status leaked into the trip page')
