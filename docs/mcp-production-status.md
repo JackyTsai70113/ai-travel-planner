@@ -13,7 +13,7 @@
 
 - 維護者已將 repository-scoped GitHub fine-grained token 設為 Railway `ai-traveller` production 的 `GITHUB_TOKEN`。Railway OAuth connector 的遮蔽值清單已確認變數名稱存在；沒有讀取 token 值。
 - 新版 Railway deployment `95e9d527-d335-44fd-8669-6e2f49e3e2d2` 狀態為 `SUCCESS`，service 為 Online；正式 `/health` 回 HTTP 200、內文 `ok`。
-- 上述證據確認變數已設定且部署已成功，不證明 token 實際具備此 repository 的 `Contents: write` 權限，也沒有執行 GitHub 寫入或公開行程。
+- 維護者透過 Railway SSH 在正式執行個體發出 GitHub REST `GET /repos/JackyTsai70113/ai-travel-planner` 唯讀查詢。只輸出存在布林值與權限布林值，未輸出 token；回應 HTTP 200、repository identity 相符、`permissions.push=true`。這驗證該憑證可讀取目標 repo 且 GitHub 回報有 push 權限，沒有執行寫入。
 - 尚未在 ChatGPT Chat 呼叫 `publish_trip_site`，也沒有指定並確認要公開的行程；所以 GitHub Pages 發布、Actions 部署及最終行程網址仍未驗收。依維護者要求，ChatGPT prompt 由使用者自行輸入。
 
 ## 2026-10-08 後續正式環境與網站檢查
@@ -85,7 +85,7 @@
 
 ### Issue #179 驗收流程
 
-1. 維護者在 GitHub 建立 fine-grained PAT，只授權 `JackyTsai70113/ai-travel-planner` repository 的 `Contents: Read and write`，將其設為 Railway service secret `GITHUB_TOKEN`。目前已確認此變數名稱存在；不得將 token 寫入 repo、issue、聊天工具參數或 CI log。
+1. 維護者在 GitHub 建立 fine-grained PAT，只授權 `JackyTsai70113/ai-travel-planner` repository 的 `Contents: Read and write`，將其設為 Railway service secret `GITHUB_TOKEN`。已確認變數存在，且 GitHub REST 唯讀 repo 查詢回報 `permissions.push=true`；不得將 token 寫入 repo、issue、聊天工具參數或 CI log。
 2. 確認 Railway 使用至少包含 PR #191 merge commit `0a948bcfb8dcb6089e9f1daf16adad1e469b1b15` 的版本，且最新 deployment 狀態為 `SUCCESS`；新增 secret 後等新 deployment 成功，再由維護者重跑 health 與 `tools/list` smoke test。
 3. 在 ChatGPT chat 先完成行程規劃。只有使用者明確要求公開分享並確認公開範圍後，才呼叫 `publish_trip_site`，傳入既有 `trip_id`、`confirm_public_publish=true`；更新現有公開內容時還要明確傳 `confirm_overwrite=true`。
 4. 工具回傳 `publish_accepted` 與 Pages URL 後，等待 Pages Actions 部署完成，實際開啟網址確認對應行程內容。僅工具接受寫入或回 `pending` 不算完成驗收。
