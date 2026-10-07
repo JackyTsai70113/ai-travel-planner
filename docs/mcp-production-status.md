@@ -8,7 +8,7 @@
 - Railway backend origin：`https://ai-traveller-production-732b.up.railway.app`。
 - MCP endpoint：`https://ai-traveller-production-732b.up.railway.app/mcp`。
 - `/health` 的最近記錄驗證為 HTTP 200；未帶授權直接呼叫 `/mcp` 回 HTTP 401 是預期行為。
-- 2026-10-08 部署紀錄：Railway deployment `041a31c7-6091-4caf-a8ba-a66731592380` 為 `SUCCESS`，source commit 為 `398e976a5b460e86b4e3a9b4c4dec26ade0e6d03`；replica 為 Online，Dockerfile 為 `/Dockerfile`、healthcheck 為 `/health`、volume 掛載在 `/data`。部署後正式 `/health` 回 HTTP 200、內文 `ok`。同日 `railway config plan` 尚列一項重啟政策差異，故 IaC plan 不是乾淨狀態。完整驗證方式見 [Railway 驗證紀錄](../.railway/README.md#正式服務網址與驗證)。
+- 2026-10-08 部署紀錄：Railway deployment `a9a03231-37f2-46cc-8a15-4cdc379f7224` 為 `SUCCESS`，source commit 為 `62ae026ce9f55b2a7a39bc24f95ec7a4130c63b0`；replica 為 Online，Dockerfile 為 `/Dockerfile`、healthcheck 為 `/health`、volume 掛載在 `/data`。部署後正式 `/health` 回 HTTP 200、內文 `ok`。該部署 manifest 確認 Railway 實際使用 On Failure、10 次重試；IaC 移除與 Railway 預設重複的明確覆寫後，`railway config plan` 回報無變更。完整驗證方式見 [Railway 驗證紀錄](../.railway/README.md#正式服務網址與驗證)。
 - 2026-10-08 部署後使用 Computer Use 在 ChatGPT Chat 以外掛選單明確選取私人 `AI Travel Planner MCP`，使用者訊息顯示該 Site 連結，並要求只呼叫 `parse_trip_request`。實際回應 `status=parsed`、目的地倉敷、5 天 4 夜，且列出未提供旅客人數與預算。另一次唯讀呼叫 `publish_trip_site` 傳入測試 trip ID 與 `confirm_public_publish=false`，回傳 `status=confirmation_required`；沒有讀取行程檔、執行 `plan_trip` 或公開發布。瀏覽器操作前已核對 Chrome、ChatGPT 對話網址／標題及 AI Travel Planner MCP 名稱，操作後確認結果出現在同一對話。
 - 同日只列出 Railway 正式服務變數名稱以確認缺漏，未讀取或輸出 secret 值；清單沒有 `GITHUB_TOKEN`。尚未執行任何公開行程寫入。
 - 不在 repo、Issue 或文件記錄任何 secret 值。ChatGPT Chat 呼叫由維護者使用已連線的使用者環境實際執行；其餘 backend 驗證亦由維護者執行。
