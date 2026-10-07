@@ -46,7 +46,7 @@
 
 - Google Places API (New)：Railway 正式環境以倉敷查詢回 HTTP 200，取得 18 筆 place ID。此前曾有 HTTP 403 `PERMISSION_DENIED`；2026-10-05 重測已可用。文件不保存 API key，也不宣稱取得的結果就是使用者 GCP 畫面中的完整 key 字串比對結果。
 - YouTube Data API：獨立 smoke test 曾回 HTTP 200、3 筆影片；實際 `plan_trip` 當次研究出現 TLS handshake timeout。因此，單次成功 smoke test 不代表每次 production research 都穩定。
-- 住宿搜尋：production 回報 Amadeus Self-Service 已退役且沒有 replacement provider；此 run 沒有住宿候選。
+- 住宿搜尋：2026-10-05 production run 沒有住宿候選。2026-10-08 維護者決定放棄自動住宿搜尋；目前開發分支已改成住宿選填，無住宿時不推測房況、價格或住宿接駁路線。
 - Google Flights 僅提供搜尋連結、不擷取票價；倉敷輸出含「桃園 → 倉敷」的 Google Flights 搜尋連結。`candidate_sets.flights` 為空是目前設計，不代表行程沒有航班搜尋入口。
 
 ## 倉敷 production run 證據
@@ -72,8 +72,8 @@
 以下狀態已於 2026-10-08 依 GitHub issue list 和正式環境證據核對：
 
 - [#153 遠端 ChatGPT MCP hosting 與連線](https://github.com/JackyTsai70113/ai-travel-planner/issues/153)：已關閉；Railway backend 與私人 ChatGPT Site 的工具呼叫已實際成功。這不代表完整行程規劃功能已全部驗收。
-- [#175 Amadeus 退役後沒有可用住宿搜尋來源](https://github.com/JackyTsai70113/ai-travel-planner/issues/175)：目前沒有已核准的 lodging inventory provider 或 partner credentials。Google Places 不提供日期型房間 availability 與住宿總價。未取得合法供應商存取前，無法完成真實住宿候選的 acceptance。
-- [#180 餐廳候選沒有排入每日用餐行程](https://github.com/JackyTsai70113/ai-travel-planner/issues/180)：production run 有 20 筆餐廳候選，但無可選住宿；目前每日往返住宿路線無法驗證，因此不可把餐廳硬塞進日程。需有住宿候選後重跑真實情境。
+- [#175 住宿供應來源](https://github.com/JackyTsai70113/ai-travel-planner/issues/175)：已依維護者決定關閉；不再尋找或呼叫自動住宿搜尋來源。住宿可以留空，未來由旅客提供住宿資料時也不可推測房況或費用。
+- [#180 餐廳候選沒有排入每日用餐行程](https://github.com/JackyTsai70113/ai-travel-planner/issues/180)：production run 曾有 20 筆餐廳候選，但無住宿且每日沒有餐點。開發分支新增無住宿的餐廳排程回歸案例；仍需以 production MCP 重跑倉敷案例，確認每日 Canonical Trip 內確實有餐點後才能關閉。
 - [#179 MCP 規劃結果沒有對應的 GitHub Pages 網址](https://github.com/JackyTsai70113/ai-travel-planner/issues/179)：PR #189、#191 已加入並部署 `publish_trip_site` 與發布 readiness gate。2026-10-08 後續已確認 Railway production 有 `GITHUB_TOKEN` 且新部署成功；尚未驗證 token 的 repo 寫入權限，也未經 ChatGPT 明確確認發布行程或驗證 Pages 網址，因此 issue 保持開啟。
 - [#199 Google Places 資料保存與公開展示政策待確認](https://github.com/JackyTsai70113/ai-travel-planner/issues/199)：PR #208 已新增並部署可公開直達的使用條款與隱私權政策頁面，Chrome 已確認正式頁可載入；這完成公開揭露頁，不表示 Places 資料保存與公開重用已合規。Places provider facts 仍進入可持久化 Canonical Trip；各欄位資料生命週期、既有資料處置與公開再託管仍待盤點。
 

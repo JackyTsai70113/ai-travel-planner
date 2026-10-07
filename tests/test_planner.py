@@ -1,16 +1,22 @@
 import copy
 import json
+import unittest
 from dataclasses import replace
 from datetime import datetime, time, timedelta, timezone
 from pathlib import Path
-import unittest
 from types import SimpleNamespace
 from zoneinfo import ZoneInfo
 
+from src.conditions import (
+    ConditionPolicy,
+    ConditionSnapshot,
+    ConditionStatus,
+    load_condition_snapshot,
+)
 from src.planner import (
     HardConstraint,
-    PlanState,
     PlannerInput,
+    PlanState,
     ScheduleState,
     SchedulingInput,
     SoftPreference,
@@ -18,10 +24,13 @@ from src.planner import (
     plan,
     schedule,
 )
-from src.planner.scheduler import _add_elapsed_minutes, _anchors, _in_trip_timezone, _is_open
+from src.planner.scheduler import (
+    _add_elapsed_minutes,
+    _anchors,
+    _in_trip_timezone,
+    _is_open,
+)
 from src.validator import BudgetLimit, OpeningInterval, ValidationContext
-from src.conditions import ConditionPolicy, ConditionSnapshot, ConditionStatus, load_condition_snapshot
-
 
 ROOT = Path(__file__).parents[1]
 TRIP_FIXTURE = ROOT / "fixtures/trips/japan-5-day-trip-v1.json"
@@ -125,7 +134,10 @@ class PlannerTests(unittest.TestCase):
         self.assertIn("constraint.forbidden_location", {v.code for v in result.plans[0].violations})
 
     def test_night_river_view_requires_confirmed_facts_and_evening_visit(self):
-        from src.planner.planner import _hard_constraint_violations, _record_constraint_satisfaction
+        from src.planner.planner import (
+            _hard_constraint_violations,
+            _record_constraint_satisfaction,
+        )
 
         source = {"source_type": "official", "provider": "Official Park Guide", "source_url": "https://example.test/park", "retrieved_at": "2026-09-01T10:00:00+08:00", "status": "confirmed"}
         fact = lambda status, description: {"status": status, "description": description, "provenance": source}
@@ -584,7 +596,9 @@ class PlannerTests(unittest.TestCase):
         trip["days"] = []
         trip["selected"]["hotel_place_ids"] = []
         place = next(item for item in trip["candidate_sets"]["places"] if item["id"] == "ohori-park")
-        place["schedule"] = {"duration_minutes": 60, "day": 1, "required": True}
+        place["schedule"] = {"duration_minutes": 60, "day": 1, "required": True,
+                             "fixed_start_at": "2026-04-10T09:00:00+09:00",
+                             "fixed_end_at": "2026-04-10T10:00:00+09:00"}
         context = verified_context()
         output = schedule(SchedulingInput(trip, context))
         candidate = output.best_trip
