@@ -5,14 +5,21 @@
 ## 2026-10-08 本輪重驗
 
 - ChatGPT Chat 使用已連線的私人 `AI Travel Planner MCP` 呼叫 `parse_trip_request`，輸入「岡山縣倉敷五天四夜，6 位成人、1 位 2 歲幼兒，預算不設限制」。回應解析出目的地倉敷、區域岡山縣、5 天 4 夜、6 位成人、1 位 2 歲幼兒、`budget_status=unlimited`，`missing_fields=[]`。此為唯讀呼叫，未執行研究、寫入或公開行程。
-- Railway OAuth connector 對正式 project `ai-traveller` / `production` 以遮蔽值模式列出變數名稱。已存在 `BEARER_TOKEN`、`GOOGLE_MAPS_API_KEY`、`OPENROUTESERVICE_API_KEY`、`PUBLIC_URL`、`YOUTUBE_API_KEY`；沒有 `GITHUB_TOKEN`。沒有讀取任何 secret 值。
+- Railway OAuth connector 對正式 project `ai-traveller` / `production` 以遮蔽值模式列出變數名稱。已存在 `BEARER_TOKEN`、`GITHUB_TOKEN`、`GOOGLE_MAPS_API_KEY`、`OPENROUTESERVICE_API_KEY`、`PUBLIC_URL`、`YOUTUBE_API_KEY`；清單僅提供名稱，沒有讀取任何 secret 值。
 - PR #204 已合併至 `8fbe0639d5fd341cbcc764979ff9e19cae30c6c2`，CI、Website CI、GitHub Pages deploy 均成功。首次檢視舊分頁仍顯示舊內容；強制重新載入後，GitHub Pages 首頁顯示新文案「頁面公開狀態與行程完成度分開呈現；公開預覽不代表行程已確認。」及「公開預覽」狀態。這只驗證公開目錄標籤，沒有改動或發布任何行程。
-- 四張仍開啟 issue 的最新外部依賴：#175 沒有已核准住宿庫存供應商；#179 沒有 Railway `GITHUB_TOKEN`；#180 的真實倉敷紀錄沒有可選住宿，無法驗證每日餐點往返路線；#199 的 Places 資料生命週期與公開再託管仍未完成確認。四張均不能以本輪唯讀解析驗收當作完成。
+- 四張仍開啟 issue 的最新狀態：#175 沒有已核准住宿庫存供應商；#179 已設定 Railway `GITHUB_TOKEN`，但尚未完成真實 Pages 發布驗收；#180 的真實倉敷紀錄沒有可選住宿，無法驗證每日餐點往返路線；#199 的 Places 資料生命週期與公開再託管仍未完成確認。四張均不能以本輪唯讀解析驗收當作完成。
+
+## 2026-10-08 GitHub Pages 發布憑證更新
+
+- 維護者已將 repository-scoped GitHub fine-grained token 設為 Railway `ai-traveller` production 的 `GITHUB_TOKEN`。Railway OAuth connector 的遮蔽值清單已確認變數名稱存在；沒有讀取 token 值。
+- 新版 Railway deployment `95e9d527-d335-44fd-8669-6e2f49e3e2d2` 狀態為 `SUCCESS`，service 為 Online；正式 `/health` 回 HTTP 200、內文 `ok`。
+- 上述證據確認變數已設定且部署已成功，不證明 token 實際具備此 repository 的 `Contents: write` 權限，也沒有執行 GitHub 寫入或公開行程。
+- 尚未在 ChatGPT Chat 呼叫 `publish_trip_site`，也沒有指定並確認要公開的行程；所以 GitHub Pages 發布、Actions 部署及最終行程網址仍未驗收。依維護者要求，ChatGPT prompt 由使用者自行輸入。
 
 ## 2026-10-08 後續正式環境與網站檢查
 
 - Railway `ai-traveller` production deployment `55396464-1724-47db-b4ae-5bb53c815cd2` 狀態為 `SUCCESS`；正式 `/health` 回 HTTP 200、內文 `ok`。未帶認證的 `/mcp` 回 HTTP 401，符合 MCP 端點認證要求。
-- 重新檢查 Railway production 變數名稱時，沒有 `GITHUB_TOKEN`。因此不能完成真實 GitHub Pages 發布；本次沒有執行公開寫入。
+- 當時重新檢查 Railway production 變數名稱時，尚無 `GITHUB_TOKEN`，因此沒有執行 GitHub Pages 發布。2026-10-08 後續憑證狀態見上方「GitHub Pages 發布憑證更新」。
 - 以 Chrome 開啟正式 `terms.html` 與 `privacy.html`，兩頁均正常載入且互有連結。首頁與既有淡路島行程頁的政策連結已在 PR #208 部署後確認。
 - 現有 ChatGPT 對話紀錄包含透過私人 `AI Travel Planner MCP` 成功呼叫 `parse_trip_request` 的倉敷結果。依維護者要求，本輪只讀取該既有結果，沒有在 ChatGPT 輸入或送出新 prompt。
 - #199 的公開條款／隱私頁工作已完成；剩餘範圍是 Google Places provider facts 寫入持久化 Canonical Trip、既有資料保存／處置與公開再託管的政策盤點。公開頁上線本身不等於 Places 資料生命週期已解決。
@@ -60,7 +67,7 @@
 - [#153 遠端 ChatGPT MCP hosting 與連線](https://github.com/JackyTsai70113/ai-travel-planner/issues/153)：已關閉；Railway backend 與私人 ChatGPT Site 的工具呼叫已實際成功。這不代表完整行程規劃功能已全部驗收。
 - [#175 Amadeus 退役後沒有可用住宿搜尋來源](https://github.com/JackyTsai70113/ai-travel-planner/issues/175)：目前沒有已核准的 lodging inventory provider 或 partner credentials。Google Places 不提供日期型房間 availability 與住宿總價。未取得合法供應商存取前，無法完成真實住宿候選的 acceptance。
 - [#180 餐廳候選沒有排入每日用餐行程](https://github.com/JackyTsai70113/ai-travel-planner/issues/180)：production run 有 20 筆餐廳候選，但無可選住宿；目前每日往返住宿路線無法驗證，因此不可把餐廳硬塞進日程。需有住宿候選後重跑真實情境。
-- [#179 MCP 規劃結果沒有對應的 GitHub Pages 網址](https://github.com/JackyTsai70113/ai-travel-planner/issues/179)：PR #189、#191 已加入並部署 `publish_trip_site` 與發布 readiness gate。2026-10-08 正式環境變數名稱清單仍沒有 `GITHUB_TOKEN`，也未執行真實 Pages 發布，因此 issue 保持開啟。
+- [#179 MCP 規劃結果沒有對應的 GitHub Pages 網址](https://github.com/JackyTsai70113/ai-travel-planner/issues/179)：PR #189、#191 已加入並部署 `publish_trip_site` 與發布 readiness gate。2026-10-08 後續已確認 Railway production 有 `GITHUB_TOKEN` 且新部署成功；尚未驗證 token 的 repo 寫入權限，也未經 ChatGPT 明確確認發布行程或驗證 Pages 網址，因此 issue 保持開啟。
 - [#199 Google Places 資料保存與公開展示政策待確認](https://github.com/JackyTsai70113/ai-travel-planner/issues/199)：PR #208 已新增並部署可公開直達的使用條款與隱私權政策頁面，Chrome 已確認正式頁可載入；這完成公開揭露頁，不表示 Places 資料保存與公開重用已合規。Places provider facts 仍進入可持久化 Canonical Trip；各欄位資料生命週期、既有資料處置與公開再託管仍待盤點。
 
 #### #199 公開條款與隱私頁
@@ -78,7 +85,7 @@
 
 ### Issue #179 驗收流程
 
-1. 維護者在 GitHub 建立 fine-grained PAT，只授權 `JackyTsai70113/ai-travel-planner` repository 的 `Contents: Read and write`，將其設為 Railway service secret `GITHUB_TOKEN`。目前缺少此變數；不得將 token 寫入 repo、issue、聊天工具參數或 CI log。
+1. 維護者在 GitHub 建立 fine-grained PAT，只授權 `JackyTsai70113/ai-travel-planner` repository 的 `Contents: Read and write`，將其設為 Railway service secret `GITHUB_TOKEN`。目前已確認此變數名稱存在；不得將 token 寫入 repo、issue、聊天工具參數或 CI log。
 2. 確認 Railway 使用至少包含 PR #191 merge commit `0a948bcfb8dcb6089e9f1daf16adad1e469b1b15` 的版本，且最新 deployment 狀態為 `SUCCESS`；新增 secret 後等新 deployment 成功，再由維護者重跑 health 與 `tools/list` smoke test。
 3. 在 ChatGPT chat 先完成行程規劃。只有使用者明確要求公開分享並確認公開範圍後，才呼叫 `publish_trip_site`，傳入既有 `trip_id`、`confirm_public_publish=true`；更新現有公開內容時還要明確傳 `confirm_overwrite=true`。
 4. 工具回傳 `publish_accepted` 與 Pages URL 後，等待 Pages Actions 部署完成，實際開啟網址確認對應行程內容。僅工具接受寫入或回 `pending` 不算完成驗收。
