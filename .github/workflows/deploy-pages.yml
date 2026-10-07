@@ -91,6 +91,8 @@ jobs:
       - name: Verify root is the multi-trip portal
         run: |
           test -s site/index.html
+          test -s site/terms.html
+          test -s site/privacy.html
           if grep -q 'http-equiv="refresh"' site/index.html; then
             echo "Unexpected root redirect in published site"
             exit 1

@@ -1,5 +1,6 @@
 import TripCatalogPage from '../features/trip-catalog'
 import type { TripCatalogEntry, TripRegistrySections } from '../contracts/trip-registry'
+import { LegalLinks } from '../components/LegalLinks'
 
 type RouteSetter = (next: { route: 'home' | 'trip'; slug?: string }) => void
 
@@ -25,6 +26,7 @@ export default function HomePage({ catalog, sections, setRoute, searchPlaceholde
         setRoute={setRoute}
         searchPlaceholder={searchPlaceholder}
       />
+      <LegalLinks className="portal-legal-links" />
     </main>
   )
 }

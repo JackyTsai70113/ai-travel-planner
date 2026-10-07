@@ -53,7 +53,14 @@
 - [#175 Amadeus 退役後沒有可用住宿搜尋來源](https://github.com/JackyTsai70113/ai-travel-planner/issues/175)：目前沒有已核准的 lodging inventory provider 或 partner credentials。Google Places 不提供日期型房間 availability 與住宿總價。未取得合法供應商存取前，無法完成真實住宿候選的 acceptance。
 - [#180 餐廳候選沒有排入每日用餐行程](https://github.com/JackyTsai70113/ai-travel-planner/issues/180)：production run 有 20 筆餐廳候選，但無可選住宿；目前每日往返住宿路線無法驗證，因此不可把餐廳硬塞進日程。需有住宿候選後重跑真實情境。
 - [#179 MCP 規劃結果沒有對應的 GitHub Pages 網址](https://github.com/JackyTsai70113/ai-travel-planner/issues/179)：PR #189、#191 已加入並部署 `publish_trip_site` 與發布 readiness gate。2026-10-08 正式環境變數名稱清單仍沒有 `GITHUB_TOKEN`，也未執行真實 Pages 發布，因此 issue 保持開啟。
-- [#199 Google Places 資料保存與公開展示政策待確認](https://github.com/JackyTsai70113/ai-travel-planner/issues/199)：Places provider facts 進入可持久化 Canonical Trip；Google 官方政策對資料保存、條款／隱私揭露與 attribution 有要求。repo 尚未完成資料生命週期與網站呈現的合規盤點，因此不能宣稱目前 Places 使用方式已確認符合政策。
+- [#199 Google Places 資料保存與公開展示政策待確認](https://github.com/JackyTsai70113/ai-travel-planner/issues/199)：本 PR 新增可公開直達的使用條款與隱私權政策頁面，並把入口加入首頁與每個行程頁；這只完成公開揭露頁，不表示 Places 資料保存與公開重用已合規。Places provider facts 仍進入可持久化 Canonical Trip；仍需完成呼叫前告知／同意、各欄位資料生命週期與既有資料處置盤點，才能確認 production 使用方式符合政策。
+
+#### #199 公開條款與隱私頁
+
+- 預定正式網址：`https://jackytsai70113.github.io/ai-travel-planner/terms.html` 與 `https://jackytsai70113.github.io/ai-travel-planner/privacy.html`。
+- 使用條款說明服務用途、行程資訊限制、明確公開確認流程及 Google Maps／Google Earth End User Additional Terms 與 Google Privacy Policy。
+- 隱私權政策說明旅行需求與生成行程的後端保存、使用 Google／OpenRouteService／YouTube 的用途、公開 Pages 資料及第三方安全紀錄；Google Places 內容保存限制仍依 Google 現行政策。
+- 合併及 Pages 部署後，需用瀏覽器開啟以上兩個正式網址並檢查首頁與行程頁頁尾連結。即使頁面可用，#199 仍須等資料處理與公開展示盤點完成再驗收。
 
 #### #199 attribution re-check after PR #206
 

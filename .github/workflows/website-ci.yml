@@ -164,6 +164,8 @@ jobs:
         run: |
           test -s site-ci/index.html
           test -s web/dist/index.html
+          test -s web/dist/terms.html
+          test -s web/dist/privacy.html
           test -s web/public/trips/awaji-2026/public-bundle.json
       - name: Run frontend security policy checks
         env:
