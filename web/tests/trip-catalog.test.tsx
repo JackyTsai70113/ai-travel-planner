@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { TripCatalogEntry, TripRegistrySections } from '../src/contracts/trip-registry'
+import { buildCatalogSections } from '../src/contracts/trip-registry'
 import HomePage from '../src/pages/HomePage'
 
 const entry: TripCatalogEntry = {
@@ -33,6 +34,25 @@ const sections: TripRegistrySections = {
 
 describe('旅行目錄公開狀態', () => {
   afterEach(() => cleanup())
+
+  it('將已結束的公開行程移至封存，當日結束的行程仍留在當前分類', () => {
+    const currentEntry = { ...entry, slug: 'current-trip', date_range: { start_date: '2026-10-05', end_date: '2026-10-08' } }
+    const futureEntry = { ...entry, slug: 'future-trip', date_range: { start_date: '2026-11-01', end_date: '2026-11-05' } }
+    const result = buildCatalogSections([entry, currentEntry, futureEntry], '2026-10-08')
+
+    expect(result.featured.map((item) => item.slug)).toEqual(['current-trip'])
+    expect(result.upcoming.map((item) => item.slug)).toEqual(['future-trip'])
+    expect(result.archived).toEqual([{ ...entry, status: 'archived' }])
+  })
+
+  it('保留預覽和明確封存狀態', () => {
+    const previewEntry = { ...entry, slug: 'preview-trip', status: 'preview' as const }
+    const archivedEntry = { ...entry, slug: 'archived-trip', status: 'archived' as const }
+    const result = buildCatalogSections([previewEntry, archivedEntry], '2026-10-08')
+
+    expect(result.preview).toEqual([previewEntry])
+    expect(result.archived).toEqual([archivedEntry])
+  })
 
   it('將公開但未完成的行程標示為公開預覽，且說明發布狀態與完成度分開', () => {
     render(<HomePage catalog={[entry]} sections={sections} setRoute={vi.fn()} searchPlaceholder="搜尋旅行" />)

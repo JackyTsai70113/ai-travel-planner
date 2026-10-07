@@ -67,18 +67,28 @@ export function formatDateRange(entry: { date_range: { start_date: string; end_d
   return `${entry.date_range.start_date} ~ ${entry.date_range.end_date}`
 }
 
-export function buildCatalogSections(catalog: TripCatalogEntry[]): TripRegistrySections {
-  const now = new Date().toISOString().slice(0, 10)
+export function buildCatalogSections(
+  catalog: TripCatalogEntry[],
+  today = (() => {
+    const now = new Date()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const day = String(now.getDate()).padStart(2, '0')
+    return `${now.getFullYear()}-${month}-${day}`
+  })(),
+): TripRegistrySections {
   const published = catalog.filter((item) => item.status === 'published')
   const preview = catalog.filter((item) => item.status === 'preview')
-  const archived = catalog.filter((item) => item.status === 'archived')
-  const upcoming = published.filter((item) => item.date_range.end_date >= now)
-  const featured = published.filter((item) => item.status === 'published').slice(0, 1)
+  const explicitlyArchived = catalog.filter((item) => item.status === 'archived')
+  const expired = published
+    .filter((item) => item.date_range.end_date < today)
+    .map((item) => ({ ...item, status: 'archived' as const }))
+  const active = published.filter((item) => item.date_range.end_date >= today)
+  const featured = active.slice(0, 1)
 
   return {
     featured,
-    upcoming: upcoming.filter((item) => !featured.some((entry) => entry.slug === item.slug)),
-    archived,
+    upcoming: active.filter((item) => !featured.some((entry) => entry.slug === item.slug)),
+    archived: [...explicitlyArchived, ...expired],
     preview,
   }
 }
