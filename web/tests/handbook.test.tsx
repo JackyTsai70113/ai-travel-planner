@@ -214,6 +214,8 @@ describe('淡路島只讀旅遊助手', () => {
     expect(screen.getByText(/成人 ¥3,000/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'うずしおクルーズ（福良港）' })).toHaveAttribute('href', 'https://www.uzu-shio.com/timetable')
     expect(screen.getByRole('link', { name: /在 Google Maps 開啟 うずしおクルーズ/ })).toBeInTheDocument()
+    expect(document.querySelector('.map-pin-link')?.textContent).toContain('Google Maps')
+    expect(document.querySelector('.map-pin-link span')).toHaveAttribute('translate', 'no')
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
     expect(document.body.textContent).not.toMatch(/地址|資料來源|最後確認|fixed-reservation/)
     expect(document.querySelectorAll('.map-pin-link svg')).toHaveLength(1)
