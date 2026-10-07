@@ -6,7 +6,7 @@ export default defineRailway(() => {
     source: github("JackyTsai70113/ai-travel-planner", { branch: "main", checkSuites: false, upstreamUrl: "https://github.com/JackyTsai70113/ai-travel-planner" }),
     replicas: { "sfo": 1 },
     build: { builder: "DOCKERFILE", dockerfilePath: "/Dockerfile" },
-    deploy: { healthcheckPath: "/health", healthcheckTimeout: 120, restartPolicyType: "ON_FAILURE", restartPolicyMaxRetries: 10 },
+    deploy: { healthcheckPath: "/health", healthcheckTimeout: 120 },
     volumeMounts: { "/data": aiTravellerVolume },
     env: { BEARER_TOKEN: preserve(), GITHUB_PAGES_BASE_URL: preserve(), GITHUB_PAGES_BRANCH: preserve(), GITHUB_REPOSITORY: preserve(), GITHUB_TOKEN: preserve(), GOOGLE_MAPS_API_KEY: preserve(), OPENROUTESERVICE_API_KEY: preserve(), PUBLIC_URL: preserve(), YOUTUBE_API_KEY: preserve() },
   });
