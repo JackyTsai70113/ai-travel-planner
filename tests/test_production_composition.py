@@ -473,3 +473,112 @@ def test_restaurant_selection_keeps_open_route_verified_candidate_when_first_is_
     backup_ids = [item["place_id"] for candidate in planned for item in candidate["schedule"]["alternatives"]]
     assert len(backup_ids) == len(set(backup_ids))
     assert not set(backup_ids).intersection(candidate["place"]["id"] for candidate in planned)
+
+
+class RecordedThreeMealGoogle(RecordedGoogle):
+    """Synthetic provider facts only; never a live provider qualification."""
+
+    include_lodging = True
+
+    def fetch(self, query):
+        import copy
+
+        records = super().fetch(query)
+        source = next(candidate for collection, candidate in records if collection == "restaurants")
+        records = [(collection, candidate) for collection, candidate in records if collection != "restaurants"]
+        for number in range(15):
+            candidate = copy.deepcopy(source)
+            candidate["place"]["id"] = f"recorded-meal-{number}"
+            candidate["place"]["name"] = f"Recorded meal {number}"
+            candidate["opening_hours"]["intervals"] = [
+                {"weekday": day, "opens_at": "07:00", "closes_at": "22:00"} for day in range(7)
+            ]
+            candidate["opening_hours"]["provenance"] = candidate["provenance"]
+            records.append(("restaurants", candidate))
+        if self.include_lodging:
+            provenance = {**source["provenance"], "provider": "Synthetic lodging fixture"}
+            records.append(("hotels", {
+                "place": {"id": "recorded-hotel", "name": "Recorded lodging", "kind": "hotel",
+                          "coordinates": {"latitude": 34.1, "longitude": 134.2}, "provenance": provenance},
+                "check_in": "2026-11-01", "check_out": "2026-11-05",
+                "occupancy": {"adults": 6, "child_ages": [2], "rooms": 1},
+                "total_cost": {"amount": 2000, "currency": "JPY"},
+                "price_status": "unverified", "provenance": provenance,
+            }))
+        return records
+
+
+def test_recorded_production_persists_three_meals_per_day_with_sources_and_selection(tmp_path):
+    intent = parse_trip_request("日本岡山縣倉敷五天四夜。日期：2026/11/01～2026/11/05。出發地：桃園國際機場。旅客：6位成人、1位2歲幼兒。預算：暫不設限制。交通方式：自駕。")
+    result = _runner(tmp_path, google=RecordedThreeMealGoogle()).run(intent)
+
+    assert result.succeeded
+    trip = json.loads(result.trip_path.read_text(encoding="utf-8"))
+    validate_trip(trip)
+    assert len(trip["selected"]["hotel_place_ids"]) == 1
+    restaurants = {candidate["place"]["id"]: candidate for candidate in trip["candidate_sets"]["restaurants"]}
+    meal_ids = []
+    for day_number, day in enumerate(trip["days"], start=1):
+        meals = [item for item in day["items"] if item["kind"] == "meal"]
+        assert [item["start_at"][11:16] for item in meals] == ["08:00", "12:30", "18:30"]
+        assert [restaurants[item["place_id"]]["schedule"]["meal_period"] for item in meals] == ["breakfast", "lunch", "dinner"]
+        for item in meals:
+            candidate = restaurants[item["place_id"]]
+            assert item["selection_status"] == "selected"
+            assert candidate["schedule"]["selected"] is True
+            assert candidate["schedule"]["day"] == day_number
+            assert candidate["provenance"]["provider"] == "Recorded Google Places"
+            assert candidate["provenance"]["source_url"] == "https://example.test/places"
+            assert candidate["provenance"]["retrieved_at"] == "2026-01-01T00:00:00+09:00"
+            assert candidate["provenance"]["status"] == "confirmed"
+            assert candidate["place"]["provenance"] == candidate["provenance"]
+            meal_ids.append(item["place_id"])
+    assert len(meal_ids) == len(set(meal_ids)) == 15
+    assert not any(finding["code"] == "meal.period_unselected" for finding in trip["validation"])
+
+
+class RecordedMissingMealReturnRouting(RecordedCompleteRouting):
+    def fetch_matrix(self, places, mode):
+        matrix = super().fetch_matrix(places, mode)
+        for key, route in matrix.items():
+            if (route.origin.place_id.startswith("recorded-meal-")
+                    and route.destination.place_id == "recorded-hotel"):
+                matrix[key] = replace(route, status=RouteStatus.UNKNOWN, duration_seconds=None, distance_meters=None)
+        return matrix
+
+
+def test_recorded_production_missing_meal_return_keeps_dinner_unselected(tmp_path):
+    intent = parse_trip_request("日本岡山縣倉敷五天四夜。日期：2026/11/01～2026/11/05。出發地：桃園國際機場。旅客：6位成人、1位2歲幼兒。預算：暫不設限制。交通方式：自駕。")
+    runner = create_production_orchestrator(
+        trip_id="recorded-no-meal-return", trips_directory=tmp_path / "trips", site_directory=tmp_path / "site",
+        environment=ENVIRONMENT,
+        dependencies=ProductionDependencies(google=RecordedThreeMealGoogle(), youtube=RecordedYouTube(),
+            routing_provider=RecordedMissingMealReturnRouting()),
+    )
+    result = runner.run(intent)
+    assert result.succeeded
+    trip = json.loads(result.trip_path.read_text(encoding="utf-8"))
+    restaurants = {candidate["place"]["id"]: candidate for candidate in trip["candidate_sets"]["restaurants"]}
+    for day in trip["days"]:
+        meals = [item for item in day["items"] if item["kind"] == "meal"]
+        assert [restaurants[item["place_id"]]["schedule"]["meal_period"] for item in meals] == ["breakfast", "lunch"]
+    assert sum(candidate.get("schedule", {}).get("selected") is True for candidate in restaurants.values()) == 10
+    assert sum(finding["code"] == "meal.period_unselected" for finding in trip["validation"]) == 5
+    assert len(restaurants) == 15
+
+
+class RecordedThreeMealWithoutLodging(RecordedThreeMealGoogle):
+    include_lodging = False
+
+
+def test_recorded_production_without_lodging_keeps_verified_meals_and_unknown_hotel_warning(tmp_path):
+    intent = parse_trip_request("日本岡山縣倉敷五天四夜。日期：2026/11/01～2026/11/05。出發地：桃園國際機場。旅客：6位成人、1位2歲幼兒。預算：暫不設限制。交通方式：自駕。")
+    result = _runner(tmp_path, google=RecordedThreeMealWithoutLodging()).run(intent)
+    assert result.succeeded
+    trip = json.loads(result.trip_path.read_text(encoding="utf-8"))
+    assert trip["selected"]["hotel_place_ids"] == []
+    assert trip["candidate_sets"]["hotels"] == []
+    assert all(sum(item["kind"] == "meal" for item in day["items"]) == 2 for day in trip["days"])
+    assert any(finding["code"] == "schedule.hotel_missing" for finding in trip["validation"])
+    assert any(finding["code"] == "schedule.origin_unknown" for finding in trip["validation"])
+    assert not trip["candidate_sets"]["transport_legs"]

@@ -237,7 +237,14 @@ class TravelOrchestrator:
             code = "repair.exhausted" if exhausted else "validator.invalid"
             error = WarningRecord(code, "no candidate passed deterministic validation", StageName.VALIDATOR_REPAIR)
             return None, StageReport(StageName.VALIDATOR_REPAIR, StageStatus.FAILED, 1, violations, (error,))
-        warnings = tuple(WarningRecord(item.code, item.message, StageName.VALIDATOR_REPAIR, item.path) for item in best.violations)
+        # Keep scheduling findings from the chosen candidate, including meal
+        # omissions; canonical assembly rebuilds validation from stage warnings.
+        scheduling_warnings = tuple(
+            WarningRecord(item["code"], item["message"], StageName.PLANNER, item.get("path", ""))
+            for item in best.trip.get("validation", ())
+            if item.get("severity") == "warning"
+        )
+        warnings = (*scheduling_warnings, *tuple(WarningRecord(item.code, item.message, StageName.VALIDATOR_REPAIR, item.path) for item in best.violations))
         status = StageStatus.INCOMPLETE if warnings else StageStatus.SUCCEEDED
         return best.trip, StageReport(StageName.VALIDATOR_REPAIR, status, 1, warnings)
 
