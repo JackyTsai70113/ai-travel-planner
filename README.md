@@ -107,30 +107,9 @@ Planner 不會擷取機票票價；每份 Canonical Trip 會顯示需求中的�
 4. 研究結果保留證據：候選景點、餐廳、住宿與交通資訊保留來源與查詢時間。
 5. 先支援日本情境並保留擴充性：第一階段優先支援日本旅遊資料來源與使用情境，核心 schema 與 planner 不綁定日本。
 
-## 多代理 GitHub 開發
+## 開發與 MCP 驗收
 
-本 repository 包含改編自 `agentic-dev-collaboration`、以 Issue 為範圍的協作控制流程。多個開發代理可透過各自的 GitHub Issue、branch、pull request 與外部 Git worktree 平行工作，交接或發布前會檢查寫入範圍是否衝突。
-
-驗證固定版本的 framework 與專案覆寫：
-
-```sh
-python3 scripts/validate_agent_collaboration.py
-```
-
-先判斷變更路由，再為每個 Issue 建立獨立 worktree：
-
-```sh
-python3 -m scripts.agent.collaboration route src/intent/parser.py tests/test_travel_intent.py
-
-python3 -m scripts.agent.collaboration prepare 28 \
-  --slug request-constraints \
-  --write-path 'src/intent/**' \
-  --write-path 'tests/test_travel_intent.py'
-```
-
-Repository 會拒絕重疊的有效寫入範圍。完成實作後，在該 Issue worktree 執行 `check` 與 `handoff`。`publish` 會推送 branch 並建立一般非 Draft PR，不會自動合併。
-
-完整流程、角色路由、平行工作範例與指令請參閱 [`docs/agents/DEVELOPMENT.md`](docs/agents/DEVELOPMENT.md)。
+開發工作依 GitHub Issue 或 pull request 描述確認範圍，完成後由維護者檢查變更與 CI。MCP 部署、連線、工具、認證或 ChatGPT Site 設定有變更時，部署後必須使用 Computer Use 在 ChatGPT Chat 實際呼叫 MCP；詳細步驟見 [`ChatGPT MCP 上線驗收流程`](docs/chatgpt-mcp-live-verification.md)。
 
 ## 目標流程
 
