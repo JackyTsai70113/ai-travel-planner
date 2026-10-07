@@ -12,3 +12,5 @@ web/dist/
 
 # Dependencies for the Railway Infrastructure as Code authoring file
 /node_modules/
+
+.env
