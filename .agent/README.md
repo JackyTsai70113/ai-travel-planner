@@ -1,33 +1,7 @@
-# Codex 開發入口
+# AI Travel Planner 本機技能
 
-本目錄是本儲存庫可提交、可審查的 Codex 輔助開發入口。
+根目錄 `AGENTS.md` 是儲存庫開發與驗收規則的唯一入口。此目錄提供旅遊研究與規劃技能，按任務需要讀取 `.agent/skills/` 中對應的 `SKILL.md`。
 
-## 使用順序
+這些技能協助處理旅遊需求、官方活動、近期趨勢、住宿餐飲評價與行程網站交付；它們不負責分派開發工作、建立 reviewer 角色或驗證協作政策。
 
-1. 先讀根目錄 `AGENTS.md`，它是本儲存庫的最高優先專案規範。
-2. 再讀 `vendor/agentic-dev-collaboration/AGENTS.md` 與 `agent-collaboration/` 下的專案代理設定。
-3. 依任務需要讀取 `.agent/skills/` 下的技能說明。
-4. 交付前執行 `scripts/validate_agent_collaboration.py` 與任務指定的測試。
-
-## 本次納入的內容
-
-本機頂層設定盤點後，只有可移植的方法文件納入本儲存庫：
-
-- `context-recovery`：中斷或交接後，依持久證據恢復工作狀態。
-- `continuous-collaboration`：選擇最小且足夠的實作者、審查者與驗證流程。
-- `investigation`：以工具證據回答目前狀態、使用者與呼叫關係問題。
-- `planning`：把已核准任務整理成可執行、可驗證的計畫。
-- `platform-impact-analysis`：先分類 Web、契約、資料與營運影響，再決定路由。
-- `taiwan-official-events`：以官方來源確認台灣活動、休園與入場限制。
-- `taiwan-travel-trends`：將近期熱度轉成待驗證的旅遊候選偏好。
-- `taiwan-hospitality-reviews`：比較住宿與餐飲評價，並分離品質與營運訊號。
-- `taiwan-trip-site-delivery`：把已驗證研究收斂為公開安全的行程網站。
-
-## 刻意不納入的內容
-
-- 個人 Codex 身分、帳號、認證、工作階段、資料庫與全域狀態。
-- 本機執行期快照與工作階段紀錄。
-- 依賴個人絕對路徑的全域攔截器或技能同步設定。
-- 儲存庫已經以固定版本快照管理的代理定義與技能副本。
-
-這些內容不是產品原始碼，也不應隨儲存庫複製或公開。
+不得將個人帳號、存取憑證、工作階段、資料庫或機器狀態提交到儲存庫。

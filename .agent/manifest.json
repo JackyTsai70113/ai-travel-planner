@@ -5,7 +5,6 @@
   "entrypoint": ".agent/README.md",
   "skills": [
     "context-recovery",
-    "continuous-collaboration",
     "investigation",
     "planning",
     "platform-impact-analysis",
@@ -14,10 +13,6 @@
     "taiwan-travel-trends",
     "taiwan-trip-site-delivery"
   ],
-  "hooks": {
-    "policy": ".agent/hooks/README.md",
-    "repository_validator": "scripts/validate_agent_collaboration.py"
-  },
   "excluded_machine_state": [
     "credentials",
     "sessions",
