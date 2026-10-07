@@ -45,13 +45,15 @@ function filterItems(items: TripCatalogEntry[], filters: FilterState): TripCatal
   })
 }
 
-function statusText(status: string): string {
+function statusText(status: string, readiness: string): string {
+  if (status === 'published' && readiness !== 'ready') return '公開預覽'
   if (status === 'published') return '已發布'
   if (status === 'preview') return '預覽'
   return '封存'
 }
 
-function statusClass(status: string): string {
+function statusClass(status: string, readiness: string): string {
+  if (status === 'published' && readiness !== 'ready') return 'status-pill status-preview'
   if (status === 'published') return 'status-pill status-published'
   if (status === 'preview') return 'status-pill status-preview'
   return 'status-pill status-archived'
@@ -74,7 +76,7 @@ function renderCard(item: TripCatalogEntry, setRoute: RouteSetter) {
   return (
     <article className="trip-card" key={item.slug}>
       <div className="trip-card-media" style={{ background }}>
-        <span className={statusClass(item.status)}>{statusText(item.status)}</span>
+        <span className={statusClass(item.status, item.readiness)}>{statusText(item.status, item.readiness)}</span>
       </div>
       <div className="trip-card-body">
         <h3>{item.title}</h3>
