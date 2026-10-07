@@ -1,16 +1,17 @@
 /* global document, getComputedStyle */
 
 import { chromium } from 'playwright'
-import { copyFileSync, cpSync, mkdirSync, readdirSync } from 'node:fs'
+import { copyFileSync, cpSync, existsSync, mkdirSync, readdirSync } from 'node:fs'
 import { startPreviewServer } from './preview-server.mjs'
 
 for (const slug of ['wanhua-2026', 'awaji-2026', 'kansai-preview-2025', 'japan-archive-example', 'japan-blocked-example']) {
   mkdirSync(`dist/trips/${slug}`, { recursive: true })
   copyFileSync('dist/index.html', `dist/trips/${slug}/index.html`)
   for (const item of readdirSync('dist')) {
-    if (item === 'index.html' || item === 'trips') continue
+    if (item === 'index.html' || item === 'trips' || item === 'terms.html' || item === 'privacy.html') continue
     cpSync(`dist/${item}`, `dist/trips/${slug}/${item}`, { recursive: true })
   }
+  if (existsSync(`dist/trips/${slug}/terms.html`) || existsSync(`dist/trips/${slug}/privacy.html`)) throw new Error(`Global legal pages were copied under the ${slug} trip path`)
   const sourceSlug = slug === 'japan-archive-example' || slug === 'japan-blocked-example' ? 'kansai-preview-2025' : slug
   copyFileSync(`public/trips/${sourceSlug}/public-bundle.json`, `dist/trips/${slug}/public-bundle.json`)
 }
@@ -211,6 +212,27 @@ try {
   await page.goto(`${baseUrl}trips/japan-blocked-example/`, { waitUntil: 'domcontentloaded' })
   await page.locator('.overview-day-grid').waitFor({ state: 'visible' })
   if (await page.locator('.status-blocked').count()) throw new Error('internal readiness status leaked into the trip page')
+
+  for (const width of [375, 390, 430]) {
+    const legalPage = await browser.newPage({ viewport: { width, height: 900 } })
+    for (const [path, heading] of [['terms.html', '使用條款'], ['privacy.html', '隱私權政策']]) {
+      await legalPage.goto(`${baseUrl}${path}`, { waitUntil: 'domcontentloaded' })
+      await legalPage.getByRole('heading', { name: heading, level: 1 }).waitFor({ state: 'visible' })
+      const geometry = await legalPage.evaluate(() => {
+        const content = document.querySelector('.legal-content')
+        const rect = content.getBoundingClientRect()
+        return { clientWidth: document.documentElement.clientWidth, scrollWidth: document.documentElement.scrollWidth, left: rect.left, right: rect.right }
+      })
+      if (geometry.scrollWidth > geometry.clientWidth) throw new Error(`${path} horizontal overflow at ${width}px: ${geometry.scrollWidth} > ${geometry.clientWidth}`)
+      if (geometry.left < 15 || geometry.right > width - 15) throw new Error(`${path} content is too close to the viewport edge at ${width}px: ${JSON.stringify(geometry)}`)
+    }
+    await legalPage.close()
+  }
+
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded' })
+  await page.getByRole('navigation', { name: '法律資訊' }).getByRole('link', { name: '使用條款' }).waitFor({ state: 'visible' })
+  await page.goto(`${baseUrl}trips/awaji-2026/`, { waitUntil: 'domcontentloaded' })
+  await page.locator('.trip-legal-links').getByRole('link', { name: '隱私權政策' }).waitFor({ state: 'visible' })
 } finally {
   await browser.close()
   stop()

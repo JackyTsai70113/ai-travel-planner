@@ -6,7 +6,7 @@ copyFileSync(new URL('../public/trips/awaji-2026/public-bundle.json', import.met
 mkdirSync(new URL('../dist/trips/awaji-2026/', import.meta.url), { recursive: true })
 copyFileSync(new URL('../public/trips/awaji-2026/public-bundle.json', import.meta.url), new URL('../dist/trips/awaji-2026/public-bundle.json', import.meta.url))
 for (const item of readdirSync(new URL('../dist/', import.meta.url))) {
-  if (item === 'trips') continue
+  if (item === 'trips' || item === 'terms.html' || item === 'privacy.html') continue
   cpSync(new URL(`../dist/${item}`, import.meta.url), new URL(`../dist/trips/awaji-2026/${item}`, import.meta.url), { recursive: true })
 }
 const staleWorkerSource = "self.addEventListener('install', (event) => event.waitUntil(self.skipWaiting()))"
@@ -14,7 +14,8 @@ writeFileSync(new URL('../dist/trips/awaji-2026/stale-worker.js', import.meta.ur
 writeFileSync(new URL('../dist/unrelated-worker.js', import.meta.url), staleWorkerSource)
 
 const deploymentPath = '/ai-travel-planner/'
-const baseUrl = `http://127.0.0.1:4173${deploymentPath}trips/awaji-2026/`
+const previewPort = process.env.TRIP_E2E_PORT || '4173'
+const baseUrl = `http://127.0.0.1:${previewPort}${deploymentPath}trips/awaji-2026/`
 const dates = ['2026-08-27', '2026-08-28', '2026-08-29', '2026-08-30', '2026-08-31']
 const forbidden = /待補|未提供|未知|官方未公布|狀態正常|規劃估計|硬截止|硬離場|Sheet 指定|家庭／無障礙|聯絡[／/]參考|Canonical Trip|Golden Trip|\bloading\b|資料快照|熱中症|UTC|資料來源|旅行資訊|只提供出發前閱讀|不要求旅途中/i
 const serviceWorkerSource = readFileSync(new URL('../public/sw.js', import.meta.url), 'utf8')
@@ -31,7 +32,7 @@ if (!awajiSummary || (deployedAwajiIndex.match(new RegExp(`content="${awajiSumma
   throw new Error('部署後的靜態 description 與 og:description 未換成淡路島旅程摘要')
 }
 const { stop, waitForServer } = startPreviewServer({
-  args: ['--base', deploymentPath, '--host', '127.0.0.1', '--port', '4173'],
+  args: ['--base', deploymentPath, '--host', '127.0.0.1', '--port', previewPort],
   baseUrl,
 })
 
@@ -198,7 +199,7 @@ try {
   // 從入口頁與行程頁模擬過期 Worker，確認只清除目前行程，不影響同網域其他網站。
   const staleCacheCleanupContext = await browser.newContext()
   const staleCacheCleanupPage = await staleCacheCleanupContext.newPage()
-  await staleCacheCleanupPage.goto(`http://127.0.0.1:4173${deploymentPath}`, { waitUntil: 'domcontentloaded' })
+  await staleCacheCleanupPage.goto(`http://127.0.0.1:${previewPort}${deploymentPath}`, { waitUntil: 'domcontentloaded' })
   await staleCacheCleanupPage.evaluate(async () => {
     await navigator.serviceWorker.register('trips/awaji-2026/stale-worker.js', { scope: 'trips/awaji-2026/' })
     await navigator.serviceWorker.register('unrelated-worker.js', { scope: 'unrelated/' })

@@ -3,6 +3,7 @@ import { Bundle } from '../contracts/trip'
 import { SectionDefinition } from '../app/route-registry'
 import { DesktopSidebar } from './DesktopSidebar'
 import { MobileHeader } from './MobileHeader'
+import { LegalLinks } from '../components/LegalLinks'
 
 export type TripStatusType =
   | 'normal'
@@ -157,6 +158,8 @@ export default function TripShell({
           </section>
         </main>
       </div>
+
+      <LegalLinks className="trip-legal-links" />
 
       {isDrawerOpen ? (
         <div className="drawer-scrim" onClick={() => setDrawerOpen(false)} role="presentation">
