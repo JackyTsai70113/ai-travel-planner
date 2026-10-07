@@ -8,7 +8,8 @@
 - Railway backend origin：`https://ai-traveller-production-732b.up.railway.app`。
 - MCP endpoint：`https://ai-traveller-production-732b.up.railway.app/mcp`。
 - `/health` 的最近記錄驗證為 HTTP 200；未帶授權直接呼叫 `/mcp` 回 HTTP 401 是預期行為。
-- 2026-10-08 在 Railway config apply 後重新驗證：deployment `43e50dcb-1631-499f-ad88-16be89221f1a` 為 `SUCCESS`、replica `RUNNING`、`/health` HTTP 200；服務設定包含 Dockerfile `/Dockerfile`、healthcheck `/health`、重啟政策與 `/data` volume。`railway config plan` 尚列一項重啟政策差異，故 IaC plan 不是乾淨狀態。部署切換中曾短暫回 HTTP 502，deployment 成功後 `/health` 恢復 HTTP 200。部署後已在 ChatGPT Chat 經私人 Site 實際呼叫 `parse_trip_request`，取得 `status=parsed`、倉敷、5 天 4 夜的解析結果。完整驗證方式見 [Railway 驗證紀錄](../.railway/README.md#正式服務網址與驗證)。
+- 2026-10-08 最新 Railway deployment `99b391dd-8343-4c9e-b0b4-77860e30065f` 為 `SUCCESS`，Railway deployment metadata 的 source commit 是 `abf7ffd2ceacf105cc50428fd4b64a326acf596a`；replica 為 Online，Dockerfile 為 `/Dockerfile`、healthcheck 為 `/health`、重啟政策已設定、volume 掛載在 `/data`。本次再次請求正式 `/health` 得 HTTP 200、內文 `ok`。`railway config plan` 尚列一項重啟政策差異，故 IaC plan 不是乾淨狀態。完整驗證方式見 [Railway 驗證紀錄](../.railway/README.md#正式服務網址與驗證)。
+- 2026-10-08 使用 Computer Use 在 ChatGPT Chat 私人 `AI Travel Planner MCP` 對話呼叫 `parse_trip_request`，工具結果為 `status=parsed`、目的地倉敷、5 天 4 夜。另在 ChatGPT Chat 呼叫 `publish_trip_site`，傳入不存在的測試 trip ID 與 `confirm_public_publish=false`，收到 server 原始結果 `status=confirmation_required`；這證實 Site 已載入此工具與公開發布保護閘門，且本次沒有讀取行程檔或寫入 GitHub。兩次操作均沒有執行 `plan_trip` 或公開發布。
 - 同日只列出 Railway 正式服務變數名稱以確認缺漏，未讀取或輸出 secret 值；清單沒有 `GITHUB_TOKEN`。尚未執行任何公開行程寫入。
 - 不在 repo、Issue 或文件記錄任何 secret 值。ChatGPT Chat 呼叫由維護者使用已連線的使用者環境實際執行；其餘 backend 驗證亦由維護者執行。
 
@@ -45,6 +46,7 @@
 - [#175 Amadeus 退役後沒有可用住宿搜尋來源](https://github.com/JackyTsai70113/ai-travel-planner/issues/175)：目前沒有已核准的 lodging inventory provider 或 partner credentials。Google Places 不提供日期型房間 availability 與住宿總價。未取得合法供應商存取前，無法完成真實住宿候選的 acceptance。
 - [#180 餐廳候選沒有排入每日用餐行程](https://github.com/JackyTsai70113/ai-travel-planner/issues/180)：production run 有 20 筆餐廳候選，但無可選住宿；目前每日往返住宿路線無法驗證，因此不可把餐廳硬塞進日程。需有住宿候選後重跑真實情境。
 - [#179 MCP 規劃結果沒有對應的 GitHub Pages 網址](https://github.com/JackyTsai70113/ai-travel-planner/issues/179)：PR #189、#191 已加入並部署 `publish_trip_site` 與發布 readiness gate。2026-10-08 正式環境變數名稱清單仍沒有 `GITHUB_TOKEN`，也未執行真實 Pages 發布，因此 issue 保持開啟。
+- [#199 Google Places 資料保存與公開展示政策待確認](https://github.com/JackyTsai70113/ai-travel-planner/issues/199)：Places provider facts 進入可持久化 Canonical Trip；Google 官方政策對資料保存、條款／隱私揭露與 attribution 有要求。repo 尚未完成資料生命週期與網站呈現的合規盤點，因此不能宣稱目前 Places 使用方式已確認符合政策。
 
 ### Issue #179 驗收流程
 
