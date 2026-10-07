@@ -36,8 +36,13 @@ const { stop, waitForServer } = startPreviewServer({
 })
 
 async function openRoute(page, route, readySelector) {
-  await page.goto(`${baseUrl}#/${route}`, { waitUntil: 'domcontentloaded' })
-  await page.locator(readySelector).waitFor({ state: 'visible' })
+  const targetUrl = `${baseUrl}#/${route}`
+  await page.goto(targetUrl, { waitUntil: 'domcontentloaded' })
+  try {
+    await page.locator(readySelector).waitFor({ state: 'visible' })
+  } catch (error) {
+    throw new Error(`${route} did not render ${readySelector} at ${page.url()} (target ${targetUrl}): ${error.message}`)
+  }
 }
 
 async function assertNoHorizontalOverflow(page, label) {
