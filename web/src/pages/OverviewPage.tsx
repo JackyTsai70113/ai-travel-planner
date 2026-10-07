@@ -193,7 +193,7 @@ export function OverviewPage({ bundle, trip }: OverviewPageProps) {
             <div className="overview-candidate-actions">
               {candidate.search_url ? <a href={candidate.search_url} target="_blank" rel="noreferrer">查房／訂房</a> : null}
               {candidate.official_url ? <a href={candidate.official_url} target="_blank" rel="noreferrer">官方資訊</a> : null}
-              {candidate.google_maps_url ? <a href={candidate.google_maps_url} target="_blank" rel="noreferrer">查看位置</a> : null}
+              {candidate.google_maps_url ? <a className="google-maps-attribution" href={candidate.google_maps_url} target="_blank" rel="noreferrer" translate="no">Google Maps</a> : null}
             </div>
           </article>)}
         </div>
