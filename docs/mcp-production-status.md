@@ -2,6 +2,13 @@
 
 最後查證：2026-10-08。本文記錄本 repo MCP 部署與實際工具呼叫的觀察結果，不代表規劃品質已達可交付標準。
 
+## 2026-10-08 過期行程封存修正部署
+
+- PR #212 以一般 merge commit `bd59a6585846ee6df4b088c34cf4b7bcbc550708` 合併至 `main`。修改後，結束日期早於瀏覽器使用者當地日期的已發布行程會移到「封存 / 歷史」，並顯示封存狀態。
+- GitHub Pages 部署 workflow [37664897575](https://github.com/JackyTsai70113/ai-travel-planner/actions/runs/37664897575) 對應相同 main SHA，狀態 `success`。以 Chrome 開啟正式首頁 `https://jackytsai70113.github.io/ai-travel-planner/`，確認「2026 淡路島五日行」（2026-08-27 至 2026-08-31）位於「封存 / 歷史」，沒有列在「精選 / 當前」。桌機 1200/1366/1440/1920px 與手機 375/390/430px 均無水平溢出。
+- Railway `ai-traveller` production deployment `b369f5f5-baac-4c10-8567-e42ef1afd412` 狀態 `SUCCESS`、instance `RUNNING`，source commit 為同一 SHA。正式 `/health` 回 HTTP 200、內文 `ok`。本次變更只修改網站目錄分類，未變更 MCP 工具或認證；沒有在 ChatGPT Chat 送出新 prompt 或呼叫 MCP。
+- 此次前端修正沒有解除下方 #175、#179、#180、#199 的既有阻塞，四張 issue 仍開啟。
+
 ## 2026-10-08 本輪重驗
 
 - ChatGPT Chat 使用已連線的私人 `AI Travel Planner MCP` 呼叫 `parse_trip_request`，輸入「岡山縣倉敷五天四夜，6 位成人、1 位 2 歲幼兒，預算不設限制」。回應解析出目的地倉敷、區域岡山縣、5 天 4 夜、6 位成人、1 位 2 歲幼兒、`budget_status=unlimited`，`missing_fields=[]`。此為唯讀呼叫，未執行研究、寫入或公開行程。
