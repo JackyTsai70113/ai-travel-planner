@@ -55,7 +55,7 @@ open site/tokushima-kobe/index.html
 
 選用的 MCP server 會將既有需求解析器、Canonical Trip 驗證器、安全行程摘要、正式規劃器與靜態網站 renderer 提供為工具。它支援本機 stdio client，且寫入行程或網站檔案前需要明確確認參數；它不會發布或部署內容。安裝與連線方式請參閱 [`MCP 旅遊規劃服務`](docs/mcp-server.md)。
 
-目前的資料來源 adapter 包含 Google Places、YouTube Data API、OpenRouteService、僅用於選用住宿搜尋的 Amadeus Self-Service，以及選用的 Hot Pepper Gourmet 官方 Web Service。Hot Pepper 結果必須標示
+目前的資料來源 adapter 包含 Google Places、YouTube Data API、OpenRouteService，以及選用的 Hot Pepper Gourmet 官方 Web Service。系統不會自動搜尋住宿；住宿可留空，由旅客自行安排。Hot Pepper 結果必須標示
 `Powered by ホットペッパーグルメ Webサービス`;
 其自由文字營業時間在結構化資料來源確認前仍未驗證。資料來源回應須實際取得後才能視為已查詢；系統不會自動訂位或付款。CI 使用記錄或 mock 資料，不會呼叫這些 API。
 
@@ -95,9 +95,9 @@ npm --prefix web run test:e2e
 
 [`旅遊意圖契約`](docs/travel-intent-contract.md) 將自由格式需求與資料研究、行程建構分開。解析器只擷取使用者明確提供的事實，並記錄欄位層級的來源依據。
 
-## 航班與住宿搜尋
+## 航班與住宿
 
-Planner 不會擷取機票票價；每份 Canonical Trip 會顯示需求中的航線與日期，並附上 Google Flights 搜尋頁連結。住宿搜尋可使用既有且相容的 Amadeus Self-Service 帳號，但這是選用功能，目前尚未設定替代住宿資料來源。詳見 [`航班與住宿資料來源`](docs/flight-hotel-providers.md)。
+Planner 不會擷取機票票價；每份 Canonical Trip 會顯示需求中的航線與日期，並附上 Google Flights 搜尋頁連結。系統不自動查住宿空房或價格；住宿可留空，由旅客自行安排。`plan_trip` 目前不會把自由文字中的住宿名稱轉成 Canonical Trip 住宿候選。未提供住宿時，不會推測住宿資訊或住宿交通路線，相關預算保持未完成。詳見 [`航班與住宿資料來源`](docs/flight-hotel-providers.md)。
 
 ## 架構原則
 

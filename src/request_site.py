@@ -5,16 +5,16 @@ orchestrator 與其 Canonical Trip output 負責。
 """
 from __future__ import annotations
 
+import json
+import re
+from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from datetime import date, datetime, timezone
-import json
 from pathlib import Path
-import re
-from typing import Any, Mapping
+from typing import Any
 
 from src.intent import TravelIntent, parse_trip_request
 from src.intent.contracts import FieldProvenance, TravelerGroup
-
 
 _SLUG = re.compile(r"[a-z0-9][a-z0-9-]*\Z")
 
@@ -151,7 +151,8 @@ def trip_to_registry_entry(trip: Mapping[str, Any], *, slug: str, source_slug: s
     validation = [_public_validation(value) for value in _sequence(trip.get("validation")) if isinstance(value, Mapping)]
     completeness_findings = _trip_completeness_findings(trip)
     has_errors = any(item["severity"] in {"error", "critical"} for item in validation)
-    readiness = "blocked" if has_errors else "incomplete" if validation or completeness_findings else "ready"
+    unresolved_findings = [item for item in validation if item["code"] not in {"schedule.hotel_missing", "schedule.origin_unknown"}]
+    readiness = "blocked" if has_errors else "incomplete" if unresolved_findings or completeness_findings else "ready"
     destinations = _destination_regions(trip)
     generated = datetime.now(timezone.utc).date().isoformat()
     return {
@@ -191,8 +192,9 @@ def trip_publication_findings(trip: Mapping[str, Any]) -> list[str]:
     """Return required itinerary sections missing before a trip can be called ready."""
     validation = [_public_validation(value) for value in _sequence(trip.get("validation")) if isinstance(value, Mapping)]
     findings = _trip_completeness_findings(trip)
-    if validation:
-        findings.extend(f"Canonical Trip validation: {item['code']}" for item in validation)
+    publication_blockers = [item for item in validation if item["code"] not in {"schedule.hotel_missing", "schedule.origin_unknown"}]
+    if publication_blockers:
+        findings.extend(f"Canonical Trip validation: {item['code']}" for item in publication_blockers)
     return findings
 
 
@@ -213,16 +215,13 @@ def _trip_completeness_findings(trip: Mapping[str, Any]) -> list[str]:
     except ValueError:
         findings.append("date range is invalid")
         start = end = None
-    if start is not None and end is not None and end > start:
+    if start is not None and end is not None and end > start and hotel_ids:
         hotel_candidates = set()
         for candidate in _sequence(_mapping(trip.get("candidate_sets")).get("hotels")):
             if isinstance(candidate, Mapping):
                 place = candidate.get("place")
                 if isinstance(place, Mapping) and isinstance(place.get("id"), str):
                     hotel_candidates.add(place["id"])
-        valid_selected_hotels = [hotel_id for hotel_id in hotel_ids if isinstance(hotel_id, str) and hotel_id in hotel_candidates]
-        if not valid_selected_hotels:
-            findings.append("overnight itinerary has no selected hotel candidate")
         if any(not isinstance(hotel_id, str) or hotel_id not in hotel_candidates for hotel_id in hotel_ids):
             findings.append("selected lodging does not match a hotel candidate")
 

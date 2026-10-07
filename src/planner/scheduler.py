@@ -3,13 +3,17 @@
 from __future__ import annotations
 
 import copy
+from collections.abc import Iterable, Mapping, Sequence
 from datetime import date, datetime, time, timedelta, timezone
-from typing import Iterable, Mapping, Sequence
 from zoneinfo import ZoneInfo
 
 from src.conditions import evaluate_conditions
-from src.opening_hours import Eligibility, evaluate_opening_hours, opening_interval_contains
-from src.validator import OpeningInterval, Violation
+from src.opening_hours import (
+    Eligibility,
+    evaluate_opening_hours,
+    opening_interval_contains,
+)
+from src.validator import Violation
 
 from .contracts import ScheduledTrip, ScheduleState, SchedulingInput, SchedulingOutput
 
@@ -252,22 +256,38 @@ def _schedule_day(current: date, day_number: int, hotel_id: str | None, activiti
             details = activity["schedule"]
             optional_meal = activity["kind"] == "meal" and not details.get("required", False)
             cursor_before, previous_before = cursor, previous
-            travel = request.validation_context.travel_minutes.get((previous, activity["id"])) if previous is not None else 0
-            if travel is None:
+            unanchored_start = previous is None and hotel_id is None
+            if unanchored_start:
+                # The user has not supplied a lodging/start anchor. Fixed planner
+                # slots are local itinerary times, not a claim that an unknown
+                # transfer took zero minutes.
+                fixed_start = details.get("fixed_start_at")
+                if not fixed_start:
+                    violations.append(_failure("schedule.origin_unknown", "activity cannot receive an exact arrival time without a verified route origin", activity["path"]))
+                    continue
+                try:
+                    cursor = datetime.fromisoformat(fixed_start).astimezone(zone)
+                except (TypeError, ValueError):
+                    violations.append(_failure("schedule.fixed_time_invalid", "fixed_start_at must be ISO-8601", activity["path"]))
+                    continue
+                violations.append(Violation("schedule.origin_unknown", "warning", "住宿／起點未提供；此時間是景點間行程時段，未包含到達第一個地點的交通。", activity["path"]))
+                travel = None
+            else:
+                travel = request.validation_context.travel_minutes.get((previous, activity["id"])) if previous is not None else None
+            if travel is None and not unanchored_start:
                 violations.append(_optional_meal_warning(activity, "schedule.route_unknown", f"route from {previous} to {activity['id']} is not verified") if optional_meal else _failure("schedule.route_unknown", f"route from {previous} to {activity['id']} is required", activity["path"]))
                 if optional_meal and attempt_index < len(attempts) - 1:
                     continue
                 continue
-            if travel < 0:
+            if travel is not None and travel < 0:
                 violations.append(_failure("schedule.route_invalid", "route duration cannot be negative", activity["path"]))
                 continue
             buffers = details.get("parking_buffer_minutes", 0) + details.get("walking_buffer_minutes", 0)
             if not isinstance(buffers, int) or buffers < 0:
                 violations.append(_failure("schedule.buffer_invalid", "parking/walking buffers must be non-negative integers", activity["path"]))
                 continue
-            cursor = _add_elapsed_minutes(cursor, travel + buffers)
-            if previous is None:
-                violations.append(Violation("schedule.origin_unknown", "warning", "每日首個活動的住宿至目的地路線尚未驗證。", activity["path"]))
+            if travel is not None:
+                cursor = _add_elapsed_minutes(cursor, travel + buffers)
             meal_period = details.get("meal_period")
             if meal_period in {"breakfast", "lunch", "dinner"}:
                 target_time = {"breakfast": time(8, 0), "lunch": time(12, 30), "dinner": time(18, 30)}[meal_period]

@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import base64
 import json
-from pathlib import Path
 import unittest
-from unittest.mock import patch
+from pathlib import Path
 
-from src.mcp_server.github_pages import GitHubPagesPublisher, GitHubPublishError, PublishResult
+from src.mcp_server.github_pages import (
+    GitHubPagesPublisher,
+    GitHubPublishError,
+    PublishResult,
+)
 from src.request_site import trip_to_public_bundle, trip_to_registry_entry
-
 
 FIXTURE = Path(__file__).parents[1] / "fixtures/trips/japan-5-day-trip-v1.json"
 
@@ -102,19 +104,22 @@ class GitHubPagesPublisherTests(unittest.TestCase):
             self.publisher(fake).publish(trip, slug="demo-trip")
         self.assertEqual(fake.calls, [])
 
-    def test_refuses_overnight_trip_without_selected_lodging(self):
+    def test_allows_overnight_trip_without_lodging(self):
         trip = json.loads(json.dumps(self.trip))
         trip["selected"]["hotel_place_ids"] = []
+        trip["validation"] = [{
+            "code": "schedule.hotel_missing", "severity": "warning",
+            "message": "lodging was not supplied", "path": "/selected/hotel_place_ids",
+        }]
         fake = FakeGitHub()
-        with self.assertRaisesRegex(ValueError, "no selected hotel candidate"):
-            self.publisher(fake).publish(trip, slug="demo-trip")
-        self.assertEqual(fake.calls, [])
+        result = self.publisher(fake).publish(trip, slug="demo-trip")
+        self.assertEqual(result.status, "publish_accepted")
 
     def test_refuses_selected_lodging_not_found_in_hotel_candidates(self):
         trip = json.loads(json.dumps(self.trip))
         trip["selected"]["hotel_place_ids"] = ["ghost-hotel"]
         fake = FakeGitHub()
-        with self.assertRaisesRegex(ValueError, "no selected hotel candidate"):
+        with self.assertRaisesRegex(ValueError, "selected lodging does not match a hotel candidate"):
             self.publisher(fake).publish(trip, slug="demo-trip")
         self.assertEqual(fake.calls, [])
 

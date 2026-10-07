@@ -1,30 +1,37 @@
 from __future__ import annotations
 
 import argparse
+import json
 from dataclasses import replace
 from datetime import date, datetime, time, timezone
-import json
-from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
-from src.application.production import ProductionDependencies, ProductionIncompleteError, _add_elapsed_minutes, _assign_route_aware_poi_schedule, _candidate_trips, _google_flights_search_summary, _google_flights_search_url, _routing_context, _select_hotel_candidate, create_production_orchestrator
+from src.application.production import (
+    ProductionDependencies,
+    ProductionIncompleteError,
+    _add_elapsed_minutes,
+    _assign_route_aware_poi_schedule,
+    _candidate_trips,
+    _google_flights_search_summary,
+    _google_flights_search_url,
+    _routing_context,
+    _select_hotel_candidate,
+    create_production_orchestrator,
+)
 from src.cli import plan_command
 from src.intent import parse_trip_request
 from src.orchestrator import StageName, StageStatus
 from src.planner import schedule as route_aware_schedule
 from src.schemas import validate_trip
-from src.sources import AmadeusClient, SourceAdapter
-from src.sources.routing import PlaceRef, Route, RouteMode, RouteProvenance, RouteStatus
+from src.sources import SourceAdapter
+from src.sources.routing import PlaceRef, Route, RouteProvenance, RouteStatus
 from src.validator import OpeningInterval, ValidationContext
-
 
 ENVIRONMENT = {
     "GOOGLE_MAPS_API_KEY": "google-secret",
     "YOUTUBE_API_KEY": "youtube-secret",
-    "AMADEUS_CLIENT_ID": "amadeus-id",
-    "AMADEUS_CLIENT_SECRET": "amadeus-secret",
     "OPENROUTESERVICE_API_KEY": "ors-secret",
 }
 
@@ -85,26 +92,14 @@ class BrokenYouTube(RecordedYouTube):
         raise RuntimeError("recorded YouTube timeout")
 
 
-def _transport(method, url, headers, body):
-    if url.endswith("/v1/security/oauth2/token"):
-        return 200, {"access_token": "recorded-token"}
-    if "flight-offers" in url:
-        return 200, {"data": [{"id": "offer-1", "itineraries": [{"segments": [{"carrierCode": "CI", "number": "1", "departure": {"iataCode": "TPE", "at": "2026-04-10T08:00:00"}, "arrival": {"iataCode": "TKS", "at": "2026-04-10T12:00:00"}}]}], "price": {"grandTotal": "1000", "currency": "JPY"}}]}
-    if "locations/hotels/by-city" in url:
-        return 200, {"data": [{"hotelId": "H1"}]}
-    if "hotel-offers" in url:
-        return 200, {"data": [{"hotel": {"hotelId": "H1", "name": "Recorded hotel", "latitude": 34.1, "longitude": 134.2}, "offers": [{"id": "hotel-offer", "price": {"total": "2000", "currency": "JPY"}}]}]}
-    raise AssertionError(url)
-
-
-def _runner(tmp_path, *, youtube=None, google=None, transport=_transport):
+def _runner(tmp_path, *, youtube=None, google=None, environment=ENVIRONMENT):
     dependencies = ProductionDependencies(
         google=google or RecordedGoogle(), youtube=youtube or RecordedYouTube(),
-        amadeus_client=AmadeusClient(transport, ENVIRONMENT), routing_provider=RecordedCompleteRouting(),
+        routing_provider=RecordedCompleteRouting(),
     )
     return create_production_orchestrator(
         trip_id="recorded-trip", trips_directory=tmp_path / "trips", site_directory=tmp_path / "site",
-        environment=ENVIRONMENT, dependencies=dependencies,
+        environment=environment, dependencies=dependencies,
     )
 
 
@@ -128,7 +123,6 @@ def test_recorded_production_composition_runs_pipeline_and_persists_canonical_ou
     assert trip["budget"]["limit"] == {"amount": 80000, "currency": "JPY"}
     assert "預算上限 JPY 80,000" in result.render_path.read_text(encoding="utf-8")
     assert "google-secret" not in persisted
-    assert "amadeus-secret" not in persisted
     assert result.render_path.exists()
 
 
@@ -154,7 +148,6 @@ def test_production_runs_without_youtube_key_and_reports_optional_source_unavail
         environment=environment,
         dependencies=ProductionDependencies(
             google=RecordedGoogle(),
-            amadeus_client=AmadeusClient(_transport, ENVIRONMENT),
             routing_provider=RecordedCompleteRouting(),
         ),
     )
@@ -173,12 +166,14 @@ def test_kurashiki_unlimited_budget_is_not_confused_with_incomplete_cost_coverag
     intent = parse_trip_request(request)
     result = _runner(tmp_path).run(intent)
 
-    assert not result.succeeded
+    assert result.succeeded
     assert intent.budget_status == "unlimited"
-    assert any("hotel search is not available for this destination" in warning.message for warning in result.stage(StageName.RESEARCH).warnings)
+    trip = json.loads(result.trip_path.read_text(encoding="utf-8"))
+    assert trip["selected"]["hotel_place_ids"] == []
+    assert trip["budget"]["total_status"] == "incomplete"
 
 
-def test_kurashiki_five_day_fixture_schedules_multiple_pois_per_day_without_provider_durations():
+def test_kurashiki_five_day_fixture_schedules_pois_and_lunch_without_lodging():
     request = "日本岡山縣倉敷五天四夜。日期：2026/11/01～2026/11/05。出發地：桃園國際機場。旅客：6位成人、1位2歲幼兒。預算：暫不設限制。交通方式：自駕。"
     intent = parse_trip_request(request)
     provenance = {"source_type": "provider", "provider": "Recorded Places", "source_url": "https://example.test/places", "retrieved_at": "2026-10-01T00:00:00+09:00", "status": "confirmed"}
@@ -188,16 +183,14 @@ def test_kurashiki_five_day_fixture_schedules_multiple_pois_per_day_without_prov
         1: {"duration_minutes": 75, "duration_basis": "provider", "day": 1, "selected": True, "required": True, "fixed_start_at": "2026-11-01T14:00:00+09:00", "fixed_end_at": "2026-11-01T15:15:00+09:00"},
     }
     poi_records = [("places", {"id": f"kurashiki-poi-{number}", "name": f"倉敷景點 {number}", "kind": "poi", "primary_type": "museum", "coordinates": {"latitude": 34.6 + number / 10000, "longitude": 133.77}, "opening_hours": hours, **({"schedule": anchors[number]} if number in anchors else {}), "provenance": provenance}) for number in range(12)]
-    hotel = {"place": {"id": "kurashiki-hotel", "name": "Recorded Kurashiki hotel", "kind": "hotel", "coordinates": {"latitude": 34.6, "longitude": 133.77}, "provenance": provenance}, "total_cost": {"amount": 1000, "currency": "JPY"}, "check_in": "2026-11-01", "check_out": "2026-11-05", "occupancy": {"adults": 6, "child_ages": [2], "rooms": 1}, "price_status": "unverified", "provenance": provenance}
     refs = [PlaceRef(candidate["id"], candidate["coordinates"]["latitude"], candidate["coordinates"]["longitude"]) for _, candidate in poi_records]
-    refs.append(PlaceRef("kurashiki-hotel", 34.6, 133.77))
-    restaurant = {"place": {"id": "kurashiki-restaurant", "name": "倉敷餐廳", "kind": "restaurant", "coordinates": {"latitude": 34.6, "longitude": 133.77}, "provenance": provenance}, "opening_hours": {"status": "fresh", "timezone": "Asia/Tokyo", "intervals": [{"weekday": day, "opens_at": "09:00", "closes_at": "21:00"} for day in range(7)]}, "rating": 4.5, "review_count": 50, "provenance": provenance}
-    refs.append(PlaceRef("kurashiki-restaurant", 34.6, 133.77))
+    restaurants = [{"place": {"id": f"kurashiki-restaurant-{number}", "name": f"倉敷餐廳 {number}", "kind": "restaurant", "coordinates": {"latitude": 34.6, "longitude": 133.77}, "provenance": provenance}, "opening_hours": {"status": "fresh", "timezone": "Asia/Tokyo", "intervals": [{"weekday": day, "opens_at": "09:00", "closes_at": "21:00"} for day in range(7)]}, "rating": 4.5, "review_count": 50, "provenance": provenance} for number in range(10)]
+    refs.extend(PlaceRef(item["place"]["id"], 34.6, 133.77) for item in restaurants)
     routes = {(origin.place_id, destination.place_id): 10 for origin in refs for destination in refs if origin != destination}
-    routes[("kurashiki-restaurant", "kurashiki-poi-1")] = 45
-    opening = {ref.place_id: tuple(OpeningInterval(day, time(8), time(22)) for day in range(7)) for ref in refs if ref.place_id != "kurashiki-hotel"}
+    opening = {ref.place_id: tuple(OpeningInterval(day, time(8), time(22)) for day in range(7)) for ref in refs}
 
-    records = [*map(lambda pair: SimpleNamespace(collection=pair[0], candidate=pair[1]), poi_records), SimpleNamespace(collection="hotels", candidate=hotel), SimpleNamespace(collection="restaurants", candidate=restaurant)]
+    records = [*(SimpleNamespace(collection=collection, candidate=candidate) for collection, candidate in poi_records),
+               *(SimpleNamespace(collection="restaurants", candidate=item) for item in restaurants)]
     with patch("src.application.production.schedule", wraps=route_aware_schedule) as scheduler:
         trip, = _candidate_trips("kurashiki-recorded", intent, records, ValidationContext(routes, opening))
     scheduler.assert_called_once()
@@ -206,7 +199,10 @@ def test_kurashiki_five_day_fixture_schedules_multiple_pois_per_day_without_prov
     visits_by_day = [[item for item in day["items"] if item["kind"] == "visit"] for day in trip["days"]]
     assert len(poi_records) >= 10
     assert all(len(visits) >= 2 for visits in visits_by_day)
-    assert not any(candidate.get("schedule", {}).get("day") == 1 and candidate.get("schedule", {}).get("meal_period") == "lunch" for candidate in trip["candidate_sets"]["restaurants"])
+    scheduled_meals = [item for day in trip["days"] for item in day["items"] if item["kind"] == "meal"]
+    assert len(scheduled_meals) == 10
+    assert all(any(item["kind"] == "meal" for item in day["items"]) for day in trip["days"])
+    assert trip["selected"]["hotel_place_ids"] == []
     assert trip["candidate_sets"]["places"][0]["schedule"]["duration_basis"] == "provider"
     assert trip["candidate_sets"]["places"][0]["schedule"]["fixed_start_at"] == "2026-11-01T09:30:00+09:00"
     assert trip["candidate_sets"]["places"][1]["schedule"]["fixed_start_at"] == "2026-11-01T14:00:00+09:00"
@@ -311,106 +307,47 @@ def test_route_aware_production_fails_closed_when_poi_hours_are_missing():
 
 
 def test_taiwan_domestic_trip_uses_taiwan_context_without_flight_search(tmp_path):
-    calls = []
-
-    def taiwan_transport(method, url, headers, body):
-        calls.append(url)
-        if url.endswith("/v1/security/oauth2/token"):
-            return 200, {"access_token": "recorded-token"}
-        if "flight-offers" in url:
-            raise AssertionError("Taiwan domestic trips must not search international flights")
-        if "locations/hotels/by-city" in url:
-            assert "cityCode=TPE" in url
-            return 200, {"data": [{"hotelId": "H1"}]}
-        if "hotel-offers" in url:
-            return 200, {"data": [{"hotel": {"hotelId": "H1", "name": "Recorded Taipei hotel", "latitude": 25.04, "longitude": 121.51}, "offers": [{"id": "hotel-offer", "price": {"total": "2000", "currency": "TWD"}}]}]}
-        raise AssertionError(url)
-
     google = RecordedTaiwanGoogle()
     intent = parse_trip_request("2026/10/20到2026/10/22，台北出發，台灣萬華西門三天兩夜，2大，大眾運輸")
-    result = _runner(tmp_path, google=google, transport=taiwan_transport).run(intent)
+    result = _runner(tmp_path, google=google).run(intent)
 
     assert result.succeeded
     trip = json.loads(result.trip_path.read_text(encoding="utf-8"))
-    assert "flight-offers" not in " ".join(calls)
     assert google.queries[0].destination == "萬華、西門町"
     assert "flights" not in google.queries[0].categories
     assert trip["local_timezone"] == "Asia/Taipei"
     assert trip["budget"]["currency"] == "TWD"
     assert trip["selected"]["flight_ids"] == []
     assert trip["candidate_sets"]["flights"] == []
-    assert set(trip["budget"]["categories"]) == {"hotel"}
-    hotel_query = next(url for url in calls if "hotel-offers" in url)
-    assert "checkInDate=2026-10-20" in hotel_query
-    assert "checkOutDate=2026-10-22" in hotel_query
-    assert trip["candidate_sets"]["hotels"][0]["check_in"] == "2026-10-20"
-    assert trip["candidate_sets"]["hotels"][0]["check_out"] == "2026-10-22"
-    assert trip["candidate_sets"]["hotels"][0]["occupancy"] == {"adults": 2, "child_ages": [], "rooms": 1}
-    assert "taxes_fees" not in trip["candidate_sets"]["hotels"][0]
-    assert "tax inclusion" in trip["candidate_sets"]["hotels"][0]["provenance"]["note"]
-    assert "one-room search is preliminary" in trip["candidate_sets"]["hotels"][0]["provenance"]["note"]
-    assert trip["candidate_sets"]["hotels"][0]["price_status"] == "unverified"
-    assert "cancellation_policy" not in trip["candidate_sets"]["hotels"][0]
+    assert trip["candidate_sets"]["hotels"] == []
+    assert "hotel" not in trip["budget"]["categories"]
     assert not any("river" in str(constraint).lower() for constraint in trip["preferences"]["hard_constraints"])
     assert "no booking is created" in trip["provenance"]["note"].lower()
 
 
-def test_hotel_selection_is_price_ranked_and_unqualified_stays_pending(tmp_path):
-    calls = []
-
-    def hotels_transport(method, url, headers, body):
-        calls.append(url)
-        if url.endswith("/v1/security/oauth2/token"):
-            return 200, {"access_token": "recorded-token"}
-        if "locations/hotels/by-city" in url:
-            return 200, {"data": [{"hotelId": "H-expensive"}, {"hotelId": "H-cheap"}]}
-        if "hotel-offers" in url:
-            return 200, {"data": [
-                {"hotel": {"hotelId": "H-expensive", "name": "Expensive Taipei", "latitude": 25.04, "longitude": 121.51}, "offers": [{"id": "expensive", "price": {"total": "7000", "currency": "TWD"}, "room": {"typeEstimated": {"category": "STANDARD_ROOM"}}}]},
-                {"hotel": {"hotelId": "H-cheap", "name": "Affordable Taipei", "latitude": 25.05, "longitude": 121.52}, "offers": [{"id": "cheap", "price": {"total": "4000", "currency": "TWD"}, "room": {"typeEstimated": {"category": "TWIN_BED"}}}]},
-            ]}
-        raise AssertionError(url)
-
+def test_production_does_not_query_lodging_even_with_legacy_amadeus_credentials(tmp_path):
     intent = parse_trip_request("2026/10/20到2026/10/22，台灣萬華西門三天兩夜，2大，2間房，雙床房，預算8千元")
-    result = _runner(tmp_path, google=RecordedTaiwanGoogle(), transport=hotels_transport).run(intent)
+    environment = {**ENVIRONMENT, "AMADEUS_CLIENT_ID": "obsolete-id", "AMADEUS_CLIENT_SECRET": "obsolete-secret"}
+    result = _runner(tmp_path, google=RecordedTaiwanGoogle(), environment=environment).run(intent)
     assert result.succeeded
     trip = json.loads(result.trip_path.read_text(encoding="utf-8"))
-    assert trip["selected"]["hotel_place_ids"] == ["amadeus-hotel-h-cheap"]
-    assert trip["budget"]["categories"]["hotel"]["amount"] == 4000
-    selected_candidate = next(item for item in trip["candidate_sets"]["hotels"] if item["place"]["id"] == trip["selected"]["hotel_place_ids"][0])
-    assert selected_candidate["room_type"] == "TWIN_BED"
-    assert selected_candidate["occupancy"]["rooms"] == 2
-    assert "roomQuantity=2" in next(url for url in calls if "hotel-offers" in url)
+    assert trip["selected"]["hotel_place_ids"] == []
+    assert trip["candidate_sets"]["hotels"] == []
 
 
 def test_hotel_over_budget_or_unverified_preference_remains_unselected(tmp_path):
-    def hotels_transport(method, url, headers, body):
-        if url.endswith("/v1/security/oauth2/token"):
-            return 200, {"access_token": "recorded-token"}
-        if "locations/hotels/by-city" in url:
-            return 200, {"data": [{"hotelId": "H1"}]}
-        if "hotel-offers" in url:
-            return 200, {"data": [{"hotel": {"hotelId": "H1", "name": "Generic Taipei hotel", "latitude": 25.04, "longitude": 121.51}, "offers": [{"id": "hotel-offer", "price": {"total": "9000", "currency": "TWD"}}]}]}
-        raise AssertionError(url)
-
     intent = parse_trip_request("2026/10/20到2026/10/22，台灣萬華三天兩夜，2大，預算8千元")
-    result = _runner(tmp_path, google=RecordedTaiwanGoogle(), transport=hotels_transport).run(intent)
-    assert not result.succeeded
-    assert any("selected lodging candidate" in error.message for error in result.stage(StageName.PLANNER).errors)
-
-    def untyped_room_transport(method, url, headers, body):
-        if url.endswith("/v1/security/oauth2/token"):
-            return 200, {"access_token": "recorded-token"}
-        if "locations/hotels/by-city" in url:
-            return 200, {"data": [{"hotelId": "H1"}]}
-        if "hotel-offers" in url:
-            return 200, {"data": [{"hotel": {"hotelId": "H1", "name": "Generic Taipei hotel", "latitude": 25.04, "longitude": 121.51}, "offers": [{"id": "hotel-offer", "price": {"total": "4000", "currency": "TWD"}}]}]}
-        raise AssertionError(url)
+    result = _runner(tmp_path, google=RecordedTaiwanGoogle()).run(intent)
+    assert result.succeeded
+    trip = json.loads(result.trip_path.read_text(encoding="utf-8"))
+    assert trip["selected"]["hotel_place_ids"] == []
+    assert trip["budget"]["total_status"] == "incomplete"
 
     room_intent = parse_trip_request("2026/10/20到2026/10/22，台灣萬華三天兩夜，2大，雙床房，預算8千元")
-    room_result = _runner(tmp_path / "room-type", google=RecordedTaiwanGoogle(), transport=untyped_room_transport).run(room_intent)
-    assert not room_result.succeeded
-    assert any("selected lodging candidate" in error.message for error in room_result.stage(StageName.PLANNER).errors)
+    room_result = _runner(tmp_path / "room-type", google=RecordedTaiwanGoogle()).run(room_intent)
+    assert room_result.succeeded
+    room_trip = json.loads(room_result.trip_path.read_text(encoding="utf-8"))
+    assert room_trip["selected"]["hotel_place_ids"] == []
 
 
 def test_hotel_selection_compares_distance_to_requested_destination_places():
@@ -433,17 +370,7 @@ def test_hotel_selection_compares_distance_to_requested_destination_places():
 
 def test_night_river_view_without_confirmed_viewpoint_evidence_stays_incomplete(tmp_path):
     intent = parse_trip_request("2026/10/20到2026/10/22，台北出發，台灣萬華西門三天兩夜，2大，大眾運輸，晚上看得到河流與夜景")
-
-    def taiwan_transport(method, url, headers, body):
-        if url.endswith("/v1/security/oauth2/token"):
-            return 200, {"access_token": "recorded-token"}
-        if "locations/hotels/by-city" in url:
-            return 200, {"data": [{"hotelId": "H1"}]}
-        if "hotel-offers" in url:
-            return 200, {"data": [{"hotel": {"hotelId": "H1", "name": "Recorded Taipei hotel", "latitude": 25.04, "longitude": 121.51}, "offers": [{"id": "hotel-offer", "price": {"total": "2000", "currency": "TWD"}}]}]}
-        raise AssertionError(url)
-
-    result = _runner(tmp_path, google=RecordedTaiwanGoogle(), transport=taiwan_transport).run(intent)
+    result = _runner(tmp_path, google=RecordedTaiwanGoogle()).run(intent)
     assert not result.succeeded
     assert result.trip is None
     validation = result.stage(StageName.VALIDATOR_REPAIR)
@@ -452,26 +379,11 @@ def test_night_river_view_without_confirmed_viewpoint_evidence_stays_incomplete(
 
 
 def test_cross_border_trip_links_to_google_flights_without_provider_search(tmp_path):
-    calls = []
-
-    def cross_border_transport(method, url, headers, body):
-        calls.append(url)
-        if url.endswith("/v1/security/oauth2/token"):
-            return 200, {"access_token": "recorded-token"}
-        if "flight-offers" in url:
-            return 200, {"data": [{"id": "hk-tpe", "itineraries": [{"segments": [{"carrierCode": "CX", "number": "400", "departure": {"iataCode": "HKG", "at": "2026-10-20T08:00:00"}, "arrival": {"iataCode": "TPE", "at": "2026-10-20T10:00:00"}}]}], "price": {"grandTotal": "3000", "currency": "TWD"}}]}
-        if "locations/hotels/by-city" in url:
-            return 200, {"data": [{"hotelId": "H1"}]}
-        if "hotel-offers" in url:
-            return 200, {"data": [{"hotel": {"hotelId": "H1", "name": "Recorded Taipei hotel", "latitude": 25.04, "longitude": 121.51}, "offers": [{"id": "hotel-offer", "price": {"total": "2000", "currency": "TWD"}}]}]}
-        raise AssertionError(url)
-
     intent = parse_trip_request("2026/10/20到2026/10/22，香港出發台灣萬華三天兩夜，2大")
-    result = _runner(tmp_path, google=RecordedTaiwanGoogle(), transport=cross_border_transport).run(intent)
+    result = _runner(tmp_path, google=RecordedTaiwanGoogle()).run(intent)
 
     assert result.succeeded
     trip = json.loads(result.trip_path.read_text(encoding="utf-8"))
-    assert "flight-offers" not in " ".join(calls)
     assert trip["selected"]["flight_ids"] == []
     assert trip["flight_search_url"] == "https://www.google.com/travel/flights?hl=zh-TW"
     assert "香港 → 台灣、萬華" in trip["flight_search_summary"]
@@ -484,33 +396,26 @@ def test_unmapped_origin_falls_back_to_google_flights_search_page(tmp_path):
     assert _google_flights_search_url(intent, start, end) == "https://www.google.com/travel/flights?hl=zh-TW"
     assert "未知出發地" in _google_flights_search_summary(intent, start, end)
     result = _runner(tmp_path, google=RecordedTaiwanGoogle()).run(intent)
-    assert not result.succeeded
-    assert any("selected lodging candidate" in error.message for error in result.stage(StageName.PLANNER).errors)
+    assert result.succeeded
+    trip = json.loads(result.trip_path.read_text(encoding="utf-8"))
+    assert trip["flight_search_url"] == "https://www.google.com/travel/flights?hl=zh-TW"
 
 
 def test_unsupported_hotel_destination_reports_provider_capability_limit(tmp_path):
     intent = parse_trip_request("2026/10/20到2026/10/22，北海道三天兩夜，2大")
     result = _runner(tmp_path).run(intent)
 
-    assert not result.succeeded
+    assert result.succeeded
+    trip = json.loads(result.trip_path.read_text(encoding="utf-8"))
+    assert trip["selected"]["hotel_place_ids"] == []
     research = result.stage(StageName.RESEARCH)
-    assert research.status is StageStatus.INCOMPLETE
-    assert any("hotel search is not available for this destination" in warning.message for warning in research.warnings)
+    assert research.status is StageStatus.SUCCEEDED
 
 
 def test_international_japan_trip_completes_without_live_flight_provider(tmp_path):
-    calls = []
-
-    def no_flight_offers(method, url, headers, body):
-        calls.append(url)
-        if "flight-offers" in url:
-            return 200, {"data": []}
-        return _transport(method, url, headers, body)
-
     intent = parse_trip_request("2026/4/10到2026/4/14 台北出發德島五天四夜，2大，預算8萬日圓，自駕")
-    result = _runner(tmp_path, transport=no_flight_offers).run(intent)
+    result = _runner(tmp_path).run(intent)
 
-    assert "flight-offers" not in " ".join(calls)
     assert result.succeeded
     trip = json.loads(result.trip_path.read_text(encoding="utf-8"))
     assert trip["candidate_sets"]["flights"] == []
@@ -519,7 +424,7 @@ def test_international_japan_trip_completes_without_live_flight_provider(tmp_pat
 
 
 def test_cli_non_demo_invokes_shared_production_composition_not_configuration_ready(monkeypatch, capsys, tmp_path):
-    monkeypatch.setattr("src.cli.missing_required_configuration", lambda: [])
+    monkeypatch.setattr("src.cli.missing_required_configuration", list)
     called = {}
     fake_result = SimpleNamespace(succeeded=True, trip_path=tmp_path / "trips/x/trip.json", render_path=tmp_path / "site/x/index.html", stages=(), warnings=(), trip={"budget": {"currency": "JPY", "categories": {}, "total": {"amount": 0, "currency": "JPY"}, "total_status": "incomplete", "limit_status": "unlimited"}})
 

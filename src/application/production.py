@@ -6,27 +6,44 @@ adapters/providers through ``dependencies`` without changing production code.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
-from datetime import date, datetime, time, timedelta, timezone
 import os
 import re
+from collections.abc import Callable, Iterable, Mapping, Sequence
+from dataclasses import dataclass, replace
+from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
-from typing import Callable, Iterable, Mapping, Sequence
 from zoneinfo import ZoneInfo
 
 from src.intent import TravelIntent
 from src.opening_hours import parse_clock
-from src.orchestrator import OrchestrationResult, TravelOrchestrator, TravelOrchestratorConfig
-from src.planner import SchedulingInput, schedule
-from src.restaurant_intelligence import eligible_restaurants, meal_eligibility, reconcile_restaurant_candidates, validation_opening_hours
-from src.sources import (
-    AdapterFailure, AmadeusClient, AmadeusHotelAdapter,
-    GooglePlacesAdapter, HotPepperGourmetAdapter, HotelSearchQuery, Occupancy, SourceAdapter, SourceQuery,
-    YouTubeEvidenceAdapter, collect_from_adapters,
+from src.orchestrator import (
+    OrchestrationResult,
+    TravelOrchestrator,
+    TravelOrchestratorConfig,
 )
-from src.sources.routing import OpenRouteServiceProvider, PlaceRef, RouteMatrix, RouteMode, RouteStatus
+from src.planner import SchedulingInput, schedule
+from src.restaurant_intelligence import (
+    eligible_restaurants,
+    reconcile_restaurant_candidates,
+    validation_opening_hours,
+)
+from src.sources import (
+    AdapterFailure,
+    GooglePlacesAdapter,
+    HotPepperGourmetAdapter,
+    SourceAdapter,
+    SourceQuery,
+    YouTubeEvidenceAdapter,
+    collect_from_adapters,
+)
+from src.sources.routing import (
+    OpenRouteServiceProvider,
+    PlaceRef,
+    RouteMatrix,
+    RouteMode,
+    RouteStatus,
+)
 from src.validator import OpeningInterval, ValidationContext
-
 
 REQUIRED_ENVIRONMENT = (
     "GOOGLE_MAPS_API_KEY",
@@ -53,7 +70,6 @@ class ProductionDependencies:
 
     google: SourceAdapter | None = None
     youtube: YouTubeEvidenceAdapter | None = None
-    amadeus_client: AmadeusClient | None = None
     routing_provider: object | None = None
     hotpepper: SourceAdapter | None = None
     official_restaurants: SourceAdapter | None = None
@@ -65,10 +81,9 @@ class _ProductionResearchAdapter(SourceAdapter):
     name = "production-research"
 
     def __init__(self, intent: TravelIntent, google: SourceAdapter, youtube: YouTubeEvidenceAdapter | None,
-                 hotel_client: AmadeusClient | None, optional_restaurants: Sequence[SourceAdapter] = ()) -> None:
+                 optional_restaurants: Sequence[SourceAdapter] = ()) -> None:
         self.intent, self.google, self.youtube = intent, google, youtube
         self.optional_restaurants = tuple(optional_restaurants)
-        self.hotel_search = AmadeusHotelAdapter(hotel_client) if hotel_client else None
         self.evidence: list[object] = []
         self.failures: list[AdapterFailure] = []
         self.optional_failures: list[AdapterFailure] = []
@@ -97,22 +112,6 @@ class _ProductionResearchAdapter(SourceAdapter):
             ))
         candidates, failures = collect_from_adapters((self.google, *self.optional_restaurants), query)
         self.failures.extend(failures)
-        start, end = _travel_dates(self.intent)
-        occupancy = Occupancy(_adults(self.intent), self.intent.travelers.child_ages)
-        currency = self.intent.currency or _default_currency(self.intent)
-        if self.hotel_search is not None:
-            try:
-                result = self.hotel_search.search(HotelSearchQuery(
-                    _hotel_city_code(self.intent), start, end, occupancy, currency=currency,
-                    room_quantity=self.intent.room_count or 1,
-                    room_quantity_explicit=self.intent.room_count is not None,
-                ))
-                candidates.extend(result.candidates)
-                self.failures.extend(result.failures)
-            except Exception as exc:
-                self.failures.append(AdapterFailure(self.hotel_search.name, str(exc)))
-        else:
-            self.failures.append(AdapterFailure("hotel-search", "hotel search is unavailable: Amadeus Self-Service was retired; no replacement provider is configured"))
         restaurants = reconcile_restaurant_candidates(candidate for collection, candidate in candidates if collection == "restaurants")
         candidates = [(collection, candidate) for collection, candidate in candidates if collection != "restaurants"]
         candidates.extend(("restaurants", candidate) for candidate in restaurants)
@@ -162,9 +161,6 @@ def create_production_orchestrator(*, trip_id: str, trips_directory: Path = Path
     youtube = dependencies.youtube
     if youtube is None and environment.get("YOUTUBE_API_KEY"):
         youtube = YouTubeEvidenceAdapter(api_key=environment["YOUTUBE_API_KEY"])
-    hotel_client = dependencies.amadeus_client
-    if hotel_client is None and environment.get("AMADEUS_CLIENT_ID") and environment.get("AMADEUS_CLIENT_SECRET"):
-        hotel_client = AmadeusClient(environment=dict(environment))
     routing_provider = dependencies.routing_provider or OpenRouteServiceProvider(api_key=environment["OPENROUTESERVICE_API_KEY"])
     optional_restaurants: list[SourceAdapter] = []
     if dependencies.hotpepper is not None:
@@ -178,7 +174,7 @@ def create_production_orchestrator(*, trip_id: str, trips_directory: Path = Path
     # the facade just before invoking the existing orchestrator.
     runner = _IntentBoundRunner(
         trip_id=trip_id, trips_directory=trips_directory, site_directory=site_directory,
-        google=google, youtube=youtube, hotel_client=hotel_client, routing_provider=routing_provider,
+        google=google, youtube=youtube, routing_provider=routing_provider,
         optional_restaurants=tuple(optional_restaurants),
         progress_callback=progress_callback,
     )
@@ -187,17 +183,17 @@ def create_production_orchestrator(*, trip_id: str, trips_directory: Path = Path
 
 class _IntentBoundRunner(ProductionPlanningRunner):
     def __init__(self, *, trip_id: str, trips_directory: Path, site_directory: Path,
-                 google: SourceAdapter, youtube: YouTubeEvidenceAdapter | None, hotel_client: AmadeusClient | None,
+                 google: SourceAdapter, youtube: YouTubeEvidenceAdapter | None,
                  routing_provider: object, progress_callback: Callable[[str], None] | None,
                  optional_restaurants: Sequence[SourceAdapter] = ()) -> None:
         self.trip_id, self.trips_directory, self.site_directory = _safe_trip_id(trip_id), trips_directory, site_directory
-        self.google, self.youtube, self.hotel_client = google, youtube, hotel_client
+        self.google, self.youtube = google, youtube
         self.optional_restaurants = tuple(optional_restaurants)
         self.routing_provider, self.progress_callback = routing_provider, progress_callback
 
     def run(self, intent: TravelIntent) -> OrchestrationResult:
         _require_plannable_intent(intent)
-        research = _ProductionResearchAdapter(intent, self.google, self.youtube, self.hotel_client, self.optional_restaurants)
+        research = _ProductionResearchAdapter(intent, self.google, self.youtube, self.optional_restaurants)
         config = TravelOrchestratorConfig(
             adapters=(research,),
             candidate_trip_factory=lambda current, store: _candidate_trips(self.trip_id, current, store.records(), _routing_context(store.records(), self.routing_provider, current)),
@@ -276,8 +272,8 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
             "no feasible route-aware schedule from normalized candidates; "
             + (detail or "verified opening hours, visit durations, and directed routes are required")
         )
-    if scheduled.state.value != "ready":
-        raise ProductionIncompleteError("route-aware schedule is partial because required hotel or route facts are unavailable")
+    if scheduled.state.value not in {"ready", "partial"}:
+        raise ProductionIncompleteError("route-aware schedule failed because required route or opening-hour facts are unavailable")
     scheduled.trip["validation"].extend(
         {"code": finding.code, "severity": finding.severity, "message": finding.message, "path": finding.path}
         for finding in scheduled.violations
@@ -298,8 +294,6 @@ def _assign_route_aware_poi_schedule(
     facts. A missing provider schedule receives a labeled estimate; missing
     hours or routes remain unavailable and can make the result incomplete.
     """
-    if hotel_id is None:
-        raise ProductionIncompleteError("route-aware daily scheduling requires a selected lodging candidate to verify each day's outbound and return routes")
     eligible: list[dict] = []
     unavailable: list[str] = []
     selected_ids: set[str] = set()
@@ -355,12 +349,17 @@ def _assign_route_aware_poi_schedule(
         for first_index, first in enumerate(eligible):
             if first["id"] in selected_ids:
                 continue
-            out_minutes = routing.travel_minutes.get((hotel_id, first["id"]))
-            if out_minutes is None or routing.travel_minutes.get((first["id"], hotel_id)) is None:
+            out_minutes = routing.travel_minutes.get((hotel_id, first["id"])) if hotel_id is not None else None
+            return_first = routing.travel_minutes.get((first["id"], hotel_id)) if hotel_id is not None else None
+            if hotel_id is not None and (out_minutes is None or return_first is None):
                 continue
             first_details = first["schedule"]
             first_duration = first_details["duration_minutes"]
             first_buffer = first_details.get("parking_buffer_minutes", 0) + first_details.get("walking_buffer_minutes", 0)
+            # Without user-supplied lodging there is no verified route anchor.
+            # Start the suggested day at the attraction opening and leave that
+            # transfer explicitly unverified; never encode an unknown route as 0.
+            first_arrival = _add_elapsed_minutes(day_start, out_minutes + first_buffer) if out_minutes is not None else day_start
             for first_interval in routing.opening_hours.get(first["id"], ()):
                 if (type(first_interval.weekday) is not int or first_interval.weekday not in range(7)
                         or type(first_interval.closes_day_offset) is not int or first_interval.closes_day_offset not in (0, 1)
@@ -369,7 +368,7 @@ def _assign_route_aware_poi_schedule(
                     continue
                 first_open = datetime.combine(current, first_interval.opens_at, zone)
                 first_close = datetime.combine(current + timedelta(days=first_interval.closes_day_offset), first_interval.closes_at, zone)
-                first_start = max(_add_elapsed_minutes(day_start, out_minutes + first_buffer), first_open,
+                first_start = max(first_arrival, first_open,
                                   key=lambda value: value.astimezone(timezone.utc))
                 first_end = _add_elapsed_minutes(first_start, first_duration)
                 if first_end.astimezone(timezone.utc) > first_close.astimezone(timezone.utc):
@@ -378,8 +377,8 @@ def _assign_route_aware_poi_schedule(
                     if second["id"] in selected_ids or second_index == first_index:
                         continue
                     between = routing.travel_minutes.get((first["id"], second["id"]))
-                    return_second = routing.travel_minutes.get((second["id"], hotel_id))
-                    if between is None or return_second is None:
+                    return_second = routing.travel_minutes.get((second["id"], hotel_id)) if hotel_id is not None else None
+                    if between is None or (hotel_id is not None and return_second is None):
                         continue
                     second_details = second["schedule"]
                     second_duration = second_details["duration_minutes"]
@@ -398,10 +397,12 @@ def _assign_route_aware_poi_schedule(
                                            datetime.combine(current, time(14, 0), zone),
                                            key=lambda value: value.astimezone(timezone.utc))
                         second_end = _add_elapsed_minutes(second_start, second_duration)
-                        if (second_end.astimezone(timezone.utc) <= second_close.astimezone(timezone.utc)
-                                and _add_elapsed_minutes(second_end, return_second).astimezone(timezone.utc)
-                                <= day_end.astimezone(timezone.utc)):
-                            route_minutes = out_minutes + between + return_second
+                        returns_in_time = (hotel_id is None or _add_elapsed_minutes(second_end, return_second).astimezone(timezone.utc)
+                                           <= day_end.astimezone(timezone.utc))
+                        if second_end.astimezone(timezone.utc) <= second_close.astimezone(timezone.utc) and returns_in_time:
+                            # Compare only verified legs; unknown lodging transfers
+                            # are omitted from the score rather than assigned zero.
+                            route_minutes = between + sum(value for value in (out_minutes, return_second) if value is not None)
                             fatigue = float(first_details.get("fatigue", 0)) + float(second_details.get("fatigue", 0))
                             options.append((route_minutes, fatigue, first_index, second_index, first_start, second_start))
         if not options:
@@ -537,7 +538,7 @@ def _restaurant_candidates(candidates: Sequence[dict], intent: TravelIntent, sta
 
 def _meal_route_feasible(candidate: Mapping[str, object], period: str, starts: datetime, ends: datetime,
                          day_number: int, routing: ValidationContext | None, places: Sequence[dict], hotel_id: str | None) -> bool:
-    if routing is None or hotel_id is None:
+    if routing is None:
         return False
     place_id = candidate.get("place", {}).get("id")
     if not isinstance(place_id, str):
@@ -568,17 +569,19 @@ def _meal_route_feasible(candidate: Mapping[str, object], period: str, starts: d
             next_buffer = next_details.get("parking_buffer_minutes", 0) + next_details.get("walking_buffer_minutes", 0)
         else:
             next_id, next_start, next_buffer = hotel_id, datetime.combine(starts.date(), time(20), starts.tzinfo), 0
-        incoming = routing.travel_minutes.get((previous_id, place_id))
-        outgoing = routing.travel_minutes.get((place_id, next_id))
-        if incoming is None or outgoing is None:
+        incoming = routing.travel_minutes.get((previous_id, place_id)) if previous_id is not None else None
+        outgoing = routing.travel_minutes.get((place_id, next_id)) if next_id is not None else None
+        if (previous_id is not None and incoming is None) or (next_id is not None and outgoing is None):
             return False
-        if _add_elapsed_minutes(starts, -incoming).astimezone(timezone.utc) < previous_end.astimezone(timezone.utc):
+        if incoming is not None and _add_elapsed_minutes(starts, -incoming).astimezone(timezone.utc) < previous_end.astimezone(timezone.utc):
             return False
-        return _add_elapsed_minutes(ends, outgoing + next_buffer).astimezone(timezone.utc) <= next_start.astimezone(timezone.utc)
+        if outgoing is not None:
+            return _add_elapsed_minutes(ends, outgoing + next_buffer).astimezone(timezone.utc) <= next_start.astimezone(timezone.utc)
+        return ends.astimezone(timezone.utc) <= next_start.astimezone(timezone.utc)
 
     # Compatibility for callers that evaluate meal candidates before assigning
     # POI dates; production passes a route-aware scheduled POI set above.
-    if day_number > len(places):
+    if hotel_id is None or day_number > len(places):
         return False
     poi_id = places[day_number - 1].get("id")
     if not isinstance(poi_id, str):
@@ -875,7 +878,7 @@ def _destination_country(intent: TravelIntent) -> str:
 
 
 def _research_categories(intent: TravelIntent) -> tuple[str, ...]:
-    return ("pois", "restaurants", "hotels", "transport")
+    return ("pois", "restaurants", "transport")
 
 
 def _research_destination(intent: TravelIntent) -> str:
@@ -885,20 +888,6 @@ def _research_destination(intent: TravelIntent) -> str:
         if specific:
             return "、".join(specific)
     return destinations[0] if destinations else (intent.regions[0] if intent.regions else "")
-
-
-def _hotel_city_code(intent: TravelIntent) -> str:
-    destination_country = _destination_country(intent)
-    if destination_country == "TW":
-        return "TPE"
-    city_codes = {
-        "德島": "TKS", "神戶": "UKB", "東京": "TYO", "大阪": "OSA", "京都": "OSA",
-        "福岡": "FUK", "札幌": "SPK", "沖繩": "OKA", "名古屋": "NGO",
-    }
-    for place in intent.destinations:
-        if place in city_codes:
-            return city_codes[place]
-    raise ProductionIncompleteError("hotel search is not available for this destination")
 
 
 def _local_timezone(intent: TravelIntent) -> str:
