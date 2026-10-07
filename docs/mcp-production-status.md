@@ -8,8 +8,8 @@
 - Railway backend origin：`https://ai-traveller-production-732b.up.railway.app`。
 - MCP endpoint：`https://ai-traveller-production-732b.up.railway.app/mcp`。
 - `/health` 的最近記錄驗證為 HTTP 200；未帶授權直接呼叫 `/mcp` 回 HTTP 401 是預期行為。
-- 2026-10-08 最新 Railway deployment `e89f37c3-1d45-441a-a9b8-ef8a1a06d504` 為 `SUCCESS`，Railway deployment metadata 的 source commit 是 `781b841083eb1dd28005b1d9e4532df28865f7d8`；replica 為 Online，Dockerfile 為 `/Dockerfile`、healthcheck 為 `/health`、重啟政策已設定、volume 掛載在 `/data`。本次再次請求正式 `/health` 得 HTTP 200、內文 `ok`。`railway config plan` 尚列一項重啟政策差異，故 IaC plan 不是乾淨狀態。完整驗證方式見 [Railway 驗證紀錄](../.railway/README.md#正式服務網址與驗證)。
-- 2026-10-08 使用 Computer Use 在 ChatGPT Chat 私人 `AI Travel Planner MCP` 對話呼叫 `parse_trip_request`，工具結果為 `status=parsed`、目的地倉敷、5 天 4 夜。另在 ChatGPT Chat 呼叫 `publish_trip_site`，傳入不存在的測試 trip ID 與 `confirm_public_publish=false`，收到 server 原始結果 `status=confirmation_required`；這證實 Site 已載入此工具與公開發布保護閘門，且本次沒有讀取行程檔或寫入 GitHub。兩次操作均沒有執行 `plan_trip` 或公開發布。
+- 2026-10-08 部署紀錄：Railway deployment `041a31c7-6091-4caf-a8ba-a66731592380` 為 `SUCCESS`，source commit 為 `398e976a5b460e86b4e3a9b4c4dec26ade0e6d03`；replica 為 Online，Dockerfile 為 `/Dockerfile`、healthcheck 為 `/health`、volume 掛載在 `/data`。部署後正式 `/health` 回 HTTP 200、內文 `ok`。同日 `railway config plan` 尚列一項重啟政策差異，故 IaC plan 不是乾淨狀態。完整驗證方式見 [Railway 驗證紀錄](../.railway/README.md#正式服務網址與驗證)。
+- 2026-10-08 部署後使用 Computer Use 在 ChatGPT Chat 以外掛選單明確選取私人 `AI Travel Planner MCP`，使用者訊息顯示該 Site 連結，並要求只呼叫 `parse_trip_request`。實際回應 `status=parsed`、目的地倉敷、5 天 4 夜，且列出未提供旅客人數與預算。另一次唯讀呼叫 `publish_trip_site` 傳入測試 trip ID 與 `confirm_public_publish=false`，回傳 `status=confirmation_required`；沒有讀取行程檔、執行 `plan_trip` 或公開發布。瀏覽器操作前已核對 Chrome、ChatGPT 對話網址／標題及 AI Travel Planner MCP 名稱，操作後確認結果出現在同一對話。
 - 同日只列出 Railway 正式服務變數名稱以確認缺漏，未讀取或輸出 secret 值；清單沒有 `GITHUB_TOKEN`。尚未執行任何公開行程寫入。
 - 不在 repo、Issue 或文件記錄任何 secret 值。ChatGPT Chat 呼叫由維護者使用已連線的使用者環境實際執行；其餘 backend 驗證亦由維護者執行。
 
