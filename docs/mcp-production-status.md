@@ -2,6 +2,13 @@
 
 最後查證：2026-10-08。本文記錄本 repo MCP 部署與實際工具呼叫的觀察結果，不代表規劃品質已達可交付標準。
 
+## 2026-10-08 本輪重驗
+
+- ChatGPT Chat 使用已連線的私人 `AI Travel Planner MCP` 呼叫 `parse_trip_request`，輸入「岡山縣倉敷五天四夜，6 位成人、1 位 2 歲幼兒，預算不設限制」。回應解析出目的地倉敷、區域岡山縣、5 天 4 夜、6 位成人、1 位 2 歲幼兒、`budget_status=unlimited`，`missing_fields=[]`。此為唯讀呼叫，未執行研究、寫入或公開行程。
+- Railway OAuth connector 對正式 project `ai-traveller` / `production` 以遮蔽值模式列出變數名稱。已存在 `BEARER_TOKEN`、`GOOGLE_MAPS_API_KEY`、`OPENROUTESERVICE_API_KEY`、`PUBLIC_URL`、`YOUTUBE_API_KEY`；沒有 `GITHUB_TOKEN`。沒有讀取任何 secret 值。
+- PR #204 已合併至 `8fbe0639d5fd341cbcc764979ff9e19cae30c6c2`，CI、Website CI、GitHub Pages deploy 均成功。首次檢視舊分頁仍顯示舊內容；強制重新載入後，GitHub Pages 首頁顯示新文案「頁面公開狀態與行程完成度分開呈現；公開預覽不代表行程已確認。」及「公開預覽」狀態。這只驗證公開目錄標籤，沒有改動或發布任何行程。
+- 四張仍開啟 issue 的最新外部依賴：#175 沒有已核准住宿庫存供應商；#179 沒有 Railway `GITHUB_TOKEN`；#180 的真實倉敷紀錄沒有可選住宿，無法驗證每日餐點往返路線；#199 的 Places 資料生命週期與網站條款／歸屬標示仍未完成確認。四張均不能以本輪唯讀解析驗收當作完成。
+
 ## ChatGPT 連線狀態
 
 - 私人 ChatGPT Site 已連到此 repo 的 Railway MCP backend；使用者曾在自己的 ChatGPT chat 中選取並呼叫 AI Travel Planner MCP 工具。
