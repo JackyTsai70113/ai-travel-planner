@@ -25,6 +25,7 @@
 ## 目前正式環境基線（2026-10-08）
 
 - Railway MCP runtime source SHA 為 `08236f8cee5575bdad5d6930896fdb038cf9241e`，deployment `a28ae4e8-9811-4b3c-b108-3577390e3423` 狀態 `SUCCESS`；正式服務 Online，`/health` 回 HTTP 200、內文 `ok`，`/mcp` `tools/list` 回 HTTP 200、7 個工具。
+- 2026-10-08 以 Railway CLI 再次核對七項工具，並對已排定 Place ID 呼叫一次 `get_place_details`；正式工具回 HTTP 200、`available`、`Google Maps` attribution。此 Codex connector 快照只有六項工具，缺少 `get_place_details`；此差異不代表 ChatGPT Chat 的工具清單。OpenAI 自訂 MCP plugin 文件指出 app 詳細資料頁可 Refresh apps 取得更新的工具描述和 server instructions；ChatGPT Chat 實際刷新與呼叫仍待驗收，詳細程序見[上線驗收流程](chatgpt-mcp-live-verification.md)。
 - PR #243 至 #252 已以一般 merge 合併。PR #250 修正網站 E2E 將行程卡數寫死為 5 的回歸；PR #252 更新 `get_trip` 與 `get_place_details` 的工具說明，要求名稱查詢只針對已排定 Place ID，並明確告知即時查詢與可能費用。
 - PR #243 修正持久化／發布投影中 Google Places 候選驗證訊息殘留名稱與 context 的問題，並要求 ChatGPT 對已排定且缺少獨立名稱來源的 Place ID 使用即時 `get_place_details`。既有行程原始檔未改寫；讀取與未來投影會套用清理。
 - PR #244 讓未排入候選景點的 warning 不阻止發布。PR #245 允許只有可揭露 warning 的行程以 preview 公開；網站 bundle 保留 `warning`，registry readiness 保留 `incomplete`。錯誤級驗證、沒有任何餐點的日期與其他硬性缺項仍拒絕發布。
