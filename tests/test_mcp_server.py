@@ -543,6 +543,7 @@ class MCPTravelServerTests(unittest.TestCase):
         source["traveler_profile"]["children"][0]["notes"] = "幼兒午睡時段不可排活動"
         source["overrides"][0]["notes"] = "使用者核准的住宿選擇"
         place = source["candidate_sets"]["places"][0]
+        place["id"] = "google-candidate-id"
         place.update({
             "google_place_id": "ChIJ-keep-exactly",
             "name": "Google 暫時名稱",
@@ -558,6 +559,13 @@ class MCPTravelServerTests(unittest.TestCase):
             "accessibility_notes": "使用者補充：入口有階梯，需帶斜坡板",
         })
         original_place = json.loads(json.dumps(place, ensure_ascii=False))
+        source["validation"] = [{
+            "code": "schedule.poi_candidate_unselected",
+            "severity": "warning",
+            "message": "候選景點「Google 暫時名稱」未排入：未能驗證所需的營業時間或路線。",
+            "path": "/candidate_sets/places/google-candidate-id/schedule",
+            "context": {"name": "Google 暫時名稱", "address": "Google 暫時地址"},
+        }]
 
         stored = durable_trip(source)
         stored_place = stored["candidate_sets"]["places"][0]
@@ -571,6 +579,25 @@ class MCPTravelServerTests(unittest.TestCase):
         self.assertEqual("使用者備註：抵達後先休息", stored["days"][0]["items"][0]["notes"])
         self.assertEqual("幼兒午睡時段不可排活動", stored["traveler_profile"]["children"][0]["notes"])
         self.assertEqual("使用者核准的住宿選擇", stored["overrides"][0]["notes"])
+        stored_text = json.dumps(stored, ensure_ascii=False)
+        self.assertNotIn("Google 暫時名稱", stored_text)
+        self.assertNotIn("Google 暫時地址", stored_text)
+        self.assertEqual("schedule.poi_candidate_unselected", stored["validation"][0]["code"])
+        self.assertEqual("/candidate_sets/places/google-candidate-id/schedule", stored["validation"][0]["path"])
+        self.assertNotIn("context", stored["validation"][0])
+        self.assertIn("Google Places 候選未排入", stored["validation"][0]["message"])
+        public_ready = json.loads(json.dumps(stored, ensure_ascii=False))
+        public_ready["candidate_sets"]["places"] = [{
+            "id": "google-candidate-id", "google_place_id": "ChIJ-keep-exactly", "kind": "poi",
+            "provenance": {"provider": "Google Places API (New)"},
+        }]
+        public_ready["candidate_sets"]["restaurants"] = []
+        public_ready["candidate_sets"]["hotels"] = []
+        from src.request_site import trip_to_public_bundle
+        public_text = json.dumps(trip_to_public_bundle(public_ready), ensure_ascii=False)
+        self.assertNotIn("Google 暫時名稱", public_text)
+        self.assertNotIn("Google 暫時地址", public_text)
+        self.assertIn("google-candidate-id", stored["validation"][0]["path"])
         self.assertEqual(original_place, source["candidate_sets"]["places"][0])
 
     def test_place_details_returns_google_and_provider_attribution_without_storing(self) -> None:

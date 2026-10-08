@@ -15,14 +15,52 @@ def durable_trip(trip: Mapping[str, Any]) -> dict[str, Any]:
     """Return a storage-safe copy, preserving user-owned trip decisions/notes."""
     result = deepcopy(dict(trip))
     candidate_sets = result.get("candidate_sets")
-    if not isinstance(candidate_sets, dict):
-        return result
-    for collection in ("places", "restaurants", "hotels"):
-        candidates = candidate_sets.get(collection)
-        if not isinstance(candidates, list):
-            continue
-        candidate_sets[collection] = [_durable_candidate(item) for item in candidates]
+    google_candidate_ids: set[str] = set()
+    if isinstance(candidate_sets, dict):
+        for collection in ("places", "restaurants", "hotels"):
+            candidates = candidate_sets.get(collection)
+            if not isinstance(candidates, list):
+                continue
+            for candidate in candidates:
+                if _has_google_provenance(candidate):
+                    google_candidate_ids.update(_candidate_ids(candidate))
+            candidate_sets[collection] = [_durable_candidate(item) for item in candidates]
+    _sanitize_google_validation(result, google_candidate_ids)
     return result
+
+
+def _candidate_ids(candidate: Any) -> set[str]:
+    """Collect stable IDs used by validation paths for a Google candidate."""
+    if not isinstance(candidate, Mapping):
+        return set()
+    values = [candidate.get(key) for key in ("id", "google_place_id")]
+    place = candidate.get("place")
+    if isinstance(place, Mapping):
+        values.extend(place.get(key) for key in ("id", "google_place_id"))
+    return {value for value in values if isinstance(value, str) and value}
+
+
+def _sanitize_google_validation(trip: dict[str, Any], google_candidate_ids: set[str]) -> None:
+    """Remove provider details embedded in validation messages for Google candidates."""
+    findings = trip.get("validation")
+    if not isinstance(findings, list) or not google_candidate_ids:
+        return
+    for finding in findings:
+        if not isinstance(finding, dict):
+            continue
+        path = finding.get("path")
+        if not isinstance(path, str) or not any(
+            segment in google_candidate_ids for segment in path.split("/")
+        ):
+            continue
+        if finding.get("code") == "schedule.poi_candidate_unselected":
+            finding["message"] = (
+                "Google Places 候選未排入：所需營業時間或路線尚未驗證。"
+            )
+        else:
+            finding["message"] = "Google Places 候選詳細資料已省略。"
+        # Validation context can contain the same provider name/address as its message.
+        finding.pop("context", None)
 
 
 def _durable_candidate(candidate: Any) -> Any:
