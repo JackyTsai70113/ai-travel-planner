@@ -24,9 +24,17 @@
 
 ## 最新正式環境與一般 Chat 檢查（2026-10-09）
 
+### 2026-10-09 後續核對
+
+- Railway CLI `railway status --json` 與 `railway deployment list --service ai-traveller --environment production --limit 5 --json` 確認 production Online；deployment `aa3ef82c-f4ec-401d-9417-9d6e1aba59aa` 為 `SUCCESS`，source SHA `530144f23546776088975f796e3cc2c18d1f8641`。`e8b29a1d6534842b33c744e670020b080374c031` 及其後續文件 commit 均為 `SKIPPED`（No changes to watched files）。
+- 維護者提供的一般 ChatGPT Chat 紀錄包含真實 MCP 呼叫：`parse_trip_request`、`plan_trip`、`get_trip` 與 `publish_trip_site`；因此一般 Chat 的工具發現、認證與呼叫已有直接使用紀錄。ChatGPT 的解析結果曾將明確寫出的桃園出發地回傳為 null。以完全相同請求在本機 parser 與目前正式 MCP connector 重測，皆得到 `origin=桃園`、目的地倉敷、正確日期、人數、無上限預算、自駕與空的 `missing_fields`。差異仍需調查，不能用 backend 結果替代 ChatGPT 回覆。
+- 維護者提供的 ChatGPT 對話中 `publish_trip_site` 回 `not_ready`。本次取得確認後，以已連線 MCP connector 對同一 trip ID 呼叫 `confirm_public_publish=true`、`confirm_overwrite=true`，結果是 `already_published`、沒有 commit SHA、沒有部署；未發生新覆寫。這與 ChatGPT 對話中的發布結果不一致，尚未確認各自使用的行程／部署版本。
+- Computer Use 在單一 Chrome 視窗實際讀取既有倉敷公開頁首日，看到 `Nagayamon Coffee`、`大原美術館`、`Caty Cafe`、`大橋家住宅`、`Momiji-dō` 和 Google Maps 標示。既有頁面可讀，但該次 `already_published` 呼叫沒有建立新的 Pages 部署。
+- #179 更新為追蹤上述解析／發布結果差異與 ChatGPT 未顯示即時具名地點的情況。沒有要求維護者重做已提供的 prompt；需要新增 UI 測試時先說明新的驗證目標及最少輸入。
+
 - Railway production deployment `aa3ef82c-f4ec-401d-9417-9d6e1aba59aa` 為 `SUCCESS`，source commit `530144f23546776088975f796e3cc2c18d1f8641`（PR #265 merge commit）。後續 main 只有倉敷公開行程投影與驗收文件變更，未改動 Railway 監看的 backend source。`/health` 回 HTTP 200／`ok`；透過 Railway CLI 注入環境變數但不輸出值，正式 `tools/list` 回 HTTP 200 並列出七項工具：`parse_trip_request`、`validate_trip`、`get_trip`、`get_place_details`、`plan_trip`、`build_trip_site`、`publish_trip_site`。
 - 2026-10-09 使用 AI Travel Planner MCP 明確覆寫既有倉敷公開行程。`publish_trip_site` 回 `publish_accepted`，commit `4380781d3cf91cd41656176769b2c2403feb03c6`；Pages workflow `37832158960` 成功。使用同一個 Chrome 視窗實際打開公開頁與 D1，看到即時載入的 `大原美術館`、`Caty Cafe`、`大橋家住宅` 等名稱，以及 Google Maps 標示。公開 bundle 有 `place_details_api_base_url` 和 Place ID，未持久化 Google 地點名稱。此次只更新公開投影，未改寫行程內容；行程仍標示住宿與費用未完成。
-- 一般 ChatGPT Chat 的外掛清單及選取器中均可見 `AI Travel Planner MCP`；外掛設定頁顯示 OAuth 與 `/mcp` endpoint。按下「重新整理工具」後按鈕持續 disabled，畫面沒有完成或失敗提示。新的一般 Chat composer 已選取 MCP，保持空白；沒有代替維護者輸入或送出 prompt，也未觀察到實際 ChatGPT MCP 工具呼叫。因此 #179 的一般 Chat 呼叫驗收仍未通過。
+- 較早的 Computer Use 快照只確認外掛已安裝且可選取；當時點擊「重新整理工具」後按鈕持續 disabled、沒有完成提示，composer 保持空白。此快照早於維護者提供的一般 ChatGPT Chat 實際 MCP 呼叫紀錄；目前結果與尚待釐清差異以上方「2026-10-09 後續核對」為準。
 - 2026-10-09 透過已連線的 MCP connector 唯讀呼叫 `parse_trip_request`，輸入「我想安排倉敷五天四夜」；回傳 `status=parsed`、目的地倉敷、5 天 4 夜，並只將旅客數與預算列為缺少資訊。這是正式 MCP backend smoke test，不是 ChatGPT Chat UI 驗收。
 
 ## 歷史基線（2026-10-09，合併 PR #265 前）

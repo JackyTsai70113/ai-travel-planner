@@ -2,12 +2,20 @@
 
 最後查證：2026-10-09。本文記錄本 repo MCP 部署與實際工具呼叫的觀察結果，不代表規劃品質已達可交付標準。
 
-## 目前正式狀態（2026-10-09，Railway runtime source `5b2b003`）
+## 最新正式狀態與查證紀錄（2026-10-09）
+
+### 最新查證補充（2026-10-09）
+
+- 重新查詢 Railway 後，production 目前 Online，部署 `aa3ef82c-f4ec-401d-9417-9d6e1aba59aa` 為 `SUCCESS`，實際 source commit 是 `530144f23546776088975f796e3cc2c18d1f8641`；`origin/main` 的 `e8b29a1` 及其後續文件提交均為 Railway `SKIPPED`，因為沒有變更 watched files。故本文件下方標示 `5b2b003` 的區段是歷史快照，不是目前 runtime。
+- 維護者提供的一般 ChatGPT Chat 對話紀錄證明 ChatGPT 實際呼叫 `parse_trip_request`、`plan_trip`、`get_trip`、`publish_trip_site`。該對話中的解析回覆將明確提供的桃園出發地顯示為 `null`。同一份完整需求在本機 parser 與目前連線的正式 MCP connector 重測均得到 `origin=桃園`、倉敷、2026-11-01 至 2026-11-05、6 位成人與 1 位 2 歲幼兒、無上限預算、自駕，且 `missing_fields=[]`。正式連線測試是 backend evidence，不能取代或抹除 ChatGPT 對話中不同的回覆；來源差異尚待查明。
+- 使用者提供的 ChatGPT 對話中，`publish_trip_site` 回 `not_ready`，包含候選景點、餐段與費用完整度訊息。之後本 agent 以已確認的 `confirm_public_publish=true`、`confirm_overwrite=true` 對同一 `trip_id` 呼叫正式 MCP，結果為 `already_published`、`commit_sha=null`、`deployment_status=not_required`，代表沒有新的覆寫或部署。兩種回覆及其所代表的資料版本差異尚待查明；不得將第二次結果描述成完成覆寫。
+- 用 Computer Use 在既有單一 Chrome 視窗開啟公開頁 `https://jackytsai70113.github.io/ai-travel-planner/trips/kurashiki-2026-11-live-20261008/#/today/2026-11-01`，確認頁面可讀，並看到 `Nagayamon Coffee`、`大原美術館`、`Caty Cafe`、`大橋家住宅`、`Momiji-dō` 與 Google Maps 地點標示。這證明現有公開頁目前可用，不代表剛才的呼叫建立了新版本。
+- #179 已修正狀態敘述：一般 Chat 工具呼叫及公開頁可用性已有證據；尚待釐清 ChatGPT 與正式 connector 的解析回覆、發布狀態差異，以及 ChatGPT 回答未依指引查詢即時地點名稱的情況。依據使用者指示，不要求重做已提供的相同流程。
 
 - PR #243–#258 功能變更與 PR #259–#261 正式狀態文件均以一般 merge 合併。PR #250 修正入口行程卡片數量的固定測試，PR #252 更新 Places 即時查詢工具指引，PR #256 修正可行備選 POI 被誤報未驗證，PR #258 為無住宿日保留早餐後的路線緩衝。
-- Railway production runtime source 為 `5b2b003c16201564bcda55edcccbb6d3e5948976`，deployment `549c1e92-161c-46f2-9552-cc2ea1605872` 狀態 `SUCCESS`，服務 Online，`/health` 回 HTTP 200、內文 `ok`；部署使用 Dockerfile `/Dockerfile`，`/data` volume 仍掛載。
+- 較早一次（PR #265 更新前）的 Railway production runtime source 為 `5b2b003c16201564bcda55edcccbb6d3e5948976`，deployment `549c1e92-161c-46f2-9552-cc2ea1605872` 狀態 `SUCCESS`，服務 Online，`/health` 回 HTTP 200、內文 `ok`；部署使用 Dockerfile `/Dockerfile`，`/data` volume 仍掛載。此為歷史基線，現在的 runtime 請以上方最新查證補充為準。
 - 2026-10-08 再次用 Railway CLI 注入既有 `BEARER_TOKEN` 呼叫正式 `tools/list`：HTTP 200，列出 7 個工具，包括 `get_place_details`。以倉敷已排定 Place ID 執行一次正式唯讀 `get_place_details`：HTTP 200、`status=available`、`attribution=Google Maps`、Place ID 相符；輸出只記錄回傳欄位名稱，沒有記錄地點詳細值或憑證。
-- 2026-10-09 以 Railway CLI 重新查證：`railway status` 顯示 `ai-traveller` Online，deployment `549c1e92-161c-46f2-9552-cc2ea1605872`；`railway deployment list --service ai-traveller --environment production --limit 100 --json` 確認其狀態 `SUCCESS`、source commit `5b2b003c16201564bcda55edcccbb6d3e5948976`。正式 `/health` HTTP 200、內容 `ok`；透過 `railway run` 注入既有 bearer token 的唯讀 `tools/list` HTTP 200，列出七個工具。後續文件版 main commit `98ee35a` 的 Railway deployment 為 `SKIPPED`，理由是沒有符合 watched files 的變更，故 runtime 仍對應 `5b2b003`。
+- 較早一次（2026-10-09）以 Railway CLI 查證時，`ai-traveller` Online、deployment `549c1e92-161c-46f2-9552-cc2ea1605872` 為 `SUCCESS`，source commit `5b2b003c16201564bcda55edcccbb6d3e5948976`；正式 `/health` HTTP 200，唯讀 `tools/list` HTTP 200 並列出七個工具。當時 main 的文件 commit `98ee35a` 對 Railway 為 `SKIPPED`，所以當時 runtime 仍是 `5b2b003`。此紀錄早於 PR #265 的新 runtime。
 - 2026-10-09 使用 Computer Use 在一般 ChatGPT「對話」模式驗證：私人 `AI Travel Planner MCP` 出現在「已安裝」清單；外掛詳細頁標示為你的雲端外掛程式，管理設定顯示 OAuth、MCP URL 結尾為 `/mcp`、審查狀態 `DEVELOPMENT`；一般 Chat 的外掛選單亦可選取此 MCP。設定頁另顯示版本 `dev mode`，外掛詳情頁資訊區顯示 `1.0.0`，版本標示不一致，無法由這次 UI 讀值判定是哪個 runtime/tool snapshot 版本。
 - 同次一般 Chat UI 操作點擊「重新整理工具」後，按鈕變成 disabled，但沒有可見的成功／失敗訊息；故不記作刷新成功。將外掛加入新的一般 Chat composer 後，畫面保留未送出的外掛標籤；未輸入或送出任何 prompt，未發生 MCP 工具呼叫，也未觀察到工具清單。因此「外掛已安裝、能在一般 Chat 選取」已驗證；「一般 Chat 真的能發現並呼叫工具」仍未驗收。唯讀驗收 prompt 必須由維護者本人輸入。
 - 最新本機 MCP 驗證命令 `PYTHONPATH=. uv run --isolated --with-requirements requirements-mcp.txt python -m unittest tests.test_mcp_server -v` 通過 21 項。測試包含真正 stdio 子程序握手與 `parse_trip_request` 呼叫，以及 Streamable HTTP 認證與工具協定；不呼叫外部供應商 API，亦不等於 ChatGPT Chat UI 驗收。
@@ -26,7 +34,7 @@
 - 2026-10-08 使用使用者已明確確認公開的既有行程，透過已連線 AI Travel Planner MCP 呼叫 `publish_trip_site(trip_id="kurashiki-2026-11-live-20261008", site_slug="kurashiki-2026-11-live-20261008", confirm_public_publish=true)`。工具回 `publish_accepted`，URL 為 `https://jackytsai70113.github.io/ai-travel-planner/trips/kurashiki-2026-11-live-20261008/`，commit `d40c71c84e94c201b5de8a5889fced98abdd250f`，初始 deployment status 為 `pending`。GitHub Pages workflow `37736450625` 成功；該網址以 `curl` 回 HTTP 200，標題為「倉敷 行程｜AI Travel Planner」，registry 標記 `status=preview`、`readiness=incomplete`。這不是一般 ChatGPT Chat UI 或互動瀏覽器驗收。
 - 發布 commit 的 Website CI `37736450517` 因 `web/tests/portal-e2e.mjs` 將入口卡片數硬編碼為 5 而失敗；新增第六筆登錄行程後觸發此回歸。PR #250 改為依 `public/trip-registry.json` 動態核對卡片數；PR 的 Python、pytest、MCP site、Website CI 均通過，並以 merge commit `8eec8baa2a7647a197b713cf9305fe71974409a8` 合併。合併後 CI `37737544356` 與 Website CI `37737544402` 均成功，Pages workflow `37737544370` 亦成功。
 - #199 已依維護者指定的歷史資料保留範圍結案。既有 Railway 檔案、公開 Pages 內容與 Git 歷史保持原樣；結案不表示歷史內容已清除或重新核驗。
-- 目前唯一開啟的 issue 為 #179。依維護者明確覆寫確認，正式 MCP `publish_trip_site` 回 `publish_accepted`，GitHub commit `3649492fd7f4f09965217c2a3b75c6f45f1bf3b4`；Pages workflow `37742158112` 成功。行程頁、`public-bundle.json` 與 registry 均 HTTP 200；頁面標題為「倉敷 行程｜AI Travel Planner」，bundle 為 5 天、每天 3 餐（共 15 餐），狀態 `warning`，registry 為 `preview`／`incomplete`。仍有 3 個 `schedule.poi_candidate_unselected`、5 個 `schedule.origin_unknown`、`schedule.hotel_missing`、`budget.incomplete`。一般 ChatGPT Chat 的真實工具呼叫與互動式行程頁檢查仍未完成；2026-10-09 已證明私人外掛在一般 Chat 中安裝且可選取，詳見本文件頂端的當前基線。
+- 先前驗收紀錄：#179 當時是唯一開啟的 issue。維護者確認覆寫後，正式 MCP `publish_trip_site` 回 `publish_accepted`，GitHub commit `3649492fd7f4f09965217c2a3b75c6f45f1bf3b4`；Pages workflow `37742158112` 成功。行程頁、`public-bundle.json` 與 registry 均 HTTP 200；bundle 為 5 天、每天 3 餐（共 15 餐），registry 為 `preview`／`incomplete`。當時記錄的一般 ChatGPT Chat 實際工具呼叫待驗收，現況已由維護者提供的對話紀錄更新，詳見本文件頂端補充。
 - 最新連線 MCP connector 的唯讀 `parse_trip_request` 對已確認的倉敷需求回 `parsed`，目的地倉敷、區域岡山縣、日期、人數、桃園出發、不限預算、自駕均正確；唯讀 `get_trip` 回同一 trip ID、5 天、每天 3 餐，並保留上述未完成 warning。這是 Codex connector 的工具呼叫，不可當成一般 ChatGPT Chat UI 驗收。
 
 下方依時間排列的 PR／部署紀錄是當時狀態快照；其中舊 issue 開啟狀態與舊 deployment ID 不代表目前狀態。以上方「目前正式狀態」和當前 GitHub／Railway 資料為準。
