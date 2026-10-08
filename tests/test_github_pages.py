@@ -10,7 +10,8 @@ from src.mcp_server.github_pages import (
     GitHubPublishError,
     PublishResult,
 )
-from src.request_site import trip_to_public_bundle, trip_to_registry_entry
+from src.google_places_storage import durable_trip
+from src.request_site import trip_publication_findings, trip_to_public_bundle, trip_to_registry_entry
 
 FIXTURE = Path(__file__).parents[1] / "fixtures/trips/japan-5-day-trip-v1.json"
 
@@ -103,6 +104,30 @@ class GitHubPagesPublisherTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "not ready for public publication"):
             self.publisher(fake).publish(trip, slug="demo-trip")
         self.assertEqual(fake.calls, [])
+
+    def test_unselected_google_poi_warning_is_visible_but_does_not_block_publication(self):
+        trip = json.loads(json.dumps(self.trip))
+        place = trip["candidate_sets"]["places"][0]
+        place["google_place_id"] = "ChIJ-unselected"
+        place["provenance"] = {"source_type": "provider", "provider": "Google Places API (New)"}
+        trip["validation"] = [{
+            "code": "schedule.poi_candidate_unselected", "severity": "warning",
+            "message": f"候選景點「{place['name']}」未排入：未能驗證所需的營業時間或路線。",
+            "path": f"/candidate_sets/places/{place['id']}/schedule",
+        }]
+        stored = durable_trip(trip)
+        self.assertEqual([], trip_publication_findings(stored))
+        entry = trip_to_registry_entry(stored, slug="demo-trip", source_slug="requested/demo-trip")
+        self.assertEqual("ready", entry["readiness"])
+
+        fake = FakeGitHub()
+        result = self.publisher(fake).publish(trip, slug="demo-trip")
+        self.assertEqual("publish_accepted", result.status)
+        blobs = [json.loads(base64.b64decode(call[2]["content"])) for call in fake.calls if call[0] == "POST" and call[1].endswith("/git/blobs")]
+        bundle = next(value for value in blobs if value.get("trip_id") == trip["id"])
+        self.assertEqual("schedule.poi_candidate_unselected", bundle["validation"][0]["code"])
+        self.assertIn("Google Places 候選未排入", bundle["validation"][0]["message"])
+        self.assertNotIn(place["name"], json.dumps(bundle, ensure_ascii=False))
 
     def test_publication_strips_google_places_details_but_preserves_place_ids(self):
         trip = json.loads(json.dumps(self.trip))

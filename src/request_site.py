@@ -17,6 +17,11 @@ from src.intent import TravelIntent, parse_trip_request
 from src.intent.contracts import FieldProvenance, TravelerGroup
 
 _SLUG = re.compile(r"[a-z0-9][a-z0-9-]*\Z")
+_NON_BLOCKING_PUBLICATION_CODES = {
+    "schedule.hotel_missing",
+    "schedule.origin_unknown",
+    "schedule.poi_candidate_unselected",
+}
 
 
 class RequestNotReadyError(ValueError):
@@ -157,7 +162,7 @@ def trip_to_registry_entry(trip: Mapping[str, Any], *, slug: str, source_slug: s
     validation = [_public_validation(value) for value in _sequence(trip.get("validation")) if isinstance(value, Mapping)]
     completeness_findings = _trip_completeness_findings(trip)
     has_errors = any(item["severity"] in {"error", "critical"} for item in validation)
-    unresolved_findings = [item for item in validation if item["code"] not in {"schedule.hotel_missing", "schedule.origin_unknown"}]
+    unresolved_findings = [item for item in validation if item["code"] not in _NON_BLOCKING_PUBLICATION_CODES]
     readiness = "blocked" if has_errors else "incomplete" if unresolved_findings or completeness_findings else "ready"
     destinations = _destination_regions(trip)
     generated = datetime.now(timezone.utc).date().isoformat()
@@ -198,7 +203,7 @@ def trip_publication_findings(trip: Mapping[str, Any]) -> list[str]:
     """Return required itinerary sections missing before a trip can be called ready."""
     validation = [_public_validation(value) for value in _sequence(trip.get("validation")) if isinstance(value, Mapping)]
     findings = _trip_completeness_findings(trip)
-    publication_blockers = [item for item in validation if item["code"] not in {"schedule.hotel_missing", "schedule.origin_unknown"}]
+    publication_blockers = [item for item in validation if item["code"] not in _NON_BLOCKING_PUBLICATION_CODES]
     if publication_blockers:
         findings.extend(f"Canonical Trip validation: {item['code']}" for item in publication_blockers)
     return findings
