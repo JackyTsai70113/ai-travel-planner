@@ -1,11 +1,16 @@
 import json
-from pathlib import Path
 import unittest
+from pathlib import Path
 
-from src.intent import ConstraintCondition, ConstraintScope, RequestConstraint, TimeWindow, parse_trip_request
+from src.intent import (
+    ConstraintCondition,
+    ConstraintScope,
+    RequestConstraint,
+    TimeWindow,
+    parse_trip_request,
+)
 from src.planner.contracts import HardConstraint, SoftPreference
 from src.request_site import parse_site_request, required_request_fields
-
 
 FIXTURES = json.loads((Path(__file__).parent / "fixtures" / "intent" / "requests.json").read_text())
 FIXTURE_BY_NAME = {fixture["name"]: fixture for fixture in FIXTURES}
@@ -116,6 +121,10 @@ class TravelIntentParserTests(unittest.TestCase):
         intent = parse_trip_request(text)
         self.assertEqual(intent.destinations, ("倉敷",))
         self.assertEqual(intent.regions, ("岡山縣",))
+        self.assertEqual(
+            [source.text for source in intent.provenance["destinations"]],
+            ["倉敷"],
+        )
         self.assertEqual((intent.start_date, intent.end_date), ("2026-11-01", "2026-11-05"))
         self.assertEqual((intent.duration_days, intent.duration_nights), (5, 4))
         self.assertEqual(intent.origin, "桃園")
