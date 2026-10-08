@@ -5,13 +5,17 @@ import json
 import unittest
 from pathlib import Path
 
+from src.google_places_storage import durable_trip
 from src.mcp_server.github_pages import (
     GitHubPagesPublisher,
     GitHubPublishError,
     PublishResult,
 )
-from src.google_places_storage import durable_trip
-from src.request_site import trip_publication_findings, trip_to_public_bundle, trip_to_registry_entry
+from src.request_site import (
+    trip_publication_findings,
+    trip_to_public_bundle,
+    trip_to_registry_entry,
+)
 
 FIXTURE = Path(__file__).parents[1] / "fixtures/trips/japan-5-day-trip-v1.json"
 
@@ -148,6 +152,43 @@ class GitHubPagesPublisherTests(unittest.TestCase):
         self.assertEqual("preview", registry[0]["status"])
         self.assertEqual("incomplete", registry[0]["readiness"])
         self.assertEqual({"meal.period_unselected", "budget.incomplete"}, {item["code"] for item in bundle["validation"]})
+
+    def test_kurashiki_warning_mix_publishes_as_incomplete_preview(self):
+        trip = json.loads(json.dumps(self.trip))
+        trip["selected"]["hotel_place_ids"] = []
+        trip["budget"]["total_status"] = "incomplete"
+        warnings = [
+            {"code": "schedule.hotel_missing", "severity": "warning", "message": "住宿未提供", "path": "/selected/hotel_place_ids"},
+            *[
+                {"code": "schedule.origin_unknown", "severity": "warning", "message": "起點未驗證", "path": f"/candidate_sets/places/{index}"}
+                for index in range(5)
+            ],
+            *[
+                {"code": "schedule.poi_candidate_unselected", "severity": "warning", "message": "候選景點未排入", "path": f"/candidate_sets/places/candidate-{index}/schedule"}
+                for index in range(10)
+            ],
+            *[
+                {"code": "meal.period_unselected", "severity": "warning", "message": "早餐未安排", "path": f"/days/{index}"}
+                for index in (0, 1, 3, 4)
+            ],
+            {"code": "budget.incomplete", "severity": "warning", "message": "費用未完整估算", "path": "/budget"},
+        ]
+        trip["validation"] = warnings
+        fake = FakeGitHub()
+
+        result = self.publisher(fake).publish(trip, slug="demo-trip")
+
+        self.assertEqual("publish_accepted", result.status)
+        blobs = [json.loads(base64.b64decode(call[2]["content"])) for call in fake.calls if call[0] == "POST" and call[1].endswith("/git/blobs")]
+        bundle = next(value for value in blobs if value.get("trip_id") == trip["id"])
+        registry = next(value for value in blobs if isinstance(value, list))
+        codes = [item["code"] for item in bundle["validation"]]
+        self.assertEqual(10, codes.count("schedule.poi_candidate_unselected"))
+        self.assertEqual(4, codes.count("meal.period_unselected"))
+        self.assertEqual(1, codes.count("budget.incomplete"))
+        self.assertEqual("warning", bundle["status"])
+        self.assertEqual("preview", registry[0]["status"])
+        self.assertEqual("incomplete", registry[0]["readiness"])
 
     def test_publication_strips_google_places_details_but_preserves_place_ids(self):
         trip = json.loads(json.dumps(self.trip))
