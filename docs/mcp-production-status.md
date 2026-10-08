@@ -8,9 +8,9 @@
 
 - 重新查詢 Railway 後，production 目前 Online，部署 `aa3ef82c-f4ec-401d-9417-9d6e1aba59aa` 為 `SUCCESS`，實際 source commit 是 `530144f23546776088975f796e3cc2c18d1f8641`；`origin/main` 的 `e8b29a1` 及其後續文件提交均為 Railway `SKIPPED`，因為沒有變更 watched files。故本文件下方標示 `5b2b003` 的區段是歷史快照，不是目前 runtime。
 - 維護者提供的一般 ChatGPT Chat 對話紀錄證明 ChatGPT 實際呼叫 `parse_trip_request`、`plan_trip`、`get_trip`、`publish_trip_site`。該對話中的解析回覆將明確提供的桃園出發地顯示為 `null`。同一份完整需求在本機 parser 與目前連線的正式 MCP connector 重測均得到 `origin=桃園`、倉敷、2026-11-01 至 2026-11-05、6 位成人與 1 位 2 歲幼兒、無上限預算、自駕，且 `missing_fields=[]`。正式連線測試是 backend evidence，不能取代或抹除 ChatGPT 對話中不同的回覆；來源差異尚待查明。
-- 使用者提供的 ChatGPT 對話中，`publish_trip_site` 回 `not_ready`，包含候選景點、餐段與費用完整度訊息。之後本 agent 以已確認的 `confirm_public_publish=true`、`confirm_overwrite=true` 對同一 `trip_id` 呼叫正式 MCP，結果為 `already_published`、`commit_sha=null`、`deployment_status=not_required`，代表沒有新的覆寫或部署。兩種回覆及其所代表的資料版本差異尚待查明；不得將第二次結果描述成完成覆寫。
+- 使用者提供的 ChatGPT 對話中，`publish_trip_site` 曾回 `not_ready`，包含候選景點、餐段與費用完整度訊息。後來以已確認的 `confirm_public_publish=true`、`confirm_overwrite=true` 對同一 `trip_id` 呼叫正式 MCP，結果為 `already_published`、`commit_sha=null`、`deployment_status=not_required`，沒有新的覆寫或部署。其後比對目前公開 bundle 與最新 `get_trip`，兩者同為 5 天、10 個景點、15 筆餐點；目前 `already_published` 與既有頁面內容相符。先前 `not_ready` 回覆當時採用的資料版本未記錄，故不把它當成目前仍需重新發布的阻塞。
 - 用 Computer Use 在既有單一 Chrome 視窗開啟公開頁 `https://jackytsai70113.github.io/ai-travel-planner/trips/kurashiki-2026-11-live-20261008/#/today/2026-11-01`，確認頁面可讀，並看到 `Nagayamon Coffee`、`大原美術館`、`Caty Cafe`、`大橋家住宅`、`Momiji-dō` 與 Google Maps 地點標示。這證明現有公開頁目前可用，不代表剛才的呼叫建立了新版本。
-- #179 已修正狀態敘述：一般 Chat 工具呼叫及公開頁可用性已有證據；尚待釐清 ChatGPT 與正式 connector 的解析回覆、發布狀態差異，以及 ChatGPT 回答未依指引查詢即時地點名稱的情況。依據使用者指示，不要求重做已提供的相同流程。
+- #179 已修正狀態敘述：一般 Chat 工具呼叫及公開頁可用性已有證據；尚待釐清 ChatGPT 與正式 connector 的解析回覆差異，並確認 ChatGPT 能呼叫 `get_place_details` 以列出即時地點名稱。既有公開頁已與最新 Trip 同步，無須再次發布。依據使用者指示，不要求重做已提供的相同流程。
 
 - PR #243–#258 功能變更與 PR #259–#261 正式狀態文件均以一般 merge 合併。PR #250 修正入口行程卡片數量的固定測試，PR #252 更新 Places 即時查詢工具指引，PR #256 修正可行備選 POI 被誤報未驗證，PR #258 為無住宿日保留早餐後的路線緩衝。
 - 較早一次（PR #265 更新前）的 Railway production runtime source 為 `5b2b003c16201564bcda55edcccbb6d3e5948976`，deployment `549c1e92-161c-46f2-9552-cc2ea1605872` 狀態 `SUCCESS`，服務 Online，`/health` 回 HTTP 200、內文 `ok`；部署使用 Dockerfile `/Dockerfile`，`/data` volume 仍掛載。此為歷史基線，現在的 runtime 請以上方最新查證補充為準。
