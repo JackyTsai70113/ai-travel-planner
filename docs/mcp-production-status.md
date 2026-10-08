@@ -8,6 +8,7 @@
 - PR #215 的基線 commit `b0676515f62af85ee048bff94e82dc80319986be` 曾部署至 Railway deployment `cb92a197-1ff9-4ec8-a79f-6e499b0d0f75`，狀態 `SUCCESS`。PR #216 接著以一般 merge commit 將 `main` 更新為 `85e1ddd4891c753201db41730d2107e954746782`；CI 的 `mcp-site`、`pytest`、`python` 均成功，完整本機測試為 364 passed、288 subtests passed，production/planner 子集為 60 passed。
 - Railway `ai-traveller` deployment `16a9ee13-3f23-4f7c-b775-5a382e40e4ef` 對應 `85e1ddd` 且狀態 `SUCCESS`；正式 `/health` 回 HTTP 200、內文 `ok`。此次只修改 GitHub Pages 發布路徑，沒有完成 ChatGPT Chat 的即時工具驗收。
 - PR #215 的 recorded/mock production composition 覆蓋排三餐、無回程餐點保留候選與 warning、住宿留空時排可行餐點且不虛構接駁。沒有在新的倉敷 `plan_trip` live run 上驗證；ChatGPT 一般 Chat 的正式倉敷 prompt／工具呼叫仍待維護者自行輸入並回報。
+- PR #218 已以一般 merge commit 更新 `main` 至 `a5d1609d560b7d6777b206ca6befda412faabacb`，修正倉敷 parser 的 destination provenance；Railway deployment `a50c0355-a5fc-45f8-93e4-b6b26047fda7` 對應此 commit 且狀態 `SUCCESS`。部署後以連線中的私人 MCP `parse_trip_request` 唯讀呼叫確認目的地／來源依據、縣市、日期、旅客、桃園出發、自駕與不限預算均正確；此呼叫未執行規劃，也不取代一般 ChatGPT Chat `plan_trip` 驗收。
 - Railway `GITHUB_TOKEN` 已由遮蔽變數清單確認存在；前次正式執行個體的 GitHub REST 唯讀檢查回報 `permissions.push=true`。尚未經 ChatGPT 確認行程公開、等待 Pages 部署及瀏覽器開啟該行程網址；#179 保持開啟。
 - GitHub Issue #175 已依維護者決定關閉；自動住宿搜尋不再是需求。住宿可留空；住宿若由使用者提供，未經驗證的地址、價格與交通仍須保持未驗證。
 - 目前開啟的服務能力 issues：#180（待正式 ChatGPT production rerun）、#179（待明確公開行程並驗證 Pages URL）、#199（Places 資料保存與既有公開內容處置）。
