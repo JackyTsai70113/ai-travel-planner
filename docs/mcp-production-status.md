@@ -13,6 +13,7 @@
 - 2026-10-09 再次檢查 ChatGPT 的「重新整理工具」：點擊後按鈕顯示載入狀態，約 12 秒後恢復可按，但沒有成功或失敗提示；因此仍不能判定工具快照已刷新。Site metadata 回報版本 7、最後更新時間為 `2026-10-06T16:48:01.969Z`；這只證明 Site metadata 的時間，不足以判定目前 ChatGPT 工具快照。其後在同一 Chrome 視窗開啟一般「對話」，確認 `AI Travel Planner MCP` 已選取且輸入框空白，未代維護者輸入或送出 prompt。
 - PR #272 部署後，透過正式 MCP `get_trip` 唯讀讀取 `kurashiki-2026-11-live-20261008`，回傳新增的 `place_details_needed` 清單，共 25 個已排程且缺少獨立名稱來源的 Place ID。這個讀取只列 ID，沒有呼叫 Google Places 詳情 API、沒有產生該項 API 查詢費用，也沒有寫入行程。
 - PR #272 部署後再次在 ChatGPT 設定頁刷新工具：按鈕載入約 12 秒後恢復可按，沒有成功／失敗提示，故刷新狀態仍未確認。回到同一 Chrome 視窗的一般「對話」後，確認 `AI Travel Planner MCP` 已選取、輸入框空白；尚未看到本次部署後的 ChatGPT MCP 工具呼叫。
+- 2026-10-09 後續 Computer Use 檢查同一 Chrome 視窗中的 ChatGPT 外掛詳情頁，確認 `AI Travel Planner MCP` 顯示為已安裝的雲端外掛程式、資訊區版本為 `1.0.0`，且列出一個應用程式。頁面沒有列出 MCP 工具名稱，因此仍不能由詳情頁證明 ChatGPT 已載入七項工具或其中的 `get_trip.place_details_needed`；返回一般 Chat 後仍選取此外掛，輸入框保持空白，沒有代維護者輸入或送出 prompt。
 - #179 已修正狀態敘述：一般 Chat 工具呼叫及公開頁可用性已有證據；尚待釐清 ChatGPT 與正式 connector 的解析回覆差異，並確認 ChatGPT 能呼叫 `get_place_details` 以列出即時地點名稱。既有公開頁已與最新 Trip 同步，無須再次發布。依據使用者指示，不要求重做已提供的相同流程。
 
 - PR #243–#258 功能變更與 PR #259–#261 正式狀態文件均以一般 merge 合併。PR #250 修正入口行程卡片數量的固定測試，PR #252 更新 Places 即時查詢工具指引，PR #256 修正可行備選 POI 被誤報未驗證，PR #258 為無住宿日保留早餐後的路線緩衝。
