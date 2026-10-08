@@ -996,6 +996,7 @@
     }
   ],
   "meta": {
-    "generated_at": "2026-10-08T07:13:47+00:00"
-  }
+    "generated_at": "2026-10-08T19:27:56+00:00"
+  },
+  "place_details_api_base_url": "https://ai-traveller-production-732b.up.railway.app/api/public/trips"
 }
