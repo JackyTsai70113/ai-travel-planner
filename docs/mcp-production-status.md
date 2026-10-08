@@ -2,20 +2,22 @@
 
 最後查證：2026-10-08。本文記錄本 repo MCP 部署與實際工具呼叫的觀察結果，不代表規劃品質已達可交付標準。
 
-## 目前正式狀態（2026-10-08，Railway runtime source `49ea552`）
+## 目前正式狀態（2026-10-08，Railway runtime source `08236f8`）
 
-- PR #243–#245 修改 runtime；PR #246–#248 僅修改文件，並以一般 merge 合併，不改變執行中的 runtime。補充工具描述與文件的 commit `49ea552` 直接推送至 `main`，沒有經 PR；其 GitHub Actions CI run `37735337661` 三個 job 均成功。PR #246–#248 的 CI 均成功。
-- Railway 文件-only deployment `1921c4ca-a7ce-440a-88e8-2bd032be5f88` 為 `SKIPPED`；目前執行 runtime source 為 `49ea552ff962c8bb15404040422632526fbf0e1f`，deployment `c8dfaf4f-3549-4a74-a269-679f431c57a9` 狀態 `SUCCESS`。`curl -fsS https://ai-traveller-production-732b.up.railway.app/health` 回 `ok`。
+- PR #243–#245 修改 runtime；PR #246–#252 均以一般 merge 合併。PR #250 修正入口行程卡片數量的固定測試，PR #252 更新 `get_trip` 與 `get_place_details` 工具說明和回歸測試。
+- Railway production runtime source 為 `08236f8cee5575bdad5d6930896fdb038cf9241e`，deployment `a28ae4e8-9811-4b3c-b108-3577390e3423` 狀態 `SUCCESS`，服務 Online，`/health` 回 HTTP 200、內文 `ok`；`/mcp` 的正式 `tools/list` 回 HTTP 200、共 7 個工具。部署使用 Dockerfile `/Dockerfile`，`/data` volume 仍掛載。
 - PR #243 避免 Google Places 候選名稱與地址經由 `validation[].message/context` 殘留於新持久化／發布 projection；保留 Place ID、自有行程與驗證代碼。MCP 指引要求具名呈現已排定地點時即時呼叫 `get_place_details` 並附 attribution。既有原始行程沒有改寫。
 - PR #244 不再讓未排入的額外 POI warning 阻止發布。PR #245 允許有已揭露 warning 的行程在明確同意後以 preview 發布；bundle 的 `warning` 與 registry 的 `incomplete` 狀態會保留。錯誤級驗證、沒有餐點的日期與硬性缺項仍阻止發布。
 - 本機全套測試：`PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 /tmp/ai-travel-mcp-current-venv/bin/python -m pytest -q`，375 passed、288 subtests passed。Railway `/health` 回 HTTP 200、body `ok`。
 - 使用者提供的正式 ChatGPT Chat 倉敷規劃結果有每日 2 至 3 筆餐點，共 11 筆；住宿按需求留空。4 個餐段與預算費用估算仍有 warning。#180 原始「每日沒有任何餐點」問題已按新規劃結果結案。
 - 2026-10-08 以已連線的唯讀 MCP connector 對相同需求再次呼叫 `parse_trip_request`：`origin=桃園`、目的地倉敷、日期、人數、自駕、`budget_status=unlimited` 均正確，`missing_fields=[]`。使用者提供的 ChatGPT 回答摘要曾列 `origin=null`，此差異未能由正式 MCP parser 重現；connector 呼叫不等於 ChatGPT Chat UI 的回應驗收。
 - 同日以唯讀 `get_trip` 讀取 `kurashiki-2026-11-live-20261008`：五天各 2、2、3、2、2 筆餐點（共 11 筆）；safe response 未含地點名稱、地址、座標或營業時間欄位。此為正式 MCP read path 驗證，不修改或重新規劃行程，也不代替 ChatGPT Chat 端對地點詳情工具的呼叫驗收。
+- 使用者提供的同一行程曾回報 `publish_trip_site` 為 `not_ready`，訊息列出 10 筆未排入候選景點、4 個未安排早餐餐段與費用不完整。2026-10-08 再以正式 MCP 呼叫同一 `trip_id`、同一 slug、`confirm_public_publish=true`、`confirm_overwrite=false`，工具回 `already_published`，確認既有公開頁存在；沒有覆寫公開頁。公開頁、bundle 與 registry 均回 HTTP 200，registry 為 `preview`／`incomplete`。目前正式 publisher 將這些 warning 保留在不完整預覽中；早先的 `not_ready` 回應與本次正式工具重查結果不一致，來源時點尚無法確認。
+- 公開 bundle 有 5 天、10 筆實際 visit、11 筆 meal，以及 10 個未排入景點候選的 warning。4 個 `meal.period_unselected` 對應四天未安排早餐；`budget.incomplete` 代表費用未完整估算，不代表預算上限未設定。40 個 Places 候選內容僅保存允許的 Place ID／行程欄位投影；公開頁仍以泛用地點標籤呈現，待瀏覽器視覺與地點詳情使用流程驗收。
 - 2026-10-08 使用使用者已明確確認公開的既有行程，透過已連線 AI Travel Planner MCP 呼叫 `publish_trip_site(trip_id="kurashiki-2026-11-live-20261008", site_slug="kurashiki-2026-11-live-20261008", confirm_public_publish=true)`。工具回 `publish_accepted`，URL 為 `https://jackytsai70113.github.io/ai-travel-planner/trips/kurashiki-2026-11-live-20261008/`，commit `d40c71c84e94c201b5de8a5889fced98abdd250f`，初始 deployment status 為 `pending`。GitHub Pages workflow `37736450625` 成功；該網址以 `curl` 回 HTTP 200，標題為「倉敷 行程｜AI Travel Planner」，registry 標記 `status=preview`、`readiness=incomplete`。這不是一般 ChatGPT Chat UI 或互動瀏覽器驗收。
 - 發布 commit 的 Website CI `37736450517` 因 `web/tests/portal-e2e.mjs` 將入口卡片數硬編碼為 5 而失敗；新增第六筆登錄行程後觸發此回歸。PR #250 改為依 `public/trip-registry.json` 動態核對卡片數；PR 的 Python、pytest、MCP site、Website CI 均通過，並以 merge commit `8eec8baa2a7647a197b713cf9305fe71974409a8` 合併。合併後 CI `37737544356` 與 Website CI `37737544402` 均成功，Pages workflow `37737544370` 亦成功。
 - #199 重新開啟：新資料 projection 已清理 Places 詳細欄位，但既有 Railway 檔案、公開 Pages 內容與 Git 歷史仍依維護者指示保持原樣，未作歷史處置。
-- 目前開啟的服務能力 issues 為 #179 與 #199。使用者保留 ChatGPT 一般 Chat prompt 由本人輸入；未代送 prompt。公開行程 URL 已部署並回 HTTP 200，但 Computer Use 最近可見原有 Chrome ChatGPT 分頁，macOS 鎖定而無法檢視頁面互動；一般 ChatGPT Chat 的真實工具呼叫與瀏覽器視覺驗收仍未完成。直接 MCP／Railway、CI、health 或 HTTP 回應都不能代替這兩項驗收。
+- 目前開啟的服務能力 issues 為 #179 與 #199。使用者保留 ChatGPT 一般 Chat prompt 由本人輸入；未代送 prompt。正式 MCP 對相同行程回 `already_published`，公開網址與資料檔 HTTP 200；但 Computer Use 最近可見原有 Chrome ChatGPT 分頁，macOS 鎖定而無法檢視互動。一般 ChatGPT Chat 的真實工具呼叫與瀏覽器視覺驗收仍未完成；直接 MCP／Railway、CI、health 或 HTTP 回應都不能代替這兩項驗收。
 
 下方依時間排列的 PR／部署紀錄是當時狀態快照；其中舊 issue 開啟狀態與舊 deployment ID 不代表目前狀態。以上方「目前正式狀態」和當前 GitHub／Railway 資料為準。
 
