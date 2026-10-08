@@ -2,10 +2,10 @@
 
 最後查證：2026-10-08。本文記錄本 repo MCP 部署與實際工具呼叫的觀察結果，不代表規劃品質已達可交付標準。
 
-## 目前正式狀態（2026-10-08，main `41559ae`）
+## 目前正式狀態（2026-10-08，Railway runtime source `49ea552`）
 
-- `main` 最新為 PR #246 merge commit `41559ae1cfbd32a858e732760c10d6a5f7979e69`。PR #243、#244、#245、#246 已一般 merge；補充工具描述與文件的 commit `49ea552` 直接推送至 `main`，沒有經 PR。`49ea552` 的 GitHub Actions CI run `37735337661` 三個 job 均成功，PR #246 CI 亦全數成功。
-- Railway deployment `1921c4ca-a7ce-440a-88e8-2bd032be5f88` 因 PR #246 僅修改文件而 `SKIPPED`；目前執行 runtime 為 `49ea552ff962c8bb15404040422632526fbf0e1f`，deployment `c8dfaf4f-3549-4a74-a269-679f431c57a9` 狀態 `SUCCESS`。`curl -fsS https://ai-traveller-production-732b.up.railway.app/health` 回 `ok`。
+- PR #243–#245 修改 runtime；PR #246–#248 僅修改文件，並以一般 merge 合併，不改變執行中的 runtime。補充工具描述與文件的 commit `49ea552` 直接推送至 `main`，沒有經 PR；其 GitHub Actions CI run `37735337661` 三個 job 均成功。PR #246–#248 的 CI 均成功。
+- Railway 文件-only deployment `1921c4ca-a7ce-440a-88e8-2bd032be5f88` 為 `SKIPPED`；目前執行 runtime source 為 `49ea552ff962c8bb15404040422632526fbf0e1f`，deployment `c8dfaf4f-3549-4a74-a269-679f431c57a9` 狀態 `SUCCESS`。`curl -fsS https://ai-traveller-production-732b.up.railway.app/health` 回 `ok`。
 - PR #243 避免 Google Places 候選名稱與地址經由 `validation[].message/context` 殘留於新持久化／發布 projection；保留 Place ID、自有行程與驗證代碼。MCP 指引要求具名呈現已排定地點時即時呼叫 `get_place_details` 並附 attribution。既有原始行程沒有改寫。
 - PR #244 不再讓未排入的額外 POI warning 阻止發布。PR #245 允許有已揭露 warning 的行程在明確同意後以 preview 發布；bundle 的 `warning` 與 registry 的 `incomplete` 狀態會保留。錯誤級驗證、沒有餐點的日期與硬性缺項仍阻止發布。
 - 本機全套測試：`PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 /tmp/ai-travel-mcp-current-venv/bin/python -m pytest -q`，375 passed、288 subtests passed。Railway `/health` 回 HTTP 200、body `ok`。
