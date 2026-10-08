@@ -10,6 +10,14 @@
 - 此次已驗證本機、CI、部署及 health；沒有在 ChatGPT Chat 執行新的 `plan_trip`。#180 的正式規劃驗收仍由維護者自行在一般 ChatGPT Chat 輸入倉敷 prompt，檢查新 Canonical Trip 的每日餐點與 warning 後才能關閉。
 - 目前開啟的服務能力 issues 仍為 #180、#179、#199；各自的未完成驗收範圍見下文。
 
+## 2026-10-08 Railway volume inventory 與網站 attribution
+
+- PR #227 已以一般 merge commit `63aace248eb3e91d840d7c6a2e03a940ea070644` 合併；GitHub Pages deployment `37715791303` 成功。部署後以瀏覽器開啟正式 Awaji 每日行程頁，在 375、390、430、1200、1366、1440、1920px 檢查 Google 官方 98×18 logo、10px 水平／5px 垂直留白及水平溢出，七種寬度均通過。
+- PR #228 已以一般 merge commit `9fcb177524788bc3ee5df43d0401d7817aae22e8` 更新資料生命週期盤點文件；`python`、`pytest`、`mcp-site` CI 均成功。透過已登入 Railway CLI SSH 對 production `/data` 執行唯讀 JSON metadata inventory，只輸出檔案數、欄位存在數及 trip ID，沒有輸出地點內容或憑證值。
+- inventory 時 Railway service `ai-traveller` Online，volume 使用量 33 MB / 500 MB。volume 只有 1 份 Canonical Trip 與 1 個行程 HTML：`kurashiki-2026-11`。該 Trip 有 40 個景點、20 個餐廳、0 個住宿候選；60 個候選均有 Google Places API (New) provenance、名稱、地址與座標，20 個另含 opening hours、rating、ratings 與 field provenance。五天的每日行程仍為 0 個 meal item。細節見 [`Google Places 資料生命週期盤點`](google-places-data-lifecycle.md)。
+- 這是單一時點的唯讀 inventory；尚未實作或執行 Places 欄位保留期限、刪除或既有公開 bundle／Git 歷史處置。#199 保持開啟。
+- 以上均未執行新的 ChatGPT `plan_trip` 或公開行程。#180 仍待維護者在一般 ChatGPT Chat 執行新規劃並檢查每日餐點；#179 仍待明確確認發布一份符合 readiness 的 Trip，驗證 Pages deployment 與網址。不得用網站 CI、health check 或此次 volume inventory 取代這兩項驗收。
+
 ## 2026-10-08 PR #223 合併後正式狀態
 
 - 長期目標已整理於 [`AI Travel Planner MCP 長期目標`](mcp-roadmap.md)：持續開發、測試、審查及合併，直到一般 ChatGPT Chat 可穩定完成有根據的旅行規劃；mock、healthcheck 或 CI 不能代替正式 ChatGPT 工具驗收。
