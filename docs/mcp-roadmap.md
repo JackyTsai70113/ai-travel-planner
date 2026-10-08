@@ -22,10 +22,10 @@
 3. 涉及 MCP 部署、連線、工具或認證的變更，依 [`ChatGPT Chat MCP 上線驗收流程`](chatgpt-mcp-live-verification.md) 使用 Computer Use 在一般 ChatGPT Chat 驗收。維護者明確要求由使用者輸入 prompt 時，必須保持等待；不得改用 Work，也不得代替使用者送出 prompt。沒有這項證據時如實標記未驗收。
 4. 涉及網站的外連、版型或互動時，依 repo `AGENTS.md` 的瀏覽器規格，以實際瀏覽器操作和畫面檢查驗收；靜態檢查或被攔截的 popup 不算目標網站可用證據。
 
-## 目前基線（2026-10-08）
+## 目前正式環境基線（2026-10-08）
 
-- `main` 目前為 PR #246 merge commit `41559ae1cfbd32a858e732760c10d6a5f7979e69`。PR #243、#244、#245、#246 以一般 merge 合併；補充工具描述與文件的 `49ea552` 是直接推送至 `main` 的一般 commit，沒有經 PR。`49ea552` 的 CI run `37735337661` 三個 job 均成功，PR #246 CI 亦全數成功。
-- Railway deployment `1921c4ca-a7ce-440a-88e8-2bd032be5f88` 因 PR #246 僅修改文件而 `SKIPPED`；目前執行 runtime 仍是成功部署的 `49ea552`，deployment `c8dfaf4f-3549-4a74-a269-679f431c57a9`。正式 `/health` 回 `ok`。
+- Railway MCP runtime source SHA 為 `49ea552ff962c8bb15404040422632526fbf0e1f`，deployment `c8dfaf4f-3549-4a74-a269-679f431c57a9` 狀態 `SUCCESS`；正式 `/health` 回 `ok`。PR #246、#247、#248 僅修改文件；Railway watch pattern 將文件-only 更新略過，不改變 runtime。
+- PR #243、#244、#245、#246、#247、#248 以一般 merge 合併。補充工具描述與文件的 `49ea552` 是直接推送至 `main` 的一般 commit，沒有經 PR。`49ea552` 的 CI run `37735337661` 三個 job 均成功；PR #246、#247、#248 CI 均成功。
 - PR #243 修正持久化／發布投影中 Google Places 候選驗證訊息殘留名稱與 context 的問題，並要求 ChatGPT 對已排定且缺少獨立名稱來源的 Place ID 使用即時 `get_place_details`。既有行程原始檔未改寫；讀取與未來投影會套用清理。
 - PR #244 讓未排入候選景點的 warning 不阻止發布。PR #245 允許只有可揭露 warning 的行程以 preview 公開；網站 bundle 保留 `warning`，registry readiness 保留 `incomplete`。錯誤級驗證、沒有任何餐點的日期與其他硬性缺項仍拒絕發布。
 - 本機全套 pytest：`PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 /tmp/ai-travel-mcp-current-venv/bin/python -m pytest -q`，375 passed、288 subtests passed。正式 deployment 亦通過 health check。
