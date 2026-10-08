@@ -8,6 +8,7 @@
 - `railway config plan` 原先只列 1 項 `build.watchPatterns` 更新，0 add、0 destroy；`railway config apply --yes` 後再次執行 plan，結果為設定已同步、無待套用變更。配置 plan 未涉及變數、GitHub 來源或 `/data` volume。
 - Railway deployment `522e831d-be9b-4dd4-aa75-d016b6ec058d` 對應 `fe0ae02047c05488a2cafb03f37bc646add6cf67`，狀態 `SUCCESS`；正式服務 Online，`/health` 回 HTTP 200、內文 `ok`。deployment image digest 與前一個部署相同；`/data` volume 仍掛載，使用量 33 MB / 500 MB。
 - 以 Railway CLI 注入既有 `BEARER_TOKEN` 執行唯讀 MCP 後端檢查，未輸出 token：`tools/list` HTTP 200，列出 `parse_trip_request`、`validate_trip`、`get_trip`、`plan_trip`、`build_trip_site`、`publish_trip_site`；`parse_trip_request` HTTP 200，輸入「我想安排倉敷五天四夜」回 `parsed`、目的地倉敷、5 天 4 夜。
+- 以 Railway CLI 注入既有 `OPENROUTESERVICE_API_KEY`，呼叫 adapter 現用的 HeiGIT `api.heigit.org/openrouteservice/v2/matrix/driving-car`，使用供應商文件中的 Heidelberg 範例座標執行單次唯讀矩陣請求。回應 route `available`、189 秒、889 公尺，確認 production key 可用於新網域；這不代表倉敷實際路線、營業時間或餐點排程已驗收。
 - PR #230 不修改 MCP runtime、tool schema 或 ChatGPT Site 設定。本次沒有在一般 ChatGPT Chat 送出新 prompt；因此未把上述 HTTP smoke test 誤報為 ChatGPT UI 驗收。#180 的新 `plan_trip` 每日餐點驗收仍由維護者在一般 ChatGPT Chat 執行並回報。
 - 目前仍開啟 #180、#179、#199；正式規劃／餐點、GitHub Pages 發布、Google Places 資料生命週期的未完成範圍分別見下文。
 
