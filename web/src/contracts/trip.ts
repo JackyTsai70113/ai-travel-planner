@@ -130,6 +130,9 @@ export interface BundlePlace {
   source_refs?: string[]
   provenance?: BundleProvenance | BundleFieldProvenance | null
   field_provenance?: BundleFieldProvenance | null
+  place_details_state?: 'loading' | 'unavailable' | null
+  place_details_attribution?: string | null
+  place_details_third_party_attributions?: Array<{ provider?: string; providerUri?: string }>
 }
 
 export interface BundleRestaurantFacts {
@@ -260,6 +263,7 @@ export interface Bundle {
   meta: {
     generated_at: string
   }
+  place_details_api_base_url?: string
 }
 
 export type BundleValidationResult =
@@ -284,6 +288,15 @@ export function validateBundle(value: unknown): value is Bundle {
   if (!Array.isArray(value.reservations) || !Array.isArray(value.validation)) return false
   if (!isRecord(value.budget) || !isRecord(value.budget.total) || !isString(value.budget.currency)) return false
   if (!isRecord(value.meta) || !isString(value.meta.generated_at)) return false
+  if (value.place_details_api_base_url !== undefined) {
+    if (!isString(value.place_details_api_base_url)) return false
+    try {
+      const endpoint = new URL(value.place_details_api_base_url)
+      if (endpoint.protocol !== 'https:' || endpoint.pathname.replace(/\/$/, '') !== '/api/public/trips') return false
+    } catch {
+      return false
+    }
+  }
   return true
 }
 
@@ -333,6 +346,8 @@ export function buildMapsLink(placeLabel: string): string {
 export function findPlaceLabel(places: BundlePlace[] = [], placeId: string): string {
   const found = places.find((place) => place.id === placeId)
   if (!found) return placeId
+  if (found.place_details_state === 'loading') return '正在載入 Google Maps 地點名稱…'
+  if (found.place_details_state === 'unavailable') return 'Google Maps 地點名稱暫時無法載入'
   return found.name || found.maps_query || (found.google_place_id ? 'Google Maps 地點' : placeId)
 }
 

@@ -97,7 +97,7 @@ function TermsContent() {
     <h2>服務內容與行程資訊</h2>
     <p>本服務協助整理旅行需求、研究資料並產生行程草案。行程、地點、營業時間、交通、價格與供應情況可能不完整或變動；除非內容明確標示為已確認，否則不得視為訂位、購票、付款或供應商承諾。出發或交易前，請向航空公司、住宿、景點及交通業者確認最新資訊。</p>
     <h2>第三方服務</h2>
-    <p>本服務可能連結或使用第三方服務及資料，包括 Google Maps Platform、GitHub Pages、Railway、OpenRouteService、YouTube 與 ChatGPT。這些服務各自受其條款及隱私權政策約束。使用 ChatGPT 時，另適用 <a href="https://openai.com/policies/terms-of-use/" target="_blank" rel="noreferrer">OpenAI 使用條款</a>與<a href="https://openai.com/policies/privacy-policy/" target="_blank" rel="noreferrer">OpenAI 隱私權政策</a>。本服務包含 Google Maps 功能與內容；使用這些功能與內容時，亦受當時有效的 <a href="https://maps.google.com/help/terms_maps/" target="_blank" rel="noreferrer">Google Maps／Google Earth 使用者附加條款</a>及<a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer">Google 隱私權政策</a>約束。服務營運亦須遵守<a href="https://cloud.google.com/maps-platform/terms" target="_blank" rel="noreferrer">Google Maps Platform 服務條款</a>。</p>
+    <p>本服務可能連結或使用第三方服務及資料，包括 Google Maps Platform、GitHub Pages、Railway、OpenRouteService、YouTube 與 ChatGPT。這些服務各自受其條款及隱私權政策約束。使用 ChatGPT 時，另適用 <a href="https://openai.com/policies/terms-of-use/" target="_blank" rel="noreferrer">OpenAI 使用條款</a>與<a href="https://openai.com/policies/privacy-policy/" target="_blank" rel="noreferrer">OpenAI 隱私權政策</a>。公開行程頁可能在你瀏覽時向本服務及 Google 即時查詢已排入行程的地點名稱；每次查詢會使用 Google Maps Platform，可能產生 API 費用。Google 查詢失敗時，頁面會標示名稱暫時無法載入。本服務包含 Google Maps 功能與內容；使用這些功能與內容時，亦受當時有效的 <a href="https://maps.google.com/help/terms_maps/" target="_blank" rel="noreferrer">Google Maps／Google Earth 使用者附加條款</a>及<a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer">Google 隱私權政策</a>約束。服務營運亦須遵守<a href="https://cloud.google.com/maps-platform/terms" target="_blank" rel="noreferrer">Google Maps Platform 服務條款</a>。</p>
     <h2>公開分享</h2>
     <p>只有在使用者明確確認公開發布後，行程才會透過 GitHub Pages 公開。公開內容可能被搜尋引擎索引、下載或轉載；請勿在行程需求或公開內容中放入護照、付款資料、精確住址或其他不適合公開的個人資料。</p>
     <h2>合理使用</h2>
@@ -122,7 +122,7 @@ function PrivacyContent() {
     <h2>公開行程</h2>
     <p>已確認發布的行程資料會存放在公開 GitHub Pages 網站所使用的 GitHub repository，任何人都可能檢視、複製或由搜尋引擎索引。未公開發布的行程仍可能保存在受認證保護的後端持久化儲存中。不要輸入不希望由服務處理或公開的資料。</p>
     <h2>保存與刪除</h2>
-    <p>新建立的行程會保存使用者的行程安排與筆記，以及 Google Places Place ID；Google Places 名稱、地址、座標、營業時間、評分等詳細資料只在查詢期間暫存在記憶體，不寫入行程檔、靜態網站或公開行程。查詢失敗時會明確標示無法取得，不會沿用持久化的 Google 詳細資料。Google Places 座標若在單次請求中使用，請求結束即丟棄，最長保存期限為零天；Google 條款允許的座標快取上限為 30 個連續日。2026 年 10 月 8 日前建立的歷史行程與公開頁面不會因這項變更自動改寫或刪除。GitHub、Railway 或網路服務商可能依其自身政策保留安全、存取及部署紀錄；詳見 <a href="https://developers.google.com/maps/documentation/places/web-service/policies" target="_blank" rel="noreferrer">Places API 政策</a>及<a href="https://cloud.google.com/maps-platform/terms/maps-service-terms" target="_blank" rel="noreferrer">Maps Service Specific Terms</a>。</p>
+    <p>新建立的行程會保存使用者的行程安排與筆記，以及 Google Places Place ID；Google Places 名稱、地址、座標、營業時間、評分等詳細資料不寫入行程檔或公開靜態頁。公開頁載入當前區段時，會將已排入行程的 Place ID 傳到本服務，再即時向 Google 查詢必要的地點名稱與署名；回應使用 no-store，僅在當前頁面記憶體中用來顯示，不存入瀏覽器儲存空間。查詢失敗時會標示名稱暫時無法載入，不會沿用持久化的 Google 詳細資料。Google Places 座標若在單次請求中使用，請求結束即丟棄，最長保存期限為零天；Google 條款允許的座標快取上限為 30 個連續日。2026 年 10 月 8 日前建立的歷史行程與公開頁面不會因這項變更自動改寫或刪除。GitHub、Railway 或網路服務商可能依其自身政策保留安全、存取及部署紀錄；詳見 <a href="https://developers.google.com/maps/documentation/places/web-service/policies" target="_blank" rel="noreferrer">Places API 政策</a>及<a href="https://cloud.google.com/maps-platform/terms/maps-service-terms" target="_blank" rel="noreferrer">Maps Service Specific Terms</a>。</p>
     <h2>Cookie 與分析</h2>
     <p>目前網站程式未設定追蹤 Cookie 或第三方分析工具。網站主機與服務供應商可能依其政策處理必要的連線及安全紀錄。</p>
     <h2>你的選擇與聯絡</h2>

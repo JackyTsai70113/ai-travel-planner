@@ -47,6 +47,8 @@ railway run --service ai-traveller --environment production -- node -e 'const r 
 
 已於 2026-10-08 以最新 production runtime 重驗：Railway deployment `a28ae4e8-9811-4b3c-b108-3577390e3423` 狀態為 `SUCCESS`，source commit `08236f8cee5575bdad5d6930896fdb038cf9241e`，`/health` 回 HTTP 200；`tools/list` 回 HTTP 200，列出 `parse_trip_request`、`validate_trip`、`get_trip`、`get_place_details`、`plan_trip`、`build_trip_site`、`publish_trip_site`。`get_place_details` 單次唯讀查詢回 HTTP 200、`available`，署名 `Google Maps`，不保存回應內容。一般 ChatGPT Chat 的工具清單需在 app/plugin 詳細資料頁 Refresh apps 後實際核對；Railway 清單不能代替 UI 驗收。實際 ChatGPT 使用者應透過私人 Site Worker 呼叫 MCP，不要把 Railway 後端網址當作公開的 Site Worker 網址。
 
+公開行程頁的即時地點名稱端點由同一服務提供，不需要新增 Railway 變數。它只允許 GitHub Pages 精確來源、registry 中已發布的行程及每日排程內的 Google Place ID；每來源每分鐘最多 60 次，每月最多 1,000 次 Places Details 請求。月計數只記錄 UTC 月份與總次數，持久放在 `/data/.public-place-details-usage.json`，不記錄 IP、Place ID 或 Google 回應。Page bundle 只含 API 網址，不含 Google key 或 Places 詳細資料；前端請求使用 `no-store`，並附 Google Maps 與第三方 attribution。此端點可能產生 Google Cloud API 費用；月上限限制本端點用量，不代表整個 GCP 專案不會超過免費額度。
+
 也可直接透過後端唯讀測試 parser：
 
 ```sh

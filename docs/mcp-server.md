@@ -61,6 +61,8 @@ Railway：
 `deployment_status=pending` 代表 Pages Actions 部署仍在進行；待 workflow
 成功後該網址才會提供新版內容。這個工具不訂房、不付款，也不會自動發布。
 
+公開行程頁的 Google 地點名稱由 Railway 後端即時查詢，不保存至 bundle。發布器會把 Railway 自動提供的 `RAILWAY_PUBLIC_DOMAIN` 寫成公開 API 根網址；`PUBLIC_URL` 是 ChatGPT Site Worker 網址，不可拿來代替這個 API 網址。後端只允許 GitHub Pages 的來源網站、公開 registry 已列出的行程，以及每日行程中實際排入的 Place ID；API key 留在 Railway。回應使用 `Cache-Control: no-store`，頁面只在記憶體中顯示 Google Maps 名稱與 attribution。每個來源每分鐘最多 60 次，且 `/data` 記錄不含個人或地點識別資訊的月總次數，上限為 1,000 次；達上限或記錄檔異常時停止查詢。這些是 Places Details API 請求，可能產生 Google Cloud 費用；免費額度或其他 API 用量會影響實際帳單。
+
 `.railway/railway.ts` sets `builder` to `DOCKERFILE` and `dockerfilePath` to the
 root `/Dockerfile`, so this service does not need `RAILWAY_DOCKERFILE_PATH`. If
 the Dockerfile is moved, update the IaC definition; the variable is an
@@ -176,6 +178,7 @@ Production planning requires `GOOGLE_MAPS_API_KEY` and `OPENROUTESERVICE_API_KEY
 | `validate_trip` | Runs Canonical Trip V1 schema validation and deterministic itinerary validation. | None |
 | `get_trip` | Returns an allowlisted summary for a safe trip ID, including scheduled items and persisted Google Place IDs; omits raw provider records, booking details, free-form notes, and arbitrary fields. Use `get_place_details` when a current Google-sourced display name or operational detail is needed. | None |
 | `get_place_details` | Fetches current Places details for one saved Google Place ID for this request only; returns `Google Maps` and supplied third-party attribution. The response is never written to trip storage or site files. | One live Google Places Details request per call; none in repo storage. |
+| 公開行程地點名稱 API | 公開頁只對當前區段已排入行程且尚無自有名稱的地點呼叫 Railway 唯讀端點；端點再以 Places API 的 `id,displayName,attributions` 欄位遮罩查詢。 | 無 bearer token，但限制精確 GitHub Pages Origin、公開 registry、排定 Place ID、每來源頻率與每月 1,000 次上限；`no-store`，名稱僅留在頁面記憶體。每次會使用一次 Places Details API。 |
 | `plan_trip` | 以繁體中文一題一答補齊必要資訊；只依使用者已明確回答的內容規劃，不回傳 parser JSON 充當最終回答。 | 必要欄位未補齊時只回傳一個 `next_question` 且不啟動研究；完整後仍須先取得私有檔案寫入確認，再以 `confirm_write=true` 建立或覆寫 Canonical Trip 和靜態網站。永不公開發布。 |
 | `build_trip_site` | Validates and renders an existing Canonical Trip. | Requires `confirm_write=true`; writes a local static site only. Never publishes. |
 | `publish_trip_site` | Publishes a Canonical Trip as a public preview. Warning-only incomplete trips keep `incomplete` readiness and visible warnings. | Requires explicit `confirm_public_publish=true`; hard validation errors and required missing sections still refuse publication. Existing-trip replacement separately requires `confirm_overwrite=true`. |

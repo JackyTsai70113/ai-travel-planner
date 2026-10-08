@@ -131,6 +131,28 @@ class ProductionProviderAdapterTests(unittest.TestCase):
         self.assertIsNone(body)
         self.assertNotIn("test-key", url)
 
+    def test_google_place_display_name_uses_minimal_field_mask_and_rejects_mismatch(self):
+        client = RecordedHttpClient([{
+            "id": "ChIJ-place", "displayName": {"text": "大濠公園"},
+            "attributions": [{"provider": "Third party", "providerUri": "https://example.test"}],
+        }])
+        result = GooglePlacesAdapter("test-key", http_client=client, now=NOW).get_place_display_name("ChIJ-place")
+        self.assertEqual({
+            "status": "available", "place_id": "ChIJ-place", "name": "大濠公園",
+            "attribution": "Google Maps",
+            "third_party_attributions": [{"provider": "Third party", "providerUri": "https://example.test"}],
+        }, result)
+        self.assertIn("languageCode=zh-TW", client.calls[0][1])
+        self.assertEqual("id,displayName,attributions", client.calls[0][2]["X-Goog-FieldMask"])
+        self.assertNotIn("test-key", client.calls[0][1])
+        self.assertNotIn("test-key", str(result))
+
+        mismatch = GooglePlacesAdapter(
+            "test-key", http_client=RecordedHttpClient([{"id": "ChIJ-other", "displayName": {"text": "別處"}}])
+        )
+        with self.assertRaisesRegex(ProviderRequestError, "matching place name"):
+            mismatch.get_place_display_name("ChIJ-place")
+
     def test_google_restaurant_query_failure_preserves_successful_poi_candidates(self):
         adapter = GooglePlacesAdapter(
             "test-key",

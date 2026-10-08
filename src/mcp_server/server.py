@@ -5,9 +5,12 @@ from __future__ import annotations
 import json
 import os
 import re
+import threading
 import time
 from pathlib import Path
 from typing import Annotated, Any
+from urllib.request import Request, urlopen
+from urllib.parse import urlsplit
 
 from mcp.server import MCPServer
 from mcp.server.transport_security import TransportSecuritySettings
@@ -37,6 +40,13 @@ _SITE_DIR = Path(os.environ.get("TRAVEL_PLANNER_SITE_DIR", "site")).resolve()
 _HTTP_REQUEST_LIMIT = 120
 _HTTP_WINDOW_SECONDS = 60
 _HTTP_MAX_BODY_BYTES = 4 * 1024 * 1024
+_PUBLIC_PLACE_REQUEST_LIMIT = 60
+_PUBLIC_PLACE_MONTHLY_LIMIT = 1_000
+_GOOGLE_PLACE_ID = re.compile(r"^[A-Za-z0-9_-]{5,255}$")
+_PUBLIC_PLACE_USAGE_PATH = Path(os.environ.get(
+    "PUBLIC_PLACE_DETAILS_USAGE_FILE", str(_TRIPS_DIR.parent / ".public-place-details-usage.json")
+))
+_PUBLIC_PLACE_USAGE_LOCK = threading.Lock()
 _MCP_LOCAL_ALLOWED_HOSTS = ("127.0.0.1:*", "localhost:*", "[::1]:*")
 
 mcp = MCPServer(
@@ -56,12 +66,14 @@ def _consume_remote_request(
     user_id: str,
     now: float,
     windows: dict[str, tuple[int, float]],
+    *,
+    limit: int = _HTTP_REQUEST_LIMIT,
 ) -> bool:
     """Apply a per-user fixed-window limit; state is held only in process memory."""
     count, window_started = windows.get(user_id, (0, now))
     if now - window_started >= _HTTP_WINDOW_SECONDS:
         count, window_started = 0, now
-    if count >= _HTTP_REQUEST_LIMIT:
+    if count >= limit:
         return False
     if user_id not in windows and len(windows) >= 10_000:
         expired = [key for key, (_, started) in windows.items() if now - started >= _HTTP_WINDOW_SECONDS]
@@ -71,6 +83,90 @@ def _consume_remote_request(
             return False
     windows[user_id] = (count + 1, window_started)
     return True
+
+
+def _github_pages_origin(pages_base_url: str) -> str:
+    parsed = urlsplit(pages_base_url)
+    if parsed.scheme != "https" or not parsed.netloc or parsed.username or parsed.password:
+        raise ValueError("GitHub Pages base URL must be an HTTPS URL")
+    return f"https://{parsed.netloc}"
+
+
+def _published_scheduled_google_place_ids(slug: str, pages_base_url: str) -> set[str]:
+    """Read the public bundle and allow only Google places actually on its schedule."""
+    if not _TRIP_ID.fullmatch(slug):
+        return set()
+    base = pages_base_url.rstrip("/")
+    headers = {"Accept": "application/json", "User-Agent": "ai-travel-planner-place-details/1.0"}
+    try:
+        registry_request = Request(f"{base}/trip-registry.json", headers=headers)
+        with urlopen(registry_request, timeout=5) as response:
+            registry_raw = response.read(_HTTP_MAX_BODY_BYTES + 1)
+        if len(registry_raw) > _HTTP_MAX_BODY_BYTES:
+            return set()
+        registry = json.loads(registry_raw)
+        if not isinstance(registry, list) or not any(
+            isinstance(entry, dict)
+            and entry.get("slug") == slug
+            and entry.get("canonical_url", "").rstrip("/") == f"trips/{slug}"
+            for entry in registry
+        ):
+            return set()
+        bundle_request = Request(f"{base}/trips/{slug}/public-bundle.json", headers=headers)
+        with urlopen(bundle_request, timeout=5) as response:
+            bundle_raw = response.read(_HTTP_MAX_BODY_BYTES + 1)
+        if len(bundle_raw) > _HTTP_MAX_BODY_BYTES:
+            return set()
+        bundle = json.loads(bundle_raw)
+    except Exception:
+        return set()
+    trip_id = bundle.get("trip_id") if isinstance(bundle, dict) else None
+    if not isinstance(bundle, dict) or not isinstance(trip_id, str) or not _TRIP_ID.fullmatch(trip_id):
+        return set()
+    scheduled: set[str] = set()
+    days = bundle.get("days", [])
+    if not isinstance(days, list):
+        return set()
+    for day in days:
+        if not isinstance(day, dict) or not isinstance(day.get("items", []), list):
+            continue
+        for item in day.get("items", []):
+            if isinstance(item, dict) and isinstance(item.get("place_id"), str):
+                scheduled.add(item["place_id"])
+    places = bundle.get("places", [])
+    if not isinstance(places, list):
+        return set()
+    return {
+        place["google_place_id"]
+        for place in places
+        if isinstance(place, dict)
+        and place.get("id") in scheduled
+        and isinstance(place.get("google_place_id"), str)
+        and _GOOGLE_PLACE_ID.fullmatch(place["google_place_id"])
+    }
+
+
+def _consume_public_place_monthly_budget(
+    path: Path = _PUBLIC_PLACE_USAGE_PATH,
+    *,
+    month: str | None = None,
+    limit: int = _PUBLIC_PLACE_MONTHLY_LIMIT,
+) -> bool:
+    """Persist an aggregate monthly call count; fail closed on corrupt or unwritable state."""
+    month = month or time.strftime("%Y-%m", time.gmtime())
+    with _PUBLIC_PLACE_USAGE_LOCK:
+        try:
+            current = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+            count = current.get("count", 0) if current.get("month") == month else 0
+            if not isinstance(count, int) or isinstance(count, bool) or count < 0 or count >= limit:
+                return False
+            path.parent.mkdir(parents=True, exist_ok=True)
+            temporary = path.with_name(f"{path.name}.tmp")
+            temporary.write_text(json.dumps({"month": month, "count": count + 1}), encoding="utf-8")
+            os.replace(temporary, path)
+            return True
+        except (OSError, ValueError, TypeError, AttributeError):
+            return False
 
 
 async def _read_limited_asgi_body(receive, limit: int) -> list[dict[str, Any]] | None:
@@ -526,12 +622,15 @@ def publish_trip_site_tool(
     repository = os.environ.get("GITHUB_REPOSITORY", "JackyTsai70113/ai-travel-planner")
     branch = os.environ.get("GITHUB_PAGES_BRANCH", "main")
     pages_base_url = os.environ.get("GITHUB_PAGES_BASE_URL", "https://jackytsai70113.github.io/ai-travel-planner")
+    railway_domain = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "").strip()
+    public_api_base_url = f"https://{railway_domain}" if re.fullmatch(r"[A-Za-z0-9.-]+", railway_domain) else None
     try:
         result = GitHubPagesPublisher(
             token=token,
             repository=repository,
             branch=branch,
             pages_base_url=pages_base_url,
+            public_api_base_url=public_api_base_url,
         ).publish(trip, slug=site_slug or trip_id, confirm_overwrite=confirm_overwrite)
     except ValueError as exc:
         message = str(exc)
@@ -642,7 +741,7 @@ def run_http_server() -> None:
     import hmac
 
     import uvicorn
-    from starlette.responses import PlainTextResponse
+    from starlette.responses import JSONResponse, PlainTextResponse
 
     token = os.environ.get("BEARER_TOKEN", "")
     if len(token) < 32:
@@ -658,6 +757,15 @@ def run_http_server() -> None:
                 await self.app(scope, receive, send)
                 return
             headers = {key.lower(): value for key, value in scope.get("headers", [])}
+            if (
+                scope.get("method") == "GET"
+                and re.fullmatch(
+                    r"/api/public/trips/[a-z0-9][a-z0-9-]{0,79}/places/[A-Za-z0-9_-]{5,255}",
+                    scope.get("path", ""),
+                )
+            ):
+                await self.app(scope, receive, send)
+                return
             value = headers.get(b"authorization", b"").decode("latin-1")
             supplied = value[7:] if value.startswith("Bearer ") else ""
             if not hmac.compare_digest(supplied, token):
@@ -724,7 +832,56 @@ def run_http_server() -> None:
     async def health(_request):
         return PlainTextResponse("ok")
 
+    pages_base_url = os.environ.get("GITHUB_PAGES_BASE_URL", "https://jackytsai70113.github.io/ai-travel-planner")
+    try:
+        allowed_public_origin = _github_pages_origin(pages_base_url)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
+    public_request_windows: dict[str, tuple[int, float]] = {}
+    public_request_lock = threading.Lock()
+
+    def public_place_name(request):
+        origin = request.headers.get("origin", "")
+        response_headers = {
+            "Cache-Control": "no-store, max-age=0",
+            "Vary": "Origin",
+            "X-Content-Type-Options": "nosniff",
+        }
+        if origin != allowed_public_origin:
+            return JSONResponse({"status": "forbidden"}, status_code=403, headers=response_headers)
+        response_headers["Access-Control-Allow-Origin"] = allowed_public_origin
+        client = request.scope.get("client")
+        remote_id = client[0] if isinstance(client, (tuple, list)) and client else "unknown"
+        with public_request_lock:
+            if not _consume_remote_request(
+                remote_id, time.monotonic(), public_request_windows, limit=_PUBLIC_PLACE_REQUEST_LIMIT
+            ):
+                return JSONResponse({"status": "rate_limited"}, status_code=429, headers=response_headers)
+        slug = request.path_params.get("slug", "")
+        place_id = request.path_params.get("place_id", "")
+        if not _GOOGLE_PLACE_ID.fullmatch(place_id):
+            return JSONResponse({"status": "not_found"}, status_code=404, headers=response_headers)
+        scheduled_place_ids = _published_scheduled_google_place_ids(slug, pages_base_url)
+        if place_id not in scheduled_place_ids:
+            return JSONResponse({"status": "not_found"}, status_code=404, headers=response_headers)
+        api_key = os.environ.get("GOOGLE_MAPS_API_KEY", "")
+        if not api_key:
+            return JSONResponse({"status": "unavailable"}, status_code=503, headers=response_headers)
+        if not _consume_public_place_monthly_budget():
+            return JSONResponse({"status": "monthly_limit_reached"}, status_code=429, headers=response_headers)
+        try:
+            details = GooglePlacesAdapter(api_key=api_key).get_place_display_name(place_id)
+        except Exception:
+            return JSONResponse({"status": "unavailable"}, status_code=502, headers=response_headers)
+        return JSONResponse(details, headers=response_headers)
+
     app.add_route("/health", health, methods=["GET"])
+    app.add_route(
+        "/api/public/trips/{slug:str}/places/{place_id:str}",
+        public_place_name,
+        methods=["GET"],
+        name="public-place-name",
+    )
     app.add_middleware(InternalBearerAuth)
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", "8000")), access_log=False)
 
