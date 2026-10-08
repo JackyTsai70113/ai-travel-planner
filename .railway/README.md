@@ -24,6 +24,7 @@ railway config apply
 - Railway 專案：`ai-traveller`。服務與 `/data` volume：`ai-traveller`、`ai-traveller-volume`。
 - GitHub 來源 repo：`JackyTsai70113/ai-travel-planner`（repo 名稱保持不變）。
 - 建置：repo 根目錄的 `/Dockerfile`
+- 自動部署監看：`Dockerfile`、`requirements-mcp.txt`、`requirements-mcp-server.txt`、`src/**`、`trips/**`。只修改網站、測試或文件時略過 Railway 後端部署；IaC 設定檔的變更仍須由維護者執行 `railway config plan` 並檢查後 `railway config apply`。
 - 健康檢查：`/health`，逾時 120 秒
 - 重啟：失敗時重試，最多 10 次（與 Railway 目前服務設定一致）
 - 永續資料：volume 掛載於 `/data`，服務維持單一副本
@@ -66,9 +67,11 @@ railway run --service ai-traveller --environment production -- node -e 'const r 
 
 ### GitHub Pages 發布工具狀態
 
-`publish_trip_site` 已部署並出現在遠端 `tools/list`。發布前會要求 ChatGPT 使用者明確確認公開；多日行程必須有對應到實際 hotel candidate 的住宿，每日都須有餐點，日期必須有效，Canonical Trip validation 也不可有 findings。相同 bundle 的 registry 缺項或過期時，工具只修復 registry。
+`publish_trip_site` 已部署並出現在遠端 `tools/list`。發布前會要求 ChatGPT 使用者明確確認公開；每一天都必須有餐點，日期必須有效，Canonical Trip validation 不可有阻擋 finding，Google Places provenance 也會阻止內容寫入 Pages bundle。住宿可以留空；未提供住宿時，`schedule.hotel_missing` 和 `schedule.origin_unknown` 會保留為未驗證警告，不會因缺住宿本身阻擋發布。相同 bundle 的 registry 缺項或過期時，工具只修復 registry。
 
-2026-10-05 已用 `railway variable list` 只輸出變數名稱核對正式服務設定，沒有讀取或列印 secret 值。清單尚無 `GITHUB_TOKEN`，因此未執行真實 Pages 發布，Issue #179 仍待維護者設定最小權限 fine-grained PAT，並在 ChatGPT 明確要求公開後完成部署與網址驗證。
+截至 2026-10-08，Railway production `GITHUB_TOKEN` 已存在；正式執行個體以 GitHub REST 唯讀查詢確認 repo 為 `JackyTsai70113/ai-travel-planner` 且回報 `permissions.push=true`，過程沒有輸出 token。最新 deployment `83790361-594a-4a42-9e75-0bd0493c13f1` 使用 main commit `e37209c959af91d761fdc547a818e49ef7a65ff6`，狀態 `SUCCESS`，health 回 HTTP 200。尚未執行真實 Pages 發布；#179 仍待符合發布 readiness 的行程、ChatGPT 明確公開指令及正式網址驗收。若行程含 Google Places provenance，現有發布 guard 會回 `not_ready`，相關資料生命週期追蹤於 #199。
+
+2026-10-05 的歷史檢查當時尚無 `GITHUB_TOKEN`；其後的設定與權限驗證以本節 2026-10-08 狀態為準。
 
 只核對變數名稱且不顯示值的指令：
 
