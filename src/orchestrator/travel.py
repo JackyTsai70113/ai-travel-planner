@@ -15,6 +15,7 @@ from typing import Callable, Iterable, Sequence
 
 from src.intent import TravelIntent
 from src.planner import PlannerInput, plan
+from src.google_places_storage import durable_trip
 from src.renderer.build_site import build_site
 from src.schemas.validate_trip import TripValidationError, validate_trip
 from src.sources import CandidateStore, SourceAdapter, SourceQuery, collect_from_adapters
@@ -185,6 +186,17 @@ class TravelOrchestrator:
         aggregate_warnings.extend(canonical_report.warnings)
         if canonical_report.status is StageStatus.FAILED:
             return self._result(intent, reports, aggregate_warnings)
+
+        # Research fields are available only through the in-memory planning
+        # stages. The durable canonical record keeps Google Place IDs and the
+        # user's itinerary, while request-scoped Google details are discarded.
+        canonical_trip = durable_trip(canonical_trip)
+        try:
+            validate_trip(canonical_trip)
+        except TripValidationError as exc:
+            error = WarningRecord("canonical.storage_projection_invalid", str(exc), StageName.CANONICAL_TRIP)
+            reports[StageName.CANONICAL_TRIP] = StageReport(StageName.CANONICAL_TRIP, StageStatus.FAILED, 1, (), (error,))
+            return self._result(intent, reports, [*aggregate_warnings, error])
 
         trip_path, persistence_report = self._persist_trip(canonical_trip)
         if persistence_report.status is StageStatus.FAILED:

@@ -104,7 +104,7 @@ class GitHubPagesPublisherTests(unittest.TestCase):
             self.publisher(fake).publish(trip, slug="demo-trip")
         self.assertEqual(fake.calls, [])
 
-    def test_refuses_public_persistence_of_google_places_content(self):
+    def test_publication_strips_google_places_details_but_preserves_place_ids(self):
         trip = json.loads(json.dumps(self.trip))
         trip["candidate_sets"]["places"][0]["provenance"] = {
             "source_type": "provider", "provider": "Google Places API (New)",
@@ -112,12 +112,14 @@ class GitHubPagesPublisherTests(unittest.TestCase):
         }
         fake = FakeGitHub()
 
-        with self.assertRaisesRegex(ValueError, "Google Places API content cannot be persisted"):
-            self.publisher(fake).publish(trip, slug="demo-trip")
+        trip["candidate_sets"]["places"][0]["google_place_id"] = "ChIJ-place"
+        result = self.publisher(fake).publish(trip, slug="demo-trip")
+        self.assertEqual("publish_accepted", result.status)
+        bundle_calls = [call for call in fake.calls if "public-bundle.json" in str(call)]
+        self.assertTrue(bundle_calls)
+        self.assertNotIn("Dazaifu", json.dumps(bundle_calls, ensure_ascii=False))
 
-        self.assertEqual(fake.calls, [])
-
-    def test_refuses_google_places_field_provenance_hidden_by_other_candidate_source(self):
+    def test_publication_strips_google_sourced_field_when_candidate_has_other_source(self):
         trip = json.loads(json.dumps(self.trip))
         place = trip["candidate_sets"]["places"][0]
         place["provenance"] = {
@@ -130,12 +132,15 @@ class GitHubPagesPublisherTests(unittest.TestCase):
                 "retrieved_at": "2026-10-08T00:00:00+00:00", "status": "confirmed",
             }],
         }
+        place["name"] = "Google Field Name"
         fake = FakeGitHub()
 
-        with self.assertRaisesRegex(ValueError, "Google Places API content cannot be persisted"):
-            self.publisher(fake).publish(trip, slug="demo-trip")
-
-        self.assertEqual(fake.calls, [])
+        trip["candidate_sets"]["places"][0]["google_place_id"] = "ChIJ-place"
+        self.publisher(fake).publish(trip, slug="demo-trip")
+        blobs = [json.loads(base64.b64decode(call[2]["content"])) for call in fake.calls if call[0] == "POST" and call[1].endswith("/git/blobs")]
+        writes = json.dumps(blobs, ensure_ascii=False)
+        self.assertNotIn("Google Field Name", writes)
+        self.assertIn("ChIJ-place", writes)
 
     def test_allows_overnight_trip_without_lodging(self):
         trip = json.loads(json.dumps(self.trip))

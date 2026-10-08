@@ -174,6 +174,7 @@ Production planning requires `GOOGLE_MAPS_API_KEY` and `OPENROUTESERVICE_API_KEY
 | `parse_trip_request` | Extracts only facts stated in the request, including missing and ambiguous fields. | None |
 | `validate_trip` | Runs Canonical Trip V1 schema validation and deterministic itinerary validation. | None |
 | `get_trip` | Returns an allowlisted summary for a safe trip ID; omits raw provider records, booking details, free-form notes, and arbitrary fields. | None |
+| `get_place_details` | Fetches current Places details from a saved Google Place ID for this request only; returns `Google Maps` and supplied third-party attribution. The response is never written to trip storage or site files. | None |
 | `plan_trip` | 以繁體中文一題一答補齊必要資訊；只依使用者已明確回答的內容規劃，不回傳 parser JSON 充當最終回答。 | 必要欄位未補齊時只回傳一個 `next_question` 且不啟動研究；完整後仍須先取得私有檔案寫入確認，再以 `confirm_write=true` 建立或覆寫 Canonical Trip 和靜態網站。永不公開發布。 |
 | `build_trip_site` | Validates and renders an existing Canonical Trip. | Requires `confirm_write=true`; writes a local static site only. Never publishes. |
 | `publish_trip_site` | Publishes a ready Canonical Trip to this repository's GitHub Pages site. | Requires explicit `confirm_public_publish=true`; updates repository content and starts the Pages workflow. Existing-trip replacement separately requires `confirm_overwrite=true`. |
@@ -216,13 +217,26 @@ Input schema: `{ "type":"object", "required":["trip_id"], "properties":{"trip_id
 
 Output statuses:
 
-- `ok`: `{ "status":"ok", "trip": {"schema_version","id","title","local_timezone","date_range","days","validation"} }`; each place is projected to `id`, `name`, `kind`, each item to `id`, `kind`, `start_at`, `end_at`, `status`, and findings to `code`, `severity`, `path`.
+- `ok`: `{ "status":"ok", "trip": {"schema_version","id","title","local_timezone","date_range","days","validation"} }`; each place is projected to `id`, `google_place_id`, optional independently sourced `name`, `kind`, each item to `id`, `kind`, `start_at`, `end_at`, `status`, and findings to `code`, `severity`, `path`.
 - `not_found`: safe `trip_id` was not found.
 - `invalid`: stored trip could not be projected to the allowlisted summary.
 - `error`: unreadable file or invalid JSON; message does not contain file contents.
 - MCP schema rejection (`isError=true`): missing/wrong argument types or a `trip_id` outside the published pattern. These inputs do not reach the tool function.
 
 Side effects and retries: read-only; safe to retry.
+
+### `get_place_details`
+
+Input schema: `{ "type":"object", "required":["place_id"], "properties":{"place_id":{"type":"string","minLength":1,"maxLength":256,"pattern":"^(?:places/)?[A-Za-z0-9_-]+$"}} }`. Accepts the exact saved Google Place ID (or its `places/` resource-name form).
+
+Output statuses:
+
+- `available`: current normalized Places details for this call, with `attribution: "Google Maps"` and API-supplied third-party attributions.
+- `unavailable`: provider request failed; no stale saved details are used. `retryable` indicates whether a later request may succeed; provider response bodies are not returned or recorded.
+- `configuration_missing`: `GOOGLE_MAPS_API_KEY` is absent.
+- `invalid_input` or MCP schema rejection: the value is not a supported Place ID.
+
+Side effects and retries: performs one live Places Details request; response is request-scoped and is not written to logs, trip JSON, rendered HTML, or public bundle. Retries make a new provider request and may incur usage charges.
 
 ### `plan_trip`
 
@@ -238,7 +252,7 @@ Output statuses (checked in this order when the arguments pass the published JSO
 - `incomplete`: returned when the orchestrator cannot produce outputs or any reported stage is not `succeeded`. A produced but degraded trip still includes `trip_id`, stage statuses, and warning `code`/`stage`/`path`; provider exception text and warning message text are deliberately omitted.
 - MCP schema rejection (`isError=true`): missing/wrong argument types, empty or more than 20,000 character request, malformed `trip_id`, or non-boolean `confirm_write`. These inputs do not reach the tool function.
 
-Side effects and retries: with `confirm_write=true`, performs live provider research and may create or replace `trips/<trip_id>/trip.json` and `site/<trip_id>/index.html`. MCP adds no automatic retry. A client retry repeats live provider calls and can replace those files; the tool is non-idempotent. `confirm_write` is an explicit tool argument, not an authorization mechanism.
+Side effects and retries: with `confirm_write=true`, performs live provider research and may create or replace `trips/<trip_id>/trip.json` and `site/<trip_id>/index.html`. Before either write, the storage projection retains exact Google Place IDs and the user's itinerary/notes while removing Google Places details. MCP adds no automatic retry. A client retry repeats live provider calls and can replace those files; the tool is non-idempotent. `confirm_write` is an explicit tool argument, not an authorization mechanism.
 
 ### `build_trip_site`
 

@@ -122,7 +122,7 @@ function PrivacyContent() {
     <h2>公開行程</h2>
     <p>已確認發布的行程資料會存放在公開 GitHub Pages 網站所使用的 GitHub repository，任何人都可能檢視、複製或由搜尋引擎索引。未公開發布的行程仍可能保存在受認證保護的後端持久化儲存中。不要輸入不希望由服務處理或公開的資料。</p>
     <h2>保存與刪除</h2>
-    <p>後端行程資料會保留至維護者刪除或服務停止；公開行程會保留至發布者移除。GitHub、Railway 或網路服務商可能依其自身政策保留安全、存取及部署紀錄。Google Maps Platform 的資料另受其現行保存限制約束，Place ID 的例外不代表其他地點內容都能永久保存；詳見 <a href="https://developers.google.com/maps/documentation/places/web-service/policies" target="_blank" rel="noreferrer">Places API 政策</a>及<a href="https://cloud.google.com/maps-platform/terms/maps-service-terms" target="_blank" rel="noreferrer">Maps Service Specific Terms</a>。</p>
+    <p>新建立的行程會保存使用者的行程安排與筆記，以及 Google Places Place ID；Google Places 名稱、地址、座標、營業時間、評分等詳細資料只在查詢期間暫存在記憶體，不寫入行程檔、靜態網站或公開行程。查詢失敗時會明確標示無法取得，不會沿用持久化的 Google 詳細資料。Google Places 座標若在單次請求中使用，請求結束即丟棄，最長保存期限為零天；Google 條款允許的座標快取上限為 30 個連續日。2026 年 10 月 8 日前建立的歷史行程與公開頁面不會因這項變更自動改寫或刪除。GitHub、Railway 或網路服務商可能依其自身政策保留安全、存取及部署紀錄；詳見 <a href="https://developers.google.com/maps/documentation/places/web-service/policies" target="_blank" rel="noreferrer">Places API 政策</a>及<a href="https://cloud.google.com/maps-platform/terms/maps-service-terms" target="_blank" rel="noreferrer">Maps Service Specific Terms</a>。</p>
     <h2>Cookie 與分析</h2>
     <p>目前網站程式未設定追蹤 Cookie 或第三方分析工具。網站主機與服務供應商可能依其政策處理必要的連線及安全紀錄。</p>
     <h2>你的選擇與聯絡</h2>

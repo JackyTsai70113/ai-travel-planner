@@ -21,11 +21,14 @@ from src.application.production import (
     missing_required_configuration,
 )
 from src.budget import format_budget_summary
+from src.google_places_storage import durable_trip
 from src.intent import parse_trip_request
 from src.mcp_server.github_pages import GitHubPagesPublisher, GitHubPublishError
 from src.orchestrator import StageStatus
 from src.renderer.build_site import build_site
 from src.schemas.validate_trip import TripValidationError, validate_trip
+from src.sources import GooglePlacesAdapter, ProviderConfigurationError, ProviderRequestError
+from src.sources.providers import ProviderHttpError
 from src.validator import ValidationContext, validate_itinerary
 
 _TRIP_ID = re.compile(r"^[a-z0-9][a-z0-9-]{0,79}$")
@@ -39,7 +42,8 @@ _MCP_LOCAL_ALLOWED_HOSTS = ("127.0.0.1:*", "localhost:*", "[::1]:*")
 mcp = MCPServer(
     "ai-travel-planner",
     instructions=(
-        "Use Canonical Trip V1 as the sole trip record. Preserve unknown facts. Ask for confirmation before tools write local files. "
+        "Use Canonical Trip V1 as the sole trip record. Google Places details are request-scoped and must never be saved; only Place IDs may persist. "
+        "Use get_place_details to refresh details when needed. Preserve unknown facts. Ask for confirmation before tools write local files. "
         "Publishing a trip to GitHub Pages is a separate public action and requires explicit confirm_public_publish=true."
     ),
 )
@@ -106,7 +110,7 @@ def _trip_path(trip_id: str) -> Path:
 def _public_trip_summary(trip: dict[str, Any]) -> dict[str, Any]:
     """Project a small public summary; never return the raw canonical record."""
     places = {
-        place["id"]: {key: place[key] for key in ("id", "name", "kind") if key in place}
+        place["id"]: {key: place[key] for key in ("id", "google_place_id", "name", "kind") if key in place}
         for place in trip.get("candidate_sets", {}).get("places", [])
         if isinstance(place, dict) and isinstance(place.get("id"), str)
     }
@@ -219,10 +223,10 @@ def get_trip_tool(
     """Read a bounded public summary of an existing Canonical Trip by safe trip ID."""
     try:
         path = _trip_path(trip_id)
-        trip = json.loads(path.read_text(encoding="utf-8"))
+        trip = durable_trip(json.loads(path.read_text(encoding="utf-8")))
     except FileNotFoundError:
         return {"status": "not_found", "trip_id": trip_id}
-    except (OSError, json.JSONDecodeError, ValueError) as exc:
+    except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
         return {"status": "error", "message": str(exc)}
     try:
         summary = _public_trip_summary(trip)
@@ -232,6 +236,43 @@ def get_trip_tool(
             "message": f"trip summary cannot be projected: {exc}",
         }
     return {"status": "ok", "trip": summary}
+
+
+@mcp.tool(
+    name="get_place_details",
+    annotations=ToolAnnotations(read_only_hint=True, open_world_hint=True),
+)
+def get_place_details_tool(
+    place_id: Annotated[
+        str,
+        Field(
+            min_length=1,
+            max_length=256,
+            pattern=r"^(?:places/)?[A-Za-z0-9_-]+$",
+            description="Google Place ID, such as ChIJ...; saved Place IDs can be looked up here.",
+        ),
+    ],
+) -> dict[str, Any]:
+    """Fetch current Google Places details for this request only; never stores the response."""
+    if not os.environ.get("GOOGLE_MAPS_API_KEY"):
+        return {"status": "configuration_missing", "missing": ["GOOGLE_MAPS_API_KEY"]}
+    try:
+        return GooglePlacesAdapter(api_key=os.environ["GOOGLE_MAPS_API_KEY"]).get_place_details(place_id)
+    except ValueError:
+        return {"status": "invalid_input", "message": "place_id must be a Google Place ID"}
+    except ProviderConfigurationError:
+        return {"status": "configuration_missing", "missing": ["GOOGLE_MAPS_API_KEY"]}
+    except ProviderHttpError as exc:
+        retryable = exc.status_code == 429 or exc.status_code >= 500
+        return {
+            "status": "unavailable",
+            "reason": "provider_busy" if retryable else "provider_rejected_request",
+            "retryable": retryable,
+        }
+    except ProviderRequestError:
+        return {"status": "unavailable", "reason": "network_or_provider_error", "retryable": True}
+    except Exception:
+        return {"status": "unavailable", "reason": "provider_request_failed", "retryable": True}
 
 
 @mcp.tool(
@@ -411,7 +452,7 @@ def build_trip_site_tool(
     """Build a local static site from a valid Canonical Trip; never deploys or publishes it."""
     try:
         path = _trip_path(trip_id)
-        trip = json.loads(path.read_text(encoding="utf-8"))
+        trip = durable_trip(json.loads(path.read_text(encoding="utf-8")))
         validate_trip(trip)
     except FileNotFoundError:
         return {"status": "not_found", "trip_id": trip_id}
@@ -471,7 +512,7 @@ def publish_trip_site_tool(
         return {"status": "configuration_missing", "missing": ["GITHUB_TOKEN"]}
     try:
         path = _trip_path(trip_id)
-        trip = json.loads(path.read_text(encoding="utf-8"))
+        trip = durable_trip(json.loads(path.read_text(encoding="utf-8")))
         validate_trip(trip)
         if trip.get("id") != trip_id:
             return {"status": "invalid", "message": "trip_id does not match the Canonical Trip id"}
@@ -538,6 +579,7 @@ def capabilities() -> str:
                 "parse_trip_request": "read-only; parses only explicit user facts",
                 "validate_trip": "read-only; validates supplied JSON",
                 "get_trip": "read-only; returns allowlisted public fields",
+                "get_place_details": "read-only live Google Places lookup; result is request-scoped and never persisted",
                 "plan_trip": "requires confirm_write=true; performs live provider research and writes local trip/site files",
                 "build_trip_site": "requires confirm_write=true; writes a local static site; never deploys",
                 "publish_trip_site": "publishes only after explicit confirm_public_publish=true; requires a ready Canonical Trip; public overwrite requires confirm_overwrite=true",

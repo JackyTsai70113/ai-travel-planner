@@ -479,13 +479,17 @@
       "type": "object",
       "required": [
         "id",
-        "name",
         "kind"
       ],
       "additionalProperties": false,
       "properties": {
         "id": {
           "$ref": "#/$defs/id"
+        },
+        "google_place_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "description": "Exact Google Places place_id; the only Places API content retained indefinitely."
         },
         "name": {
           "type": "string"

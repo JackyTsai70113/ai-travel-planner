@@ -113,6 +113,23 @@ class ProductionProviderAdapterTests(unittest.TestCase):
         self.assertEqual("POST", client.calls[0][0])
         self.assertEqual({"ja"}, {call[3]["languageCode"] for call in client.calls})
         self.assertNotIn("test-key", str(client.calls[0][3]))
+        self.assertEqual("ChIJ-place", poi["google_place_id"])
+
+    def test_google_place_details_fetch_is_request_scoped_and_returns_attribution(self):
+        client = RecordedHttpClient([{
+            "id": "ChIJ-place", "displayName": {"text": "大濠公園"},
+            "formattedAddress": "福岡市中央区", "attributions": [{"provider": "Third party"}],
+        }])
+        result = GooglePlacesAdapter("test-key", http_client=client, now=NOW).get_place_details("ChIJ-place")
+        self.assertEqual("available", result["status"])
+        self.assertEqual("Google Maps", result["attribution"])
+        self.assertEqual("大濠公園", result["details"]["name"])
+        self.assertEqual([{"provider": "Third party"}], result["third_party_attributions"])
+        method, url, headers, body = client.calls[0]
+        self.assertEqual("GET", method)
+        self.assertEqual("https://places.googleapis.com/v1/places/ChIJ-place", url)
+        self.assertIsNone(body)
+        self.assertNotIn("test-key", url)
 
     def test_google_restaurant_query_failure_preserves_successful_poi_candidates(self):
         adapter = GooglePlacesAdapter(
@@ -125,7 +142,8 @@ class ProductionProviderAdapterTests(unittest.TestCase):
 
         self.assertEqual(["places"], [collection for collection, _ in candidates])
         self.assertEqual(["google-places:restaurants"], [failure.adapter for failure in failures])
-        self.assertIn("restaurant timeout", failures[0].message)
+        self.assertIn("Google Places request failed", failures[0].message)
+        self.assertNotIn("restaurant timeout", failures[0].message)
 
     def test_google_poi_query_failure_preserves_successful_restaurant_candidates(self):
         adapter = GooglePlacesAdapter(
@@ -138,7 +156,8 @@ class ProductionProviderAdapterTests(unittest.TestCase):
 
         self.assertEqual(["restaurants"], [collection for collection, _ in candidates])
         self.assertEqual(["google-places:pois"], [failure.adapter for failure in failures])
-        self.assertIn("poi timeout", failures[0].message)
+        self.assertIn("Google Places request failed", failures[0].message)
+        self.assertNotIn("poi timeout", failures[0].message)
 
     def test_google_places_normalizes_poi_opening_hours_and_primary_type(self):
         recording = {"places": [{

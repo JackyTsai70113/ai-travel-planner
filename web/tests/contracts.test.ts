@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { parseBundle } from '../src/contracts/trip'
 import { buildRoutePath, parseRouteFromHash } from '../src/app/route-registry'
 import { resolveBundleUrl, resolveRegistryUrl } from '../src/hooks/useBundleLoader'
+import { googleMapsHrefForPlace } from '../src/lib/google-maps-links'
 
 const validBundle = {
   trip_id: 'trip-a', title: 'Trip A', status: 'ok', local_timezone: 'Asia/Tokyo',
@@ -31,5 +32,13 @@ describe('canonical frontend contracts', () => {
     const deployedPage = 'https://example.github.io/ai-travel-planner/trips/awaji-2026/'
     expect(resolveRegistryUrl('./', deployedPage)).toBe('https://example.github.io/ai-travel-planner/trip-registry.json')
     expect(resolveBundleUrl('./', 'trips/awaji-2026', deployedPage)).toBe(`${deployedPage}public-bundle.json`)
+  })
+
+  it('builds a direct Google Maps place link from a retained Place ID without coordinates', () => {
+    const target = new URL(googleMapsHrefForPlace({ google_place_id: 'ChIJ-place' }))
+    expect(target.hostname).toBe('www.google.com')
+    expect(target.pathname).toBe('/maps/search/')
+    expect(target.searchParams.get('query_place_id')).toBe('ChIJ-place')
+    expect(target.searchParams.has('query')).toBe(true)
   })
 })

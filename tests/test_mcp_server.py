@@ -19,12 +19,14 @@ from mcp.client.streamable_http import streamable_http_client
 
 from src.application.production import ProductionIncompleteError
 from src.mcp_server.github_pages import PublishResult
+from src.renderer.build_site import build_site
 from src.mcp_server.server import (
     _consume_remote_request,
     _public_trip_summary,
     _read_limited_asgi_body,
     build_trip_site_tool,
     get_trip_tool,
+    get_place_details_tool,
     mcp,
     parse_trip_request_tool,
     plan_trip_tool,
@@ -69,6 +71,7 @@ class MCPTravelServerTests(unittest.TestCase):
                         "parse_trip_request",
                         "validate_trip",
                         "get_trip",
+                        "get_place_details",
                         "plan_trip",
                         "build_trip_site",
                         "publish_trip_site",
@@ -426,6 +429,84 @@ class MCPTravelServerTests(unittest.TestCase):
             [{"code": "warning", "severity": "warning", "path": "/days"}],
         )
 
+    def test_get_place_details_is_transient_and_handles_provider_failure(self) -> None:
+        with patch.dict(os.environ, {"GOOGLE_MAPS_API_KEY": "test-key"}), patch(
+            "src.mcp_server.server.GooglePlacesAdapter.get_place_details",
+            return_value={"status": "available", "attribution": "Google Maps", "details": {"name": "Transient"}},
+        ) as lookup:
+            result = get_place_details_tool("ChIJ-place")
+        self.assertEqual("available", result["status"])
+        lookup.assert_called_once_with("ChIJ-place")
+        with patch.dict(os.environ, {"GOOGLE_MAPS_API_KEY": "test-key"}), patch(
+            "src.mcp_server.server.GooglePlacesAdapter.get_place_details",
+            side_effect=RuntimeError("provider error"),
+        ):
+            result = get_place_details_tool("ChIJ-place")
+        self.assertEqual({"status": "unavailable", "reason": "provider_request_failed", "retryable": True}, result)
+        with patch.dict(os.environ, {"GOOGLE_MAPS_API_KEY": ""}):
+            missing = get_place_details_tool("ChIJ-place")
+        self.assertEqual({"status": "configuration_missing", "missing": ["GOOGLE_MAPS_API_KEY"]}, missing)
+
+    def test_legacy_trip_reads_and_site_builds_sanitize_without_rewriting_history(self) -> None:
+        fixture = json.loads((Path(__file__).parent.parent / "fixtures/trips/japan-5-day-trip-v1.json").read_text(encoding="utf-8"))
+        place = fixture["candidate_sets"]["places"][0]
+        place.update({
+            "google_place_id": "ChIJ-place",
+            "provenance": {
+                "source_type": "provider", "provider": "Google Places API (New)",
+                "source_url": "https://maps.google.test/place", "retrieved_at": "2026-10-08T00:00:00+00:00", "status": "confirmed",
+            },
+        })
+        fixture["days"][0]["items"][0]["place_id"] = place["id"]
+        with tempfile.TemporaryDirectory() as temp:
+            trips, sites = Path(temp) / "trips", Path(temp) / "sites"
+            source = trips / fixture["id"] / "trip.json"
+            source.parent.mkdir(parents=True)
+            original = json.dumps(fixture, ensure_ascii=False, indent=2)
+            source.write_text(original, encoding="utf-8")
+            with patch("src.mcp_server.server._TRIPS_DIR", trips.resolve()), patch(
+                "src.mcp_server.server._SITE_DIR", sites.resolve()
+            ):
+                summary = get_trip_tool(fixture["id"])
+                built = build_trip_site_tool(fixture["id"], confirm_write=True)
+            html = (sites / fixture["id"] / "index.html").read_text(encoding="utf-8")
+            self.assertEqual("ok", summary["status"])
+            self.assertNotIn("name", summary["trip"]["days"][0]["items"][0]["place"])
+            self.assertEqual("ChIJ-place", summary["trip"]["days"][0]["items"][0]["place"]["google_place_id"])
+            self.assertEqual("built", built["status"])
+            self.assertNotIn(place["name"], html)
+            self.assertIn("query_place_id", html)
+            self.assertEqual(original, source.read_text(encoding="utf-8"))
+
+    def test_public_publisher_keeps_id_and_html_omits_google_details(self) -> None:
+        from src.google_places_storage import durable_trip
+        fixture = json.loads((Path(__file__).parent.parent / "fixtures/trips/japan-5-day-trip-v1.json").read_text(encoding="utf-8"))
+        for index, day in enumerate(fixture["days"], start=1):
+            day["items"].append({
+                "id": f"meal-{index}", "kind": "meal", "place_id": "ramen-shop",
+                "start_at": f"{day['date']}T12:00:00+09:00", "end_at": f"{day['date']}T13:00:00+09:00",
+                "selection_status": "selected",
+            })
+        place = fixture["candidate_sets"]["places"][0]
+        place["google_place_id"] = "ChIJ-place"
+        place["provenance"] = {
+            "source_type": "provider", "provider": "Google Places API (New)",
+            "source_url": "https://maps.google.test/place", "retrieved_at": "2026-10-08T00:00:00+00:00", "status": "confirmed",
+        }
+        fixture["days"][0]["items"][0]["place_id"] = place["id"]
+        stored = durable_trip(fixture)
+        stored_place = stored["candidate_sets"]["places"][0]
+        self.assertEqual("ChIJ-place", stored_place["google_place_id"])
+        self.assertNotIn("name", stored_place)
+        self.assertNotIn("address", stored_place)
+        self.assertNotIn("source_url", stored_place["provenance"])
+        from src.request_site import trip_to_public_bundle
+        bundle = trip_to_public_bundle(stored)
+        self.assertTrue(any(p.get("google_place_id") == "ChIJ-place" for p in bundle["places"]))
+
+        html = build_site(fixture)
+        self.assertIn("query_place_id", html)
+
     def test_tool_errors_are_structured_and_writes_need_confirmation(self) -> None:
         parsed = parse_trip_request_tool("")
         self.assertEqual(parsed["status"], "invalid_input")
@@ -486,12 +567,20 @@ class MCPTravelServerTests(unittest.TestCase):
         self.assertEqual(published["url"], result_value.url)
         publish.assert_called_once()
 
-    def test_public_trip_publish_blocks_google_places_content_before_github_io(self) -> None:
+    def test_public_trip_publish_sanitizes_google_places_details_before_github_io(self) -> None:
         fixture = json.loads((Path(__file__).parent.parent / "fixtures/trips/japan-5-day-trip-v1.json").read_text(encoding="utf-8"))
+        for index, day in enumerate(fixture["days"], start=1):
+            day["items"].append({
+                "id": f"meal-{index}", "kind": "meal", "place_id": "ramen-shop",
+                "start_at": f"{day['date']}T12:00:00+09:00", "end_at": f"{day['date']}T13:00:00+09:00",
+                "selection_status": "selected",
+            })
         fixture["candidate_sets"]["places"][0]["provenance"] = {
             "source_type": "provider", "provider": "Google Places API (New)",
             "retrieved_at": "2026-10-08T00:00:00+00:00", "status": "confirmed",
         }
+        fixture["candidate_sets"]["places"][0]["name"] = "Google Ephemeral Name"
+        fixture["candidate_sets"]["places"][0]["google_place_id"] = "ChIJ-place"
         trip_id = fixture["id"]
         with tempfile.TemporaryDirectory() as temp:
             trips = Path(temp) / "trips"
@@ -501,14 +590,20 @@ class MCPTravelServerTests(unittest.TestCase):
             with (
                 patch("src.mcp_server.server._TRIPS_DIR", trips.resolve()),
                 patch.dict(os.environ, {"GITHUB_TOKEN": "private-test-token"}),
-                patch("src.mcp_server.github_pages._request_json") as github_request,
+                patch("src.mcp_server.server.GitHubPagesPublisher.publish", return_value=PublishResult(
+                    "publish_accepted", "JackyTsai70113/ai-travel-planner", "family-trip",
+                    "https://example.test/trips/family-trip/", "commit-sha",
+                )) as publish,
             ):
                 result = publish_trip_site_tool(
                     trip_id, "family-trip", confirm_public_publish=True
                 )
-        self.assertEqual(result["status"], "not_ready")
-        self.assertIn("Google Places API content cannot be persisted", result["message"])
-        github_request.assert_not_called()
+        self.assertEqual("publish_accepted", result["status"])
+        self.assertTrue(publish.called)
+        published_trip = publish.call_args.args[0]
+        published_text = json.dumps(published_trip, ensure_ascii=False)
+        self.assertNotIn("Google Ephemeral Name", published_text)
+        self.assertEqual("ChIJ-place", published_trip["candidate_sets"]["places"][0]["google_place_id"])
 
     def test_plan_status_is_incomplete_when_any_stage_is_incomplete(self) -> None:
         request = "2026/4/10到2026/4/14 台北出發德島五天四夜，2大，預算8萬日圓，自駕"

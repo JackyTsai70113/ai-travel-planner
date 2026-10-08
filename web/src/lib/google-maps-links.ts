@@ -10,6 +10,7 @@ export interface MapsStop {
 }
 
 interface PlaceMapsTarget {
+  google_place_id?: string | null
   name?: string | null
   maps_query?: string | null
   google_maps_url?: string | null
@@ -80,6 +81,11 @@ export function googleMapsQueryForPlace(place: PlaceMapsTarget | null | undefine
 }
 
 export function googleMapsHrefForPlace(place: PlaceMapsTarget | null | undefined, fallback = ''): string {
+  const googlePlaceId = safeToString(place?.google_place_id)
+  if (googlePlaceId) {
+    const params = new URLSearchParams({ api: '1', query: 'Google Maps place', query_place_id: googlePlaceId })
+    return `https://www.google.com/maps/search/?${params.toString()}`
+  }
   const latitude = safeToNumber(place?.coordinates?.latitude)
   const longitude = safeToNumber(place?.coordinates?.longitude)
   if (latitude !== null && longitude !== null) return buildMapsSearchLink(`${latitude},${longitude}`)

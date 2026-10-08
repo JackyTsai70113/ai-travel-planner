@@ -218,9 +218,28 @@ def _google_places_content_sources(trip: Mapping[str, Any]) -> list[str]:
         for index, candidate in enumerate(_sequence(candidate_sets.get(collection))):
             if not isinstance(candidate, Mapping):
                 continue
-            if _contains_google_places_provenance(candidate):
+            if _contains_google_places_provenance(candidate) and _has_persisted_google_details(candidate):
                 sources.append(f"/candidate_sets/{collection}/{index}")
     return sources
+
+
+def _has_persisted_google_details(value: Any) -> bool:
+    """Identify Google candidates that still contain provider detail fields."""
+    allowed = {"id", "google_place_id", "kind", "place", "provenance", "source_provenance", "field_provenance"}
+    if isinstance(value, Mapping):
+        for key, child in value.items():
+            if key in {"provenance", "source_provenance", "field_provenance"}:
+                continue
+            if key not in allowed:
+                return True
+            if isinstance(child, Mapping) and _has_persisted_google_details(child):
+                return True
+            if isinstance(child, (list, tuple)) and any(_has_persisted_google_details(item) for item in child):
+                return True
+        return False
+    if isinstance(value, (list, tuple)):
+        return any(_has_persisted_google_details(item) for item in value)
+    return False
 
 
 def _contains_google_places_provenance(value: Any) -> bool:
@@ -282,7 +301,7 @@ def _public_places(candidate_sets: Mapping[str, Any]) -> list[dict[str, Any]]:
             if not isinstance(identifier, str) or identifier in seen:
                 continue
             seen.add(identifier)
-            result.append({key: place[key] for key in ("id", "name", "address", "kind", "maps_query", "official_url", "opening_hours_note", "parking", "accessibility_notes", "coordinates") if key in place})
+            result.append({key: place[key] for key in ("id", "google_place_id", "name", "address", "kind", "maps_query", "official_url", "opening_hours_note", "parking", "accessibility_notes", "coordinates") if key in place})
             projected = result[-1]
             candidate_provenance = candidate.get("provenance") if isinstance(candidate.get("provenance"), Mapping) else place.get("provenance")
             if isinstance(candidate_provenance, Mapping):

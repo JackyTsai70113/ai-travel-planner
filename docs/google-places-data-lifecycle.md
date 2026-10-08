@@ -2,6 +2,18 @@
 
 最後核對：2026-10-08。這份文件記錄程式實際保存路徑與已查閱的 Google 官方文件，不作法律合規結論。
 
+## 新版資料處理規則（PR #199）
+
+- Google Places 搜尋結果只在單次規劃請求記憶體中供候選篩選、營業時間與路線排程使用；寫入 Canonical Trip 與靜態 HTML 前，會移除 Google Places 衍生欄位與 Google 回傳的 source URL。
+- Canonical Trip 可保留 Google API 的原始 `id` 欄位（以 `google_place_id` 保存不含 `places/` 前綴的 ID），另保留使用者自己的行程安排、備註、選擇及其他非 Google 來源且有欄位級 provenance 的資料。查詢 Place Details 時才包成 `places/{place_id}` resource name。
+- `get_place_details(place_id)` 每次呼叫均向 Places API 即時查詢，資料僅回傳當次 MCP 結果；不使用快取。工具失敗會回 `unavailable`、失敗類別及是否可重試，不回傳舊資料，也不把 Google 回應寫入日誌或行程。
+- MCP 即時結果標示 `Google Maps`，並附上 API 回傳的第三方 attribution。靜態網頁若只有 Place ID，顯示 Google Maps 連結，不呈現 API 的名稱、地址、座標、營業時間、評分等詳細資料。
+- 新版程式的 Places 詳細資料保存期限為 0 天；Places 座標不會持久保存。官方一般條款允許座標快取最多 30 個連續日，但本實作選擇不快取。Place ID 依政策例外可永久保存。
+- 已存在於 Railway volume、已發布的 Pages bundle 與 Git 歷史中的舊資料均未刪除、改寫或回填。本變更只管束合併後新產生的 Canonical Trip、HTML 與公開 bundle。舊行程若仍含 Places 詳細欄位，發布器會繼續拒絕，避免再次公開這些資料。
+- 不同來源重整後的欄位只有具備非 Google 欄位級 provenance 才能留存；沒有欄位級證據時，Places 標記候選只保留 Place ID、kind 與來源識別 metadata。
+
+自動回歸測試涵蓋：原樣保存 Place ID、規劃與渲染投影移除 Places 詳細欄位、保留非 Google 欄位級 provenance、ID-only Google candidate 可投影為公開 bundle、舊 bundle 中仍含 Google 詳細欄位時發布受阻、即時查詢使用 GET 且不寫入資料、attribution 回傳，以及 API 錯誤不回退舊資料。
+
 ## 官方規則摘要
 
 本服務 GCP 計費地址尚未從帳務設定確認是否屬於 EEA。Places API 文件說明非 EEA 帳務地址使用一般 Maps Platform 條款；EEA 有另一套 Service Specific Terms，部署前仍須確認適用版本。
@@ -17,11 +29,11 @@
 
 | API 欄位 | 正規化欄位／用途 | Google 例外與期限 | 現行 Canonical Trip / Pages 路徑 | 狀態 |
 | --- | --- | --- | --- | --- |
-| `places.id` | 候選 `id` 中的 Google Place ID；穩定地點識別 | 可永久保存 | `candidate_sets`、地點引用；公開 bundle 若發布 | Place ID 單獨保存有明文例外 |
-| `places.displayName.text` | `name`；行程顯示與排程 | 未找到快取例外 | Canonical Trip、`/data/site/<id>/index.html`、公開 bundle | 不得當作可永久保存欄位 |
-| `places.formattedAddress` | `address`；辨識及導航 | 未找到快取例外 | Canonical Trip、網站 HTML、公開 bundle | 不得當作可永久保存欄位 |
-| `places.location.latitude/longitude` | `coordinates`；路線計算與定位 | 最多 30 個連續日，之後必須刪除 | Canonical Trip、路線輸入、網站 HTML、公開 bundle | 目前沒有可證明執行期限刪除的全生命週期清理器 |
-| `places.googleMapsUri` | provenance `source_url` / 地圖連結 | 未找到 URI 快取例外；Place ID 可存 | Canonical Trip、網站 HTML、bundle | 改由 Place ID 組成連結，避免持久化 API 回傳 URI |
+| `places.id` | `google_place_id`；穩定地點識別 | 可永久保存 | 新版 Canonical Trip、地點引用；公開 bundle 若發布 | 新版單獨保存原始 Place ID |
+| `places.displayName.text` | `name`；行程顯示與排程 | 未找到快取例外 | 單次規劃請求記憶體 | 新版落盤前移除；顯示時重新查詢 |
+| `places.formattedAddress` | `address`；辨識及導航 | 未找到快取例外 | 單次規劃請求記憶體 | 新版落盤前移除；顯示時重新查詢 |
+| `places.location.latitude/longitude` | `coordinates`；路線計算與定位 | 最多 30 個連續日，之後必須刪除 | 單次規劃請求記憶體及路線輸入 | 新版請求結束即丟棄，持久化期限 0 天 |
+| `places.googleMapsUri` | provenance `source_url` / 地圖連結 | 未找到 URI 快取例外；Place ID 可存 | 單次規劃請求記憶體 | 新版不保存回傳 URI；連結由原始 Place ID 即時組成 |
 | `places.websiteUri` | 曾作為 `source_url` fallback | 未找到快取例外 | 若回傳可能進入 Canonical Trip / 公開來源 | 應由該官方網站獨立查核後另記來源 |
 | `primaryType`, `types` | `primary_type`、餐廳 `cuisine`；分類與研究排序 | 未找到快取例外 | Canonical Trip、bundle 餐廳 facts | 不得視作永久保存欄位 |
 | `regularOpeningHours`, `currentOpeningHours`, `timeZone` | `opening_hours`, `opening_hours_note`；排程及營業狀態 | 未找到 Places 快取例外 | Canonical Trip、HTML、bundle | 不得視作永久保存欄位 |
@@ -31,6 +43,8 @@
 應用程式自行給定的 `kind`、`wait_risk`、時長估值與來源信心值不是上述原始 API 欄位；但如果它們是依 Google Places 結果選取或推導出的行程資料，不能僅靠改名或刪 provenance 規避來源限制。需以獨立來源重新建立並保存欄位證據。
 
 ## 已確認的儲存與公開路徑
+
+以下清單記錄本次程式變更前的資料流快照；合併後的新寫入與查詢以後面的「新版資料處理規則」為準。歷史檔案本身不因程式升級自動重寫。
 
 - Production composition 將 Provider candidates 放入 Canonical Trip。
 - Orchestrator 將完整 Canonical Trip 寫到設定的 `TRAVEL_PLANNER_TRIPS_DIR/<trip_id>/trip.json`；Railway 掛載為 `/data`。
@@ -74,11 +88,11 @@
 
 這 14 筆均被每日行程、路線或地點操作資料引用；尚未逐欄完成獨立來源核查，因此本盤點不將其中任何欄位重標為官方來源，也未刪除或改寫公開資料。逐筆來源重建或移除仍是 #199 的必要處置。
 
-## 本次程式防線與未完成項目
+## 合併前程式防線與歷史處置範圍
 
-- `trip_to_public_bundle` 現在拒絕 Canonical Trip candidates 或 field-level provenance 中明確含 `Google Places API (New)` 的資料，GitHub Pages publisher 因此不會把這些 provider fields 再寫入新的公開 bundle。
+- 本 PR 合併後，Canonical Trip 的新寫入、`get_trip` 回應、靜態 HTML 與 GitHub Pages publisher 都先套用 `durable_trip` 投影；Google Places 欄位會被移除，Place ID 和自有行程／筆記保留。直接呼叫 `trip_to_public_bundle` 並傳入仍帶 Places 詳細欄位的未投影文件仍會拒絕，避免繞過 publisher 邊界。
 - 本次變更後，地點地圖連結使用 Google 官方提供的 Maps logo；瀏覽器驗收會核對原始 98×18 尺寸及至少 10px 水平、5px 垂直留白。這只改善歸屬標示外觀，並未解決 Canonical Trip 持久化、既有 public bundle 或欄位級來源辨識問題。
-- 這個防線不清理已發布的靜態 bundle，也不解決 Railway Canonical Trip 和 renderer HTML 的持久化。因此 #199 仍未完成，不可宣稱 Places 資料生命週期已符合政策。
+- 歷史 Railway 檔案、歷史靜態 HTML、已發布 bundle 與 Git commit 均未刪除或改寫。既有 `build_trip_site`、`get_trip` 和重新發布的輸出會使用安全投影；舊檔案本身仍在原位置。歷史公開頁面與 Git 歷史的處置需另行決策，不能宣稱其已被本 PR 清除。
 - 已發布的 Awaji 資料須逐欄位重建獨立來源或移除；不能僅依據 place-level provenance 將資料轉標成官方來源。
 - 私有 Railway 行程需先有可列舉、可安全盤點的唯讀稽核方式，才可逐欄位決定保留、重新查證或刪除；不要輸出或記錄任何 credential。
 - 若繼續使用 Places API，還需要重新界定規劃流程，使禁止保存／再託管的欄位不進入持久化 Canonical Trip、靜態 HTML、Git Pages、日誌及長期 ChatGPT 摘要，並確保介面仍能合法實現規劃目標。現有 Google Places adapter 是 production 唯一景點發現來源，不能用「加 attribution」宣稱此設計已解決。
