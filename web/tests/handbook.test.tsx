@@ -198,10 +198,12 @@ describe('淡路島只讀旅遊助手', () => {
 
   it('總覽不重複旅客人數、狀態或資料快照', () => {
     const trip = { title: '關西五日', destination_regions: ['大阪', '京都'], date_range: { start_date: dates[0], end_date: dates[4] }, duration_days: 5, travelers_summary: '2 位大人', status: 'published', readiness: 'incomplete', cover_media: { kind: 'gradient', gradient: 'linear-gradient(#123, #456)' }, hero_summary: '關西行程摘要' } as TripCatalogEntry
-    render(<OverviewPage bundle={bundle} trip={trip} />)
+    render(<OverviewPage bundle={{ ...bundle, hotel_candidates: [{ place_id: 'hotel', name: '測試住宿', google_maps_url: 'https://www.google.com/maps/search/?api=1&query=hotel' }] }} trip={trip} />)
     expect(document.body.textContent).not.toContain('6 大 1 小')
     expect(document.querySelector('.hero-actions')).toBeNull()
     expect(screen.getByLabelText(/五日移動路線/)).toBeInTheDocument()
+    const hotelMap = screen.getByRole('link', { name: '在 Google Maps 開啟 測試住宿' })
+    expect(within(hotelMap).getByRole('img', { name: 'Google Maps' })).toHaveAttribute('width', '98')
     expect(screen.getByText('大阪旅行')).toBeInTheDocument()
     expect(screen.getByText('關西行程摘要')).toBeInTheDocument()
     expect(document.body.textContent).not.toContain('淡路島自駕旅行')
@@ -214,11 +216,12 @@ describe('淡路島只讀旅遊助手', () => {
     expect(screen.getByText(/成人 ¥3,000/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'うずしおクルーズ（福良港）' })).toHaveAttribute('href', 'https://www.uzu-shio.com/timetable')
     expect(screen.getByRole('link', { name: /在 Google Maps 開啟 うずしおクルーズ/ })).toBeInTheDocument()
-    expect(document.querySelector('.map-pin-link')?.textContent).toContain('Google Maps')
-    expect(document.querySelector('.map-pin-link span')).toHaveAttribute('translate', 'no')
+    const attribution = within(screen.getByRole('link', { name: /在 Google Maps 開啟 うずしおクルーズ/ })).getByRole('img', { name: 'Google Maps' })
+    expect(attribution).toHaveAttribute('width', '98')
+    expect(attribution).toHaveAttribute('height', '18')
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
     expect(document.body.textContent).not.toMatch(/地址|資料來源|最後確認|fixed-reservation/)
-    expect(document.querySelectorAll('.map-pin-link svg')).toHaveLength(1)
+    expect(document.querySelectorAll('.map-pin-link img[alt="Google Maps"]')).toHaveLength(1)
   })
 
   it('攜帶物品是完整閱讀清單，不要求旅途中勾選或填寫', () => {

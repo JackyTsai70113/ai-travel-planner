@@ -9,6 +9,7 @@
 已查閱：
 
 - [Places API 政策與 attribution](https://developers.google.com/maps/documentation/places/web-service/policies)：Places 內容除明文例外外不得預取、快取或保存；Place ID 不受快取限制，可永久保存。顯示非地圖內容時須提供 Google Maps attribution，Places 內容不得放在非 Google 地圖上。
+- 同一份 Places API 政策的最新歸屬標示說明要求盡可能使用 Google Maps 官方 logo；介面空間不足時才可使用未翻譯、大小寫不變的 `Google Maps` 文字。repo 將官方提供的深灰色 logo 原樣加入地圖連結，保留 98×18 比例及規定留白。此標示只標明 Google Maps 連結；不代表行程內每個地點欄位都已完成來源辨識。
 - [Maps Platform Service Specific Terms](https://cloud.google.com/maps-platform/terms/maps-service-terms) 第 14 節：Places API (Legacy and New) 明確允許緯度、經度快取最多 30 個連續日，期滿必須刪除。
 - [Maps Platform Terms](https://cloud.google.com/maps-platform/terms) 第 3.2.3 節：禁止在服務外匯出、擷取、保存、轉載或重新託管 Google Maps Content；條文明列複製保存商家名稱與地址。禁止快取未經 Service Specific Terms 明確允許的內容，也禁止以 Google Maps Content 建立內容。Attribution 本身不會授予保存或重新託管權。
 
@@ -75,6 +76,7 @@
 ## 本次程式防線與未完成項目
 
 - `trip_to_public_bundle` 現在拒絕 Canonical Trip candidates 或 field-level provenance 中明確含 `Google Places API (New)` 的資料，GitHub Pages publisher 因此不會把這些 provider fields 再寫入新的公開 bundle。
+- 本次變更後，地點地圖連結使用 Google 官方提供的 Maps logo；瀏覽器驗收會核對原始 98×18 尺寸及至少 10px 水平、5px 垂直留白。這只改善歸屬標示外觀，並未解決 Canonical Trip 持久化、既有 public bundle 或欄位級來源辨識問題。
 - 這個防線不清理已發布的靜態 bundle，也不解決 Railway Canonical Trip 和 renderer HTML 的持久化。因此 #199 仍未完成，不可宣稱 Places 資料生命週期已符合政策。
 - 已發布的 Awaji 資料須逐欄位重建獨立來源或移除；不能僅依據 place-level provenance 將資料轉標成官方來源。
 - 私有 Railway 行程需先有可列舉、可安全盤點的唯讀稽核方式，才可逐欄位決定保留、重新查證或刪除；不要輸出或記錄任何 credential。
