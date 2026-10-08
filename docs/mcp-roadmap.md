@@ -24,7 +24,7 @@
 
 ## 目前基線（2026-10-08）
 
-- 最新 main 為 PR #236 的文件 merge commit `72d0dbf196c1e6ffc048cd75194c9f829439b65b`；最近一次影響後端的 commit 是 PR #235 merge commit `9219ffbda35d82d547324038e0f47cfdc5178659`。Railway production deployment `90208905-5cea-46a9-bf2a-eb8b4aa9f11f` 使用後者、狀態 `SUCCESS`；`/health` HTTP 200，MCP `tools/list` HTTP 200 並列出 7 個工具，含 `get_place_details`。
+- PR #236 的文件 merge commit 為 `72d0dbf196c1e6ffc048cd75194c9f829439b65b`，其後 PR #237 將 production parser 實測記錄合併為文件 commit `37aacd2e43a67689b4b36b5e3b9fedb90fdc2f00`；這兩次 merge 均未改變後端程式。最近一次影響後端的 commit 是 PR #235 merge commit `9219ffbda35d82d547324038e0f47cfdc5178659`。Railway deployment `90208905-5cea-46a9-bf2a-eb8b4aa9f11f` 使用該後端 commit、狀態 `SUCCESS`；`/health` HTTP 200，MCP `tools/list` HTTP 200 並列出 7 個工具，含 `get_place_details`。
 - Railway CLI 的唯讀 MCP 驗證確認 `get_place_details` 即時查詢成功。另以 production `parse_trip_request` 解析完整倉敷需求，回 HTTP 200、目的地倉敷、岡山縣、2026-11-01 至 2026-11-05、6 位成人、1 位 2 歲幼兒、不限預算、`missing_fields=[]`。這些是 Railway endpoint 證據，不等於 ChatGPT Chat UI 驗收。
 - ChatGPT 一般 Chat 過去曾成功呼叫 `parse_trip_request`。本次 Computer Use 回報 macOS 已鎖定，未輸入或代送 prompt；目前最新版本的 ChatGPT UI 工具發現與呼叫仍未驗收。
 - `plan_trip` 倉敷舊正式案例（2026-10-05）有 20 筆餐廳候選、每日 0 餐點。後續 #214/#215 已加入無住宿時的可行景點間排餐與 production composition regressions；仍須以維護者在一般 ChatGPT Chat 新發起的真實規劃結果驗證，不把舊 Trip 或 mock 測試當成最新行為證據。自動住宿搜尋已放棄，住宿可留空或由旅客提供。
