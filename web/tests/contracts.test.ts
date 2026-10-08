@@ -16,6 +16,9 @@ describe('canonical frontend contracts', () => {
     expect(parseBundle(validBundle).ok).toBe(true)
     expect(parseBundle({ ...validBundle, days: 'not-an-array' }).ok).toBe(false)
     expect(parseBundle({ ...validBundle, trip_id: '' }).ok).toBe(false)
+    expect(parseBundle({ ...validBundle, place_details_api_base_url: 'http://example.test/api/public/trips' }).ok).toBe(false)
+    expect(parseBundle({ ...validBundle, place_details_api_base_url: 'https://example.test/untrusted' }).ok).toBe(false)
+    expect(parseBundle({ ...validBundle, place_details_api_base_url: 'https://example.test/api/public/trips' }).ok).toBe(true)
   })
 
   it('round-trips day and item routes', () => {

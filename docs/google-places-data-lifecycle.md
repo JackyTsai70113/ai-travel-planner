@@ -7,12 +7,13 @@
 - Google Places 搜尋結果只在單次規劃請求記憶體中供候選篩選、營業時間與路線排程使用；寫入 Canonical Trip 與靜態 HTML 前，會移除 Google Places 衍生欄位與 Google 回傳的 source URL。
 - Canonical Trip 可保留 Google API 的原始 `id` 欄位（以 `google_place_id` 保存不含 `places/` 前綴的 ID），另保留使用者自己的行程安排、備註、選擇及其他非 Google 來源且有欄位級 provenance 的資料。查詢 Place Details 時才包成 `places/{place_id}` resource name。
 - `get_place_details(place_id)` 每次呼叫均向 Places API 即時查詢，資料僅回傳當次 MCP 結果；不使用快取。工具失敗會回 `unavailable`、失敗類別及是否可重試，不回傳舊資料，也不把 Google 回應寫入日誌或行程。
-- MCP 即時結果標示 `Google Maps`，並附上 API 回傳的第三方 attribution。靜態網頁若只有 Place ID，顯示 Google Maps 連結，不呈現 API 的名稱、地址、座標、營業時間、評分等詳細資料。
+- MCP 即時結果標示 `Google Maps`，並附上 API 回傳的第三方 attribution。公開行程頁只把 API endpoint 根網址和原始 Place ID 放在 bundle；頁面開啟當前區段時，後端會確認 trip registry 與每日排程，再以最小欄位遮罩即時查詢名稱。名稱與 attribution 只進入當前頁面記憶體，HTTP 回應設 `no-store`，不寫入 Canonical Trip、靜態 bundle、瀏覽器儲存或日誌。頁面顯示 `Google Maps` 署名和有效的第三方 attribution 連結；查詢失敗時顯示無法載入，不讀舊值。
+- 公開查詢僅接受 GitHub Pages 的精確 Origin，僅允許公開 registry 中該行程已排入每日行程的 Google Place ID；每個來源每分鐘最多 60 次，Railway `/data` 上另保存不含 IP 或地點 ID 的 UTC 月份／總次數計數，每月最多 1,000 次。超過上限或計數檔不可用時 fail closed。Google API key 不送到瀏覽器。
 - 新版程式的 Places 詳細資料保存期限為 0 天；Places 座標不會持久保存。官方一般條款允許座標快取最多 30 個連續日，但本實作選擇不快取。Place ID 依政策例外可永久保存。
 - 已存在於 Railway volume、已發布的 Pages bundle 與 Git 歷史中的舊資料均未刪除、改寫或回填。本變更只管束合併後新產生的 Canonical Trip、HTML 與公開 bundle。舊行程若仍含 Places 詳細欄位，發布器會繼續拒絕再次發布這些資料；現有歷史檔案和已公開頁面保持原樣。
 - 不同來源重整後的欄位只有具備非 Google 欄位級 provenance 才能留存；沒有欄位級證據時，Places 標記候選只保留 Place ID、kind 與來源識別 metadata。
 
-自動回歸測試涵蓋：原樣保存 Place ID、規劃與渲染投影移除 Places 詳細欄位、保留非 Google 欄位級 provenance、ID-only Google candidate 可投影為公開 bundle、舊 bundle 中仍含 Google 詳細欄位時發布受阻、即時查詢使用 GET 且不寫入資料、attribution 回傳，以及 API 錯誤不回退舊資料。
+自動回歸測試涵蓋：原樣保存 Place ID、規劃與渲染投影移除 Places 詳細欄位、保留非 Google 欄位級 provenance、ID-only Google candidate 可投影為公開 bundle、舊 bundle 中仍含 Google 詳細欄位時發布受阻、最小欄位遮罩的即時名稱查詢、公開排程 allowlist、每月總量上限、頁面署名，以及 API 錯誤不回退舊資料。
 
 ## 官方規則摘要
 

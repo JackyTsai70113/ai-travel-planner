@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import TripShell from '../layouts/TripShell'
 import { Bundle } from '../contracts/trip'
 import { useBundleLoader } from '../hooks/useBundleLoader'
+import { useLivePlaceDetails } from '../hooks/useLivePlaceDetails'
 import { useTripNavigation } from '../hooks/useTripNavigation'
 import {
   SECTION_DEFINITIONS,
@@ -100,6 +101,9 @@ export default function TripApp({ tripMeta = null, tripSlug }: TripAppProps) {
     return bundleLoader.bundle.days.find((day) => day.date === fromRoute) || bundleLoader.bundle.days[0]
   }, [bundleLoader.bundle, isDayScopedSection, route.day, normalizeDay])
 
+  const livePlaces = useLivePlaceDetails(bundleLoader.bundle, tripSlug, selectedSection, activeDay?.date)
+  const displayBundle = livePlaces.bundle
+
   useEffect(() => {
     if (!isDayScopedSection && !routeSectionNotFound) {
       setRouteNotFound(false)
@@ -149,7 +153,7 @@ export default function TripApp({ tripMeta = null, tripSlug }: TripAppProps) {
     if (routeNotFound) {
       return <NotFoundPage path={effectiveRoute.raw || 'n/a'} />
     }
-    const bundle = bundleLoader.bundle
+    const bundle = displayBundle
 
     if (!bundle && selectedSection !== 'overview') {
       return (
@@ -192,7 +196,18 @@ export default function TripApp({ tripMeta = null, tripSlug }: TripAppProps) {
       return <JapanesePage />
     }
     return <NotFoundPage path={effectiveRoute.raw || 'n/a'} />
-  }, [bundleLoader.bundle, effectiveRoute, gotoRoute, routeNotFound, selectedSection, tripMeta])
+  }, [displayBundle, effectiveRoute, gotoRoute, routeNotFound, selectedSection, tripMeta])
+
+  const placeAttributions = useMemo(() => {
+    const entries = displayBundle?.places?.flatMap((place) => place.place_details_third_party_attributions || []) || []
+    const unique = new Map<string, { provider: string; providerUri?: string }>()
+    for (const entry of entries) {
+      if (!entry.provider) continue
+      unique.set(`${entry.provider}\u0000${entry.providerUri || ''}`, { provider: entry.provider, providerUri: entry.providerUri })
+    }
+    return [...unique.values()]
+  }, [displayBundle])
+  const hasGooglePlaceNames = !!displayBundle?.places?.some((place) => place.place_details_attribution === 'Google Maps')
 
   const renderBundleLoading = !bundleLoader.bundle && shellStatus === 'loading'
 
@@ -218,7 +233,7 @@ export default function TripApp({ tripMeta = null, tripSlug }: TripAppProps) {
 
   return (
     <TripShell
-      bundle={bundleLoader.bundle}
+      bundle={displayBundle}
       fallbackTitle={tripMeta?.title}
       shellStatus={shellStatus}
       pageTitleId={pageTitleId}
@@ -229,6 +244,21 @@ export default function TripApp({ tripMeta = null, tripSlug }: TripAppProps) {
       setDrawerOpen={setDrawerOpen}
     >
       {mainSection}
+      {hasGooglePlaceNames ? (
+        <footer className="trip-place-attribution" aria-label="地點資料來源">
+          <span>Google Maps</span>
+          {placeAttributions.map((entry) => {
+            let safeUrl: string | undefined
+            try {
+              const parsed = new URL(entry.providerUri || '')
+              if (parsed.protocol === 'https:') safeUrl = parsed.toString()
+            } catch { /* omit invalid provider links */ }
+            return safeUrl
+              ? <a key={`${entry.provider}:${safeUrl}`} href={safeUrl} target="_blank" rel="noreferrer">{entry.provider}</a>
+              : <span key={entry.provider}>{entry.provider}</span>
+          })}
+        </footer>
+      ) : null}
     </TripShell>
   )
 }

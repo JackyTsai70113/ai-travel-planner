@@ -51,6 +51,7 @@ class GitHubPagesPublisher:
         repository: str,
         branch: str = "main",
         pages_base_url: str | None = None,
+        public_api_base_url: str | None = None,
         api_url: str = "https://api.github.com",
         request_json: Callable[..., Mapping[str, Any]] | None = None,
     ) -> None:
@@ -68,6 +69,9 @@ class GitHubPagesPublisher:
         self.pages_base_url = (pages_base_url or f"https://{self.owner.lower()}.github.io/{self.name}").rstrip("/")
         if not self.pages_base_url.startswith("https://"):
             raise ValueError("Pages base URL must use HTTPS")
+        self.public_api_base_url = public_api_base_url.rstrip("/") if public_api_base_url else None
+        if self.public_api_base_url and not self.public_api_base_url.startswith("https://"):
+            raise ValueError("Public API base URL must use HTTPS")
         self.request_json = request_json or _request_json
 
     def publish(self, trip: Mapping[str, Any], *, slug: str, confirm_overwrite: bool = False) -> PublishResult:
@@ -81,6 +85,8 @@ class GitHubPagesPublisher:
             details = "; ".join(findings) or "Canonical Trip is not ready"
             raise ValueError(f"trip is not ready for public publication: {details}")
         bundle = trip_to_public_bundle(trip)
+        if self.public_api_base_url:
+            bundle["place_details_api_base_url"] = f"{self.public_api_base_url}/api/public/trips"
 
         ref = self._request("GET", f"git/ref/heads/{quote(self.branch, safe='')}")
         parent_sha = _required_text(ref.get("object", {}).get("sha"), "branch commit")

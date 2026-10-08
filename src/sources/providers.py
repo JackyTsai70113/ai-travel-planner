@@ -183,6 +183,39 @@ class GooglePlacesAdapter(SourceAdapter):
             "details": {key: value for key, value in result.items() if key != "provenance"},
         }
 
+    def get_place_display_name(self, place_id: str) -> dict[str, Any]:
+        """Fetch only display-name fields for a public itinerary page, without caching."""
+        if not self.api_key:
+            raise ProviderConfigurationError("GOOGLE_MAPS_API_KEY is required for Google Places")
+        raw_place_id = place_id.removeprefix("places/")
+        if not re.fullmatch(r"[A-Za-z0-9_-]+", raw_place_id):
+            raise ValueError("place_id must be a Google Place ID")
+        payload = self.http_client.request_json(
+            "GET", f"https://places.googleapis.com/v1/places/{raw_place_id}?languageCode=zh-TW",
+            headers={
+                "X-Goog-Api-Key": self.api_key,
+                "X-Goog-FieldMask": "id,displayName,attributions",
+            },
+        )
+        display_name = payload.get("displayName")
+        returned_id = payload.get("id")
+        if (
+            not isinstance(returned_id, str)
+            or returned_id.removeprefix("places/") != raw_place_id
+            or not isinstance(display_name, Mapping)
+            or not isinstance(display_name.get("text"), str)
+            or not display_name["text"].strip()
+        ):
+            raise ProviderRequestError("Google Places returned no matching place name")
+        attributions = payload.get("attributions", [])
+        return {
+            "status": "available",
+            "place_id": raw_place_id,
+            "name": display_name["text"],
+            "attribution": "Google Maps",
+            "third_party_attributions": attributions if isinstance(attributions, list) else [],
+        }
+
     def _candidate(self, raw: Mapping[str, Any], *, restaurant: bool) -> dict[str, Any] | None:
         place_id = raw.get("id")
         display_name = raw.get("displayName")

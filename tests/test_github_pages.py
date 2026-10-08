@@ -94,6 +94,25 @@ class GitHubPagesPublisherTests(unittest.TestCase):
         self.assertEqual(fake.ref_update, {"sha": "new-commit", "force": False})
         self.assertEqual(len([call for call in fake.calls if call[0] == "PATCH"]), 1)
 
+    def test_published_bundle_receives_only_public_runtime_api_address(self):
+        fake = FakeGitHub()
+        publisher = GitHubPagesPublisher(
+            token="private-token",
+            repository="JackyTsai70113/ai-travel-planner",
+            public_api_base_url="https://ai-traveller-production-732b.up.railway.app",
+            request_json=fake,
+        )
+
+        publisher.publish(self.trip, slug="demo-trip")
+
+        blobs = [json.loads(base64.b64decode(call[2]["content"])) for call in fake.calls if call[0] == "POST" and call[1].endswith("/git/blobs")]
+        bundle = next(value for value in blobs if value.get("trip_id") == self.trip["id"])
+        self.assertEqual(
+            "https://ai-traveller-production-732b.up.railway.app/api/public/trips",
+            bundle["place_details_api_base_url"],
+        )
+        self.assertNotIn("GOOGLE_MAPS_API_KEY", json.dumps(bundle))
+
     def test_rejects_invalid_slug_before_github_writes(self):
         fake = FakeGitHub()
         with self.assertRaises(ValueError):

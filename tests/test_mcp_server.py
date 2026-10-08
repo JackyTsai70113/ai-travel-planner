@@ -23,6 +23,9 @@ from src.renderer.build_site import build_site
 from src.mcp_server.server import (
     _consume_remote_request,
     _public_trip_summary,
+    _github_pages_origin,
+    _consume_public_place_monthly_budget,
+    _published_scheduled_google_place_ids,
     _read_limited_asgi_body,
     build_trip_site_tool,
     get_trip_tool,
@@ -37,6 +40,43 @@ from src.orchestrator import StageName, StageReport, StageStatus, WarningRecord
 
 
 class MCPTravelServerTests(unittest.TestCase):
+    def test_public_place_usage_budget_persists_only_month_and_count(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            usage_path = Path(directory) / "usage.json"
+            self.assertTrue(_consume_public_place_monthly_budget(usage_path, month="2026-10", limit=2))
+            self.assertTrue(_consume_public_place_monthly_budget(usage_path, month="2026-10", limit=2))
+            self.assertFalse(_consume_public_place_monthly_budget(usage_path, month="2026-10", limit=2))
+            self.assertEqual({"month": "2026-10", "count": 2}, json.loads(usage_path.read_text()))
+            self.assertTrue(_consume_public_place_monthly_budget(usage_path, month="2026-11", limit=2))
+
+    def test_public_place_lookup_is_allowlisted_to_scheduled_published_bundle_places(self) -> None:
+        bundle = {
+            "trip_id": "demo-trip",
+            "days": [{"date": "2026-01-01", "items": [{"place_id": "google-poi"}]}],
+            "places": [
+                {"id": "google-poi", "google_place_id": "ChIJ-scheduled"},
+                {"id": "unused-candidate", "google_place_id": "ChIJ-unselected"},
+            ],
+        }
+
+        class Response:
+            def __init__(self, value): self.value = value
+            def __enter__(self): return self
+            def __exit__(self, *_args): return None
+            def read(self, limit): return json.dumps(self.value).encode()
+
+        with patch("src.mcp_server.server.urlopen", side_effect=[
+            Response([{"slug": "demo-trip", "canonical_url": "trips/demo-trip"}]), Response(bundle),
+        ]) as fetch:
+            allowed = _published_scheduled_google_place_ids("demo-trip", "https://example.test/site")
+        self.assertEqual({"ChIJ-scheduled"}, allowed)
+        self.assertEqual(2, fetch.call_count)
+        self.assertIn("https://example.test/site/trips/demo-trip/public-bundle.json", fetch.call_args_list[1].args[0].full_url)
+        self.assertEqual("https://example.test", _github_pages_origin("https://example.test/site"))
+        with patch("src.mcp_server.server.urlopen") as fetch:
+            self.assertEqual(set(), _published_scheduled_google_place_ids("../private", "https://example.test/site"))
+        fetch.assert_not_called()
+
     def test_remote_rate_limit_is_per_user_and_resets_by_window(self) -> None:
         windows: dict[str, tuple[int, float]] = {}
         for _ in range(120):
@@ -203,6 +243,15 @@ class MCPTravelServerTests(unittest.TestCase):
                 urllib.request.urlopen(urllib.request.Request(endpoint, data=b"{}", method="POST", headers={"Authorization": f"Bearer {token}"}), timeout=2)
             self.assertEqual(unauthenticated.exception.code, 401)
             unauthenticated.exception.close()
+            public_lookup = urllib.request.Request(
+                f"http://127.0.0.1:{port}/api/public/trips/demo-trip/places/ChIJ-place",
+                headers={"Origin": "https://untrusted.example"},
+            )
+            with self.assertRaises(urllib.error.HTTPError) as blocked_public_lookup:
+                urllib.request.urlopen(public_lookup, timeout=2)
+            self.assertEqual(blocked_public_lookup.exception.code, 403)
+            self.assertEqual("no-store, max-age=0", blocked_public_lookup.exception.headers.get("Cache-Control"))
+            blocked_public_lookup.exception.close()
             wrong_host = urllib.request.Request(
                 endpoint,
                 data=json.dumps(
