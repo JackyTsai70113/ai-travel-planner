@@ -12,9 +12,16 @@ from collections import defaultdict
 from src.planner.contracts import HardConstraint, SoftPreference
 
 from .contracts import (
-    AmbiguousField, ConstraintCondition, ConstraintIssue, ConstraintScope,
-    FieldProvenance, MissingField, RequestConstraint, TimeWindow,
-    TravelerGroup, TripRequest,
+    AmbiguousField,
+    ConstraintCondition,
+    ConstraintIssue,
+    ConstraintScope,
+    FieldProvenance,
+    MissingField,
+    RequestConstraint,
+    TimeWindow,
+    TravelerGroup,
+    TripRequest,
 )
 
 _KNOWN_PLACES = (
@@ -66,6 +73,9 @@ def parse_trip_request(text: str) -> TripRequest:
     # A prefecture is a parent region when a more specific city is present.
     if "倉敷" in known_places and "岡山" in known_places:
         known_places.remove("岡山")
+        provenance["destinations"] = [
+            source for source in provenance["destinations"] if source.text != "岡山"
+        ]
     places = tuple(known_places)
     taiwan_pattern = re.compile("|".join(
         re.escape(alias) for alias in sorted(_TAIWAN_DESTINATION_ALIASES, key=len, reverse=True)
