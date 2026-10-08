@@ -2,7 +2,7 @@
 
 ## Remote ChatGPT deployment
 
-最新正式環境連線證據、倉敷 production run 實測結果與未解 issues，整理於[ChatGPT MCP 正式環境現況](mcp-production-status.md)。
+本 repo 持續開發目標與驗收範圍見[AI Travel Planner MCP 長期目標](mcp-roadmap.md)；最新正式環境連線證據、倉敷 production run 實測結果與未解 issues，整理於[ChatGPT MCP 正式環境現況](mcp-production-status.md)。
 
 ## 已查證的 Railway production endpoint（2026-10-05）
 
@@ -280,6 +280,10 @@ Side effects：以非 force update 更新 `GITHUB_PAGES_BRANCH`。bundle 與 reg
 在同一 tree/commit 中寫入。內容採用 `src.request_site` 的 public allowlist，
 不提交 Canonical Trip 原始 JSON、provider payload 或 MCP secrets。相同內容重試
 不會再建立 commit；改變已公開內容必須明確設 `confirm_overwrite=true`。
+若 `candidate_sets` 或欄位來源證據包含 `Google Places API (New)`，發布會以
+`not_ready` 拒絕，避免把 Places 內容保存或重新託管至 GitHub Pages。這項防線
+不會清除既有 bundle，也不代表 Railway Canonical Trip 的保存路徑已解決；完整
+盤點見 [`google-places-data-lifecycle.md`](google-places-data-lifecycle.md)。
 
 The resource `travel-planner://capabilities` returns the schema version, stage list, Canonical Trip source-of-truth statement, and a concise side-effect summary for each tool. The `plan_a_trip(request)` prompt instructs the host to resolve ambiguity and preserve unknown values before using `plan_trip`.
 

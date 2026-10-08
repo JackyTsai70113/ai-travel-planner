@@ -14,13 +14,13 @@ from mcp.server.transport_security import TransportSecuritySettings
 from mcp.types import ToolAnnotations
 from pydantic import Field
 
-from src.budget import format_budget_summary
 from src.application.production import (
     ProductionConfigurationError,
     ProductionIncompleteError,
     create_production_orchestrator,
     missing_required_configuration,
 )
+from src.budget import format_budget_summary
 from src.intent import parse_trip_request
 from src.mcp_server.github_pages import GitHubPagesPublisher, GitHubPublishError
 from src.orchestrator import StageStatus
@@ -482,7 +482,12 @@ def publish_trip_site_tool(
         ).publish(trip, slug=site_slug or trip_id, confirm_overwrite=confirm_overwrite)
     except ValueError as exc:
         message = str(exc)
-        status = "not_ready" if "not ready for public publication" in message else "invalid_input"
+        status = (
+            "not_ready"
+            if "not ready for public publication" in message
+            or "Google Places API content cannot be persisted" in message
+            else "invalid_input"
+        )
         return {"status": status, "message": message}
     except GitHubPublishError as exc:
         if "confirm_overwrite=true" in str(exc):

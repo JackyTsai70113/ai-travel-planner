@@ -6,8 +6,8 @@ import os
 import socket
 import subprocess
 import sys
-import time
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
@@ -19,10 +19,10 @@ from mcp.client.streamable_http import streamable_http_client
 
 from src.application.production import ProductionIncompleteError
 from src.mcp_server.github_pages import PublishResult
-from src.orchestrator import StageName, StageReport, StageStatus, WarningRecord
-
 from src.mcp_server.server import (
+    _consume_remote_request,
     _public_trip_summary,
+    _read_limited_asgi_body,
     build_trip_site_tool,
     get_trip_tool,
     mcp,
@@ -30,9 +30,8 @@ from src.mcp_server.server import (
     plan_trip_tool,
     publish_trip_site_tool,
     validate_trip_tool,
-    _consume_remote_request,
-    _read_limited_asgi_body,
 )
+from src.orchestrator import StageName, StageReport, StageStatus, WarningRecord
 
 
 class MCPTravelServerTests(unittest.TestCase):
@@ -145,9 +144,9 @@ class MCPTravelServerTests(unittest.TestCase):
         asyncio.run(check())
 
     def test_streamable_http_requires_internal_token_and_serves_tools(self) -> None:
+        import http.client
         import urllib.error
         import urllib.request
-        import http.client
 
         project = Path(__file__).parent.parent.resolve()
         with socket.socket() as sock:
@@ -483,6 +482,30 @@ class MCPTravelServerTests(unittest.TestCase):
         self.assertEqual(published["status"], "publish_accepted")
         self.assertEqual(published["url"], result_value.url)
         publish.assert_called_once()
+
+    def test_public_trip_publish_blocks_google_places_content_before_github_io(self) -> None:
+        fixture = json.loads((Path(__file__).parent.parent / "fixtures/trips/japan-5-day-trip-v1.json").read_text(encoding="utf-8"))
+        fixture["candidate_sets"]["places"][0]["provenance"] = {
+            "source_type": "provider", "provider": "Google Places API (New)",
+            "retrieved_at": "2026-10-08T00:00:00+00:00", "status": "confirmed",
+        }
+        trip_id = fixture["id"]
+        with tempfile.TemporaryDirectory() as temp:
+            trips = Path(temp) / "trips"
+            trip_path = trips / trip_id / "trip.json"
+            trip_path.parent.mkdir(parents=True)
+            trip_path.write_text(json.dumps(fixture), encoding="utf-8")
+            with (
+                patch("src.mcp_server.server._TRIPS_DIR", trips.resolve()),
+                patch.dict(os.environ, {"GITHUB_TOKEN": "private-test-token"}),
+                patch("src.mcp_server.github_pages._request_json") as github_request,
+            ):
+                result = publish_trip_site_tool(
+                    trip_id, "family-trip", confirm_public_publish=True
+                )
+        self.assertEqual(result["status"], "not_ready")
+        self.assertIn("Google Places API content cannot be persisted", result["message"])
+        github_request.assert_not_called()
 
     def test_plan_status_is_incomplete_when_any_stage_is_incomplete(self) -> None:
         request = "2026/4/10到2026/4/14 台北出發德島五天四夜，2大，預算8萬日圓，自駕"

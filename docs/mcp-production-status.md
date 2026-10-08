@@ -2,6 +2,16 @@
 
 最後查證：2026-10-08。本文記錄本 repo MCP 部署與實際工具呼叫的觀察結果，不代表規劃品質已達可交付標準。
 
+## 2026-10-08 PR #215 合併後基線
+
+- 長期目標已整理於 [`AI Travel Planner MCP 長期目標`](mcp-roadmap.md)：持續開發、測試、審查及合併，直到一般 ChatGPT Chat 可穩定完成有根據的旅行規劃；mock、healthcheck 或 CI 不能代替正式 ChatGPT 工具驗收。
+- PR #215 已以一般 merge commit 合併，`main` 為 `b0676515f62af85ee048bff94e82dc80319986be`。PR CI 的 `mcp-site`、`pytest`、`python` 均成功；Railway deployment `cb92a197-1ff9-4ec8-a79f-6e499b0d0f75` 對應該 commit 且狀態 `SUCCESS`。合併後本機 production/planner tests 為 60 passed；工作目錄中的未合併 #199 變更完成後，全測試 364 passed、288 subtests passed，兩種範圍不可混為一談。
+- PR #215 的 recorded/mock production composition 覆蓋排三餐、無回程餐點保留候選與 warning、住宿留空時排可行餐點且不虛構接駁。沒有在新的倉敷 `plan_trip` live run 上驗證；ChatGPT 一般 Chat 的正式倉敷 prompt／工具呼叫仍待維護者自行輸入並回報。
+- Railway `GITHUB_TOKEN` 已由遮蔽變數清單確認存在；前次正式執行個體的 GitHub REST 唯讀檢查回報 `permissions.push=true`。尚未經 ChatGPT 確認行程公開、等待 Pages 部署及瀏覽器開啟該行程網址；#179 保持開啟。
+- GitHub Issue #175 已依維護者決定關閉；自動住宿搜尋不再是需求。住宿可留空；住宿若由使用者提供，未經驗證的地址、價格與交通仍須保持未驗證。
+- 目前開啟的服務能力 issues：#180（待正式 ChatGPT production rerun）、#179（待明確公開行程並驗證 Pages URL）、#199（Places 資料保存與既有公開內容處置）。
+- #199 正在進行中的本機變更加入動態 publisher guard 和欄位生命週期盤點文件；測試通過前仍不得描述成已交付或 production 已生效。此防線只阻擋新 GitHub Pages 發布，沒有處理 Railway 私有持久資料與既有公開 bundle。
+
 ## 2026-10-08 過期行程封存修正部署
 
 - PR #212 以一般 merge commit `bd59a6585846ee6df4b088c34cf4b7bcbc550708` 合併至 `main`。修改後，結束日期早於瀏覽器使用者當地日期的已發布行程會移到「封存 / 歷史」，並顯示封存狀態。
