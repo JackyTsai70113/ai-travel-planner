@@ -607,7 +607,13 @@ def test_recorded_production_without_lodging_keeps_verified_meals_and_unknown_ho
     trip = json.loads(result.trip_path.read_text(encoding="utf-8"))
     assert trip["selected"]["hotel_place_ids"] == []
     assert trip["candidate_sets"]["hotels"] == []
-    assert all(sum(item["kind"] == "meal" for item in day["items"]) == 2 for day in trip["days"])
+    restaurants = {candidate["place"]["id"]: candidate for candidate in trip["candidate_sets"]["restaurants"]}
+    for day in trip["days"]:
+        meals = [item for item in day["items"] if item["kind"] == "meal"]
+        assert [item["start_at"][11:16] for item in meals] == ["08:00", "12:30", "18:30"]
+        assert [restaurants[item["place_id"]]["schedule"]["meal_period"] for item in meals] == ["breakfast", "lunch", "dinner"]
+        assert min(item["start_at"] for item in day["items"] if item["kind"] == "visit")[11:16] >= "09:30"
+    assert not any(finding["code"] == "meal.period_unselected" for finding in trip["validation"])
     assert any(finding["code"] == "schedule.hotel_missing" for finding in trip["validation"])
     assert any(finding["code"] == "schedule.origin_unknown" for finding in trip["validation"])
     assert not trip["candidate_sets"]["transport_legs"]

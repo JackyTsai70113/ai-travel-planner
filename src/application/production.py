@@ -346,7 +346,10 @@ def _assign_route_aware_poi_schedule(
             continue
         current = start + timedelta(days=day_number - 1)
         options: list[tuple[int, float, int, int, datetime, datetime]] = []
-        day_start = datetime.combine(current, time(9, 0), zone)
+        # With no selected lodging there is no known hotel-to-POI route. Leave
+        # a half-hour after the planned breakfast window so verified restaurant
+        # to first-POI travel can still fit without pretending the route is zero.
+        day_start = datetime.combine(current, time(9, 30) if hotel_id is None else time(9, 0), zone)
         day_end = datetime.combine(current, time(20, 0), zone)
         for first_index, first in enumerate(eligible):
             if first["id"] in selected_ids:
