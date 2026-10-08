@@ -266,7 +266,16 @@ def plan_trip_tool(
         ),
     ] = False,
 ) -> dict[str, Any]:
-    """Research and plan a trip after the user has answered clarifications and confirmed local file writes."""
+    """以繁體中文進行一題一答的規劃，不要把 parser JSON 原樣當成回答。
+
+    先用 parse_trip_request 累積使用者明確提供的內容。若回傳
+    needs_clarification，只問 next_question 並等待回答；每輪保留先前答案，
+    不重問已解決欄位、不猜測缺漏資訊，也不可在必要欄位未補齊時啟動研究。
+    資料完整後，先摘要需求並取得使用者對私有檔案寫入的明確確認，再以
+    confirm_write=true 呼叫本工具。這會建立或覆寫指定 trip_id 的 Canonical
+    Trip 與靜態網站檔案；不會發布公開網站。公開發布必須另行取得確認並呼叫
+    publish_trip_site。
+    """
     try:
         _trip_path(trip_id)
     except ValueError as exc:

@@ -174,7 +174,7 @@ Production planning requires `GOOGLE_MAPS_API_KEY` and `OPENROUTESERVICE_API_KEY
 | `parse_trip_request` | Extracts only facts stated in the request, including missing and ambiguous fields. | None |
 | `validate_trip` | Runs Canonical Trip V1 schema validation and deterministic itinerary validation. | None |
 | `get_trip` | Returns an allowlisted summary for a safe trip ID; omits raw provider records, booking details, free-form notes, and arbitrary fields. | None |
-| `plan_trip` | Runs the existing production orchestrator; returns clarification or configuration status before attempting planning. | Requires `confirm_write=true`; then writes the Canonical Trip and static site locally. Never publishes. |
+| `plan_trip` | 以繁體中文一題一答補齊必要資訊；只依使用者已明確回答的內容規劃，不回傳 parser JSON 充當最終回答。 | 必要欄位未補齊時只回傳一個 `next_question` 且不啟動研究；完整後仍須先取得私有檔案寫入確認，再以 `confirm_write=true` 建立或覆寫 Canonical Trip 和靜態網站。永不公開發布。 |
 | `build_trip_site` | Validates and renders an existing Canonical Trip. | Requires `confirm_write=true`; writes a local static site only. Never publishes. |
 | `publish_trip_site` | Publishes a ready Canonical Trip to this repository's GitHub Pages site. | Requires explicit `confirm_public_publish=true`; updates repository content and starts the Pages workflow. Existing-trip replacement separately requires `confirm_overwrite=true`. |
 
