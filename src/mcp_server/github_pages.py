@@ -2,17 +2,21 @@
 from __future__ import annotations
 
 import base64
-from dataclasses import dataclass
 import json
 import re
-from typing import Any, Callable, Mapping
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass
+from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
-from src.request_site import trip_publication_findings, trip_to_public_bundle, trip_to_registry_entry
+from src.request_site import (
+    trip_publication_findings,
+    trip_to_public_bundle,
+    trip_to_registry_entry,
+)
 from src.schemas.validate_trip import validate_trip
-
 
 _SLUG = re.compile(r"[a-z0-9][a-z0-9-]{0,79}\Z")
 _REGISTRY_PATH = "web/public/trip-registry.json"
@@ -69,12 +73,12 @@ class GitHubPagesPublisher:
         if not _SLUG.fullmatch(slug):
             raise ValueError("site slug must use lowercase letters, digits, and hyphens")
         validate_trip(dict(trip))
-        bundle = trip_to_public_bundle(trip)
         findings = trip_publication_findings(trip)
         entry = trip_to_registry_entry(trip, slug=slug, source_slug=f"requested/{slug}")
         if entry["readiness"] != "ready":
             details = "; ".join(findings) or "Canonical Trip is not ready"
             raise ValueError(f"trip is not ready for public publication: {details}")
+        bundle = trip_to_public_bundle(trip)
 
         ref = self._request("GET", f"git/ref/heads/{quote(self.branch, safe='')}")
         parent_sha = _required_text(ref.get("object", {}).get("sha"), "branch commit")

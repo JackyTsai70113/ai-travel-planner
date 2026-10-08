@@ -53,7 +53,9 @@ open site/tokushima-kobe/index.html
 
 ## MCP 服務
 
-選用的 MCP server 會將既有需求解析器、Canonical Trip 驗證器、安全行程摘要、正式規劃器與靜態網站 renderer 提供為工具。它支援本機 stdio client，且寫入行程或網站檔案前需要明確確認參數；它不會發布或部署內容。安裝與連線方式請參閱 [`MCP 旅遊規劃服務`](docs/mcp-server.md)。
+MCP server 將既有需求解析器、Canonical Trip 驗證器、安全行程摘要、正式規劃器與靜態網站 renderer 提供為工具，支援本機 stdio 與 Railway Streamable HTTP。寫入行程或網站檔案前需要明確確認；公開 GitHub Pages 則是獨立的發布工具，必須另行確認公開。安裝、連線與各工具副作用請參閱 [`MCP 旅遊規劃服務`](docs/mcp-server.md)。
+
+本 repo 的長期目標是持續開發、測試、審查與合併，直到 AI Travel Planner MCP 能在一般 ChatGPT Chat 中穩定完成有根據的旅行規劃；達標後仍依實際使用回饋持續改善。成功標準、目前基線與正式驗收規則記錄於 [`AI Travel Planner MCP 長期目標`](docs/mcp-roadmap.md)。Health check、CI 或 mock 測試都不能單獨證明 ChatGPT Chat 的完整規劃功能正常。
 
 目前的資料來源 adapter 包含 Google Places、YouTube Data API、OpenRouteService，以及選用的 Hot Pepper Gourmet 官方 Web Service。系統不會自動搜尋住宿；住宿可留空，由旅客自行安排。Hot Pepper 結果必須標示
 `Powered by ホットペッパーグルメ Webサービス`;

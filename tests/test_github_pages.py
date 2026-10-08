@@ -104,6 +104,39 @@ class GitHubPagesPublisherTests(unittest.TestCase):
             self.publisher(fake).publish(trip, slug="demo-trip")
         self.assertEqual(fake.calls, [])
 
+    def test_refuses_public_persistence_of_google_places_content(self):
+        trip = json.loads(json.dumps(self.trip))
+        trip["candidate_sets"]["places"][0]["provenance"] = {
+            "source_type": "provider", "provider": "Google Places API (New)",
+            "retrieved_at": "2026-10-08T00:00:00+00:00", "status": "confirmed",
+        }
+        fake = FakeGitHub()
+
+        with self.assertRaisesRegex(ValueError, "Google Places API content cannot be persisted"):
+            self.publisher(fake).publish(trip, slug="demo-trip")
+
+        self.assertEqual(fake.calls, [])
+
+    def test_refuses_google_places_field_provenance_hidden_by_other_candidate_source(self):
+        trip = json.loads(json.dumps(self.trip))
+        place = trip["candidate_sets"]["places"][0]
+        place["provenance"] = {
+            "source_type": "official", "provider": "Nagoya City",
+            "retrieved_at": "2026-10-08T00:00:00+00:00", "status": "confirmed",
+        }
+        place["field_provenance"] = {
+            "name": [{
+                "source_type": "provider", "provider": "Google Places API (New)",
+                "retrieved_at": "2026-10-08T00:00:00+00:00", "status": "confirmed",
+            }],
+        }
+        fake = FakeGitHub()
+
+        with self.assertRaisesRegex(ValueError, "Google Places API content cannot be persisted"):
+            self.publisher(fake).publish(trip, slug="demo-trip")
+
+        self.assertEqual(fake.calls, [])
+
     def test_allows_overnight_trip_without_lodging(self):
         trip = json.loads(json.dumps(self.trip))
         trip["selected"]["hotel_place_ids"] = []

@@ -103,6 +103,12 @@ def publish_request_site(trip: Mapping[str, Any], *, slug: str, public_root: Pat
 def trip_to_public_bundle(trip: Mapping[str, Any]) -> dict[str, Any]:
     """只投影 React runtime 需要的 Canonical Trip allowlist 欄位。"""
     _require_trip_basics(trip)
+    google_places = _google_places_content_sources(trip)
+    if google_places:
+        raise ValueError(
+            "Google Places API content cannot be persisted in a GitHub Pages bundle; "
+            "replace it with independently sourced, persistable facts before publishing"
+        )
     candidate_sets = _mapping(trip.get("candidate_sets"))
     places = _public_places(candidate_sets)
     restaurant_facts = _public_restaurant_facts(candidate_sets)
@@ -198,8 +204,39 @@ def trip_publication_findings(trip: Mapping[str, Any]) -> list[str]:
     return findings
 
 
+def _google_places_content_sources(trip: Mapping[str, Any]) -> list[str]:
+    """Find normalized Google Places content anywhere in publishable candidates.
+
+    Place IDs are exempt from Google Places caching restrictions, but the other
+    normalized candidate fields are not thereby persistable. Field-level
+    provenance is checked as well as candidate provenance so reconciliation
+    cannot hide a Google Places source behind a different top-level provider.
+    """
+    candidate_sets = _mapping(trip.get("candidate_sets"))
+    sources: list[str] = []
+    for collection in ("places", "restaurants", "hotels"):
+        for index, candidate in enumerate(_sequence(candidate_sets.get(collection))):
+            if not isinstance(candidate, Mapping):
+                continue
+            if _contains_google_places_provenance(candidate):
+                sources.append(f"/candidate_sets/{collection}/{index}")
+    return sources
+
+
+def _contains_google_places_provenance(value: Any) -> bool:
+    if isinstance(value, Mapping):
+        if value.get("provider") == "Google Places API (New)":
+            return True
+        return any(_contains_google_places_provenance(child) for child in value.values())
+    if isinstance(value, (list, tuple)):
+        return any(_contains_google_places_provenance(child) for child in value)
+    return False
+
+
 def _trip_completeness_findings(trip: Mapping[str, Any]) -> list[str]:
     findings: list[str] = []
+    if _google_places_content_sources(trip):
+        findings.append("Google Places API content cannot be persisted in a GitHub Pages bundle")
     selected = _mapping(trip.get("selected"))
     hotel_ids = _sequence(selected.get("hotel_place_ids"))
     date_range = _mapping(trip.get("date_range"))
