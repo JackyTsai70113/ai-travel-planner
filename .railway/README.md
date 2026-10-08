@@ -69,7 +69,7 @@ railway run --service ai-traveller --environment production -- node -e 'const r 
 
 `publish_trip_site` 已部署並出現在遠端 `tools/list`。發布前會要求 ChatGPT 使用者明確確認公開；每一天都必須有餐點，日期必須有效，Canonical Trip validation 不可有阻擋 finding，Google Places provenance 也會阻止內容寫入 Pages bundle。住宿可以留空；未提供住宿時，`schedule.hotel_missing` 和 `schedule.origin_unknown` 會保留為未驗證警告，不會因缺住宿本身阻擋發布。相同 bundle 的 registry 缺項或過期時，工具只修復 registry。
 
-截至 2026-10-08，Railway production `GITHUB_TOKEN` 已存在；正式執行個體以 GitHub REST 唯讀查詢確認 repo 為 `JackyTsai70113/ai-travel-planner` 且回報 `permissions.push=true`，過程沒有輸出 token。最新 deployment `83790361-594a-4a42-9e75-0bd0493c13f1` 使用 main commit `e37209c959af91d761fdc547a818e49ef7a65ff6`，狀態 `SUCCESS`，health 回 HTTP 200。尚未執行真實 Pages 發布；#179 仍待符合發布 readiness 的行程、ChatGPT 明確公開指令及正式網址驗收。若行程含 Google Places provenance，現有發布 guard 會回 `not_ready`，相關資料生命週期追蹤於 #199。
+截至 2026-10-08，Railway production `GITHUB_TOKEN` 已存在；正式執行個體以 GitHub REST 唯讀查詢確認 repo 為 `JackyTsai70113/ai-travel-planner` 且回報 `permissions.push=true`，過程沒有輸出 token。PR #230 合併後，Railway deployment `522e831d-be9b-4dd4-aa75-d016b6ec058d` 使用 main commit `fe0ae02047c05488a2cafb03f37bc646add6cf67`，狀態 `SUCCESS`，service Online，health 回 HTTP 200。`railway config plan` 套用後為 no-op；MCP 後端唯讀 `tools/list` 列出六項工具，`parse_trip_request` 正確解析倉敷五天四夜。這些後端 smoke tests 不等於 ChatGPT Chat UI 驗收。尚未執行真實 Pages 發布；#179 仍待符合發布 readiness 的行程、ChatGPT 明確公開指令及正式網址驗收。若行程含 Google Places provenance，現有發布 guard 會回 `not_ready`，相關資料生命週期追蹤於 #199。
 
 2026-10-05 的歷史檢查當時尚無 `GITHUB_TOKEN`；其後的設定與權限驗證以本節 2026-10-08 狀態為準。
 

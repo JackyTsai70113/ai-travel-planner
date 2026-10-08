@@ -2,6 +2,15 @@
 
 最後查證：2026-10-08。本文記錄本 repo MCP 部署與實際工具呼叫的觀察結果，不代表規劃品質已達可交付標準。
 
+## 2026-10-08 PR #230 Railway 部署與後端唯讀驗證
+
+- PR #230 已以一般 merge commit 合併，`main` 為 `fe0ae02047c05488a2cafb03f37bc646add6cf67`。變更只設定 Railway backend 的 `build.watchPatterns`，使 `Dockerfile`、`requirements-mcp.txt`、`requirements-mcp-server.txt`、`src/**`、`trips/**` 變更才觸發後端部署；網站、測試及文件變更不觸發後端部署。
+- `railway config plan` 原先只列 1 項 `build.watchPatterns` 更新，0 add、0 destroy；`railway config apply --yes` 後再次執行 plan，結果為設定已同步、無待套用變更。配置 plan 未涉及變數、GitHub 來源或 `/data` volume。
+- Railway deployment `522e831d-be9b-4dd4-aa75-d016b6ec058d` 對應 `fe0ae02047c05488a2cafb03f37bc646add6cf67`，狀態 `SUCCESS`；正式服務 Online，`/health` 回 HTTP 200、內文 `ok`。deployment image digest 與前一個部署相同；`/data` volume 仍掛載，使用量 33 MB / 500 MB。
+- 以 Railway CLI 注入既有 `BEARER_TOKEN` 執行唯讀 MCP 後端檢查，未輸出 token：`tools/list` HTTP 200，列出 `parse_trip_request`、`validate_trip`、`get_trip`、`plan_trip`、`build_trip_site`、`publish_trip_site`；`parse_trip_request` HTTP 200，輸入「我想安排倉敷五天四夜」回 `parsed`、目的地倉敷、5 天 4 夜。
+- PR #230 不修改 MCP runtime、tool schema 或 ChatGPT Site 設定。本次沒有在一般 ChatGPT Chat 送出新 prompt；因此未把上述 HTTP smoke test 誤報為 ChatGPT UI 驗收。#180 的新 `plan_trip` 每日餐點驗收仍由維護者在一般 ChatGPT Chat 執行並回報。
+- 目前仍開啟 #180、#179、#199；正式規劃／餐點、GitHub Pages 發布、Google Places 資料生命週期的未完成範圍分別見下文。
+
 ## 2026-10-08 PR #225 部署後狀態
 
 - PR #225 以一般 merge commit 將 `main` 更新為 `941b8c5c4e1cfc66e539d43cff29c0f80b4fc908`；GitHub Actions 的 `python`、`pytest`、`mcp-site` 均成功。本機 Python 3.13 驗證：production composition 24 passed、完整 pytest 367 passed / 288 subtests passed、`python -m unittest discover -s tests -q` 252 tests OK，`git diff --check` 通過。
