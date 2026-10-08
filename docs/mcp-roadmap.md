@@ -32,10 +32,10 @@
 - PR #258 commit `ce3a5f5` 的完整 pytest 通過：377 passed、288 subtests passed；CI 的 unittest、pytest、mcp-site 三項均成功。Railway deployment `549c1e92-161c-46f2-9552-cc2ea1605872` 使用 merge commit `5b2b003c16201564bcda55edcccbb6d3e5948976` 且狀態 `SUCCESS`，`/health` HTTP 200。No-lodging recorded provider fixture 排入 5 天早餐、午餐、晚餐，路線與營業時間驗證仍有效。
 - 使用者提供的 ChatGPT Chat 正式規劃結果顯示倉敷五天每日有 2 至 3 筆餐點，共 11 筆；住宿留空。仍有 4 個未安排餐段、費用估算不完整 warning。Issue #180 原始「每日完全沒有餐點」問題已據此結案；這些 warning 仍須如實呈現。
 - Issue #179 仍開啟。2026-10-08 已透過 AI Travel Planner MCP 將使用者明確核准的倉敷行程發布為 `preview`／`incomplete`。工具回 `publish_accepted`，Pages workflow `37736450625` 成功，目標 URL 與 `public-bundle.json` 回 HTTP 200，registry 狀態為 `preview`、readiness 為 `incomplete`。發布 commit `d40c71c84e94c201b5de8a5889fced98abdd250f` 的 Website CI `37736450517` 發現入口頁 E2E 將行程數量固定為 5；PR #250 改為依公開 registry 動態驗證數量，所有 PR CI 通過，並以 `8eec8baa2a7647a197b713cf9305fe71974409a8` 合併。合併後 CI `37737544356`、Website CI `37737544402` 與 Pages workflow `37737544370` 均成功。ChatGPT 一般 Chat UI 與互動式瀏覽器仍待驗，Computer Use 當時回報 macOS 已鎖定。
-- Issue #179 仍開啟。正式 MCP 重規劃後讀回每天早餐、午餐、晚餐均已排入，共 15 餐；仍有 3 個未排 POI 候選、5 個住宿／起點未知警告、`schedule.hotel_missing` 和 `budget.incomplete`。公開頁原已存在，但發布更新版本時因 `confirm_overwrite=false` 回 `overwrite_confirmation_required`、HTTP 409，故公開頁仍是重規劃前版本；沒有覆寫。一般 ChatGPT Chat 工具刷新／呼叫及互動瀏覽器驗收待完成；本次 Computer Use 因 macOS 鎖定且唯一 Chrome 分頁為 ai-video 對話，未操作該分頁。
+- Issue #179 仍開啟。維護者明確確認覆寫後，正式 MCP 成功發布重規劃版本：每天早餐、午餐、晚餐均已排入，共 15 餐；仍保留 3 個未排 POI 候選、5 個住宿／起點未知警告、`schedule.hotel_missing` 和 `budget.incomplete`。GitHub Pages workflow `37742158112` 成功，行程頁與 bundle 回 HTTP 200，registry 為 `preview`／`incomplete`。一般 ChatGPT Chat 工具刷新／呼叫及互動瀏覽器視覺驗收待完成；本次 Computer Use 因 macOS 鎖定且唯一 Chrome 分頁為 ai-video 對話，未操作該分頁。
 - Issue #199 已依維護者指定範圍結案：新資料生命週期防線已部署；既有 Railway 行程、Pages 頁面與 Git 歷史保持原樣、不刪除或改寫。結案不表示歷史內容已清除、逐欄重新驗證或作出法律合規結論。
 - 目前開啟的服務能力 issue 為 #179。一般 ChatGPT Chat prompt 仍由使用者本人輸入；目前 Computer Use 顯示 macOS 已鎖定且唯一 Chrome 分頁是 ai-video 對話，未進行錯誤分頁操作。
-- 使用者已明確保留 ChatGPT 一般 Chat prompt 由本人輸入。沒有輸入或代送 prompt。已核准的發布動作已由正式 MCP 確認為 `already_published`；Pages URL 與公開資料 HTTP 200，但不能代替一般 ChatGPT Chat UI 和互動式瀏覽器驗收。Computer Use 最近可見唯一 Chrome 分頁是既有 ai-video ChatGPT 對話，macOS 鎖定。
+- 使用者已明確保留 ChatGPT 一般 Chat prompt 由本人輸入。沒有輸入或代送 prompt。更新後的發布動作已由正式 MCP 回 `publish_accepted`；Pages workflow 成功，公開 URL 與 bundle HTTP 200，但不能代替一般 ChatGPT Chat UI 和互動式瀏覽器驗收。Computer Use 最近可見唯一 Chrome 分頁是既有 ai-video ChatGPT 對話，macOS 鎖定。
 
 ## 更新規則
 
