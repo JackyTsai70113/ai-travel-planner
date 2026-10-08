@@ -24,13 +24,12 @@
 
 ## 目前基線（2026-10-08）
 
-- 私人 MCP 已連接 Railway `ai-traveller`；既有 ChatGPT Chat 曾成功呼叫 `parse_trip_request`。這證明 connector 路徑，不代表完整即時規劃成功。
-- `plan_trip` 倉敷正式案例於 2026-10-05 仍有 20 筆餐廳候選、0 間住宿、每日 0 餐點；此為已知舊 production 證據。
-- 住宿自動搜尋已由維護者放棄；住宿不是規劃必要欄位，可以空白。MCP 尚未把自由文字住宿名稱轉成 canonical lodging candidate。
-- PR #214 以一般 merge 合併後，無住宿時的可行景點間餐點排程已加 regression。PR #215 以一般 merge 合併 `b067651`，補上 final Canonical Trip 保存排餐 warning 的 production composition regression。Railway 已部署 `b067651` 為 deployment `cb92a197-1ff9-4ec8-a79f-6e499b0d0f75`，狀態 `SUCCESS`。
-- PR #215 的記錄測試證明合成路線資料可排三餐／兩餐及保留未排 warning，不代表新的 live 倉敷 MCP run 已成功。#180 在正式 ChatGPT 工具結果確認前保持開啟。
-- Railway `GITHUB_TOKEN` 已存在，且唯讀 GitHub REST 檢查曾確認 repository push permission。沒有為驗收建立假行程公開頁；#179 仍待對已選定行程的明確公開確認、Pages 成功部署與瀏覽器核對。
-- #199 發現 Google Places 顯示內容會流入 Canonical Trip、Railway HTML 與公開 bundle。Places 保存／公開條款及既有資料清理尚未完成；單加 attribution 或 30 日座標期限不足以解除。
+- main 目前為 merge commit `9219ffbda35d82d547324038e0f47cfdc5178659`（PR #235）。Railway `ai-traveller` production deployment `90208905-5cea-46a9-bf2a-eb8b4aa9f11f` 對應相同 SHA、狀態 `SUCCESS`；`/health` HTTP 200，MCP `tools/list` HTTP 200 並列出 7 個工具，含 `get_place_details`。透過 Railway CLI 的唯讀 MCP 呼叫已確認即時 Places 詳細資料查詢成功；這不是 ChatGPT Chat UI 驗收。
+- ChatGPT 一般 Chat 過去曾成功呼叫 `parse_trip_request`。本次 Computer Use 回報 macOS 已鎖定，未輸入或代送 prompt；目前最新版本的 ChatGPT UI 工具發現與呼叫仍未驗收。
+- `plan_trip` 倉敷舊正式案例（2026-10-05）有 20 筆餐廳候選、每日 0 餐點。後續 #214/#215 已加入無住宿時的可行景點間排餐與 production composition regressions；仍須以維護者在一般 ChatGPT Chat 新發起的真實規劃結果驗證，不把舊 Trip 或 mock 測試當成最新行為證據。自動住宿搜尋已放棄，住宿可留空或由旅客提供。
+- #179 的 publisher 已部署；`GITHUB_TOKEN` 存在且先前唯讀 GitHub REST 查詢確認 repo `permissions.push=true`。沒有建立假行程公開頁。仍須由使用者指定並明確確認真正要公開的行程，再驗證 Pages 部署和結果網址。
+- PR #235 為 #199 實作 Place ID 持久化、Google Places 詳細資料請求時查詢、資料投影、署名、失敗處理和回歸測試。既有 Railway 檔案、已發布靜態頁與 Git 歷史依維護者要求未刪除或改寫；#199 因舊公開資料處置仍開啟。
+- 目前開啟的服務能力 issues 為 #180（新的正式 `plan_trip` 餐點驗收）、#179（明確授權的 Pages 真實發布驗收）、#199（既有公開歷史資料處置）。
 
 ## 更新規則
 
