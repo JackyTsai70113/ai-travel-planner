@@ -4,7 +4,7 @@
 
 ## 目前正式狀態（2026-10-08，Railway runtime source `5b2b003`）
 
-- PR #243–#258 均以一般 merge 合併。PR #250 修正入口行程卡片數量的固定測試，PR #252 更新 Places 即時查詢工具指引，PR #256 修正可行備選 POI 被誤報未驗證，PR #258 為無住宿日保留早餐後的路線緩衝。
+- PR #243–#260 均以一般 merge 合併。PR #250 修正入口行程卡片數量的固定測試，PR #252 更新 Places 即時查詢工具指引，PR #256 修正可行備選 POI 被誤報未驗證，PR #258 為無住宿日保留早餐後的路線緩衝，PR #259–#260 同步發布和行程讀回的正式狀態紀錄。
 - Railway production runtime source 為 `5b2b003c16201564bcda55edcccbb6d3e5948976`，deployment `549c1e92-161c-46f2-9552-cc2ea1605872` 狀態 `SUCCESS`，服務 Online，`/health` 回 HTTP 200、內文 `ok`；部署使用 Dockerfile `/Dockerfile`，`/data` volume 仍掛載。
 - 2026-10-08 再次用 Railway CLI 注入既有 `BEARER_TOKEN` 呼叫正式 `tools/list`：HTTP 200，列出 7 個工具，包括 `get_place_details`。以倉敷已排定 Place ID 執行一次正式唯讀 `get_place_details`：HTTP 200、`status=available`、`attribution=Google Maps`、Place ID 相符；輸出只記錄回傳欄位名稱，沒有記錄地點詳細值或憑證。
 - 同日檢視此 Codex 對話的 AI Travel Planner connector 快照，僅顯示 6 個工具並缺少 `get_place_details`。這是 Codex connector 清單與 Railway 工具清單不同的證據，不能推論一般 ChatGPT Chat 顯示相同清單。OpenAI 自訂 MCP plugin 文件說明可在 app 詳細資料頁 Refresh apps，以取得新工具、描述與 server instructions；已將該步驟加入 [ChatGPT Chat 驗收流程](chatgpt-mcp-live-verification.md)。ChatGPT Chat 實際刷新與工具呼叫尚未驗收。
@@ -22,7 +22,7 @@
 - 2026-10-08 使用使用者已明確確認公開的既有行程，透過已連線 AI Travel Planner MCP 呼叫 `publish_trip_site(trip_id="kurashiki-2026-11-live-20261008", site_slug="kurashiki-2026-11-live-20261008", confirm_public_publish=true)`。工具回 `publish_accepted`，URL 為 `https://jackytsai70113.github.io/ai-travel-planner/trips/kurashiki-2026-11-live-20261008/`，commit `d40c71c84e94c201b5de8a5889fced98abdd250f`，初始 deployment status 為 `pending`。GitHub Pages workflow `37736450625` 成功；該網址以 `curl` 回 HTTP 200，標題為「倉敷 行程｜AI Travel Planner」，registry 標記 `status=preview`、`readiness=incomplete`。這不是一般 ChatGPT Chat UI 或互動瀏覽器驗收。
 - 發布 commit 的 Website CI `37736450517` 因 `web/tests/portal-e2e.mjs` 將入口卡片數硬編碼為 5 而失敗；新增第六筆登錄行程後觸發此回歸。PR #250 改為依 `public/trip-registry.json` 動態核對卡片數；PR 的 Python、pytest、MCP site、Website CI 均通過，並以 merge commit `8eec8baa2a7647a197b713cf9305fe71974409a8` 合併。合併後 CI `37737544356` 與 Website CI `37737544402` 均成功，Pages workflow `37737544370` 亦成功。
 - #199 已依維護者指定的歷史資料保留範圍結案。既有 Railway 檔案、公開 Pages 內容與 Git 歷史保持原樣；結案不表示歷史內容已清除或重新核驗。
-- 目前唯一開啟的 issue 為 #179。正式 MCP 重規劃後 `get_trip` 確認每日 3 餐、共 15 餐，仍有 3 個 `schedule.poi_candidate_unselected`、5 個 `schedule.origin_unknown`、`schedule.hotel_missing` 與 `budget.incomplete`。原公開頁存在，URL 為 https://jackytsai70113.github.io/ai-travel-planner/trips/kurashiki-2026-11-live-20261008/；但對更新後資料呼叫 `publish_trip_site(..., confirm_public_publish=true, confirm_overwrite=false)` 回 `overwrite_confirmation_required`、HTTP 409，尚未覆寫，因此公開頁仍是舊版本。一般 ChatGPT Chat 的工具刷新、詳細地點呼叫與瀏覽器視覺驗收仍未完成；直接 MCP／Railway、CI、health 或 HTTP 回應不能代替這些驗收。Computer Use 本次仍顯示 macOS 鎖定及既有 ai-video Chrome 分頁，沒有操作錯誤分頁或代送 prompt。
+- 目前唯一開啟的 issue 為 #179。依維護者明確覆寫確認，正式 MCP `publish_trip_site` 回 `publish_accepted`，GitHub commit `3649492fd7f4f09965217c2a3b75c6f45f1bf3b4`；Pages workflow `37742158112` 成功。行程頁、`public-bundle.json` 與 registry 均 HTTP 200；頁面標題為「倉敷 行程｜AI Travel Planner」，bundle 為 5 天、每天 3 餐（共 15 餐），狀態 `warning`，registry 為 `preview`／`incomplete`。仍有 3 個 `schedule.poi_candidate_unselected`、5 個 `schedule.origin_unknown`、`schedule.hotel_missing`、`budget.incomplete`。一般 ChatGPT Chat 工具刷新／呼叫與互動瀏覽器視覺驗收仍未完成；本次 Computer Use 顯示 macOS 鎖定、唯一 Chrome 分頁為 ai-video 對話，沒有操作錯誤分頁或代送 prompt。
 
 下方依時間排列的 PR／部署紀錄是當時狀態快照；其中舊 issue 開啟狀態與舊 deployment ID 不代表目前狀態。以上方「目前正式狀態」和當前 GitHub／Railway 資料為準。
 
