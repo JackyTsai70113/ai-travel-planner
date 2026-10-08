@@ -12,6 +12,7 @@ from src.application.production import (
     ProductionDependencies,
     ProductionIncompleteError,
     _add_elapsed_minutes,
+    _add_unselected_poi_warnings,
     _assign_route_aware_poi_schedule,
     _candidate_trips,
     _google_flights_search_summary,
@@ -207,6 +208,7 @@ def test_kurashiki_five_day_fixture_schedules_pois_and_lunch_without_lodging():
     assert trip["candidate_sets"]["places"][0]["schedule"]["fixed_start_at"] == "2026-11-01T09:30:00+09:00"
     assert trip["candidate_sets"]["places"][1]["schedule"]["fixed_start_at"] == "2026-11-01T14:00:00+09:00"
     assert all(trip["candidate_sets"]["places"][number]["schedule"]["duration_basis"] == "planning_estimate" for number in range(2, 12))
+    assert not any(finding["code"] == "schedule.poi_candidate_unselected" for finding in trip["validation"])
     assert all(item["end_at"] > item["start_at"] for day in visits_by_day for item in day)
     assert trip["budget"]["limit_status"] == "unlimited"
     assert "limit" not in trip["budget"]
@@ -232,6 +234,32 @@ def test_route_aware_assignment_reserves_weekday_limited_pois_for_constrained_da
 
     assert {place["id"] for place in places if place["schedule"]["day"] == 1} == {"monday-c", "monday-d"}
     assert {place["id"] for place in places if place["schedule"]["day"] == 2} == {"common-a", "common-b"}
+
+
+def test_unselected_feasible_pois_are_alternatives_but_unverified_candidates_warn():
+    start = date(2026, 11, 2)  # Monday
+    places = [{"id": name, "name": name, "kind": "poi", "schedule": {"duration_minutes": 60}}
+              for name in ("selected-a", "selected-b", "feasible-alternative", "hours-unverified")]
+    hours = {
+        place["id"]: tuple(OpeningInterval(day, time(8), time(20)) for day in range(7))
+        for place in places[:-1]
+    }
+    ids = [place["id"] for place in places]
+    routes = {(origin, destination): 10 for origin in ids for destination in ids if origin != destination}
+
+    feasible_ids = _assign_route_aware_poi_schedule(
+        places, 1, start, "Asia/Tokyo", None, ValidationContext(routes, hours)
+    )
+    trip = {"days": [{"items": [
+        {"place_id": place["id"]} for place in places if place["schedule"].get("selected") is True
+    ]}], "validation": []}
+    _add_unselected_poi_warnings(trip, places, feasible_ids)
+
+    warnings = [item for item in trip["validation"] if item["code"] == "schedule.poi_candidate_unselected"]
+    assert len(warnings) == 1
+    assert warnings[0]["path"].endswith("/hours-unverified/schedule")
+    assert "feasible-alternative" in feasible_ids
+    assert "hours-unverified" not in feasible_ids
 
 
 def test_production_preserves_overnight_opening_interval_offset_in_routing_context():
