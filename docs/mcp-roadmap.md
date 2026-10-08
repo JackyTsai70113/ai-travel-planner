@@ -35,7 +35,7 @@
 - Issue #179 仍開啟。維護者明確確認覆寫後，正式 MCP 成功發布重規劃版本：每天早餐、午餐、晚餐均已排入，共 15 餐；仍保留 3 個未排 POI 候選、5 個住宿／起點未知警告、`schedule.hotel_missing` 和 `budget.incomplete`。GitHub Pages workflow `37742158112` 成功，行程頁與 bundle 回 HTTP 200，registry 為 `preview`／`incomplete`。一般 ChatGPT Chat 工具刷新／呼叫及互動瀏覽器視覺驗收待完成；本次 Computer Use 因 macOS 鎖定且唯一 Chrome 分頁為 ai-video 對話，未操作該分頁。
 - Issue #199 已依維護者指定範圍結案：新資料生命週期防線已部署；既有 Railway 行程、Pages 頁面與 Git 歷史保持原樣、不刪除或改寫。結案不表示歷史內容已清除、逐欄重新驗證或作出法律合規結論。
 - 目前開啟的服務能力 issue 為 #179。一般 ChatGPT Chat prompt 仍由使用者本人輸入；目前 Computer Use 顯示 macOS 已鎖定且唯一 Chrome 分頁是 ai-video 對話，未進行錯誤分頁操作。
-- 使用者已明確保留 ChatGPT 一般 Chat prompt 由本人輸入。沒有輸入或代送 prompt。已核准的發布動作已由正式 MCP 確認為 `already_published`；Pages URL 與公開資料 HTTP 200，但不能代替一般 ChatGPT Chat UI 和互動式瀏覽器驗收。Computer Use 最近可見唯一 Chrome 分頁是既有 ai-video ChatGPT 對話，macOS 鎖定。
+- 使用者已明確保留 ChatGPT 一般 Chat prompt 由本人輸入。沒有輸入或代送 prompt。更新後的發布動作已由正式 MCP 回 `publish_accepted`；Pages workflow 成功，公開 URL 與 bundle HTTP 200，但不能代替一般 ChatGPT Chat UI 和互動式瀏覽器驗收。Computer Use 最近可見唯一 Chrome 分頁是既有 ai-video ChatGPT 對話，macOS 鎖定。
 
 ## 更新規則
 
