@@ -24,13 +24,14 @@
 
 ## 目前基線（2026-10-08）
 
-- PR #236 的文件 merge commit 為 `72d0dbf196c1e6ffc048cd75194c9f829439b65b`，其後 PR #237 將 production parser 實測記錄合併為文件 commit `37aacd2e43a67689b4b36b5e3b9fedb90fdc2f00`；這兩次 merge 均未改變後端程式。最近一次影響後端的 commit 是 PR #235 merge commit `9219ffbda35d82d547324038e0f47cfdc5178659`。Railway deployment `90208905-5cea-46a9-bf2a-eb8b4aa9f11f` 使用該後端 commit、狀態 `SUCCESS`；`/health` HTTP 200，MCP `tools/list` HTTP 200 並列出 7 個工具，含 `get_place_details`。
-- Railway CLI 的唯讀 MCP 驗證確認 `get_place_details` 即時查詢成功。另以 production `parse_trip_request` 解析完整倉敷需求，回 HTTP 200、目的地倉敷、岡山縣、2026-11-01 至 2026-11-05、6 位成人、1 位 2 歲幼兒、不限預算、`missing_fields=[]`。這些是 Railway endpoint 證據，不等於 ChatGPT Chat UI 驗收。
-- ChatGPT 一般 Chat 過去曾成功呼叫 `parse_trip_request`。本次 Computer Use 回報 macOS 已鎖定，未輸入或代送 prompt；目前最新版本的 ChatGPT UI 工具發現與呼叫仍未驗收。
-- `plan_trip` 倉敷舊正式案例（2026-10-05）有 20 筆餐廳候選、每日 0 餐點。後續 #214/#215 已加入無住宿時的可行景點間排餐與 production composition regressions；仍須以維護者在一般 ChatGPT Chat 新發起的真實規劃結果驗證，不把舊 Trip 或 mock 測試當成最新行為證據。自動住宿搜尋已放棄，住宿可留空或由旅客提供。
-- #179 的 publisher 已部署；`GITHUB_TOKEN` 存在且先前唯讀 GitHub REST 查詢確認 repo `permissions.push=true`。沒有建立假行程公開頁。仍須由使用者指定並明確確認真正要公開的行程，再驗證 Pages 部署和結果網址。
-- PR #235 為 #199 實作 Place ID 持久化、Google Places 詳細資料請求時查詢、資料投影、署名、失敗處理和回歸測試。既有 Railway 檔案、已發布靜態頁與 Git 歷史依維護者要求未刪除或改寫；#199 因舊公開資料處置仍開啟。
-- 目前開啟的服務能力 issues 為 #180（新的正式 `plan_trip` 餐點驗收）、#179（明確授權的 Pages 真實發布驗收）、#199（既有公開歷史資料處置）。
+- `main` 最新 commit 是 PR #239 一般 merge commit `9e15a808288298386a0706516dfedd6536cea3f2`。PR #239 更新 MCP ChatGPT 指引，規劃成功後讀取 `get_trip`，必要時依原始 Place ID 即時查詢 `get_place_details`，要求回傳 Google Maps／第三方署名，失敗時不使用舊資料。PR CI 的 `python`、`pytest`、`mcp-site` 全部成功；本機 pytest 為 373 passed、288 subtests，unittest 為 258 tests。
+- Railway `ai-traveller` production deployment `3e39097c-1962-4c15-9543-ab3ef0f949f0` 對應上述 main SHA，狀態 `SUCCESS`；`/health` 回 `ok`。正式 ChatGPT Chat 工具呼叫仍未驗收。
+- Production `parse_trip_request` 對完整倉敷需求曾回傳正確目的地、日期、旅客人數、無預算上限且 `missing_fields=[]`。這是 Railway MCP 直連證據，不等於 ChatGPT Chat UI 驗收。
+- #180：無住宿時排入可驗證餐點的 production composition 與 regression 已部署；待使用者在一般 ChatGPT Chat 啟動新的正式 `plan_trip`，檢查每日餐點、住宿留空及未知狀態呈現。舊 `kurashiki-2026-11` 是 0 餐點的歷史紀錄，不是新版規劃證據。
+- #179：GitHub Pages publisher 已部署；`GITHUB_TOKEN` 存在且先前唯讀確認 repo push 權限。尚未對新的有效行程取得 ChatGPT 明確公開確認、執行真實發布、等待 Pages 部署並瀏覽器核對網址。
+- #199 已於 PR #239 後結案。Place ID 原樣保存；新 Canonical Trip／網站不保存 Places 詳細資料，詳細資料使用時查詢，保存期限 0 天，並保留使用者行程與筆記。依維護者指示，舊 Railway 檔案、舊公開 Pages 內容及 Git 歷史保持原樣；舊公開內容可能仍包含歷史 Places 資料。
+- 目前開啟的服務能力 issues 僅有 #180 與 #179。
+- ChatGPT Chat UI 最近由 Computer Use 檢查時，macOS 處於鎖定狀態。使用者要求由本人輸入 ChatGPT prompt；未代送 prompt，也未以 health／CI／mock 取代 UI 驗收。
 
 ## 更新規則
 
