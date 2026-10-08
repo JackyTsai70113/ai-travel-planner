@@ -2,7 +2,7 @@
 
 最後查證：2026-10-08。本文記錄本 repo MCP 部署與實際工具呼叫的觀察結果，不代表規劃品質已達可交付標準。
 
-## 2026-10-08 PR #220 合併後正式狀態
+## 2026-10-08 PR #223 合併後正式狀態
 
 - 長期目標已整理於 [`AI Travel Planner MCP 長期目標`](mcp-roadmap.md)：持續開發、測試、審查及合併，直到一般 ChatGPT Chat 可穩定完成有根據的旅行規劃；mock、healthcheck 或 CI 不能代替正式 ChatGPT 工具驗收。
 - PR #220 已以一般 merge commit 將 `main` 更新為 `508d40c7d5ebb9e20d64d7ddfe9d75088065cbe9`。CI 的 `mcp-site`、`pytest`、`python` 均成功；完整本機測試為 365 passed、288 subtests passed。該版將 plan_trip 的逐題確認、明確寫入同意及公開發布同意分開寫入 MCP 工具說明。
@@ -11,6 +11,9 @@
 - #180 正式驗收仍需維護者在一般 ChatGPT Chat 輸入新的倉敷 `plan_trip` prompt，之後檢查新 Canonical Trip 的每日餐點及警告。一般 ChatGPT Chat 的正式 prompt 由維護者自行輸入；本次沒有代送 prompt，也沒有執行會寫入正式行程的 `plan_trip`。
 - 住宿自動搜尋需求已由維護者放棄並關閉 #175。住宿可留空，也可由使用者提供；不得因缺少住宿而阻擋規劃，不得推測住宿費用或不存在的住宿接駁路線。
 - 目前仍開啟的服務能力 issues 為 #180（待一般 ChatGPT Chat 新規劃驗收）、#179（待明確授權公開行程並驗證 Pages URL）、#199（Places 資料保存、既有資料處置與公開再託管尚未完成）。
+- PR #223 已以一般 merge commit 將 `main` 更新為 `8288fb611276289ed08b135746243b74a65bec54`。Google Places 的 POI 與 restaurant 類別查詢現在各自隔離；任一類別失敗會保留另一類別已成功的候選，並以類別名稱記錄失敗，讓規劃仍能回報不完整狀態。Recorded 回歸驗證為 `367 passed, 288 subtests passed`，`python -m unittest discover -s tests -q` 為 252 tests passed，GitHub Actions 的 `python`、`pytest`、`mcp-site` 均成功。
+- Railway production deployment `7a634e82-0357-47d9-b95d-f4e043dd246d` 使用上述 main commit，狀態 `SUCCESS`；正式 `/health` 回 HTTP 200、內文 `ok`。此為部署與服務健康檢查，不證明新倉敷 live `plan_trip` 會排入每日餐點。
+- 部署後嘗試用 Computer Use 查看一般 ChatGPT Chat 驗收分頁；Chrome 仍是原有單一分頁，但 macOS 回報已鎖定且不能自動解鎖。沒有輸入或送出任何 prompt；新版 provider 行為的 ChatGPT Chat `plan_trip` 驗收仍待維護者本人在一般 Chat 發起。
 
 ## 2026-10-08 PR #215、#216 合併後基線（歷史）
 
