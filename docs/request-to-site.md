@@ -23,6 +23,6 @@ python3 -m src.cli plan-site \
 
 ChatGPT 規劃和本機 `build_trip_site` 都不會自行公開行程。只有在使用者明確要求分享網站並確認公開後，才呼叫 `publish_trip_site`，傳入既有 `trip_id`、`confirm_public_publish=true` 與可選 slug。這會把旅程日期、同行人數與已允許公開的行程內容提交至 GitHub repository，因此必須先讓使用者確認公開範圍。
 
-只有 validation findings 為空、registry readiness 為 `ready` 的 trip 可發布；不完整旅程（例如缺少必要住宿資料導致 validation 警告）會拒絕。公開 slug 已被其他 trip 使用時不覆寫；更新同一 trip 的現有網站還需使用者另行確認 `confirm_overwrite=true`。
+有錯誤級驗證或硬性缺項的 trip 會拒絕發布。只有已揭露的警告（例如未安排全部餐段、費用估算不完整、住宿未選或未排入候選地點）時，仍可在明確公開確認後發布為 preview；registry readiness 保留 `incomplete`，網站 bundle 保留警告，不會標成完整。公開 slug 已被其他 trip 使用時不覆寫；更新同一 trip 的現有網站還需使用者另行確認 `confirm_overwrite=true`。
 
 Railway 必須設定 `GITHUB_TOKEN` secret，token 僅需對指定 repository 有 `Contents: Read and write` 權限。發布以單一 Git commit 原子更新 bundle 和 registry，觸發既有 GitHub Pages Actions。MCP 回傳 `publish_accepted` 和正式網址時，部署狀態仍是 `pending`；Actions 完成後網站才會顯示新版內容。其他 repository/branch/Pages host 設定請看 [MCP server deployment](mcp-server.md#已查證的-railway-production-endpoint2026-10-05)。

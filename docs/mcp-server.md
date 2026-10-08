@@ -52,8 +52,9 @@ Railway：
 | `GITHUB_PAGES_BASE_URL` | `https://jackytsai70113.github.io/ai-travel-planner` | 工具回傳的 Pages 網址根目錄。 |
 
 只有獨立呼叫 `publish_trip_site` 並傳入 `confirm_public_publish=true` 才會
-把行程公開。只有 registry readiness 為 `ready` 的 Canonical Trip 可發布；
-有 validation finding、缺少住宿等造成的 incomplete trip 會拒絕。現有 slug
+把行程公開。沒有錯誤級驗證或硬性缺項的 Canonical Trip 可發布為網站預覽；
+若仍有未安排餐段或費用估算不完整等已揭露警告，registry readiness 會保留
+`incomplete`，bundle 狀態保留 `warning`，不會標成完整行程。現有 slug
 若已屬於別的 trip 會拒絕；同一 trip 的內容更新還需
 `confirm_overwrite=true`。網站 bundle 與 registry 會由同一 Git commit 原子
 更新。成功回應的 `status=publish_accepted` 代表 GitHub 已接受 commit，
@@ -177,7 +178,7 @@ Production planning requires `GOOGLE_MAPS_API_KEY` and `OPENROUTESERVICE_API_KEY
 | `get_place_details` | Fetches current Places details for one saved Google Place ID for this request only; returns `Google Maps` and supplied third-party attribution. The response is never written to trip storage or site files. | One live Google Places Details request per call; none in repo storage. |
 | `plan_trip` | 以繁體中文一題一答補齊必要資訊；只依使用者已明確回答的內容規劃，不回傳 parser JSON 充當最終回答。 | 必要欄位未補齊時只回傳一個 `next_question` 且不啟動研究；完整後仍須先取得私有檔案寫入確認，再以 `confirm_write=true` 建立或覆寫 Canonical Trip 和靜態網站。永不公開發布。 |
 | `build_trip_site` | Validates and renders an existing Canonical Trip. | Requires `confirm_write=true`; writes a local static site only. Never publishes. |
-| `publish_trip_site` | Publishes a ready Canonical Trip to this repository's GitHub Pages site. | Requires explicit `confirm_public_publish=true`; updates repository content and starts the Pages workflow. Existing-trip replacement separately requires `confirm_overwrite=true`. |
+| `publish_trip_site` | Publishes a Canonical Trip as a public preview. Warning-only incomplete trips keep `incomplete` readiness and visible warnings. | Requires explicit `confirm_public_publish=true`; hard validation errors and required missing sections still refuse publication. Existing-trip replacement separately requires `confirm_overwrite=true`. |
 
 ### Chat planning result flow
 
@@ -285,7 +286,7 @@ Side effects and retries: `confirm_write=true` writes or replaces only the local
 - `confirmation_required`：尚未確認公開；不讀取 trip，也不呼叫 GitHub。
 - `configuration_missing`：Railway 缺少 `GITHUB_TOKEN`。
 - `not_found`、`invalid`、`not_ready`：trip 不存在、Canonical schema 無效，
-  或 registry readiness 不是 `ready`；不會寫入 repository。
+  或含有硬性驗證缺項；不會寫入 repository。
 - `conflict`：slug 指向另一個 Pages 來源或另一個 trip；不會覆寫。
 - `overwrite_confirmation_required`：同一 trip 已有公開網站但內容不同，需在
   使用者同意更新後再傳入 `confirm_overwrite=true`。

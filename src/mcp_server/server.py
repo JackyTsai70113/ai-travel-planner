@@ -504,7 +504,7 @@ def publish_trip_site_tool(
         Field(description="Must be true to replace an existing public page for the same trip."),
     ] = False,
 ) -> dict[str, Any]:
-    """Explicitly publish a ready Canonical Trip to this repository's public GitHub Pages site."""
+    """Publish a Canonical Trip preview after explicit public approval; blocking validation still refuses publication."""
     if not confirm_public_publish:
         return {
             "status": "confirmation_required",
@@ -585,7 +585,7 @@ def capabilities() -> str:
                 "get_place_details": "read-only live Google Places lookup; result is request-scoped and never persisted",
                 "plan_trip": "requires confirm_write=true; performs live provider research and writes local trip/site files",
                 "build_trip_site": "requires confirm_write=true; writes a local static site; never deploys",
-                "publish_trip_site": "publishes only after explicit confirm_public_publish=true; requires a ready Canonical Trip; public overwrite requires confirm_overwrite=true",
+                "publish_trip_site": "requires explicit confirm_public_publish=true; publishes ready trips as previews and warning-only incomplete trips with incomplete readiness; blocking findings refuse publication; public overwrite requires confirm_overwrite=true",
             },
         },
         ensure_ascii=False,
