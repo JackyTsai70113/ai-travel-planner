@@ -636,8 +636,8 @@ def _canonical_hard_constraints(intent: TravelIntent) -> list[dict]:
 
 def _lodging_note(selected_hotel: Mapping[str, object] | None) -> str:
     if selected_hotel is None:
-        return "No lodging candidate meets the verified stay dates, party, total-budget, destination proximity (within 10 km of a researched destination place), and explicit lodging preferences; lodging remains unselected. No booking is created. The overall trip budget is incomplete because lodging, dining, or local transport costs remain unpriced."
-    return "Selected hotel is a preferred search candidate only; candidates were compared by distance to researched destination places (within 10 km) and total price. No booking is created. Price and availability require provider confirmation. The overall trip budget is incomplete because dining and local transport costs are not priced."
+        return "住宿欄位留空；每日第一段抵達與返回住宿的交通未驗證，住宿及當地交通費未納入預算。"
+    return "住宿資料僅供行程規劃，並非訂房確認；房價與空房狀態仍待旅客確認。住宿及當地交通費未納入已知費用總額。"
 
 
 def _select_hotel_candidate(hotels: Sequence[dict], intent: TravelIntent, check_in: date, check_out: date,

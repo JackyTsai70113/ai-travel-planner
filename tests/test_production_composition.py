@@ -322,7 +322,8 @@ def test_taiwan_domestic_trip_uses_taiwan_context_without_flight_search(tmp_path
     assert trip["candidate_sets"]["hotels"] == []
     assert "hotel" not in trip["budget"]["categories"]
     assert not any("river" in str(constraint).lower() for constraint in trip["preferences"]["hard_constraints"])
-    assert "no booking is created" in trip["provenance"]["note"].lower()
+    assert "住宿欄位留空" in trip["provenance"]["note"]
+    assert "住宿及當地交通費未納入預算" in trip["provenance"]["note"]
 
 
 def test_production_does_not_query_lodging_even_with_legacy_amadeus_credentials(tmp_path):
@@ -582,3 +583,6 @@ def test_recorded_production_without_lodging_keeps_verified_meals_and_unknown_ho
     assert any(finding["code"] == "schedule.hotel_missing" for finding in trip["validation"])
     assert any(finding["code"] == "schedule.origin_unknown" for finding in trip["validation"])
     assert not trip["candidate_sets"]["transport_legs"]
+    assert "住宿欄位留空" in trip["provenance"]["note"]
+    assert "未納入預算" in trip["provenance"]["note"]
+    assert "No lodging candidate meets" not in trip["provenance"]["note"]
