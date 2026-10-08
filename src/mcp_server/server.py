@@ -55,7 +55,7 @@ mcp = MCPServer(
         "Use Canonical Trip V1 as the sole trip record and answer in Traditional Chinese. "
         "For trip planning, ask one focused clarification question at a time, preserve prior answers, and never invent missing facts. "
         "Before plan_trip writes trip/site files, summarize the request and obtain explicit user confirmation; call it with confirm_write=true only after confirmation. "
-        "After a successful plan_trip, call get_trip to read the saved itinerary. If the user asks for a readable itinerary or named daily places, call get_place_details once for each distinct scheduled Google Place ID whose saved record has no independently sourced name; include the returned Google Maps and third-party attribution. Do not query unselected candidates. "
+        "After a successful plan_trip, call get_trip to read the saved itinerary. When presenting a readable or day-by-day itinerary, treat the request as asking for current names of scheduled places unless the traveler requests ID-only output or declines live lookups. Read get_trip.place_details_needed and call get_place_details once for each listed Place ID; include the returned Google Maps and third-party attribution. Do not stop at opaque Place IDs or query unselected candidates. Each lookup is a live Places request and may incur usage charges. "
         "Google Places details are request-scoped and must never be saved; only Place IDs may persist. If a detail lookup fails, say it is unavailable and do not substitute stale saved data or guess. "
         "Preserve unknown facts. Publishing a trip to GitHub Pages is a separate public action and requires explicit user confirmation with confirm_public_publish=true."
     ),
@@ -264,6 +264,27 @@ def _public_trip_summary(trip: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _place_details_needed(summary: dict[str, Any]) -> list[str]:
+    """List distinct scheduled Google Place IDs lacking an independently sourced name."""
+    needed: list[str] = []
+    seen: set[str] = set()
+    for day in summary.get("days", []):
+        for item in day.get("items", []):
+            place = item.get("place")
+            name = place.get("name") if isinstance(place, dict) else None
+            if not isinstance(place, dict) or (isinstance(name, str) and name.strip()):
+                continue
+            place_id = place.get("google_place_id")
+            if (
+                isinstance(place_id, str)
+                and _GOOGLE_PLACE_ID.fullmatch(place_id)
+                and place_id not in seen
+            ):
+                seen.add(place_id)
+                needed.append(place_id)
+    return needed
+
+
 @mcp.tool(
     name="parse_trip_request",
     annotations=ToolAnnotations(read_only_hint=True, open_world_hint=False),
@@ -319,7 +340,7 @@ def get_trip_tool(
         ),
     ],
 ) -> dict[str, Any]:
-    """Read a bounded itinerary summary. Google-sourced place names are intentionally omitted; when the traveler asks for a readable itinerary or named daily places, call get_place_details once for each distinct scheduled Google Place ID lacking an independently sourced name. Each detail call makes one live Places request and may incur usage charges; never query unselected candidates."""
+    """Read a bounded itinerary summary. The response's place_details_needed array is the authoritative list of distinct scheduled Google Place IDs lacking an independently sourced name. When presenting a readable or day-by-day itinerary, call get_place_details once for each listed ID and include attribution; do not stop at opaque IDs or query unselected candidates. Each detail call makes one live Places request and may incur usage charges."""
     try:
         path = _trip_path(trip_id)
         trip = durable_trip(json.loads(path.read_text(encoding="utf-8")))
@@ -334,7 +355,11 @@ def get_trip_tool(
             "status": "invalid",
             "message": f"trip summary cannot be projected: {exc}",
         }
-    return {"status": "ok", "trip": summary}
+    return {
+        "status": "ok",
+        "trip": summary,
+        "place_details_needed": _place_details_needed(summary),
+    }
 
 
 @mcp.tool(
@@ -680,7 +705,7 @@ def capabilities() -> str:
             "tools": {
                 "parse_trip_request": "read-only; parses only explicit user facts",
                 "validate_trip": "read-only; validates supplied JSON",
-                "get_trip": "read-only; returns allowlisted public fields",
+                "get_trip": "read-only; returns allowlisted trip fields and place_details_needed for scheduled places needing live names",
                 "get_place_details": "read-only live Google Places lookup; result is request-scoped and never persisted",
                 "plan_trip": "requires confirm_write=true; performs live provider research and writes local trip/site files",
                 "build_trip_site": "requires confirm_write=true; writes a local static site; never deploys",
@@ -712,11 +737,13 @@ def plan_a_trip(request: str) -> str:
         "that summary and the planning action. Only after explicit confirmation, explain that "
         "plan_trip performs live research and writes/overwrites the named Canonical Trip and "
         "static site files on the MCP service; then call plan_trip with confirm_write=true. "
-        "After a successful plan_trip, call get_trip to read the persisted itinerary. If the "
-        "traveler asks for a readable itinerary or named daily places, call get_place_details "
-        "once for each distinct scheduled Google Place ID whose saved record has no independently "
-        "sourced name; include the returned Google Maps and third-party attribution. Do not query "
-        "unselected candidates. If lookup fails, state that the detail is unavailable; do not "
+        "After a successful plan_trip, call get_trip to read the persisted itinerary. When "
+        "presenting a readable or day-by-day itinerary, treat that as asking for current names "
+        "of scheduled places unless the traveler requests ID-only output or declines live lookups. "
+        "Read get_trip.place_details_needed and call get_place_details once for each listed ID; "
+        "include the returned Google Maps and third-party attribution. Do not stop at opaque IDs "
+        "or query unselected candidates. Each lookup is a live Places request and may incur usage "
+        "charges. If lookup fails, state that the detail is unavailable; do not "
         "reuse stale saved details or invent a value. "
         "Never claim research, availability, opening hours, prices, routes, or validation succeeded "
         "without tool evidence. Planning does not book, pay, or publish the site. Publishing exposes trip details publicly; "
