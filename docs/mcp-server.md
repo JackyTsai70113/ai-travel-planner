@@ -298,10 +298,12 @@ Side effects：以非 force update 更新 `GITHUB_PAGES_BRANCH`。bundle 與 reg
 在同一 tree/commit 中寫入。內容採用 `src.request_site` 的 public allowlist，
 不提交 Canonical Trip 原始 JSON、provider payload 或 MCP secrets。相同內容重試
 不會再建立 commit；改變已公開內容必須明確設 `confirm_overwrite=true`。
-若 `candidate_sets` 或欄位來源證據包含 `Google Places API (New)`，發布會以
-`not_ready` 拒絕，避免把 Places 內容保存或重新託管至 GitHub Pages。這項防線
-不會清除既有 bundle，也不代表 Railway Canonical Trip 的保存路徑已解決；完整
-盤點見 [`google-places-data-lifecycle.md`](google-places-data-lifecycle.md)。
+發布前會套用與持久化相同的 `durable_trip` 投影：移除 Google Places 詳細資料與
+Google 回傳網址，保留原始 Place ID、使用者自有行程／筆記，以及具獨立來源欄位
+證據的資料。只有經投影後仍含不可持久化 Places 詳細資料的內容才會被拒絕；單有
+Google Places provenance 或 Place ID 不會阻擋新發布。這不會改寫既有公開 bundle
+或 Git 歷史。欄位期限及歷史資料範圍見
+[`Google Places 資料生命週期盤點`](google-places-data-lifecycle.md)。
 
 The resource `travel-planner://capabilities` returns the schema version, stage list, Canonical Trip source-of-truth statement, and a concise side-effect summary for each tool. The `plan_a_trip(request)` prompt instructs the host to resolve ambiguity and preserve unknown values before using `plan_trip`.
 
