@@ -1445,7 +1445,8 @@ body,
 .overview-candidate-topline { display: flex; align-items: center; justify-content: space-between; gap: 9px; color: #69808b; font-size: .66rem; font-weight: 800; letter-spacing: .06em; }
 .overview-candidate-topline strong { padding: 4px 7px; border-radius: 999px; color: #08756f; background: #e6f6f2; letter-spacing: 0; }
 .overview-candidate-card h3, .overview-candidate-card p { margin: 0; }.overview-candidate-card h3 { color: #23414e; font-size: .94rem; }.overview-candidate-card p { color: #59717c; font-size: .72rem; line-height: 1.6; }.overview-candidate-card .overview-candidate-room { color: #1b6f7c; font-weight: 700; }.overview-candidate-card .overview-candidate-price { color: #475f6a; }.overview-candidate-status { padding-top: 8px; border-top: 1px solid #e4ecee; }
-.overview-candidate-actions a.google-maps-attribution { color: #1f1f1f; font-family: Arial, sans-serif; font-size: 12px; font-weight: 400; }
+.google-maps-logo { display: block; flex: 0 0 auto; width: 98px; height: 18px; }
+.overview-candidate-actions a.google-maps-attribution { display: inline-flex; align-items: center; justify-content: center; min-height: 36px; padding: 5px 10px; }
 
 /* Itinerary additions */
 .day-hero-copy { flex: 1; min-width: 0; }
@@ -2000,8 +2001,7 @@ body,
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 0 8px;
+  padding: 5px 10px;
   height: 36px;
   border: 1px solid #8ab9c9;
   border-radius: 10px;
@@ -2010,8 +2010,6 @@ body,
   text-decoration: none;
   transition: border-color .16s ease, background .16s ease, transform .16s ease;
 }
-.map-pin-link svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
-.map-pin-link span { color: #1f1f1f; font-family: Arial, sans-serif; font-size: 12px; font-weight: 400; white-space: nowrap; }
 .map-pin-link:hover { border-color: #087d91; background: #ddf2f6; transform: translateY(-1px); }
 .map-pin-link:focus-visible { outline: 3px solid #0b6da838; outline-offset: 2px; }
 

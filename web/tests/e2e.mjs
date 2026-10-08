@@ -51,6 +51,24 @@ async function assertNoHorizontalOverflow(page, label) {
   if (size.scroll > size.client) throw new Error(`${label} horizontal overflow: ${size.scroll} > ${size.client}`)
 }
 
+async function assertGoogleMapsLogoAttribution(page, label) {
+  const images = page.locator('.google-maps-logo')
+  if (!(await images.count())) throw new Error(`${label} 沒有 Google Maps 官方 logo 歸屬標示`)
+  await page.waitForFunction(() => [...document.querySelectorAll('.google-maps-logo')].every((image) => image.complete && image.naturalWidth > 0))
+  const metrics = await images.evaluateAll((elements) => elements.map((image) => {
+    const bounds = image.getBoundingClientRect()
+    const style = getComputedStyle(image.parentElement)
+    return { src: image.currentSrc, complete: image.complete, naturalWidth: image.naturalWidth, naturalHeight: image.naturalHeight,
+      width: bounds.width, height: bounds.height, paddingLeft: style.paddingLeft, paddingRight: style.paddingRight,
+      paddingTop: style.paddingTop, paddingBottom: style.paddingBottom }
+  }))
+  const invalid = metrics.filter((image) => !image.complete || image.naturalWidth !== 98 || image.naturalHeight !== 18
+    || Math.abs(image.width - 98) > 1 || Math.abs(image.height - 18) > 1
+    || Number.parseFloat(image.paddingLeft) < 10 || Number.parseFloat(image.paddingRight) < 10
+    || Number.parseFloat(image.paddingTop) < 5 || Number.parseFloat(image.paddingBottom) < 5)
+  if (invalid.length) throw new Error(`${label} Google Maps logo 缺檔、變形或周圍留白不足：${JSON.stringify(invalid)}`)
+}
+
 async function assertNoForbiddenText(page, label) {
   const text = await page.locator('body').innerText()
   const match = text.match(forbidden)
@@ -265,6 +283,7 @@ try {
       if (mobileGapSelectors[routeKind]) await assertVerticalCardGap(mobile, mobileGapSelectors[routeKind], `${width}px ${route}`)
       await assertNoElementCollisions(mobile, mobileCollisionSelectors[routeKind], `${width}px ${route}`)
       if (routeKind === 'today') await assertCompactConditionSummary(mobile, `${width}px ${route}`)
+      if (routeKind === 'today') await assertGoogleMapsLogoAttribution(mobile, `${width}px ${route}`)
       if (routeKind === 'today') await assertVerticalFlow(mobile, ['.itinerary-day-nav', '.day-hero', '.day-media', '.daily-route-map', '.itinerary-utility', '.timeline', '.day-alternatives'], `${width}px ${route}`)
       await assertNoForbiddenText(mobile, route)
     }
@@ -293,6 +312,7 @@ try {
     await openRoute(mobile, `today/${date}`, '.itinerary-workspace')
     if (await mobile.locator('.day-condition-grid > div').count() !== 6) throw new Error(`${date} does not show six practical condition cards`)
     if (await mobile.locator('.map-pin-link').count() < 1) throw new Error(`${date} has no map pin links`)
+    await assertGoogleMapsLogoAttribution(mobile, `390px today/${date}`)
     if (await mobile.locator('.timeline-map-link, .map-icon-link, .parking-map-link, .official-info-link').count()) throw new Error(`${date} still renders duplicate map or official text buttons`)
     const repeatedParkingFacts = await mobile.locator('.timeline-entry.transport-leg').evaluateAll((cards) => cards.flatMap((card) => {
       const destinationCard = card.nextElementSibling
@@ -371,7 +391,7 @@ try {
   const desktop = await desktopContext.newPage()
   desktop.setDefaultTimeout(10000)
   await desktop.route('**/*', (route) => {
-    if (route.request().resourceType() !== 'image') return route.continue()
+    if (route.request().resourceType() !== 'image' || route.request().url().includes('google-maps-logo-darkgray')) return route.continue()
     return route.fulfill({
       contentType: 'image/png',
       body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64'),
@@ -404,6 +424,7 @@ try {
     const heroOverflow = await desktop.locator('.trip-hero-content').evaluate((element) => element.scrollWidth > element.clientWidth + 1)
     if (heroOverflow) throw new Error(`${width}px overview content overflows its grid column`)
     await openRoute(desktop, 'today/2026-08-27', '.itinerary-workspace')
+    await assertGoogleMapsLogoAttribution(desktop, `${width}px itinerary`)
     const photoHeights = await desktop.locator('.day-media figure').evaluateAll((figures) => figures.map((figure) => figure.getBoundingClientRect().height))
     if (Math.max(...photoHeights) - Math.min(...photoHeights) > 1) throw new Error(`${width}px 同列照片卡高度不一致：${photoHeights.join(', ')}`)
     const shinobiTitleLayout = await desktop.locator('.day-media strong[title*="Nijigen no Mori"]').evaluate((element) => {
@@ -426,6 +447,7 @@ try {
   await desktop.setViewportSize({ width: 1440, height: 1000 })
   for (const date of dates) {
     await openRoute(desktop, `today/${date}`, '.itinerary-workspace')
+    await assertGoogleMapsLogoAttribution(desktop, `1440px today/${date}`)
     await desktop.locator('.day-media').scrollIntoViewIfNeeded()
     await desktop.waitForFunction(() => [...document.querySelectorAll('.day-media img')].every((image) => image.complete && image.naturalWidth > 0))
     await assertExternalLinksOpen(desktop, '.daily-route-links a, .timeline-place-heading > h3 a, .timeline-place-heading > .map-pin-link, .parking-fact-link', `${date} primary external`)
