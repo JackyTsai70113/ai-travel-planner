@@ -4,7 +4,7 @@
 
 ## 目前正式狀態（2026-10-08，PR #239 後）
 
-- `main` 為 `9e15a808288298386a0706516dfedd6536cea3f2`。PR #239 已一般合併；CI 的 `python`、`pytest`、`mcp-site` 全數成功。本機完整 pytest 為 373 passed、288 subtests；unittest 為 258 tests passed。
+- 最近一次影響 runtime 的 merge commit 是 PR #239：`9e15a808288298386a0706516dfedd6536cea3f2`。後續文件更新未改變 runtime；Railway 後端 deployment 仍對應 PR #239。PR #239 的 `python`、`pytest`、`mcp-site` CI 全數成功；本機完整 pytest 為 373 passed、288 subtests；unittest 為 258 tests passed。
 - Railway deployment `3e39097c-1962-4c15-9543-ab3ef0f949f0` 對應同一 main SHA，狀態 `SUCCESS`；`curl --silent --show-error --fail https://ai-traveller-production-732b.up.railway.app/health` 回 `ok`。
 - PR #239 更新 MCP 規劃指引：成功後讀取 `get_trip`；需要 Google Places 最新資料時以 Place ID 呼叫 `get_place_details`，附上 Google Maps 和第三方 attribution；失敗時不使用舊資料。Places 詳細欄位零日保存，使用者行程與筆記及原始 Place ID 保留。
 - GitHub Issues #180、#179 仍開啟。#180 尚需一般 ChatGPT Chat 的新規劃結果驗收；#179 尚需對有效行程明確同意公開、成功發布 Pages 並以瀏覽器開啟結果網址。Issue #199 已結案；舊 Railway 行程、已發布 Pages 內容及 Git 歷史依維護者指示原樣保留，舊公開頁可能仍包含歷史 Places 詳細資料。

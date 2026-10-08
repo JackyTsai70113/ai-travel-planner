@@ -24,8 +24,8 @@
 
 ## 目前基線（2026-10-08）
 
-- `main` 最新 commit 是 PR #239 一般 merge commit `9e15a808288298386a0706516dfedd6536cea3f2`。PR #239 更新 MCP ChatGPT 指引，規劃成功後讀取 `get_trip`，必要時依原始 Place ID 即時查詢 `get_place_details`，要求回傳 Google Maps／第三方署名，失敗時不使用舊資料。PR CI 的 `python`、`pytest`、`mcp-site` 全部成功；本機 pytest 為 373 passed、288 subtests，unittest 為 258 tests。
-- Railway `ai-traveller` production deployment `3e39097c-1962-4c15-9543-ab3ef0f949f0` 對應上述 main SHA，狀態 `SUCCESS`；`/health` 回 `ok`。正式 ChatGPT Chat 工具呼叫仍未驗收。
+- 最近一次影響 MCP runtime 的 merge commit 是 PR #239：`9e15a808288298386a0706516dfedd6536cea3f2`。後續文件更新未改變 runtime；Railway source SHA 仍是上述 runtime commit。PR #239 更新 MCP ChatGPT 指引，規劃成功後讀取 `get_trip`，必要時依原始 Place ID 即時查詢 `get_place_details`，要求回傳 Google Maps／第三方署名，失敗時不使用舊資料。PR CI 的 `python`、`pytest`、`mcp-site` 全部成功；本機 pytest 為 373 passed、288 subtests，unittest 為 258 tests。
+- Railway `ai-traveller` production deployment `3e39097c-1962-4c15-9543-ab3ef0f949f0` 對應上述 runtime SHA，狀態 `SUCCESS`；`/health` 回 `ok`。正式 ChatGPT Chat 工具呼叫仍未驗收。
 - Production `parse_trip_request` 對完整倉敷需求曾回傳正確目的地、日期、旅客人數、無預算上限且 `missing_fields=[]`。這是 Railway MCP 直連證據，不等於 ChatGPT Chat UI 驗收。
 - #180：無住宿時排入可驗證餐點的 production composition 與 regression 已部署；待使用者在一般 ChatGPT Chat 啟動新的正式 `plan_trip`，檢查每日餐點、住宿留空及未知狀態呈現。舊 `kurashiki-2026-11` 是 0 餐點的歷史紀錄，不是新版規劃證據。
 - #179：GitHub Pages publisher 已部署；`GITHUB_TOKEN` 存在且先前唯讀確認 repo push 權限。尚未對新的有效行程取得 ChatGPT 明確公開確認、執行真實發布、等待 Pages 部署並瀏覽器核對網址。
