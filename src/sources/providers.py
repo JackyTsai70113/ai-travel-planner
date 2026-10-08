@@ -144,13 +144,44 @@ class GooglePlacesAdapter(SourceAdapter):
                 # restaurant request must not discard already-found POIs (or
                 # vice versa); the production pipeline still reports this
                 # category as incomplete through drain_failures().
-                self.failures.append(AdapterFailure(f"{self.name}:{category}", str(exc)))
+                status = f" (HTTP {exc.status_code})" if isinstance(exc, ProviderHttpError) else ""
+                self.failures.append(AdapterFailure(f"{self.name}:{category}", f"Google Places request failed{status}"))
         return result
 
     def drain_failures(self) -> tuple[AdapterFailure, ...]:
         failures = tuple(self.failures)
         self.failures.clear()
         return failures
+
+    def get_place_details(self, place_id: str) -> dict[str, Any]:
+        """Fetch current place details for one request without caching the response.
+
+        The caller receives a short-lived normalized mapping and must not write it
+        to trip storage, rendered HTML, logs, or other durable state.
+        """
+        if not self.api_key:
+            raise ProviderConfigurationError("GOOGLE_MAPS_API_KEY is required for Google Places")
+        raw_place_id = place_id.removeprefix("places/")
+        if not re.fullmatch(r"[A-Za-z0-9_-]+", raw_place_id):
+            raise ValueError("place_id must be a Google Place ID")
+        payload = self.http_client.request_json(
+            "GET", f"https://places.googleapis.com/v1/places/{raw_place_id}",
+            headers={
+                "X-Goog-Api-Key": self.api_key,
+                "X-Goog-FieldMask": "id,name,displayName,formattedAddress,location,googleMapsUri,websiteUri,rating,userRatingCount,primaryType,regularOpeningHours,currentOpeningHours,timeZone,businessStatus,attributions",
+            },
+        )
+        result = self._candidate(payload, restaurant=False)
+        if result is None:
+            raise ProviderRequestError("Google Places returned no usable place details")
+        # The explicit Google Maps attribution accompanies this transient payload.
+        attributions = payload.get("attributions", [])
+        return {
+            "status": "available",
+            "attribution": "Google Maps",
+            "third_party_attributions": attributions if isinstance(attributions, list) else [],
+            "details": {key: value for key, value in result.items() if key != "provenance"},
+        }
 
     def _candidate(self, raw: Mapping[str, Any], *, restaurant: bool) -> dict[str, Any] | None:
         place_id = raw.get("id")
@@ -163,7 +194,7 @@ class GooglePlacesAdapter(SourceAdapter):
             "source_url": raw.get("googleMapsUri") or raw.get("websiteUri") or f"https://www.google.com/maps/place/?q=place_id:{place_id}",
             "retrieved_at": retrieved_at, "status": "confirmed", "confidence": 0.85,
         }
-        candidate: dict[str, Any] = {"id": canonical_provider_id("google", place_id), "name": display_name["text"], "kind": "restaurant" if restaurant else "poi", "provenance": provenance}
+        candidate: dict[str, Any] = {"id": canonical_provider_id("google", place_id), "google_place_id": place_id, "name": display_name["text"], "kind": "restaurant" if restaurant else "poi", "provenance": provenance}
         if isinstance(raw.get("formattedAddress"), str):
             candidate["address"] = raw["formattedAddress"]
         primary_type = raw.get("primaryType")

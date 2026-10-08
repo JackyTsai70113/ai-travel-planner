@@ -111,6 +111,7 @@ export interface BundleDayItem {
 
 export interface BundlePlace {
   id: string
+  google_place_id?: string | null
   name?: string | null
   address?: string | null
   kind?: string | null
@@ -332,7 +333,7 @@ export function buildMapsLink(placeLabel: string): string {
 export function findPlaceLabel(places: BundlePlace[] = [], placeId: string): string {
   const found = places.find((place) => place.id === placeId)
   if (!found) return placeId
-  return found.name || found.maps_query || placeId
+  return found.name || found.maps_query || (found.google_place_id ? 'Google Maps 地點' : placeId)
 }
 
 export function findPlaceAddress(places: BundlePlace[] = [], placeId: string): string {

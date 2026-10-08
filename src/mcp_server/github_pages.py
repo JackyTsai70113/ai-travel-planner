@@ -16,6 +16,7 @@ from src.request_site import (
     trip_to_public_bundle,
     trip_to_registry_entry,
 )
+from src.google_places_storage import durable_trip
 from src.schemas.validate_trip import validate_trip
 
 _SLUG = re.compile(r"[a-z0-9][a-z0-9-]{0,79}\Z")
@@ -72,6 +73,7 @@ class GitHubPagesPublisher:
     def publish(self, trip: Mapping[str, Any], *, slug: str, confirm_overwrite: bool = False) -> PublishResult:
         if not _SLUG.fullmatch(slug):
             raise ValueError("site slug must use lowercase letters, digits, and hyphens")
+        trip = durable_trip(trip)
         validate_trip(dict(trip))
         findings = trip_publication_findings(trip)
         entry = trip_to_registry_entry(trip, slug=slug, source_slug=f"requested/{slug}")

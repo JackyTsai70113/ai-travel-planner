@@ -86,15 +86,32 @@ def test_recorded_five_day_japan_pipeline_runs_candidates_routing_budget_validat
     result = TravelOrchestrator(TravelOrchestratorConfig(
         adapters=(adapter,), candidate_trip_factory=_recorded_candidate_factory,
         routing_context_factory=_context, output_directory=tmp_path,
+        trip_output_directory=tmp_path / "trips",
     )).run(parse_trip_request("幫我規劃 5 天 4 夜德島＋神戶，2 大 1 個 2 歲小孩，台北出發，自駕，不要太累，預算 20 萬日圓。"))
 
     assert result.succeeded
     assert result.trip is not None
     assert result.trip["schema_version"] == "trip-v1"
-    assert result.trip["candidate_sets"]["restaurants"][0]["rating"] == 4.4
+    stored_restaurant = result.trip["candidate_sets"]["restaurants"][0]
+    assert stored_restaurant["place"]["google_place_id"] == "tokushima-family-dining"
+    assert "rating" not in stored_restaurant
+    assert "opening_hours" not in stored_restaurant
+    assert "address" not in stored_restaurant["place"]
+    assert "coordinates" not in result.trip["candidate_sets"]["places"][0]
     assert result.trip["budget"]["total"]["amount"] == 169000
     assert result.render_path == tmp_path / "kyushu-family-2026" / "index.html"
     assert result.render_path.exists()
+    persisted = json.loads(result.trip_path.read_text(encoding="utf-8"))
+    persisted_text = json.dumps(persisted, ensure_ascii=False)
+    assert "親子食堂" not in persisted_text
+    assert "Tokushima" not in persisted_text
+    assert "rating" not in persisted_text
+    assert "googleMapsUri" not in persisted_text
+    assert persisted["days"][0]["summary"] == result.trip["days"][0]["summary"]
+    assert persisted["days"][0]["items"] == result.trip["days"][0]["items"]
+    rendered = result.render_path.read_text(encoding="utf-8")
+    assert "親子食堂" not in rendered
+    assert "query_place_id" in rendered
     assert result.stage(StageName.ROUTING).status is StageStatus.SUCCEEDED
     assert result.stage(StageName.VALIDATOR_REPAIR).status is StageStatus.SUCCEEDED
     assert "recorded-google-key" not in result.render_path.read_text(encoding="utf-8")

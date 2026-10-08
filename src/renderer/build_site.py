@@ -15,10 +15,12 @@ from typing import Any
 from urllib.parse import urlsplit
 
 from src.budget import format_budget_summary
+from src.google_places_storage import durable_trip
 
 
 def build_site(trip: dict[str, Any], derived: dict[str, Any] | None = None) -> str:
     """Render a self-contained mobile-first HTML document."""
+    trip = durable_trip(trip)
     derived = derived or {}
     places = {p["id"]: p for p in trip["candidate_sets"].get("places", [])}
     title = escape(trip.get("title", "Trip"))
@@ -61,7 +63,13 @@ def _render_day(day: dict[str, Any], places: dict[str, dict[str, Any]], restaura
         details = _render_place_details(place)
         restaurant = restaurants.get(item.get("place_id"), {}) if item.get("kind") == "meal" else {}
         details += _render_restaurant_details(restaurant)
-        items.append(f'<li><time>{escape(_time(item.get("start_at", "")))}</time><strong>{escape(place.get("name", item.get("place_id", "—")))}</strong><span>{escape(item.get("kind", ""))}</span>{details}</li>')
+        name = place.get("name")
+        if not name and place.get("google_place_id"):
+            target = _google_place_href(place["google_place_id"])
+            name = f'<a href="{escape(target, quote=True)}" target="_blank" rel="noopener">在 Google Maps 查看地點</a>'
+        else:
+            name = escape(str(name or item.get("place_id", "—")))
+        items.append(f'<li><time>{escape(_time(item.get("start_at", "")))}</time><strong>{name}</strong><span>{escape(item.get("kind", ""))}</span>{details}</li>')
     return f'<article><p class="eyebrow">{escape(day.get("date", ""))}</p><h3>{escape(day.get("summary", ""))}</h3><ol>{"".join(items)}</ol></article>'
 
 
@@ -199,6 +207,11 @@ def _safe_web_url(value: Any) -> str | None:
 def _safe_phone(value: Any) -> str | None:
     value = str(value).strip()
     return value if re.fullmatch(r"\+?[0-9][0-9 ()-]{2,24}", value) else None
+
+
+def _google_place_href(place_id: str) -> str:
+    from urllib.parse import urlencode
+    return "https://www.google.com/maps/search/?" + urlencode({"api": "1", "query": "Google Maps place", "query_place_id": place_id})
 
 
 def _warning_text(value: Any) -> str:
