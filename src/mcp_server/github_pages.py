@@ -77,7 +77,7 @@ class GitHubPagesPublisher:
         validate_trip(dict(trip))
         findings = trip_publication_findings(trip)
         entry = trip_to_registry_entry(trip, slug=slug, source_slug=f"requested/{slug}")
-        if entry["readiness"] != "ready":
+        if entry["readiness"] == "blocked" or findings:
             details = "; ".join(findings) or "Canonical Trip is not ready"
             raise ValueError(f"trip is not ready for public publication: {details}")
         bundle = trip_to_public_bundle(trip)

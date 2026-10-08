@@ -118,7 +118,7 @@ class GitHubPagesPublisherTests(unittest.TestCase):
         stored = durable_trip(trip)
         self.assertEqual([], trip_publication_findings(stored))
         entry = trip_to_registry_entry(stored, slug="demo-trip", source_slug="requested/demo-trip")
-        self.assertEqual("ready", entry["readiness"])
+        self.assertEqual("incomplete", entry["readiness"])
 
         fake = FakeGitHub()
         result = self.publisher(fake).publish(trip, slug="demo-trip")
@@ -128,6 +128,26 @@ class GitHubPagesPublisherTests(unittest.TestCase):
         self.assertEqual("schedule.poi_candidate_unselected", bundle["validation"][0]["code"])
         self.assertIn("Google Places 候選未排入", bundle["validation"][0]["message"])
         self.assertNotIn(place["name"], json.dumps(bundle, ensure_ascii=False))
+
+    def test_incomplete_trip_can_publish_only_as_an_incomplete_preview(self):
+        trip = json.loads(json.dumps(self.trip))
+        trip["budget"]["total_status"] = "incomplete"
+        trip["validation"] = [
+            {"code": "meal.period_unselected", "severity": "warning", "message": "尚有餐段未安排", "path": "/days/0"},
+            {"code": "budget.incomplete", "severity": "warning", "message": "費用尚未完整估算", "path": "/budget"},
+        ]
+        fake = FakeGitHub()
+
+        result = self.publisher(fake).publish(trip, slug="demo-trip")
+
+        self.assertEqual("publish_accepted", result.status)
+        blobs = [json.loads(base64.b64decode(call[2]["content"])) for call in fake.calls if call[0] == "POST" and call[1].endswith("/git/blobs")]
+        bundle = next(value for value in blobs if value.get("trip_id") == trip["id"])
+        registry = next(value for value in blobs if isinstance(value, list))
+        self.assertEqual("warning", bundle["status"])
+        self.assertEqual("preview", registry[0]["status"])
+        self.assertEqual("incomplete", registry[0]["readiness"])
+        self.assertEqual({"meal.period_unselected", "budget.incomplete"}, {item["code"] for item in bundle["validation"]})
 
     def test_publication_strips_google_places_details_but_preserves_place_ids(self):
         trip = json.loads(json.dumps(self.trip))
