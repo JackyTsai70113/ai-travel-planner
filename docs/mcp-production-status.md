@@ -49,7 +49,7 @@
 - PR #227 已以一般 merge commit `63aace248eb3e91d840d7c6a2e03a940ea070644` 合併；GitHub Pages deployment `37715791303` 成功。部署後以瀏覽器開啟正式 Awaji 每日行程頁，在 375、390、430、1200、1366、1440、1920px 檢查 Google 官方 98×18 logo、10px 水平／5px 垂直留白及水平溢出，七種寬度均通過。
 - PR #228 已以一般 merge commit `9fcb177524788bc3ee5df43d0401d7817aae22e8` 更新資料生命週期盤點文件；`python`、`pytest`、`mcp-site` CI 均成功。透過已登入 Railway CLI SSH 對 production `/data` 執行唯讀 JSON metadata inventory，只輸出檔案數、欄位存在數及 trip ID，沒有輸出地點內容或憑證值。
 - inventory 時 Railway service `ai-traveller` Online，volume 使用量 33 MB / 500 MB。volume 只有 1 份 Canonical Trip 與 1 個行程 HTML：`kurashiki-2026-11`。該 Trip 有 40 個景點、20 個餐廳、0 個住宿候選；60 個候選均有 Google Places API (New) provenance、名稱、地址與座標，20 個另含 opening hours、rating、ratings 與 field provenance。五天的每日行程仍為 0 個 meal item。細節見 [`Google Places 資料生命週期盤點`](google-places-data-lifecycle.md)。
-- 這是單一時點的唯讀 inventory；尚未實作或執行 Places 欄位保留期限、刪除或既有公開 bundle／Git 歷史處置。#199 保持開啟。
+- 這是 2026-10-08 合併 PR #239 前的單一時點唯讀 inventory；inventory 本身未刪除或改寫 Places 欄位。PR #239 已對合併後新資料實施 0 日保存與輸出投影；既有 Railway 行程、公開 bundle 和 Git 歷史仍依維護者指示原樣保留。#199 已結案，結案不代表歷史資料已清理或重新核驗。
 - 以上均未執行新的 ChatGPT `plan_trip` 或公開行程。#180 仍待維護者在一般 ChatGPT Chat 執行新規劃並檢查每日餐點；#179 仍待明確確認發布一份符合 readiness 的 Trip，驗證 Pages deployment 與網址。不得用網站 CI、health check 或此次 volume inventory 取代這兩項驗收。
 
 ## 2026-10-08 PR #223 合併後正式狀態
@@ -163,7 +163,7 @@
 
 - PR #206 was merged as `e9a189c9e90c5981659ef26e34a6abbbd158195a`. It adds a visible, untranslated `Google Maps` label to map links in the itinerary and lodging candidate views, using 12px normal-weight text.
 - Post-deployment Chrome check on `https://jackytsai70113.github.io/ai-travel-planner/trips/awaji-2026/` opened the `每日行程` section and confirmed the map link is visible with label `Google Maps`, exact case, computed 12px/400 styling, and no horizontal overflow at 1200px.
-- This fixes the previously observed absence of visible map-link attribution in those views. PR #208 later added and deployed public Terms/Privacy pages, which were opened in Chrome. Neither change establishes that every displayed place fact came from Places API or that Places-derived content has compliant retention and rehosting behavior. #199 remains open pending that data-lifecycle review.
+- This fixes the previously observed absence of visible map-link attribution in those views. PR #208 later added and deployed public Terms/Privacy pages, which were opened in Chrome. Those earlier UI checks did not establish field-level sources or retention behavior; PR #239 subsequently added request-scoped Places details and durable/public projections for newly processed trips. #199 is closed, while historical files and Pages remain unchanged by explicit instruction.
 
 ### Issue #179 驗收流程
 

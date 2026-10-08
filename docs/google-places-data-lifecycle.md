@@ -113,4 +113,4 @@ HeiGIT 官方 API 文件列有 OpenPOIService，路徑為 `https://api.heigit.or
 - [OpenRouteService 服務條款與資料來源／歸屬說明](https://ask.openrouteservice.org/tos)
 - [OpenStreetMap 著作權與 ODbL 說明](https://www.openstreetmap.org/copyright)
 
-若後續採用 OSM 衍生 POI，仍須處理 ODbL attribution／share-alike、來源逐欄 provenance、公開頁呈現及資料生命週期；API 呼叫成功本身不解決授權與產品呈現問題。#199 保持開啟。
+若後續評估其他來源，仍須逐欄確認來源、署名、公開頁呈現及資料生命週期；本次實作維持 Google Places，不引入 OSM。#199 已由 PR #239 完成新資料生命週期防線並結案；歷史資料依維護者指示保留，不代表歷史資料已清理或重新核驗。
