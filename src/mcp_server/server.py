@@ -223,7 +223,7 @@ def get_trip_tool(
         ),
     ],
 ) -> dict[str, Any]:
-    """Read a bounded itinerary summary; use returned Google Place IDs for current details when needed."""
+    """Read a bounded itinerary summary. Google-sourced place names are intentionally omitted; when the traveler asks for a readable itinerary or named daily places, call get_place_details once for each distinct scheduled Google Place ID lacking an independently sourced name. Each detail call makes one live Places request and may incur usage charges; never query unselected candidates."""
     try:
         path = _trip_path(trip_id)
         trip = durable_trip(json.loads(path.read_text(encoding="utf-8")))
@@ -256,7 +256,7 @@ def get_place_details_tool(
         ),
     ],
 ) -> dict[str, Any]:
-    """Fetch request-scoped Google details for an itinerary Place ID; show the returned attribution and never store the response."""
+    """Fetch current request-scoped details for one scheduled Google Place ID. When readable place names are requested, call once per distinct scheduled ID lacking an independently sourced name; include Google Maps and third-party attribution. Each call makes one live Places request and may incur usage charges. Never query unselected candidates or store the response."""
     if not os.environ.get("GOOGLE_MAPS_API_KEY"):
         return {"status": "configuration_missing", "missing": ["GOOGLE_MAPS_API_KEY"]}
     try:

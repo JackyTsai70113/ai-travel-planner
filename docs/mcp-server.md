@@ -230,6 +230,8 @@ Output statuses:
 
 Side effects and retries: read-only; safe to retry.
 
+The safe projection may include only a Google Place ID, not a display name. If the traveler requests a readable itinerary or named scheduled places, call `get_place_details` once for each distinct scheduled Google Place ID without an independently sourced name; do not call it for unselected candidates. Each call performs a live provider request and may incur usage charges. Details must remain in the current response and include the returned Google Maps and third-party attribution; never write them to the trip or site.
+
 ### `get_place_details`
 
 Input schema: `{ "type":"object", "required":["place_id"], "properties":{"place_id":{"type":"string","minLength":1,"maxLength":256,"pattern":"^(?:places/)?[A-Za-z0-9_-]+$"}} }`. Accepts the exact saved Google Place ID (or its `places/` resource-name form).
