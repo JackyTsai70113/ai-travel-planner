@@ -1,12 +1,15 @@
 # ChatGPT MCP 正式環境現況與已知問題
 
-最後查證：2026-10-08。本文記錄本 repo MCP 部署與實際工具呼叫的觀察結果，不代表規劃品質已達可交付標準。
+最後查證：2026-10-09。本文記錄本 repo MCP 部署與實際工具呼叫的觀察結果，不代表規劃品質已達可交付標準。
 
-## 目前正式狀態（2026-10-08，Railway runtime source `5b2b003`）
+## 目前正式狀態（2026-10-09，Railway runtime source `5b2b003`）
 
 - PR #243–#258 功能變更與 PR #259–#261 正式狀態文件均以一般 merge 合併。PR #250 修正入口行程卡片數量的固定測試，PR #252 更新 Places 即時查詢工具指引，PR #256 修正可行備選 POI 被誤報未驗證，PR #258 為無住宿日保留早餐後的路線緩衝。
 - Railway production runtime source 為 `5b2b003c16201564bcda55edcccbb6d3e5948976`，deployment `549c1e92-161c-46f2-9552-cc2ea1605872` 狀態 `SUCCESS`，服務 Online，`/health` 回 HTTP 200、內文 `ok`；部署使用 Dockerfile `/Dockerfile`，`/data` volume 仍掛載。
 - 2026-10-08 再次用 Railway CLI 注入既有 `BEARER_TOKEN` 呼叫正式 `tools/list`：HTTP 200，列出 7 個工具，包括 `get_place_details`。以倉敷已排定 Place ID 執行一次正式唯讀 `get_place_details`：HTTP 200、`status=available`、`attribution=Google Maps`、Place ID 相符；輸出只記錄回傳欄位名稱，沒有記錄地點詳細值或憑證。
+- 2026-10-09 以 Railway CLI 重新查證：`railway status` 顯示 `ai-traveller` Online，deployment `549c1e92-161c-46f2-9552-cc2ea1605872`；`railway deployment list --service ai-traveller --environment production --limit 100 --json` 確認其狀態 `SUCCESS`、source commit `5b2b003c16201564bcda55edcccbb6d3e5948976`。正式 `/health` HTTP 200、內容 `ok`；透過 `railway run` 注入既有 bearer token 的唯讀 `tools/list` HTTP 200，列出七個工具。後續文件版 main commit `98ee35a` 的 Railway deployment 為 `SKIPPED`，理由是沒有符合 watched files 的變更，故 runtime 仍對應 `5b2b003`。
+- 2026-10-09 使用 Computer Use 在一般 ChatGPT「對話」模式驗證：私人 `AI Travel Planner MCP` 出現在「已安裝」清單；外掛詳細頁標示為你的雲端外掛程式，管理設定顯示 OAuth、MCP URL 結尾為 `/mcp`、審查狀態 `DEVELOPMENT`；一般 Chat 的外掛選單亦可選取此 MCP。設定頁另顯示版本 `dev mode`，外掛詳情頁資訊區顯示 `1.0.0`，版本標示不一致，無法由這次 UI 讀值判定是哪個 runtime/tool snapshot 版本。
+- 同次一般 Chat UI 操作點擊「重新整理工具」後，按鈕變成 disabled，但沒有可見的成功／失敗訊息；故不記作刷新成功。將外掛加入新的一般 Chat composer 後，畫面保留未送出的外掛標籤；未輸入或送出任何 prompt，未發生 MCP 工具呼叫，也未觀察到工具清單。因此「外掛已安裝、能在一般 Chat 選取」已驗證；「一般 Chat 真的能發現並呼叫工具」仍未驗收。唯讀驗收 prompt 必須由維護者本人輸入。
 - 最新本機 MCP 驗證命令 `PYTHONPATH=. uv run --isolated --with-requirements requirements-mcp.txt python -m unittest tests.test_mcp_server -v` 通過 21 項。測試包含真正 stdio 子程序握手與 `parse_trip_request` 呼叫，以及 Streamable HTTP 認證與工具協定；不呼叫外部供應商 API，亦不等於 ChatGPT Chat UI 驗收。
 - 同日檢視此 Codex 對話的 AI Travel Planner connector 快照，僅顯示 6 個工具並缺少 `get_place_details`。這是 Codex connector 清單與 Railway 工具清單不同的證據，不能推論一般 ChatGPT Chat 顯示相同清單。OpenAI 自訂 MCP plugin 文件說明可在 app 詳細資料頁 Refresh apps，以取得新工具、描述與 server instructions；已將該步驟加入 [ChatGPT Chat 驗收流程](chatgpt-mcp-live-verification.md)。ChatGPT Chat 實際刷新與工具呼叫尚未驗收。
 - Sites 唯讀 `get_site(include_mcp_connection=true)` 確認私人 `AI Travel Planner MCP` Site 為 `active`、目前版本 7，MCP endpoint 結尾為 `/mcp`。此只證明 Site 設定與部署版本存在，不證明 ChatGPT plugin 已刷新工具清單或一般 Chat 可呼叫。
@@ -23,7 +26,7 @@
 - 2026-10-08 使用使用者已明確確認公開的既有行程，透過已連線 AI Travel Planner MCP 呼叫 `publish_trip_site(trip_id="kurashiki-2026-11-live-20261008", site_slug="kurashiki-2026-11-live-20261008", confirm_public_publish=true)`。工具回 `publish_accepted`，URL 為 `https://jackytsai70113.github.io/ai-travel-planner/trips/kurashiki-2026-11-live-20261008/`，commit `d40c71c84e94c201b5de8a5889fced98abdd250f`，初始 deployment status 為 `pending`。GitHub Pages workflow `37736450625` 成功；該網址以 `curl` 回 HTTP 200，標題為「倉敷 行程｜AI Travel Planner」，registry 標記 `status=preview`、`readiness=incomplete`。這不是一般 ChatGPT Chat UI 或互動瀏覽器驗收。
 - 發布 commit 的 Website CI `37736450517` 因 `web/tests/portal-e2e.mjs` 將入口卡片數硬編碼為 5 而失敗；新增第六筆登錄行程後觸發此回歸。PR #250 改為依 `public/trip-registry.json` 動態核對卡片數；PR 的 Python、pytest、MCP site、Website CI 均通過，並以 merge commit `8eec8baa2a7647a197b713cf9305fe71974409a8` 合併。合併後 CI `37737544356` 與 Website CI `37737544402` 均成功，Pages workflow `37737544370` 亦成功。
 - #199 已依維護者指定的歷史資料保留範圍結案。既有 Railway 檔案、公開 Pages 內容與 Git 歷史保持原樣；結案不表示歷史內容已清除或重新核驗。
-- 目前唯一開啟的 issue 為 #179。依維護者明確覆寫確認，正式 MCP `publish_trip_site` 回 `publish_accepted`，GitHub commit `3649492fd7f4f09965217c2a3b75c6f45f1bf3b4`；Pages workflow `37742158112` 成功。行程頁、`public-bundle.json` 與 registry 均 HTTP 200；頁面標題為「倉敷 行程｜AI Travel Planner」，bundle 為 5 天、每天 3 餐（共 15 餐），狀態 `warning`，registry 為 `preview`／`incomplete`。仍有 3 個 `schedule.poi_candidate_unselected`、5 個 `schedule.origin_unknown`、`schedule.hotel_missing`、`budget.incomplete`。一般 ChatGPT Chat 工具刷新／呼叫與互動瀏覽器視覺驗收仍未完成；本次 Computer Use 顯示 macOS 鎖定、唯一 Chrome 分頁為 ai-video 對話，沒有操作錯誤分頁或代送 prompt。
+- 目前唯一開啟的 issue 為 #179。依維護者明確覆寫確認，正式 MCP `publish_trip_site` 回 `publish_accepted`，GitHub commit `3649492fd7f4f09965217c2a3b75c6f45f1bf3b4`；Pages workflow `37742158112` 成功。行程頁、`public-bundle.json` 與 registry 均 HTTP 200；頁面標題為「倉敷 行程｜AI Travel Planner」，bundle 為 5 天、每天 3 餐（共 15 餐），狀態 `warning`，registry 為 `preview`／`incomplete`。仍有 3 個 `schedule.poi_candidate_unselected`、5 個 `schedule.origin_unknown`、`schedule.hotel_missing`、`budget.incomplete`。一般 ChatGPT Chat 的真實工具呼叫與互動式行程頁檢查仍未完成；2026-10-09 已證明私人外掛在一般 Chat 中安裝且可選取，詳見本文件頂端的當前基線。
 - 最新連線 MCP connector 的唯讀 `parse_trip_request` 對已確認的倉敷需求回 `parsed`，目的地倉敷、區域岡山縣、日期、人數、桃園出發、不限預算、自駕均正確；唯讀 `get_trip` 回同一 trip ID、5 天、每天 3 餐，並保留上述未完成 warning。這是 Codex connector 的工具呼叫，不可當成一般 ChatGPT Chat UI 驗收。
 
 下方依時間排列的 PR／部署紀錄是當時狀態快照；其中舊 issue 開啟狀態與舊 deployment ID 不代表目前狀態。以上方「目前正式狀態」和當前 GitHub／Railway 資料為準。
@@ -183,10 +186,12 @@
 
 ### Issue #179 驗收流程
 
-1. 維護者在 GitHub 建立 fine-grained PAT，只授權 `JackyTsai70113/ai-travel-planner` repository 的 `Contents: Read and write`，將其設為 Railway service secret `GITHUB_TOKEN`。已確認變數存在，且 GitHub REST 唯讀 repo 查詢回報 `permissions.push=true`；不得將 token 寫入 repo、issue、聊天工具參數或 CI log。
-2. 確認 Railway 使用至少包含 PR #191 merge commit `0a948bcfb8dcb6089e9f1daf16adad1e469b1b15` 的版本，且最新 deployment 狀態為 `SUCCESS`；新增 secret 後等新 deployment 成功，再由維護者重跑 health 與 `tools/list` smoke test。
-3. 在 ChatGPT chat 先完成行程規劃。只有使用者明確要求公開分享並確認公開範圍後，才呼叫 `publish_trip_site`，傳入既有 `trip_id`、`confirm_public_publish=true`；更新現有公開內容時還要明確傳 `confirm_overwrite=true`。
-4. 工具回傳 `publish_accepted` 與 Pages URL 後，等待 Pages Actions 部署完成，實際開啟網址確認對應行程內容。僅工具接受寫入或回 `pending` 不算完成驗收。
-5. 將 deployment 結果、HTTP/瀏覽器可用證據與 commit SHA 記錄回 #179；驗收全部完成後才關閉 issue。
+倉敷行程的發布路徑已驗證完成：使用者確認覆寫後，正式 `publish_trip_site` 接受行程，Pages workflow `37742158112` 成功，公開 URL 與 bundle 均已驗證。行程維持 `preview`／`incomplete`，因住宿、部分起點與費用資料仍未驗證。發布工具與 `GITHUB_TOKEN` 設定不再是 #179 的阻塞。
 
-以上只列已觀察問題與外部依賴；#175 已關閉，#180 的正式 ChatGPT Chat 驗收仍待執行。本次沒有以 fixture 代替正式資料，也沒有發布倉敷頁面。
+2026-10-09 的未完成驗收如下：
+
+1. Railway production deployment `549c1e92-161c-46f2-9552-cc2ea1605872` 為 `SUCCESS`，source commit `5b2b003c16201564bcda55edcccbb6d3e5948976`；`/health` 與正式 `tools/list` 均回 HTTP 200，列出七項工具。
+2. 一般 ChatGPT「對話」模式已確認私人 `AI Travel Planner MCP` 出現在已安裝外掛清單、設定頁可見 OAuth 與 `/mcp` endpoint，且一般 Chat 外掛選單可選取。設定頁 Refresh tools 按鈕被點擊後呈 disabled，沒有成功／失敗提示，故刷新結果不確定；ChatGPT UI 未顯示工具清單，也沒有真實工具呼叫。
+3. 維護者必須本人在該一般 Chat 輸入 [`ChatGPT Chat 驗收流程`](chatgpt-mcp-live-verification.md) 的唯讀 `parse_trip_request` prompt。已選取的外掛標籤留在空白 composer；沒有輸入或送出任何 prompt。
+4. 以瀏覽器實際開啟倉敷公開網址並核對行程頁內容與互動；HTTP 200 不足以通過此項。
+5. 保存不含帳戶敏感資訊或其他私人對話的 UI 證據，更新本節與 #179。以上完成後才關閉 #179。
