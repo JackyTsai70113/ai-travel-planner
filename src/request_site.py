@@ -21,6 +21,8 @@ _NON_BLOCKING_PUBLICATION_CODES = {
     "schedule.hotel_missing",
     "schedule.origin_unknown",
     "schedule.poi_candidate_unselected",
+    "meal.period_unselected",
+    "budget.incomplete",
 }
 
 
@@ -162,8 +164,7 @@ def trip_to_registry_entry(trip: Mapping[str, Any], *, slug: str, source_slug: s
     validation = [_public_validation(value) for value in _sequence(trip.get("validation")) if isinstance(value, Mapping)]
     completeness_findings = _trip_completeness_findings(trip)
     has_errors = any(item["severity"] in {"error", "critical"} for item in validation)
-    unresolved_findings = [item for item in validation if item["code"] not in _NON_BLOCKING_PUBLICATION_CODES]
-    readiness = "blocked" if has_errors else "incomplete" if unresolved_findings or completeness_findings else "ready"
+    readiness = "blocked" if has_errors else "incomplete" if validation or completeness_findings else "ready"
     destinations = _destination_regions(trip)
     generated = datetime.now(timezone.utc).date().isoformat()
     return {
