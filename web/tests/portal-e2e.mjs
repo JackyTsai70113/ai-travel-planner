@@ -1,8 +1,11 @@
 /* global document, getComputedStyle */
 
 import { chromium } from 'playwright'
-import { copyFileSync, cpSync, existsSync, mkdirSync, readdirSync } from 'node:fs'
+import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, readdirSync } from 'node:fs'
 import { startPreviewServer } from './preview-server.mjs'
+
+const tripRegistry = JSON.parse(readFileSync('public/trip-registry.json', 'utf8'))
+const expectedTripCardCount = tripRegistry.length
 
 for (const slug of ['wanhua-2026', 'awaji-2026', 'kansai-preview-2025', 'japan-archive-example', 'japan-blocked-example']) {
   mkdirSync(`dist/trips/${slug}`, { recursive: true })
@@ -83,7 +86,7 @@ try {
     layoutPage.setDefaultTimeout(10000)
     await layoutPage.goto(baseUrl, { waitUntil: 'domcontentloaded' })
     await layoutPage.locator('.trip-card').nth(1).waitFor({ state: 'visible' })
-    if (await layoutPage.locator('.trip-card').count() !== 5) throw new Error(`${width}px root catalog did not render all visible trips`)
+    if (await layoutPage.locator('.trip-card').count() !== expectedTripCardCount) throw new Error(`${width}px root catalog did not render all ${expectedTripCardCount} registered trips`)
     const portalText = await layoutPage.locator('body').innerText()
     if (/CANONICAL TRIP JOURNEYS|Kansai 2025|Archived example|Blocked example|family|self-drive|recorded-example|查看 trip/i.test(portalText)) throw new Error(`${width}px root catalog exposed internal English copy`)
     await assertPortalLayout(layoutPage, width)
@@ -95,7 +98,7 @@ try {
   page.setDefaultNavigationTimeout(10000)
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' })
   await page.locator('.trip-card').nth(1).waitFor({ state: 'visible' })
-  if (await page.locator('.trip-card').count() !== 5) throw new Error('root catalog did not render all visible trips')
+  if (await page.locator('.trip-card').count() !== expectedTripCardCount) throw new Error(`root catalog did not render all ${expectedTripCardCount} registered trips`)
   if (await page.locator('h1').filter({ hasText: 'AI Travel Planner' }).count() !== 1) throw new Error('root product identity missing')
   await Promise.all([
     page.waitForURL('**/trips/wanhua-2026/'),

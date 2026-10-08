@@ -30,10 +30,10 @@
 - PR #244 讓未排入候選景點的 warning 不阻止發布。PR #245 允許只有可揭露 warning 的行程以 preview 公開；網站 bundle 保留 `warning`，registry readiness 保留 `incomplete`。錯誤級驗證、沒有任何餐點的日期與其他硬性缺項仍拒絕發布。
 - 本機全套 pytest：`PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 /tmp/ai-travel-mcp-current-venv/bin/python -m pytest -q`，375 passed、288 subtests passed。正式 deployment 亦通過 health check。
 - 使用者提供的 ChatGPT Chat 正式規劃結果顯示倉敷五天每日有 2 至 3 筆餐點，共 11 筆；住宿留空。仍有 4 個未安排餐段、費用估算不完整 warning。Issue #180 原始「每日完全沒有餐點」問題已據此結案；這些 warning 仍須如實呈現。
-- Issue #179 仍開啟。倉敷行程現可發布為 `preview`／`incomplete`；正式 production readiness 計算結果沒有硬性 blocker。2026-10-08 唯讀檢查 GitHub Pages registry 尚無該 trip slug，因此真實發布、Pages deployment 及瀏覽器網址驗收仍未完成。
+- Issue #179 仍開啟。2026-10-08 已透過 AI Travel Planner MCP 將使用者明確核准的倉敷行程發布為 `preview`／`incomplete`。工具回 `publish_accepted`，Pages workflow `37736450625` 成功，目標 URL 回 HTTP 200，registry 狀態為 `preview`、readiness 為 `incomplete`。發布 commit `d40c71c84e94c201b5de8a5889fced98abdd250f` 的 Website CI `37736450517` 反而發現入口頁 E2E 將行程數量固定為 5；修正分支改為依公開 registry 動態驗證數量。ChatGPT 一般 Chat UI 與互動式瀏覽器仍待驗，Computer Use 當時回報 macOS 已鎖定。
 - Issue #199 重新開啟。新資料的持久化與發布 projection 已清理候選詳情，但既有 Railway 行程及公開頁仍保持原狀；依維護者要求不刪除或改寫歷史資料。舊內容範圍仍待處置。
 - 目前開啟的服務能力 issues 為 #179 與 #199。
-- 使用者已明確保留 ChatGPT 一般 Chat prompt 由本人輸入。Computer Use 最近可見唯一 Chrome 分頁是既有 ChatGPT Chat，但 macOS 鎖定；沒有輸入或代送 prompt。部署健康、CI、單元測試與 Railway readiness 計算均不能代替使用者在 ChatGPT 發布行程，再由瀏覽器驗收 Pages 網址。
+- 使用者已明確保留 ChatGPT 一般 Chat prompt 由本人輸入。沒有輸入或代送 prompt。已核准的發布動作由已連線 MCP 發布工具完成；Pages workflow 與 HTTP 回應成功，但不能代替一般 ChatGPT Chat UI 和互動式瀏覽器驗收。Computer Use 最近可見唯一 Chrome 分頁是既有 ChatGPT Chat，但 macOS 鎖定。
 
 ## 更新規則
 
