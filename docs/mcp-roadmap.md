@@ -24,14 +24,16 @@
 
 ## 目前基線（2026-10-08）
 
-- 最近一次影響 MCP runtime 的 merge commit 是 PR #239：`9e15a808288298386a0706516dfedd6536cea3f2`。後續文件更新未改變 runtime；Railway source SHA 仍是上述 runtime commit。PR #239 更新 MCP ChatGPT 指引，規劃成功後讀取 `get_trip`，必要時依原始 Place ID 即時查詢 `get_place_details`，要求回傳 Google Maps／第三方署名，失敗時不使用舊資料。PR CI 的 `python`、`pytest`、`mcp-site` 全部成功；本機 pytest 為 373 passed、288 subtests，unittest 為 258 tests。
-- Railway `ai-traveller` production deployment `3e39097c-1962-4c15-9543-ab3ef0f949f0` 對應上述 runtime SHA，狀態 `SUCCESS`；`/health` 回 `ok`。正式 ChatGPT Chat 工具呼叫仍未驗收。
-- Production `parse_trip_request` 對完整倉敷需求曾回傳正確目的地、日期、旅客人數、無預算上限且 `missing_fields=[]`。這是 Railway MCP 直連證據，不等於 ChatGPT Chat UI 驗收。
-- #180：無住宿時排入可驗證餐點的 production composition 與 regression 已部署；待使用者在一般 ChatGPT Chat 啟動新的正式 `plan_trip`，檢查每日餐點、住宿留空及未知狀態呈現。舊 `kurashiki-2026-11` 是 0 餐點的歷史紀錄，不是新版規劃證據。
-- #179：GitHub Pages publisher 已部署；`GITHUB_TOKEN` 存在且先前唯讀確認 repo push 權限。尚未對新的有效行程取得 ChatGPT 明確公開確認、執行真實發布、等待 Pages 部署並瀏覽器核對網址。
-- #199 已於 PR #239 後結案。Place ID 原樣保存；新 Canonical Trip／網站不保存 Places 詳細資料，詳細資料使用時查詢，保存期限 0 天，並保留使用者行程與筆記。依維護者指示，舊 Railway 檔案、舊公開 Pages 內容及 Git 歷史保持原樣；舊公開內容可能仍包含歷史 Places 資料。
-- 目前開啟的服務能力 issues 僅有 #180 與 #179。
-- ChatGPT Chat UI 最近由 Computer Use 檢查時，macOS 處於鎖定狀態。使用者要求由本人輸入 ChatGPT prompt；未代送 prompt，也未以 health／CI／mock 取代 UI 驗收。
+- `main` 為 `49ea552ff962c8bb15404040422632526fbf0e1f`。PR #243、#244、#245 以一般 merge 合併；補充工具描述與文件的 `49ea552` 是直接推送至 `main` 的一般 commit，沒有經 PR。其 GitHub Actions CI run `37735337661` 的 `python`、`pytest`、`mcp-site` 均成功。
+- Railway `ai-traveller` production deployment `c8dfaf4f-3549-4a74-a269-679f431c57a9` 對應目前 `main` SHA，狀態 `SUCCESS`；正式 `/health` 回 `ok`。
+- PR #243 修正持久化／發布投影中 Google Places 候選驗證訊息殘留名稱與 context 的問題，並要求 ChatGPT 對已排定且缺少獨立名稱來源的 Place ID 使用即時 `get_place_details`。既有行程原始檔未改寫；讀取與未來投影會套用清理。
+- PR #244 讓未排入候選景點的 warning 不阻止發布。PR #245 允許只有可揭露 warning 的行程以 preview 公開；網站 bundle 保留 `warning`，registry readiness 保留 `incomplete`。錯誤級驗證、沒有任何餐點的日期與其他硬性缺項仍拒絕發布。
+- 本機全套 pytest：`PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 /tmp/ai-travel-mcp-current-venv/bin/python -m pytest -q`，375 passed、288 subtests passed。正式 deployment 亦通過 health check。
+- 使用者提供的 ChatGPT Chat 正式規劃結果顯示倉敷五天每日有 2 至 3 筆餐點，共 11 筆；住宿留空。仍有 4 個未安排餐段、費用估算不完整 warning。Issue #180 原始「每日完全沒有餐點」問題已據此結案；這些 warning 仍須如實呈現。
+- Issue #179 仍開啟。倉敷行程現可發布為 `preview`／`incomplete`；正式 production readiness 計算結果沒有硬性 blocker，但尚未執行真實 GitHub Pages 發布，也沒有最終網址及瀏覽器驗收。
+- Issue #199 重新開啟。新資料的持久化與發布 projection 已清理候選詳情，但既有 Railway 行程及公開頁仍保持原狀；依維護者要求不刪除或改寫歷史資料。舊內容範圍仍待處置。
+- 目前開啟的服務能力 issues 為 #179 與 #199。
+- 使用者已明確保留 ChatGPT 一般 Chat prompt 由本人輸入。Computer Use 最近可見唯一 Chrome 分頁是既有 ChatGPT Chat，但 macOS 鎖定；沒有輸入或代送 prompt。部署健康、CI、單元測試與 Railway readiness 計算均不能代替使用者在 ChatGPT 發布行程，再由瀏覽器驗收 Pages 網址。
 
 ## 更新規則
 
