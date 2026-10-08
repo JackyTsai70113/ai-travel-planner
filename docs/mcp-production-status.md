@@ -186,6 +186,13 @@
 
 ### Issue #179 驗收流程
 
+#### 最新驗收更新（2026-10-09）
+
+- `main` merge commit `530144f23546776088975f796e3cc2c18d1f8641` 由 Railway deployment `aa3ef82c-f4ec-401d-9417-9d6e1aba59aa` 成功部署；部署來源 SHA 為 `530144f`。`/health` 回 HTTP 200／`ok`；正式 `tools/list` 回 HTTP 200，含七項工具（含 `get_place_details`）。
+- 使用 MCP 覆寫 `kurashiki-2026-11-live-20261008` 成功，`publish_trip_site` 回 `publish_accepted`，commit `4380781d3cf91cd41656176769b2c2403feb03c6`。GitHub Pages workflow `37832158960` 成功，網址為 https://jackytsai70113.github.io/ai-travel-planner/trips/kurashiki-2026-11-live-20261008/。
+- 使用 Computer Use 在同一 Chrome 視窗實際檢查該頁總覽及 D1。頁面渲染出即時地點名稱（例如 `大原美術館`、`Caty Cafe`、`大橋家住宅`）與 Google Maps 標示。公開 bundle 含 Places API base URL 和 Place ID，未持久化 Google 地點名稱。既有行程資料未重規劃；住宿、費用等原有 incomplete 狀態仍存在。
+- 一般 ChatGPT Chat 外掛清單與選擇器顯示私人 `AI Travel Planner MCP`；設定頁顯示 OAuth 與 Railway `/mcp` URL。按「重新整理工具」後按鈕 disabled，但沒有結果提示，因此不能判定刷新成功。新對話 composer 已選取該 MCP 且保持空白；依維護者要求未輸入或送出 prompt，也未看到 ChatGPT UI 的真實工具呼叫。
+
 倉敷行程的發布路徑已驗證完成：使用者確認覆寫後，正式 `publish_trip_site` 接受行程，Pages workflow `37742158112` 成功，公開 URL 與 bundle 均已驗證。行程維持 `preview`／`incomplete`，因住宿、部分起點與費用資料仍未驗證。發布工具與 `GITHUB_TOKEN` 設定不再是 #179 的阻塞。
 
 2026-10-09 的未完成驗收如下：
