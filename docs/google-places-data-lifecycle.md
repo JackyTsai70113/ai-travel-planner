@@ -47,7 +47,8 @@
 - Git tracked public bundle：`awaji-2026` 有 51 個 place records，其中 14 個 record 的 provenance provider 明確寫 `Google Maps`；其 `name`、`address` 等欄位缺少逐欄位 provenance。source ledger 另有 14 個 `Google Maps` authority 記錄。該標籤不足以證明這批是 Places API 回應，也不足以證明欄位另有獨立來源。
 - `wanhua-2026`：19 個 place records，沒有 provider 欄位明確標為 `Google Maps`。
 - `kansai-preview-2025`：public bundle 沒有 places 清單。
-- Railway volume 不在本機掛載中；目前程式唯讀工具只按明確 `trip_id` 讀摘要，不能列出或逐欄位檢查 volume 全部 Canonical Trip。未宣稱私有歷史資料已盤點或刪除。
+- Railway volume 不在本機掛載中；MCP 唯讀工具只按明確 `trip_id` 讀摘要，不能列出全部 Canonical Trip。2026-10-08 透過已登入 Railway CLI 的 SSH 在遠端執行唯讀 JSON metadata 盤點，沒有輸出地點名稱、地址、座標或任何憑證值。該盤點目前只確認遠端檔案數與欄位存在數，尚未檢查每個欄位的逐筆來源或保存期限。
+- 此次 Railway production inventory：`/data/trips/` 有 1 份 `trip.json`，`/data/site/` 有 1 個 `index.html`；唯一 trip ID 是 `kurashiki-2026-11`。該 Canonical Trip 有 40 個 `places`、20 個 `restaurants`、0 個 `hotels` 候選；60 個候選均標示 `Google Places API (New)` provenance，且均有 `name`、`address`、`coordinates`。其中 20 筆有 `opening_hours`、`rating`、`ratings` 與 `field_provenance`。五天 `days[].items[]` 仍有 0 個 `meal` 項目。此為一次 SSH 時點盤點，不代表已清除、更新或套用保存期限。
 - 過往 Git commit 可能仍含目前 bundle 已移除的資料；單純改寫目前 branch 不會清除所有既有 clone、fork、GitHub cache 或歷史物件。
 
 ### `awaji-2026` 的 14 筆 Google Maps 標示地點
