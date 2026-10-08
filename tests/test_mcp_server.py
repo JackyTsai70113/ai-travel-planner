@@ -75,6 +75,9 @@ class MCPTravelServerTests(unittest.TestCase):
                     }.issubset(by_name)
                 )
                 self.assertTrue(all(tool.description for tool in by_name.values()))
+                self.assertIn("一題一答", by_name["plan_trip"].description)
+                self.assertIn("不要把 parser JSON 原樣當成回答", by_name["plan_trip"].description)
+                self.assertIn("公開發布必須另行取得確認", by_name["plan_trip"].description)
                 self.assertEqual(
                     by_name["parse_trip_request"].input_schema["properties"]["request"][
                         "maxLength"
@@ -563,6 +566,26 @@ class MCPTravelServerTests(unittest.TestCase):
             output = plan_trip_tool(request, "mcp-incomplete-reason", confirm_write=True)
         self.assertEqual(output["status"], "incomplete")
         self.assertEqual(output["message"], reason)
+
+    def test_plan_clarification_returns_one_question_without_starting_research(self) -> None:
+        with (
+            patch("src.mcp_server.server.missing_required_configuration") as configuration,
+            patch("src.mcp_server.server.create_production_orchestrator") as create_runner,
+        ):
+            output = plan_trip_tool(
+                "我想安排倉敷五天四夜",
+                "qa-preflight",
+                confirm_write=True,
+            )
+
+        self.assertEqual(output["status"], "needs_clarification")
+        self.assertGreater(len(output["missing_fields"]), 1)
+        self.assertEqual(
+            output["next_question"],
+            "請提供確切的出發與返程日期（YYYY/MM/DD）。",
+        )
+        configuration.assert_not_called()
+        create_runner.assert_not_called()
 
     def test_plan_reports_missing_provider_configuration_without_fixture_fallback(
         self,
