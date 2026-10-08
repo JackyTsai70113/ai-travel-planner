@@ -22,7 +22,7 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.621555+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.036085+00:00",
         "status": "confirmed",
         "confidence": 0.85
       }
@@ -34,19 +34,7 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.621827+00:00",
-        "status": "confirmed",
-        "confidence": 0.85
-      }
-    },
-    {
-      "id": "google-chija-u-r0zwuturymjwrukh3ck",
-      "google_place_id": "ChIJa-U-R0ZWUTURYMjwRUKh3Ck",
-      "kind": "poi",
-      "provenance": {
-        "source_type": "provider",
-        "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.621945+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.036347+00:00",
         "status": "confirmed",
         "confidence": 0.85
       }
@@ -58,7 +46,19 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.622043+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.036588+00:00",
+        "status": "confirmed",
+        "confidence": 0.85
+      }
+    },
+    {
+      "id": "google-chija-u-r0zwuturymjwrukh3ck",
+      "google_place_id": "ChIJa-U-R0ZWUTURYMjwRUKh3Ck",
+      "kind": "poi",
+      "provenance": {
+        "source_type": "provider",
+        "provider": "Google Places API (New)",
+        "retrieved_at": "2026-10-08T07:09:07.036765+00:00",
         "status": "confirmed",
         "confidence": 0.85
       }
@@ -70,43 +70,7 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.622130+00:00",
-        "status": "confirmed",
-        "confidence": 0.85
-      }
-    },
-    {
-      "id": "google-chijrxy5kknwuturqyrg1nehao8",
-      "google_place_id": "ChIJrxy5kkNWUTURQyRg1NEHao8",
-      "kind": "poi",
-      "provenance": {
-        "source_type": "provider",
-        "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.622208+00:00",
-        "status": "confirmed",
-        "confidence": 0.85
-      }
-    },
-    {
-      "id": "google-chijxztuqn3huzur6idicytspw0",
-      "google_place_id": "ChIJXztuqN3hUzUR6IDiCyTsPW0",
-      "kind": "poi",
-      "provenance": {
-        "source_type": "provider",
-        "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.622293+00:00",
-        "status": "confirmed",
-        "confidence": 0.85
-      }
-    },
-    {
-      "id": "google-chijm4wn0dhwuturne-3zlklpf8",
-      "google_place_id": "ChIJm4wn0DhWUTURnE-3zlklpf8",
-      "kind": "poi",
-      "provenance": {
-        "source_type": "provider",
-        "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.622396+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.036928+00:00",
         "status": "confirmed",
         "confidence": 0.85
       }
@@ -118,7 +82,19 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.622479+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.037077+00:00",
+        "status": "confirmed",
+        "confidence": 0.85
+      }
+    },
+    {
+      "id": "google-chijxztuqn3huzur6idicytspw0",
+      "google_place_id": "ChIJXztuqN3hUzUR6IDiCyTsPW0",
+      "kind": "poi",
+      "provenance": {
+        "source_type": "provider",
+        "provider": "Google Places API (New)",
+        "retrieved_at": "2026-10-08T07:09:07.037099+00:00",
         "status": "confirmed",
         "confidence": 0.85
       }
@@ -130,7 +106,31 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.622491+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.037267+00:00",
+        "status": "confirmed",
+        "confidence": 0.85
+      }
+    },
+    {
+      "id": "google-chijrxy5kknwuturqyrg1nehao8",
+      "google_place_id": "ChIJrxy5kkNWUTURQyRg1NEHao8",
+      "kind": "poi",
+      "provenance": {
+        "source_type": "provider",
+        "provider": "Google Places API (New)",
+        "retrieved_at": "2026-10-08T07:09:07.037344+00:00",
+        "status": "confirmed",
+        "confidence": 0.85
+      }
+    },
+    {
+      "id": "google-chijm4wn0dhwuturne-3zlklpf8",
+      "google_place_id": "ChIJm4wn0DhWUTURnE-3zlklpf8",
+      "kind": "poi",
+      "provenance": {
+        "source_type": "provider",
+        "provider": "Google Places API (New)",
+        "retrieved_at": "2026-10-08T07:09:07.037654+00:00",
         "status": "confirmed",
         "confidence": 0.85
       }
@@ -142,7 +142,7 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.622546+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.037830+00:00",
         "status": "confirmed",
         "confidence": 0.85
       }
@@ -154,7 +154,7 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.622556+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.037874+00:00",
         "status": "confirmed",
         "confidence": 0.85
       }
@@ -166,7 +166,7 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.622630+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.038023+00:00",
         "status": "confirmed",
         "confidence": 0.85
       }
@@ -178,7 +178,7 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.623126+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.038667+00:00",
         "status": "confirmed",
         "confidence": 0.85
       }
@@ -190,19 +190,7 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.623259+00:00",
-        "status": "confirmed",
-        "confidence": 0.85
-      }
-    },
-    {
-      "id": "google-chijx_lfxdhwuturrckngmi_55m",
-      "google_place_id": "ChIJx_LfXDhWUTURrCkngmi_55M",
-      "kind": "poi",
-      "provenance": {
-        "source_type": "provider",
-        "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.623343+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.038831+00:00",
         "status": "confirmed",
         "confidence": 0.85
       }
@@ -214,7 +202,7 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.623426+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.038986+00:00",
         "status": "confirmed",
         "confidence": 0.85
       }
@@ -226,7 +214,7 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.623466+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.039051+00:00",
         "status": "confirmed",
         "confidence": 0.85
       }
@@ -238,7 +226,7 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.623477+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.039069+00:00",
         "status": "confirmed",
         "confidence": 0.85
       }
@@ -250,7 +238,19 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.623518+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.039137+00:00",
+        "status": "confirmed",
+        "confidence": 0.85
+      }
+    },
+    {
+      "id": "google-chijxuu84edwuturu8sxrmzxce8",
+      "google_place_id": "ChIJxUU84EdWUTURu8SxrMZXcE8",
+      "kind": "poi",
+      "provenance": {
+        "source_type": "provider",
+        "provider": "Google Places API (New)",
+        "retrieved_at": "2026-10-08T07:09:07.039202+00:00",
         "status": "confirmed",
         "confidence": 0.85
       }
@@ -262,7 +262,7 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.935814+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.351915+00:00",
         "status": "confirmed",
         "confidence": 0.85
       }
@@ -274,7 +274,7 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.936080+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.352150+00:00",
         "status": "confirmed",
         "confidence": 0.85
       }
@@ -286,7 +286,7 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.936221+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.352247+00:00",
         "status": "confirmed",
         "confidence": 0.85
       }
@@ -298,19 +298,7 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.936346+00:00",
-        "status": "confirmed",
-        "confidence": 0.85
-      }
-    },
-    {
-      "id": "google-chijz7gyvr8hvdurw4nygop4tx8",
-      "google_place_id": "ChIJz7gYvR8HVDURw4nyGop4TX8",
-      "kind": "restaurant",
-      "provenance": {
-        "source_type": "provider",
-        "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.936478+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.352340+00:00",
         "status": "confirmed",
         "confidence": 0.85
       }
@@ -322,7 +310,7 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.936620+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.352434+00:00",
         "status": "confirmed",
         "confidence": 0.85
       }
@@ -334,19 +322,7 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.936760+00:00",
-        "status": "confirmed",
-        "confidence": 0.85
-      }
-    },
-    {
-      "id": "google-chijrfl0bkrjuzurpg8rdh0eawu",
-      "google_place_id": "ChIJRfL0BKrjUzURpG8RDh0eAwU",
-      "kind": "restaurant",
-      "provenance": {
-        "source_type": "provider",
-        "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.936896+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.352548+00:00",
         "status": "confirmed",
         "confidence": 0.85
       }
@@ -358,19 +334,19 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.936998+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.352656+00:00",
         "status": "confirmed",
         "confidence": 0.85
       }
     },
     {
-      "id": "google-chijos3ixfjxuturb-6ybdvekzu",
-      "google_place_id": "ChIJOS3ixFJXUTURB-6yBDveKZU",
+      "id": "google-chijz7gyvr8hvdurw4nygop4tx8",
+      "google_place_id": "ChIJz7gYvR8HVDURw4nyGop4TX8",
       "kind": "restaurant",
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.937131+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.352793+00:00",
         "status": "confirmed",
         "confidence": 0.85
       }
@@ -382,7 +358,19 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.937244+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.352892+00:00",
+        "status": "confirmed",
+        "confidence": 0.85
+      }
+    },
+    {
+      "id": "google-chijos3ixfjxuturb-6ybdvekzu",
+      "google_place_id": "ChIJOS3ixFJXUTURB-6yBDveKZU",
+      "kind": "restaurant",
+      "provenance": {
+        "source_type": "provider",
+        "provider": "Google Places API (New)",
+        "retrieved_at": "2026-10-08T07:09:07.352984+00:00",
         "status": "confirmed",
         "confidence": 0.85
       }
@@ -394,19 +382,19 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.937362+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.353070+00:00",
         "status": "confirmed",
         "confidence": 0.85
       }
     },
     {
-      "id": "google-chij8bfdhdhwuturw7y0rxb4ieq",
-      "google_place_id": "ChIJ8bFdhDhWUTURw7Y0RxB4ieQ",
+      "id": "google-chijrfl0bkrjuzurpg8rdh0eawu",
+      "google_place_id": "ChIJRfL0BKrjUzURpG8RDh0eAwU",
       "kind": "restaurant",
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.937493+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.353165+00:00",
         "status": "confirmed",
         "confidence": 0.85
       }
@@ -418,43 +406,7 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.937683+00:00",
-        "status": "confirmed",
-        "confidence": 0.85
-      }
-    },
-    {
-      "id": "google-chij4zxffebwuturf4wmmmzrksu",
-      "google_place_id": "ChIJ4ZXffEBWUTURf4WMMmZRksU",
-      "kind": "restaurant",
-      "provenance": {
-        "source_type": "provider",
-        "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.937854+00:00",
-        "status": "confirmed",
-        "confidence": 0.85
-      }
-    },
-    {
-      "id": "google-chijxczoollxutur8dzf3qnepb4",
-      "google_place_id": "ChIJXcZOOllXUTUR8DZF3qNepb4",
-      "kind": "restaurant",
-      "provenance": {
-        "source_type": "provider",
-        "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.938001+00:00",
-        "status": "confirmed",
-        "confidence": 0.85
-      }
-    },
-    {
-      "id": "google-chijm5pvsifxuturzt4hktdthkw",
-      "google_place_id": "ChIJM5pVsIFXUTURzt4hkTDthKw",
-      "kind": "restaurant",
-      "provenance": {
-        "source_type": "provider",
-        "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.938180+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.353237+00:00",
         "status": "confirmed",
         "confidence": 0.85
       }
@@ -466,31 +418,79 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.938295+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.353368+00:00",
         "status": "confirmed",
         "confidence": 0.85
       }
     },
     {
-      "id": "google-chije-litkhwuturhpxaohfddyo",
-      "google_place_id": "ChIJe-lITkhWUTURhPxaOHfDdyo",
+      "id": "google-chijsyggl4lwuturethu5kt_ig0",
+      "google_place_id": "ChIJsYGGl4lWUTUREtHu5KT_Ig0",
       "kind": "restaurant",
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.938486+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.353496+00:00",
         "status": "confirmed",
         "confidence": 0.85
       }
     },
     {
-      "id": "google-chijvblqxcbxutursdkl8dn0ua0",
-      "google_place_id": "ChIJvbLQxcBXUTURsDKl8dn0ua0",
+      "id": "google-chij4rqhkkhxuturowvqsiobyjk",
+      "google_place_id": "ChIJ4RQHkkhXUTUROWVQsIoBYjk",
       "kind": "restaurant",
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.938620+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.353567+00:00",
+        "status": "confirmed",
+        "confidence": 0.85
+      }
+    },
+    {
+      "id": "google-chij4zxffebwuturf4wmmmzrksu",
+      "google_place_id": "ChIJ4ZXffEBWUTURf4WMMmZRksU",
+      "kind": "restaurant",
+      "provenance": {
+        "source_type": "provider",
+        "provider": "Google Places API (New)",
+        "retrieved_at": "2026-10-08T07:09:07.353653+00:00",
+        "status": "confirmed",
+        "confidence": 0.85
+      }
+    },
+    {
+      "id": "google-chijm5pvsifxuturzt4hktdthkw",
+      "google_place_id": "ChIJM5pVsIFXUTURzt4hkTDthKw",
+      "kind": "restaurant",
+      "provenance": {
+        "source_type": "provider",
+        "provider": "Google Places API (New)",
+        "retrieved_at": "2026-10-08T07:09:07.353734+00:00",
+        "status": "confirmed",
+        "confidence": 0.85
+      }
+    },
+    {
+      "id": "google-chijveprx09xuturunnbtu5153e",
+      "google_place_id": "ChIJvePrx09XUTURUNnbTu5153E",
+      "kind": "restaurant",
+      "provenance": {
+        "source_type": "provider",
+        "provider": "Google Places API (New)",
+        "retrieved_at": "2026-10-08T07:09:07.353818+00:00",
+        "status": "confirmed",
+        "confidence": 0.85
+      }
+    },
+    {
+      "id": "google-chij8bfdhdhwuturw7y0rxb4ieq",
+      "google_place_id": "ChIJ8bFdhDhWUTURw7Y0RxB4ieQ",
+      "kind": "restaurant",
+      "provenance": {
+        "source_type": "provider",
+        "provider": "Google Places API (New)",
+        "retrieved_at": "2026-10-08T07:09:07.353915+00:00",
         "status": "confirmed",
         "confidence": 0.85
       }
@@ -502,7 +502,7 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.935814+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.351915+00:00",
         "status": "confirmed",
         "confidence": 0.85
       },
@@ -513,7 +513,7 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.936080+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.352150+00:00",
         "status": "confirmed",
         "confidence": 0.85
       },
@@ -524,7 +524,7 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.936221+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.352247+00:00",
         "status": "confirmed",
         "confidence": 0.85
       },
@@ -535,18 +535,7 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.936346+00:00",
-        "status": "confirmed",
-        "confidence": 0.85
-      },
-      "fields": {}
-    },
-    {
-      "place_id": "google-chijz7gyvr8hvdurw4nygop4tx8",
-      "provenance": {
-        "source_type": "provider",
-        "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.936478+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.352340+00:00",
         "status": "confirmed",
         "confidence": 0.85
       },
@@ -557,7 +546,7 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.936620+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.352434+00:00",
         "status": "confirmed",
         "confidence": 0.85
       },
@@ -568,18 +557,7 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.936760+00:00",
-        "status": "confirmed",
-        "confidence": 0.85
-      },
-      "fields": {}
-    },
-    {
-      "place_id": "google-chijrfl0bkrjuzurpg8rdh0eawu",
-      "provenance": {
-        "source_type": "provider",
-        "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.936896+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.352548+00:00",
         "status": "confirmed",
         "confidence": 0.85
       },
@@ -590,18 +568,18 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.936998+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.352656+00:00",
         "status": "confirmed",
         "confidence": 0.85
       },
       "fields": {}
     },
     {
-      "place_id": "google-chijos3ixfjxuturb-6ybdvekzu",
+      "place_id": "google-chijz7gyvr8hvdurw4nygop4tx8",
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.937131+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.352793+00:00",
         "status": "confirmed",
         "confidence": 0.85
       },
@@ -612,7 +590,18 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.937244+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.352892+00:00",
+        "status": "confirmed",
+        "confidence": 0.85
+      },
+      "fields": {}
+    },
+    {
+      "place_id": "google-chijos3ixfjxuturb-6ybdvekzu",
+      "provenance": {
+        "source_type": "provider",
+        "provider": "Google Places API (New)",
+        "retrieved_at": "2026-10-08T07:09:07.352984+00:00",
         "status": "confirmed",
         "confidence": 0.85
       },
@@ -623,18 +612,18 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.937362+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.353070+00:00",
         "status": "confirmed",
         "confidence": 0.85
       },
       "fields": {}
     },
     {
-      "place_id": "google-chij8bfdhdhwuturw7y0rxb4ieq",
+      "place_id": "google-chijrfl0bkrjuzurpg8rdh0eawu",
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.937493+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.353165+00:00",
         "status": "confirmed",
         "confidence": 0.85
       },
@@ -645,40 +634,7 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.937683+00:00",
-        "status": "confirmed",
-        "confidence": 0.85
-      },
-      "fields": {}
-    },
-    {
-      "place_id": "google-chij4zxffebwuturf4wmmmzrksu",
-      "provenance": {
-        "source_type": "provider",
-        "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.937854+00:00",
-        "status": "confirmed",
-        "confidence": 0.85
-      },
-      "fields": {}
-    },
-    {
-      "place_id": "google-chijxczoollxutur8dzf3qnepb4",
-      "provenance": {
-        "source_type": "provider",
-        "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.938001+00:00",
-        "status": "confirmed",
-        "confidence": 0.85
-      },
-      "fields": {}
-    },
-    {
-      "place_id": "google-chijm5pvsifxuturzt4hktdthkw",
-      "provenance": {
-        "source_type": "provider",
-        "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.938180+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.353237+00:00",
         "status": "confirmed",
         "confidence": 0.85
       },
@@ -689,29 +645,73 @@
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.938295+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.353368+00:00",
         "status": "confirmed",
         "confidence": 0.85
       },
       "fields": {}
     },
     {
-      "place_id": "google-chije-litkhwuturhpxaohfddyo",
+      "place_id": "google-chijsyggl4lwuturethu5kt_ig0",
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.938486+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.353496+00:00",
         "status": "confirmed",
         "confidence": 0.85
       },
       "fields": {}
     },
     {
-      "place_id": "google-chijvblqxcbxutursdkl8dn0ua0",
+      "place_id": "google-chij4rqhkkhxuturowvqsiobyjk",
       "provenance": {
         "source_type": "provider",
         "provider": "Google Places API (New)",
-        "retrieved_at": "2026-10-08T05:46:20.938620+00:00",
+        "retrieved_at": "2026-10-08T07:09:07.353567+00:00",
+        "status": "confirmed",
+        "confidence": 0.85
+      },
+      "fields": {}
+    },
+    {
+      "place_id": "google-chij4zxffebwuturf4wmmmzrksu",
+      "provenance": {
+        "source_type": "provider",
+        "provider": "Google Places API (New)",
+        "retrieved_at": "2026-10-08T07:09:07.353653+00:00",
+        "status": "confirmed",
+        "confidence": 0.85
+      },
+      "fields": {}
+    },
+    {
+      "place_id": "google-chijm5pvsifxuturzt4hktdthkw",
+      "provenance": {
+        "source_type": "provider",
+        "provider": "Google Places API (New)",
+        "retrieved_at": "2026-10-08T07:09:07.353734+00:00",
+        "status": "confirmed",
+        "confidence": 0.85
+      },
+      "fields": {}
+    },
+    {
+      "place_id": "google-chijveprx09xuturunnbtu5153e",
+      "provenance": {
+        "source_type": "provider",
+        "provider": "Google Places API (New)",
+        "retrieved_at": "2026-10-08T07:09:07.353818+00:00",
+        "status": "confirmed",
+        "confidence": 0.85
+      },
+      "fields": {}
+    },
+    {
+      "place_id": "google-chij8bfdhdhwuturw7y0rxb4ieq",
+      "provenance": {
+        "source_type": "provider",
+        "provider": "Google Places API (New)",
+        "retrieved_at": "2026-10-08T07:09:07.353915+00:00",
         "status": "confirmed",
         "confidence": 0.85
       },
@@ -728,18 +728,25 @@
       "summary": "",
       "items": [
         {
+          "id": "day1-google-chijmyktf7pxuturcwia8yt_kg0",
+          "kind": "meal",
+          "start_at": "2026-11-01T08:00:00+09:00",
+          "end_at": "2026-11-01T09:00:00+09:00",
+          "place_id": "google-chijmyktf7pxuturcwia8yt_kg0"
+        },
+        {
           "id": "day1-google-chijvvxfludwutur0ep250fshz0",
           "kind": "visit",
-          "start_at": "2026-11-01T09:00:00+09:00",
-          "end_at": "2026-11-01T11:00:00+09:00",
+          "start_at": "2026-11-01T09:30:00+09:00",
+          "end_at": "2026-11-01T11:30:00+09:00",
           "place_id": "google-chijvvxfludwutur0ep250fshz0"
         },
         {
-          "id": "day1-google-chij_9o0pzjxutur-n-yejzzhny",
+          "id": "day1-google-chijxxjrojn-uzurgsq3njvs2mo",
           "kind": "meal",
           "start_at": "2026-11-01T12:30:00+09:00",
           "end_at": "2026-11-01T13:30:00+09:00",
-          "place_id": "google-chij_9o0pzjxutur-n-yejzzhny"
+          "place_id": "google-chijxxjrojn-uzurgsq3njvs2mo"
         },
         {
           "id": "day1-google-chija-u-r0zwuturymjwrukh3ck",
@@ -749,11 +756,11 @@
           "place_id": "google-chija-u-r0zwuturymjwrukh3ck"
         },
         {
-          "id": "day1-google-chijuemwxixwutur4j6vkxi7qss",
+          "id": "day1-google-chijlfbautnwuturfj2t_qnh_3a",
           "kind": "meal",
           "start_at": "2026-11-01T18:30:00+09:00",
           "end_at": "2026-11-01T19:30:00+09:00",
-          "place_id": "google-chijuemwxixwutur4j6vkxi7qss"
+          "place_id": "google-chijlfbautnwuturfj2t_qnh_3a"
         }
       ]
     },
@@ -762,18 +769,25 @@
       "summary": "",
       "items": [
         {
+          "id": "day2-google-chija7micepwuturrvt3seurjzo",
+          "kind": "meal",
+          "start_at": "2026-11-02T08:00:00+09:00",
+          "end_at": "2026-11-02T09:00:00+09:00",
+          "place_id": "google-chija7micepwuturrvt3seurjzo"
+        },
+        {
           "id": "day2-google-chij1do4lkdwuturvg3rfkfpzhe",
           "kind": "visit",
-          "start_at": "2026-11-02T09:00:00+09:00",
-          "end_at": "2026-11-02T10:30:00+09:00",
+          "start_at": "2026-11-02T09:30:00+09:00",
+          "end_at": "2026-11-02T11:00:00+09:00",
           "place_id": "google-chij1do4lkdwuturvg3rfkfpzhe"
         },
         {
-          "id": "day2-google-chijos3ixfjxuturb-6ybdvekzu",
+          "id": "day2-google-chijh52rf4lxuturdd2tqater1k",
           "kind": "meal",
           "start_at": "2026-11-02T12:30:00+09:00",
           "end_at": "2026-11-02T13:30:00+09:00",
-          "place_id": "google-chijos3ixfjxuturb-6ybdvekzu"
+          "place_id": "google-chijh52rf4lxuturdd2tqater1k"
         },
         {
           "id": "day2-google-chij04vydjhwuturw5wobgzlsae",
@@ -783,11 +797,11 @@
           "place_id": "google-chij04vydjhwuturw5wobgzlsae"
         },
         {
-          "id": "day2-google-chijc7yoqthwuturt2yfkt-oswc",
+          "id": "day2-google-chijuemwxixwutur4j6vkxi7qss",
           "kind": "meal",
           "start_at": "2026-11-02T18:30:00+09:00",
           "end_at": "2026-11-02T19:30:00+09:00",
-          "place_id": "google-chijc7yoqthwuturt2yfkt-oswc"
+          "place_id": "google-chijuemwxixwutur4j6vkxi7qss"
         }
       ]
     },
@@ -796,39 +810,39 @@
       "summary": "",
       "items": [
         {
-          "id": "day3-google-chija7micepwuturrvt3seurjzo",
+          "id": "day3-google-chijm5pvsifxuturzt4hktdthkw",
           "kind": "meal",
           "start_at": "2026-11-03T08:00:00+09:00",
           "end_at": "2026-11-03T09:00:00+09:00",
-          "place_id": "google-chija7micepwuturrvt3seurjzo"
+          "place_id": "google-chijm5pvsifxuturzt4hktdthkw"
         },
         {
-          "id": "day3-google-chijrxy5kknwuturqyrg1nehao8",
+          "id": "day3-google-chij-1osmknwuturo_cifk1mkwi",
           "kind": "visit",
           "start_at": "2026-11-03T09:30:00+09:00",
           "end_at": "2026-11-03T11:00:00+09:00",
-          "place_id": "google-chijrxy5kknwuturqyrg1nehao8"
+          "place_id": "google-chij-1osmknwuturo_cifk1mkwi"
         },
         {
-          "id": "day3-google-chije-litkhwuturhpxaohfddyo",
+          "id": "day3-google-chijc7yoqthwuturt2yfkt-oswc",
           "kind": "meal",
           "start_at": "2026-11-03T12:30:00+09:00",
           "end_at": "2026-11-03T13:30:00+09:00",
-          "place_id": "google-chije-litkhwuturhpxaohfddyo"
+          "place_id": "google-chijc7yoqthwuturt2yfkt-oswc"
         },
         {
-          "id": "day3-google-chijz70fnuhwutursefxe9yldle",
+          "id": "day3-google-chijs7r7pkrwuturuxtawxaikyc",
           "kind": "visit",
           "start_at": "2026-11-03T14:00:00+09:00",
-          "end_at": "2026-11-03T16:00:00+09:00",
-          "place_id": "google-chijz70fnuhwutursefxe9yldle"
+          "end_at": "2026-11-03T15:30:00+09:00",
+          "place_id": "google-chijs7r7pkrwuturuxtawxaikyc"
         },
         {
-          "id": "day3-google-chijxxjrojn-uzurgsq3njvs2mo",
+          "id": "day3-google-chijveprx09xuturunnbtu5153e",
           "kind": "meal",
           "start_at": "2026-11-03T18:30:00+09:00",
           "end_at": "2026-11-03T19:30:00+09:00",
-          "place_id": "google-chijxxjrojn-uzurgsq3njvs2mo"
+          "place_id": "google-chijveprx09xuturunnbtu5153e"
         }
       ]
     },
@@ -837,32 +851,39 @@
       "summary": "",
       "items": [
         {
-          "id": "day4-google-chij-1osmknwuturo_cifk1mkwi",
-          "kind": "visit",
-          "start_at": "2026-11-04T09:00:00+09:00",
-          "end_at": "2026-11-04T10:30:00+09:00",
-          "place_id": "google-chij-1osmknwuturo_cifk1mkwi"
-        },
-        {
-          "id": "day4-google-chijz7gyvr8hvdurw4nygop4tx8",
+          "id": "day4-google-chijos3ixfjxuturb-6ybdvekzu",
           "kind": "meal",
-          "start_at": "2026-11-04T12:30:00+09:00",
-          "end_at": "2026-11-04T13:30:00+09:00",
-          "place_id": "google-chijz7gyvr8hvdurw4nygop4tx8"
+          "start_at": "2026-11-04T08:00:00+09:00",
+          "end_at": "2026-11-04T09:00:00+09:00",
+          "place_id": "google-chijos3ixfjxuturb-6ybdvekzu"
         },
         {
-          "id": "day4-google-chijs7r7pkrwuturuxtawxaikyc",
+          "id": "day4-google-chijrxy5kknwuturqyrg1nehao8",
           "kind": "visit",
-          "start_at": "2026-11-04T14:00:00+09:00",
-          "end_at": "2026-11-04T15:30:00+09:00",
-          "place_id": "google-chijs7r7pkrwuturuxtawxaikyc"
+          "start_at": "2026-11-04T09:30:00+09:00",
+          "end_at": "2026-11-04T11:00:00+09:00",
+          "place_id": "google-chijrxy5kknwuturqyrg1nehao8"
         },
         {
           "id": "day4-google-chij5wv00m5yuturoal31xszuyi",
           "kind": "meal",
+          "start_at": "2026-11-04T12:30:00+09:00",
+          "end_at": "2026-11-04T13:30:00+09:00",
+          "place_id": "google-chij5wv00m5yuturoal31xszuyi"
+        },
+        {
+          "id": "day4-google-chijz70fnuhwutursefxe9yldle",
+          "kind": "visit",
+          "start_at": "2026-11-04T14:00:00+09:00",
+          "end_at": "2026-11-04T16:00:00+09:00",
+          "place_id": "google-chijz70fnuhwutursefxe9yldle"
+        },
+        {
+          "id": "day4-google-chijyx_3wrbxutur8iqrbihozac",
+          "kind": "meal",
           "start_at": "2026-11-04T18:30:00+09:00",
           "end_at": "2026-11-04T19:30:00+09:00",
-          "place_id": "google-chij5wv00m5yuturoal31xszuyi"
+          "place_id": "google-chijyx_3wrbxutur8iqrbihozac"
         }
       ]
     },
@@ -871,18 +892,25 @@
       "summary": "",
       "items": [
         {
+          "id": "day5-google-chij4zxffebwuturf4wmmmzrksu",
+          "kind": "meal",
+          "start_at": "2026-11-05T08:00:00+09:00",
+          "end_at": "2026-11-05T09:00:00+09:00",
+          "place_id": "google-chij4zxffebwuturf4wmmmzrksu"
+        },
+        {
           "id": "day5-google-chijhbmbvkdwutursebrfp3lg_i",
           "kind": "visit",
-          "start_at": "2026-11-05T09:00:00+09:00",
-          "end_at": "2026-11-05T10:30:00+09:00",
+          "start_at": "2026-11-05T09:30:00+09:00",
+          "end_at": "2026-11-05T11:00:00+09:00",
           "place_id": "google-chijhbmbvkdwutursebrfp3lg_i"
         },
         {
-          "id": "day5-google-chijxczoollxutur8dzf3qnepb4",
+          "id": "day5-google-chij4rqhkkhxuturowvqsiobyjk",
           "kind": "meal",
           "start_at": "2026-11-05T12:30:00+09:00",
           "end_at": "2026-11-05T13:30:00+09:00",
-          "place_id": "google-chijxczoollxutur8dzf3qnepb4"
+          "place_id": "google-chij4rqhkkhxuturowvqsiobyjk"
         },
         {
           "id": "day5-google-chiji3g8mrpxuturu0dasdlzphw",
@@ -892,11 +920,11 @@
           "place_id": "google-chiji3g8mrpxuturu0dasdlzphw"
         },
         {
-          "id": "day5-google-chijyx_3wrbxutur8iqrbihozac",
+          "id": "day5-google-chij_9o0pzjxutur-n-yejzzhny",
           "kind": "meal",
           "start_at": "2026-11-05T18:30:00+09:00",
           "end_at": "2026-11-05T19:30:00+09:00",
-          "place_id": "google-chijyx_3wrbxutur8iqrbihozac"
+          "place_id": "google-chij_9o0pzjxutur-n-yejzzhny"
         }
       ]
     }
@@ -962,67 +990,12 @@
       "severity": "warning"
     },
     {
-      "code": "schedule.poi_candidate_unselected",
-      "message": "Google Places 候選未排入：所需營業時間或路線尚未驗證。",
-      "severity": "warning"
-    },
-    {
-      "code": "schedule.poi_candidate_unselected",
-      "message": "Google Places 候選未排入：所需營業時間或路線尚未驗證。",
-      "severity": "warning"
-    },
-    {
-      "code": "schedule.poi_candidate_unselected",
-      "message": "Google Places 候選未排入：所需營業時間或路線尚未驗證。",
-      "severity": "warning"
-    },
-    {
-      "code": "schedule.poi_candidate_unselected",
-      "message": "Google Places 候選未排入：所需營業時間或路線尚未驗證。",
-      "severity": "warning"
-    },
-    {
-      "code": "schedule.poi_candidate_unselected",
-      "message": "Google Places 候選未排入：所需營業時間或路線尚未驗證。",
-      "severity": "warning"
-    },
-    {
-      "code": "schedule.poi_candidate_unselected",
-      "message": "Google Places 候選未排入：所需營業時間或路線尚未驗證。",
-      "severity": "warning"
-    },
-    {
-      "code": "schedule.poi_candidate_unselected",
-      "message": "Google Places 候選未排入：所需營業時間或路線尚未驗證。",
-      "severity": "warning"
-    },
-    {
-      "code": "meal.period_unselected",
-      "message": "2026-11-01 有 1 個餐段未找到營業時間已驗證且路線可行的獨立餐廳；請選擇餐廳後再安排。",
-      "severity": "warning"
-    },
-    {
-      "code": "meal.period_unselected",
-      "message": "2026-11-02 有 1 個餐段未找到營業時間已驗證且路線可行的獨立餐廳；請選擇餐廳後再安排。",
-      "severity": "warning"
-    },
-    {
-      "code": "meal.period_unselected",
-      "message": "2026-11-04 有 1 個餐段未找到營業時間已驗證且路線可行的獨立餐廳；請選擇餐廳後再安排。",
-      "severity": "warning"
-    },
-    {
-      "code": "meal.period_unselected",
-      "message": "2026-11-05 有 1 個餐段未找到營業時間已驗證且路線可行的獨立餐廳；請選擇餐廳後再安排。",
-      "severity": "warning"
-    },
-    {
       "code": "budget.incomplete",
       "message": "known cost subtotal excludes unpriced trip categories",
       "severity": "warning"
     }
   ],
   "meta": {
-    "generated_at": "2026-10-08T06:13:34+00:00"
+    "generated_at": "2026-10-08T07:13:47+00:00"
   }
 }
