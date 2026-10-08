@@ -84,3 +84,18 @@
 - 若繼續使用 Places API，還需要重新界定規劃流程，使禁止保存／再託管的欄位不進入持久化 Canonical Trip、靜態 HTML、Git Pages、日誌及長期 ChatGPT 摘要，並確保介面仍能合法實現規劃目標。現有 Google Places adapter 是 production 唯一景點發現來源，不能用「加 attribution」宣稱此設計已解決。
 
 自動測試目前只保證 GitHub Pages 動態 publisher 會拒絕新的 Google Places provider provenance；尚未建立 Railway historical-data migration、座標期限刪除或靜態舊 bundle 處置驗證。Issue #199 在這些範圍完備前保持開啟。
+
+## 2026-10-08 OpenRouteService POI 替代來源唯讀試查
+
+HeiGIT 官方 API 文件列有 OpenPOIService，路徑為 `https://api.heigit.org/openpoiservice/v0/pois`，資料由 OpenStreetMap 衍生；官方文件另列 POI 面積與搜尋半徑限制。既有 `OPENROUTESERVICE_API_KEY` 已以 production matrix 單次請求確認可用於 `api.heigit.org`，但這不代表 POI endpoint 已能提供所需資料。
+
+使用 Railway production 注入的既有 key，對 OpenPOIService 執行三次唯讀試查：倉敷中心附近一次、HeiGIT 文件範例座標附近兩次（分類篩選與未篩選）。三次均回 HTTP 200 `FeatureCollection`，但 `features` 都是空陣列；只記錄狀態與筆數，沒有輸出或保存地點內容，也沒有修改行程資料。這是有限的 endpoint/schema/coverage 試查，不足以證明整個服務無資料；目前不能把 OpenPOIService 宣稱為可用的 Google Places 替代來源。
+
+官方參考：
+
+- [HeiGIT OpenPOIService API 文件](https://giscience.github.io/openrouteservice/api-reference/endpoints/poi/)
+- [OpenRouteService 網域遷移公告](https://ask.openrouteservice.org/t/deprecating-api-openrouteservice-org-in-favour-of-api-heigit-org/7912)
+- [OpenRouteService 服務條款與資料來源／歸屬說明](https://ask.openrouteservice.org/tos)
+- [OpenStreetMap 著作權與 ODbL 說明](https://www.openstreetmap.org/copyright)
+
+若後續採用 OSM 衍生 POI，仍須處理 ODbL attribution／share-alike、來源逐欄 provenance、公開頁呈現及資料生命週期；API 呼叫成功本身不解決授權與產品呈現問題。#199 保持開啟。
