@@ -89,7 +89,7 @@
 
 HeiGIT 官方 API 文件列有 OpenPOIService，路徑為 `https://api.heigit.org/openpoiservice/v0/pois`，資料由 OpenStreetMap 衍生；官方文件另列 POI 面積與搜尋半徑限制。既有 `OPENROUTESERVICE_API_KEY` 已以 production matrix 單次請求確認可用於 `api.heigit.org`，但這不代表 POI endpoint 已能提供所需資料。
 
-使用 Railway production 注入的既有 key，對 OpenPOIService 執行三次唯讀試查：倉敷中心附近一次、HeiGIT 文件範例座標附近兩次（分類篩選與未篩選）。三次均回 HTTP 200 `FeatureCollection`，但 `features` 都是空陣列；只記錄狀態與筆數，沒有輸出或保存地點內容，也沒有修改行程資料。這是有限的 endpoint/schema/coverage 試查，不足以證明整個服務無資料；目前不能把 OpenPOIService 宣稱為可用的 Google Places 替代來源。
+使用 Railway production 注入的既有 key，對 OpenPOIService 執行四次唯讀試查：倉敷中心附近一次、HeiGIT 文件範例座標附近三次（含不同分類篩選、帶 bbox 與不帶 bbox）。四次均回 HTTP 200 `FeatureCollection`，但 `features` 都是空陣列；只記錄狀態與筆數，沒有輸出或保存地點內容，也沒有修改行程資料。這是有限的 endpoint/schema/coverage 試查，不足以證明整個服務無資料；目前不能把 OpenPOIService 宣稱為可用的 Google Places 替代來源。
 
 官方參考：
 
