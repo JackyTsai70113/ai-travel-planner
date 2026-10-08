@@ -24,7 +24,7 @@
 
 ## 最新正式環境與一般 Chat 檢查（2026-10-09）
 
-- `main` 為 `530144f23546776088975f796e3cc2c18d1f8641`；Railway production deployment `aa3ef82c-f4ec-401d-9417-9d6e1aba59aa` 為 `SUCCESS`，來源 merge commit `530144f`。`/health` 回 HTTP 200／`ok`；透過 Railway CLI 注入環境變數但不輸出值，正式 `tools/list` 回 HTTP 200 並列出七項工具：`parse_trip_request`、`validate_trip`、`get_trip`、`get_place_details`、`plan_trip`、`build_trip_site`、`publish_trip_site`。
+- Railway production deployment `aa3ef82c-f4ec-401d-9417-9d6e1aba59aa` 為 `SUCCESS`，source commit `530144f23546776088975f796e3cc2c18d1f8641`（PR #265 merge commit）。後續 main 只有倉敷公開行程投影與驗收文件變更，未改動 Railway 監看的 backend source。`/health` 回 HTTP 200／`ok`；透過 Railway CLI 注入環境變數但不輸出值，正式 `tools/list` 回 HTTP 200 並列出七項工具：`parse_trip_request`、`validate_trip`、`get_trip`、`get_place_details`、`plan_trip`、`build_trip_site`、`publish_trip_site`。
 - 2026-10-09 使用 AI Travel Planner MCP 明確覆寫既有倉敷公開行程。`publish_trip_site` 回 `publish_accepted`，commit `4380781d3cf91cd41656176769b2c2403feb03c6`；Pages workflow `37832158960` 成功。使用同一個 Chrome 視窗實際打開公開頁與 D1，看到即時載入的 `大原美術館`、`Caty Cafe`、`大橋家住宅` 等名稱，以及 Google Maps 標示。公開 bundle 有 `place_details_api_base_url` 和 Place ID，未持久化 Google 地點名稱。此次只更新公開投影，未改寫行程內容；行程仍標示住宿與費用未完成。
 - 一般 ChatGPT Chat 的外掛清單及選取器中均可見 `AI Travel Planner MCP`；外掛設定頁顯示 OAuth 與 `/mcp` endpoint。按下「重新整理工具」後按鈕持續 disabled，畫面沒有完成或失敗提示。新的一般 Chat composer 已選取 MCP，保持空白；沒有代替維護者輸入或送出 prompt，也未觀察到實際 ChatGPT MCP 工具呼叫。因此 #179 的一般 Chat 呼叫驗收仍未通過。
 
