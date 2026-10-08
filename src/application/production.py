@@ -226,7 +226,7 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
         raise ProductionIncompleteError("live provider results are insufficient for a complete trip (need POIs)")
     selected_hotel = _select_hotel_candidate(hotels, intent, start, end, flights, collections["places"])
     hotel_id = selected_hotel["place"]["id"] if selected_hotel else None
-    _assign_route_aware_poi_schedule(
+    feasible_poi_ids = _assign_route_aware_poi_schedule(
         places, days_count, start, _local_timezone(intent), hotel_id, routing,
         low_fatigue=intent.pace == "relaxed" or any(preference.kind == "low_fatigue" for preference in intent.soft_preferences),
     )
@@ -279,7 +279,7 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
         for finding in scheduled.violations
         if finding.severity != "error"
     )
-    _add_unselected_poi_warnings(scheduled.trip, places)
+    _add_unselected_poi_warnings(scheduled.trip, places, feasible_poi_ids)
     _add_unfilled_meal_warnings(scheduled.trip)
     return [scheduled.trip]
 
@@ -287,12 +287,14 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
 def _assign_route_aware_poi_schedule(
     places: Sequence[dict], days_count: int, start: date, timezone_name: str,
     hotel_id: str | None, routing: ValidationContext, *, low_fatigue: bool = False,
-) -> None:
-    """Assign two POIs per day only when verified hours and directed routes fit.
+) -> set[str]:
+    """Assign two POIs per day and return candidates that can fit a day.
 
     Visit lengths are explicit planning estimates, never provider or opening-hour
     facts. A missing provider schedule receives a labeled estimate; missing
     hours or routes remain unavailable and can make the result incomplete.
+    Unselected candidates in the returned set are feasible alternatives, not
+    itinerary validation warnings.
     """
     eligible: list[dict] = []
     unavailable: list[str] = []
@@ -440,6 +442,10 @@ def _assign_route_aware_poi_schedule(
         failures.extend((start + timedelta(days=day_number - 1)).isoformat() for day_number in ordered_days)
 
     if not failures:
+        feasible_ids = set(selected_ids)
+        for options in options_by_day.values():
+            for option in options:
+                feasible_ids.update((eligible[option[2]]["id"], eligible[option[3]]["id"]))
         for day_number, option in assignment.items():
             _, _, first_index, second_index, first_start, second_start = option
             for place, slot in ((eligible[first_index], first_start), (eligible[second_index], second_start)):
@@ -455,6 +461,7 @@ def _assign_route_aware_poi_schedule(
         raise ProductionIncompleteError(
             f"route-aware scheduling requires two feasible POIs per day; no feasible assignment for {', '.join(failures)}. Missing facts include: {missing}"
         )
+    return feasible_ids
 
 
 def _estimated_visit_duration(place: Mapping[str, object]) -> int:
@@ -467,14 +474,15 @@ def _estimated_visit_duration(place: Mapping[str, object]) -> int:
     return 90
 
 
-def _add_unselected_poi_warnings(trip: dict, places: Sequence[dict]) -> None:
+def _add_unselected_poi_warnings(trip: dict, places: Sequence[dict], feasible_ids: set[str]) -> None:
     for place in places:
-        if place.get("schedule", {}).get("selected") is True:
+        schedule = place.get("schedule", {})
+        if schedule.get("selected") is True or place.get("id") in feasible_ids:
             continue
         if not any(item.get("place_id") == place.get("id") for day in trip.get("days", []) for item in day.get("items", [])):
             trip.setdefault("validation", []).append({
                 "code": "schedule.poi_candidate_unselected", "severity": "warning",
-                "message": f"候選景點「{place.get('name', place.get('id', ''))}」未排入：未能驗證所需的營業時間或路線。",
+                "message": f"候選景點「{place.get('name', place.get('id', ''))}」未排入：未能驗證營業時間與路線是否符合行程。",
                 "path": f"/candidate_sets/places/{place.get('id', '')}/schedule",
             })
 
