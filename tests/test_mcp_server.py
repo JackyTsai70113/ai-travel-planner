@@ -480,6 +480,27 @@ class MCPTravelServerTests(unittest.TestCase):
 
     def test_public_publisher_keeps_id_and_html_omits_google_details(self) -> None:
         from src.google_places_storage import durable_trip
+        nested = durable_trip({
+            "candidate_sets": {
+                "places": [{
+                    "id": "google:place",
+                    "kind": "poi",
+                    "provenance": {"provider": "Google Places API (New)"},
+                    "place": {
+                        "id": "google:place",
+                        "google_place_id": "ChIJ-nested",
+                        "kind": "poi",
+                        "name": "Transient nested name",
+                        "address": "Transient nested address",
+                    },
+                }]
+            }
+        })
+        nested_place = nested["candidate_sets"]["places"][0]["place"]
+        self.assertEqual("ChIJ-nested", nested_place["google_place_id"])
+        self.assertNotIn("name", nested_place)
+        self.assertNotIn("address", nested_place)
+
         fixture = json.loads((Path(__file__).parent.parent / "fixtures/trips/japan-5-day-trip-v1.json").read_text(encoding="utf-8"))
         for index, day in enumerate(fixture["days"], start=1):
             day["items"].append({

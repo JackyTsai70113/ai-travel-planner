@@ -39,7 +39,10 @@ def _durable_candidate(candidate: Any) -> Any:
         # are fetched again when requested.
         safe: dict[str, Any] = {}
         if isinstance(candidate.get("place"), dict):
-            safe["place"] = candidate["place"]
+            # Provenance is sometimes recorded on the candidate wrapper
+            # instead of the nested place. Treat all nested detail fields as
+            # Google-derived unless field-level provenance proves otherwise.
+            safe["place"] = _durable_place(candidate["place"])
         for field in ("id", "google_place_id", "kind"):
             if field in candidate:
                 safe[field] = candidate[field]
