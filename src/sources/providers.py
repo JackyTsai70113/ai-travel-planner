@@ -17,7 +17,7 @@ from typing import Any, Iterable, Mapping, Protocol
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from .adapters import SourceAdapter, SourceQuery
+from .adapters import AdapterFailure, SourceAdapter, SourceQuery
 from src.opening_hours import HoursStatus, OpeningHoursSnapshot, OpeningInterval, SpecialHours, snapshot_to_mapping
 
 
@@ -115,28 +115,42 @@ class GooglePlacesAdapter(SourceAdapter):
         self.api_key = api_key or os.getenv("GOOGLE_MAPS_API_KEY")
         self.http_client = http_client or UrllibJsonHttpClient()
         self.now = now
+        self.failures: list[AdapterFailure] = []
 
     def fetch(self, query: SourceQuery) -> Iterable[tuple[str, dict[str, Any]]]:
+        self.failures = []
         if not self.api_key:
             raise ProviderConfigurationError("GOOGLE_MAPS_API_KEY is required for Google Places")
         result: list[tuple[str, dict[str, Any]]] = []
         for category, text in (("pois", "tourist attractions"), ("restaurants", _restaurant_search_text(query.destination))):
             if category not in query.categories:
                 continue
-            payload = self.http_client.request_json(
-                "POST", self.endpoint,
-                headers={
-                    "Content-Type": "application/json",
-                    "X-Goog-Api-Key": self.api_key,
-                    "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location,places.googleMapsUri,places.websiteUri,places.rating,places.userRatingCount,places.primaryType,places.types,places.priceLevel,places.regularOpeningHours,places.currentOpeningHours,places.timeZone,places.businessStatus",
-                },
-                body={"textQuery": f"{text} in {query.destination}", "languageCode": _places_language(query.destination)},
-            )
-            for place in result_or_empty(payload, "places"):
-                candidate = self._candidate(place, restaurant=(category == "restaurants"))
-                if candidate is not None:
-                    result.append(("restaurants" if category == "restaurants" else "places", candidate))
+            try:
+                payload = self.http_client.request_json(
+                    "POST", self.endpoint,
+                    headers={
+                        "Content-Type": "application/json",
+                        "X-Goog-Api-Key": self.api_key,
+                        "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location,places.googleMapsUri,places.websiteUri,places.rating,places.userRatingCount,places.primaryType,places.types,places.priceLevel,places.regularOpeningHours,places.currentOpeningHours,places.timeZone,places.businessStatus",
+                    },
+                    body={"textQuery": f"{text} in {query.destination}", "languageCode": _places_language(query.destination)},
+                )
+                for place in result_or_empty(payload, "places"):
+                    candidate = self._candidate(place, restaurant=(category == "restaurants"))
+                    if candidate is not None:
+                        result.append(("restaurants" if category == "restaurants" else "places", candidate))
+            except Exception as exc:
+                # Keep results from other category searches. A failure in the
+                # restaurant request must not discard already-found POIs (or
+                # vice versa); the production pipeline still reports this
+                # category as incomplete through drain_failures().
+                self.failures.append(AdapterFailure(f"{self.name}:{category}", str(exc)))
         return result
+
+    def drain_failures(self) -> tuple[AdapterFailure, ...]:
+        failures = tuple(self.failures)
+        self.failures.clear()
+        return failures
 
     def _candidate(self, raw: Mapping[str, Any], *, restaurant: bool) -> dict[str, Any] | None:
         place_id = raw.get("id")

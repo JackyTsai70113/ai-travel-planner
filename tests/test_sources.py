@@ -114,6 +114,32 @@ class ProductionProviderAdapterTests(unittest.TestCase):
         self.assertEqual({"ja"}, {call[3]["languageCode"] for call in client.calls})
         self.assertNotIn("test-key", str(client.calls[0][3]))
 
+    def test_google_restaurant_query_failure_preserves_successful_poi_candidates(self):
+        adapter = GooglePlacesAdapter(
+            "test-key",
+            http_client=RecordedHttpClient([self.google_recording, ProviderRequestError("restaurant timeout")]),
+            now=NOW,
+        )
+
+        candidates, failures = collect_from_adapters([adapter], QUERY)
+
+        self.assertEqual(["places"], [collection for collection, _ in candidates])
+        self.assertEqual(["google-places:restaurants"], [failure.adapter for failure in failures])
+        self.assertIn("restaurant timeout", failures[0].message)
+
+    def test_google_poi_query_failure_preserves_successful_restaurant_candidates(self):
+        adapter = GooglePlacesAdapter(
+            "test-key",
+            http_client=RecordedHttpClient([ProviderRequestError("poi timeout"), self.google_recording]),
+            now=NOW,
+        )
+
+        candidates, failures = collect_from_adapters([adapter], QUERY)
+
+        self.assertEqual(["restaurants"], [collection for collection, _ in candidates])
+        self.assertEqual(["google-places:pois"], [failure.adapter for failure in failures])
+        self.assertIn("poi timeout", failures[0].message)
+
     def test_google_places_normalizes_poi_opening_hours_and_primary_type(self):
         recording = {"places": [{
             "id": "ChIJ-kurashiki", "displayName": {"text": "倉敷美觀地區"},
@@ -259,7 +285,7 @@ class ProductionProviderAdapterTests(unittest.TestCase):
         adapter = GooglePlacesAdapter("test-key", http_client=RecordedHttpClient([ProviderRequestError("quota")]))
         candidates, failures = collect_from_adapters([adapter, FixtureOfficialPoiAdapter(NOW)], SourceQuery("福岡", ("pois",)))
         self.assertEqual(1, len(candidates))
-        self.assertEqual("google-places", failures[0].adapter)
+        self.assertEqual("google-places:pois", failures[0].adapter)
 
     def test_youtube_extracts_reported_evidence_not_operational_candidates(self):
         client = RecordedHttpClient([{"items": [{"id": {"videoId": "abc"}, "snippet": {"title": "福岡 親子旅", "description": "Parking is easy; stroller friendly. Queue after lunch."}}]}])
