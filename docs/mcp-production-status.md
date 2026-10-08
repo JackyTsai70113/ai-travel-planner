@@ -10,6 +10,8 @@
 - PR #244 不再讓未排入的額外 POI warning 阻止發布。PR #245 允許有已揭露 warning 的行程在明確同意後以 preview 發布；bundle 的 `warning` 與 registry 的 `incomplete` 狀態會保留。錯誤級驗證、沒有餐點的日期與硬性缺項仍阻止發布。
 - 本機全套測試：`PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 /tmp/ai-travel-mcp-current-venv/bin/python -m pytest -q`，375 passed、288 subtests passed。Railway `/health` 回 HTTP 200、body `ok`。
 - 使用者提供的正式 ChatGPT Chat 倉敷規劃結果有每日 2 至 3 筆餐點，共 11 筆；住宿按需求留空。4 個餐段與預算費用估算仍有 warning。#180 原始「每日沒有任何餐點」問題已按新規劃結果結案。
+- 2026-10-08 以已連線的唯讀 MCP connector 對相同需求再次呼叫 `parse_trip_request`：`origin=桃園`、目的地倉敷、日期、人數、自駕、`budget_status=unlimited` 均正確，`missing_fields=[]`。使用者提供的 ChatGPT 回答摘要曾列 `origin=null`，此差異未能由正式 MCP parser 重現；connector 呼叫不等於 ChatGPT Chat UI 的回應驗收。
+- 同日以唯讀 `get_trip` 讀取 `kurashiki-2026-11-live-20261008`：五天各 2、2、3、2、2 筆餐點（共 11 筆）；safe response 未含地點名稱、地址、座標或營業時間欄位。此為正式 MCP read path 驗證，不修改或重新規劃行程，也不代替 ChatGPT Chat 端對地點詳情工具的呼叫驗收。
 - #179 仍待實際發布驗收。唯讀 production readiness 顯示指定行程沒有硬性 publisher blocker，registry readiness 為 `incomplete`、狀態為 `preview`。2026-10-08 唯讀查詢 GitHub Pages registry 沒有該 trip slug；尚無真實發布結果、Pages Actions 成功證據或瀏覽器確認的行程網址。
 - #199 重新開啟：新資料 projection 已清理 Places 詳細欄位，但既有 Railway 檔案、公開 Pages 內容與 Git 歷史仍依維護者指示保持原樣，未作歷史處置。
 - 目前開啟的服務能力 issues 為 #179 與 #199。使用者保留 ChatGPT 一般 Chat prompt 由本人輸入；未代送 prompt。Computer Use 最近可見原有 Chrome ChatGPT 分頁，但 macOS 鎖定。直接 MCP／Railway、CI、health 或本機 fixture 都不能代替正式 ChatGPT Chat 與瀏覽器頁面驗收。
