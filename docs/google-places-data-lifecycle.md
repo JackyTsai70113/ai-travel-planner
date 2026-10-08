@@ -49,6 +49,29 @@
 - Railway volume 不在本機掛載中；目前程式唯讀工具只按明確 `trip_id` 讀摘要，不能列出或逐欄位檢查 volume 全部 Canonical Trip。未宣稱私有歷史資料已盤點或刪除。
 - 過往 Git commit 可能仍含目前 bundle 已移除的資料；單純改寫目前 branch 不會清除所有既有 clone、fork、GitHub cache 或歷史物件。
 
+### `awaji-2026` 的 14 筆 Google Maps 標示地點
+
+逐筆比對 `trips/awaji-naruto-tokushima-kobe-2026/trip.json` 的 `candidate_sets.places` 與部署用 `web/public/trips/awaji-2026/public-bundle.json`。以下每筆均有 place-level provenance `provider=Google Maps`，每筆皆沒有 `field_provenance`；所列官方網站欄位只代表有保存該連結，不代表地點名稱、地址、座標或其他欄位已由該網站逐欄重新查證。
+
+| Canonical ID | 顯示名稱 | provider reference | 保存的官方網站連結 | 欄位來源狀態 |
+| --- | --- | --- | --- | --- |
+| `map-import-pokara-naruto-store` | ポカラ 鳴門店 | `maps-list:entry-01` | 無 | 名稱、地址、座標等無欄位級來源 |
+| `map-import-ocean-terrace` | Ocean Terrace | `maps-list:entry-02` | `https://ocean-terrace-awaji.jp/menu/`（圖片來源） | 名稱、地址、座標等無欄位級來源 |
+| `map-import-sbrick-warehouse` | S BRICK 旧:鐘紡工場跡 赤レンガ倉庫 | `maps-list:entry-03` | `https://sumoto-brick.jp/about/`（圖片來源） | 名稱、地址、座標等無欄位級來源 |
+| `map-import-uzuno-oka` | 絶景レストラン うずの丘 | `maps-list:entry-05` | `https://rest.uzunokuni.com/shop/`（圖片來源） | 名稱、地址、座標等無欄位級來源 |
+| `map-import-yumebutai` | 夢舞台 | `maps-list:entry-06` | 無 | 名稱、地址、座標等無欄位級來源 |
+| `map-import-naruto-bridge-memorial` | 漩渦之丘 大鳴門橋紀念館 | `maps-list:entry-07` | 無 | 名稱、地址、座標等無欄位級來源 |
+| `map-import-poplar-ramen` | 淡路島ラーメン ポプラ | `maps-list:entry-08` | 無 | 名稱、地址、座標等無欄位級來源 |
+| `map-import-ohama-park` | Ohama Park | `maps-list:entry-09` | 無 | 名稱、地址、座標等無欄位級來源 |
+| `map-import-garb-costa-orange` | Garb Costa Orange | `maps-list:entry-10` | `https://garbcostaorange.jp/`（圖片來源） | 名稱、地址、座標等無欄位級來源 |
+| `map-import-taidrobou` | 浮世離れの鯛ドロボー | `maps-list:entry-11` | `https://www.shichicafe.com/taidoroboo/`（圖片來源） | 名稱、地址、座標等無欄位級來源 |
+| `map-import-o-awaji` | O AWAJI | `maps-list:entry-12` | 無 | 名稱、地址、座標等無欄位級來源 |
+| `map-import-picnic-garden` | Picnic Garden | `maps-list:entry-14` | 無 | 名稱、地址、座標等無欄位級來源 |
+| `map-import-keino-beach` | 慶野松原海水浴場 | `maps-list:entry-15` | 無 | 名稱、地址、座標等無欄位級來源 |
+| `map-import-awaji-hanasajiki` | Hyogo Prefecture Awaji Hanasajiki | `maps-list:entry-16` | `https://awajihanasajiki.jp/flowering/`（圖片來源） | 名稱、地址、座標等無欄位級來源 |
+
+這 14 筆均被每日行程、路線或地點操作資料引用；尚未逐欄完成獨立來源核查，因此本盤點不將其中任何欄位重標為官方來源，也未刪除或改寫公開資料。逐筆來源重建或移除仍是 #199 的必要處置。
+
 ## 本次程式防線與未完成項目
 
 - `trip_to_public_bundle` 現在拒絕 Canonical Trip candidates 或 field-level provenance 中明確含 `Google Places API (New)` 的資料，GitHub Pages publisher 因此不會把這些 provider fields 再寫入新的公開 bundle。
