@@ -24,13 +24,13 @@
 
 ## 目前基線（2026-10-08）
 
-- `main` 為 `49ea552ff962c8bb15404040422632526fbf0e1f`。PR #243、#244、#245 以一般 merge 合併；補充工具描述與文件的 `49ea552` 是直接推送至 `main` 的一般 commit，沒有經 PR。其 GitHub Actions CI run `37735337661` 的 `python`、`pytest`、`mcp-site` 均成功。
-- Railway `ai-traveller` production deployment `c8dfaf4f-3549-4a74-a269-679f431c57a9` 對應目前 `main` SHA，狀態 `SUCCESS`；正式 `/health` 回 `ok`。
+- `main` 目前為 PR #246 merge commit `41559ae1cfbd32a858e732760c10d6a5f7979e69`。PR #243、#244、#245、#246 以一般 merge 合併；補充工具描述與文件的 `49ea552` 是直接推送至 `main` 的一般 commit，沒有經 PR。`49ea552` 的 CI run `37735337661` 三個 job 均成功，PR #246 CI 亦全數成功。
+- Railway deployment `1921c4ca-a7ce-440a-88e8-2bd032be5f88` 因 PR #246 僅修改文件而 `SKIPPED`；目前執行 runtime 仍是成功部署的 `49ea552`，deployment `c8dfaf4f-3549-4a74-a269-679f431c57a9`。正式 `/health` 回 `ok`。
 - PR #243 修正持久化／發布投影中 Google Places 候選驗證訊息殘留名稱與 context 的問題，並要求 ChatGPT 對已排定且缺少獨立名稱來源的 Place ID 使用即時 `get_place_details`。既有行程原始檔未改寫；讀取與未來投影會套用清理。
 - PR #244 讓未排入候選景點的 warning 不阻止發布。PR #245 允許只有可揭露 warning 的行程以 preview 公開；網站 bundle 保留 `warning`，registry readiness 保留 `incomplete`。錯誤級驗證、沒有任何餐點的日期與其他硬性缺項仍拒絕發布。
 - 本機全套 pytest：`PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 /tmp/ai-travel-mcp-current-venv/bin/python -m pytest -q`，375 passed、288 subtests passed。正式 deployment 亦通過 health check。
 - 使用者提供的 ChatGPT Chat 正式規劃結果顯示倉敷五天每日有 2 至 3 筆餐點，共 11 筆；住宿留空。仍有 4 個未安排餐段、費用估算不完整 warning。Issue #180 原始「每日完全沒有餐點」問題已據此結案；這些 warning 仍須如實呈現。
-- Issue #179 仍開啟。倉敷行程現可發布為 `preview`／`incomplete`；正式 production readiness 計算結果沒有硬性 blocker，但尚未執行真實 GitHub Pages 發布，也沒有最終網址及瀏覽器驗收。
+- Issue #179 仍開啟。倉敷行程現可發布為 `preview`／`incomplete`；正式 production readiness 計算結果沒有硬性 blocker。2026-10-08 唯讀檢查 GitHub Pages registry 尚無該 trip slug，因此真實發布、Pages deployment 及瀏覽器網址驗收仍未完成。
 - Issue #199 重新開啟。新資料的持久化與發布 projection 已清理候選詳情，但既有 Railway 行程及公開頁仍保持原狀；依維護者要求不刪除或改寫歷史資料。舊內容範圍仍待處置。
 - 目前開啟的服務能力 issues 為 #179 與 #199。
 - 使用者已明確保留 ChatGPT 一般 Chat prompt 由本人輸入。Computer Use 最近可見唯一 Chrome 分頁是既有 ChatGPT Chat，但 macOS 鎖定；沒有輸入或代送 prompt。部署健康、CI、單元測試與 Railway readiness 計算均不能代替使用者在 ChatGPT 發布行程，再由瀏覽器驗收 Pages 網址。
