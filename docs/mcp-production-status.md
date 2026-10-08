@@ -7,7 +7,9 @@
 - PR #235 以一般 merge commit 合併，`main` 為 `9219ffbda35d82d547324038e0f47cfdc5178659`。PR 的 `python`、`pytest`、`mcp-site`、`website` checks 均成功；同 SHA 的 GitHub Pages deploy workflow 亦成功。
 - Railway `ai-traveller` production deployment `90208905-5cea-46a9-bf2a-eb8b4aa9f11f` 使用相同 source commit，狀態 `SUCCESS`。正式 `/health` 回 HTTP 200、內文 `ok`。
 - Railway CLI 注入既有 `BEARER_TOKEN` 後，MCP `tools/list` 回 HTTP 200，共 7 個工具，包含 `get_place_details`。單次唯讀 production `get_place_details` 回 HTTP 200、`status=available`、署名 `Google Maps`，並回傳 Place ID；輸出只記錄資料欄位名稱，沒有保存或記錄地點詳情或 secret 值。
+- 後續唯讀呼叫 production `parse_trip_request`，輸入完整倉敷需求，回 HTTP 200、`status=parsed`、目的地 `倉敷`、區域 `岡山縣`、日期 `2026-11-01` 至 `2026-11-05`、6 位成人、1 位兒童及年齡 2、不限預算、`missing_fields=[]`。此為 Railway 直連工具呼叫，不是 ChatGPT UI 驗收。
 - ChatGPT Chat UI 本次未驗收：Computer Use 回報 Mac 已鎖定且無法自動解鎖。沒有輸入或代送 prompt；因此不能把直接呼叫 Railway MCP endpoint 說成 ChatGPT Chat 通過。最新 UI 驗收仍依 [`ChatGPT Chat MCP 上線驗收流程`](chatgpt-mcp-live-verification.md) 待維護者本人執行。
+- PR #236 之後 main 為 `72d0dbf196c1e6ffc048cd75194c9f829439b65b`（文件更新，不改變 MCP 程式）；上述 Railway deployment 對應最近一次後端程式 commit `9219ffbda35d82d547324038e0f47cfdc5178659`。
 - #180：無住宿情境的排餐程式與 recorded regression 已部署；正式新 `plan_trip` 每日餐點和完整度仍待一般 ChatGPT Chat 驗收。舊 `kurashiki-2026-11` 記錄不是新規劃結果。
 - #179：publisher 已部署、`GITHUB_TOKEN` repo push 權限先前已唯讀確認；尚未對任何實際行程做明確公開確認、Pages publish 與瀏覽器網址驗收。
 - #199：新寫入與輸出採 Place ID／自有行程投影、詳細資料即時查詢。依維護者要求，既有 Railway 檔案、已發布 Pages bundle 與 Git 歷史未刪除或改寫；舊公開頁可能仍含歷史 Places 詳細資料，所以 issue 保持開啟。
