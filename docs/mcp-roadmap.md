@@ -29,6 +29,7 @@
 - Railway CLI `railway status --json` 與 `railway deployment list --service ai-traveller --environment production --limit 5 --json` 確認 production Online；deployment `aa3ef82c-f4ec-401d-9417-9d6e1aba59aa` 為 `SUCCESS`，source SHA `530144f23546776088975f796e3cc2c18d1f8641`。`e8b29a1d6534842b33c744e670020b080374c031` 及其後續文件 commit 均為 `SKIPPED`（No changes to watched files）。
 - 維護者提供的一般 ChatGPT Chat 紀錄包含真實 MCP 呼叫：`parse_trip_request`、`plan_trip`、`get_trip` 與 `publish_trip_site`；因此一般 Chat 的工具發現、認證與呼叫已有直接使用紀錄。ChatGPT 的解析結果曾將明確寫出的桃園出發地回傳為 null。以完全相同請求在本機 parser 與目前正式 MCP connector 重測，皆得到 `origin=桃園`、目的地倉敷、正確日期、人數、無上限預算、自駕與空的 `missing_fields`。差異仍需調查，不能用 backend 結果替代 ChatGPT 回覆。
 - 維護者提供的較早 ChatGPT 對話中 `publish_trip_site` 回 `not_ready`。本次以已連線 MCP connector 對同一 trip ID 呼叫 `confirm_public_publish=true`、`confirm_overwrite=true`，結果是 `already_published`、沒有 commit SHA、沒有部署；未發生新覆寫。隨後讀取公開 bundle，確認五天、10 個景點、每天 3 餐共 15 餐，與最新 `get_trip` 相符。既有頁面目前已反映最新行程，沒有再次發布的需要；先前 `not_ready` 回覆所用行程版本未保存。
+- 2026-10-09 使用 Computer Use 再次操作 ChatGPT 設定頁的「重新整理工具」：按鈕進入載入狀態，約 12 秒後恢復可按，但沒有成功／失敗提示，因此刷新結果仍未確認。Site metadata 顯示版本 7、更新於 `2026-10-06T16:48:01.969Z`；該日期不能單獨證明工具快照過期。之後同一 Chrome 視窗停在一般「對話」模式，已選取 `AI Travel Planner MCP`，composer 空白，未輸入或送出 prompt。
 - Computer Use 在單一 Chrome 視窗實際讀取既有倉敷公開頁首日，看到 `Nagayamon Coffee`、`大原美術館`、`Caty Cafe`、`大橋家住宅`、`Momiji-dō` 和 Google Maps 標示。該次 `already_published` 呼叫沒有建立新的 Pages 部署。
 - #179 現追蹤解析結果差異，以及一般 ChatGPT Chat 是否能呼叫 `get_place_details` 並提供即時具名地點；不再把目前公開行程的發布狀態列為阻塞。沒有要求維護者重做已提供的 prompt；需要新增 UI 測試時先說明新的驗證目標及最少輸入。
 
