@@ -42,9 +42,12 @@ _MCP_LOCAL_ALLOWED_HOSTS = ("127.0.0.1:*", "localhost:*", "[::1]:*")
 mcp = MCPServer(
     "ai-travel-planner",
     instructions=(
-        "Use Canonical Trip V1 as the sole trip record. Google Places details are request-scoped and must never be saved; only Place IDs may persist. "
-        "Use get_place_details to refresh details when needed. Preserve unknown facts. Ask for confirmation before tools write local files. "
-        "Publishing a trip to GitHub Pages is a separate public action and requires explicit confirm_public_publish=true."
+        "Use Canonical Trip V1 as the sole trip record and answer in Traditional Chinese. "
+        "For trip planning, ask one focused clarification question at a time, preserve prior answers, and never invent missing facts. "
+        "Before plan_trip writes trip/site files, summarize the request and obtain explicit user confirmation; call it with confirm_write=true only after confirmation. "
+        "After a successful plan_trip, call get_trip to read the saved itinerary. When a scheduled place needs a current name, address, or opening details, use its google_place_id with get_place_details and include the returned Google Maps and third-party attribution. "
+        "Google Places details are request-scoped and must never be saved; only Place IDs may persist. If a detail lookup fails, say it is unavailable and do not substitute stale saved data or guess. "
+        "Preserve unknown facts. Publishing a trip to GitHub Pages is a separate public action and requires explicit user confirmation with confirm_public_publish=true."
     ),
 )
 
@@ -220,7 +223,7 @@ def get_trip_tool(
         ),
     ],
 ) -> dict[str, Any]:
-    """Read a bounded public summary of an existing Canonical Trip by safe trip ID."""
+    """Read a bounded itinerary summary; use returned Google Place IDs for current details when needed."""
     try:
         path = _trip_path(trip_id)
         trip = durable_trip(json.loads(path.read_text(encoding="utf-8")))
@@ -249,11 +252,11 @@ def get_place_details_tool(
             min_length=1,
             max_length=256,
             pattern=r"^(?:places/)?[A-Za-z0-9_-]+$",
-            description="Google Place ID, such as ChIJ...; saved Place IDs can be looked up here.",
+            description="Raw google_place_id from get_trip (such as ChIJ...); fetch current details for this request only.",
         ),
     ],
 ) -> dict[str, Any]:
-    """Fetch current Google Places details for this request only; never stores the response."""
+    """Fetch request-scoped Google details for an itinerary Place ID; show the returned attribution and never store the response."""
     if not os.environ.get("GOOGLE_MAPS_API_KEY"):
         return {"status": "configuration_missing", "missing": ["GOOGLE_MAPS_API_KEY"]}
     try:
@@ -610,6 +613,11 @@ def plan_a_trip(request: str) -> str:
         "that summary and the planning action. Only after explicit confirmation, explain that "
         "plan_trip performs live research and writes/overwrites the named Canonical Trip and "
         "static site files on the MCP service; then call plan_trip with confirm_write=true. "
+        "After a successful plan_trip, call get_trip to read the persisted itinerary. When a "
+        "scheduled place needs a current name, address, or opening details, use its raw "
+        "google_place_id with get_place_details and include the returned Google Maps and "
+        "third-party attribution. If lookup fails, state that the detail is unavailable; do not "
+        "reuse stale saved details or invent a value. "
         "Never claim research, availability, opening hours, prices, routes, or validation succeeded "
         "without tool evidence. Planning does not book, pay, or publish the site. Publishing exposes trip details publicly; "
         "only call publish_trip_site after the traveler separately asks for public publication and confirms the action.\n\n"

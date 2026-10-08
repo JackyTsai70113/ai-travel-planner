@@ -9,7 +9,7 @@
 - `get_place_details(place_id)` 每次呼叫均向 Places API 即時查詢，資料僅回傳當次 MCP 結果；不使用快取。工具失敗會回 `unavailable`、失敗類別及是否可重試，不回傳舊資料，也不把 Google 回應寫入日誌或行程。
 - MCP 即時結果標示 `Google Maps`，並附上 API 回傳的第三方 attribution。靜態網頁若只有 Place ID，顯示 Google Maps 連結，不呈現 API 的名稱、地址、座標、營業時間、評分等詳細資料。
 - 新版程式的 Places 詳細資料保存期限為 0 天；Places 座標不會持久保存。官方一般條款允許座標快取最多 30 個連續日，但本實作選擇不快取。Place ID 依政策例外可永久保存。
-- 已存在於 Railway volume、已發布的 Pages bundle 與 Git 歷史中的舊資料均未刪除、改寫或回填。本變更只管束合併後新產生的 Canonical Trip、HTML 與公開 bundle。舊行程若仍含 Places 詳細欄位，發布器會繼續拒絕，避免再次公開這些資料。
+- 已存在於 Railway volume、已發布的 Pages bundle 與 Git 歷史中的舊資料均未刪除、改寫或回填。本變更只管束合併後新產生的 Canonical Trip、HTML 與公開 bundle。舊行程若仍含 Places 詳細欄位，發布器會繼續拒絕再次發布這些資料；現有歷史檔案和已公開頁面保持原樣。
 - 不同來源重整後的欄位只有具備非 Google 欄位級 provenance 才能留存；沒有欄位級證據時，Places 標記候選只保留 Place ID、kind 與來源識別 metadata。
 
 自動回歸測試涵蓋：原樣保存 Place ID、規劃與渲染投影移除 Places 詳細欄位、保留非 Google 欄位級 provenance、ID-only Google candidate 可投影為公開 bundle、舊 bundle 中仍含 Google 詳細欄位時發布受阻、即時查詢使用 GET 且不寫入資料、attribution 回傳，以及 API 錯誤不回退舊資料。
@@ -86,18 +86,19 @@
 | `map-import-keino-beach` | 慶野松原海水浴場 | `maps-list:entry-15` | 無 | 名稱、地址、座標等無欄位級來源 |
 | `map-import-awaji-hanasajiki` | Hyogo Prefecture Awaji Hanasajiki | `maps-list:entry-16` | `https://awajihanasajiki.jp/flowering/`（圖片來源） | 名稱、地址、座標等無欄位級來源 |
 
-這 14 筆均被每日行程、路線或地點操作資料引用；尚未逐欄完成獨立來源核查，因此本盤點不將其中任何欄位重標為官方來源，也未刪除或改寫公開資料。逐筆來源重建或移除仍是 #199 的必要處置。
+這 14 筆均被每日行程、路線或地點操作資料引用；尚未逐欄完成獨立來源核查，因此本盤點不將其中任何欄位重標為官方來源。依維護者要求，這些歷史公開資料不刪除、不改寫。
 
-## 合併前程式防線與歷史處置範圍
+## 程式防線與歷史資料保留範圍
 
-- 本 PR 合併後，Canonical Trip 的新寫入、`get_trip` 回應、靜態 HTML 與 GitHub Pages publisher 都先套用 `durable_trip` 投影；Google Places 欄位會被移除，Place ID 和自有行程／筆記保留。直接呼叫 `trip_to_public_bundle` 並傳入仍帶 Places 詳細欄位的未投影文件仍會拒絕，避免繞過 publisher 邊界。
-- 本次變更後，地點地圖連結使用 Google 官方提供的 Maps logo；瀏覽器驗收會核對原始 98×18 尺寸及至少 10px 水平、5px 垂直留白。這只改善歸屬標示外觀，並未解決 Canonical Trip 持久化、既有 public bundle 或欄位級來源辨識問題。
-- 歷史 Railway 檔案、歷史靜態 HTML、已發布 bundle 與 Git commit 均未刪除或改寫。既有 `build_trip_site`、`get_trip` 和重新發布的輸出會使用安全投影；舊檔案本身仍在原位置。歷史公開頁面與 Git 歷史的處置需另行決策，不能宣稱其已被本 PR 清除。
-- 已發布的 Awaji 資料須逐欄位重建獨立來源或移除；不能僅依據 place-level provenance 將資料轉標成官方來源。
-- 私有 Railway 行程需先有可列舉、可安全盤點的唯讀稽核方式，才可逐欄位決定保留、重新查證或刪除；不要輸出或記錄任何 credential。
-- 若繼續使用 Places API，還需要重新界定規劃流程，使禁止保存／再託管的欄位不進入持久化 Canonical Trip、靜態 HTML、Git Pages、日誌及長期 ChatGPT 摘要，並確保介面仍能合法實現規劃目標。現有 Google Places adapter 是 production 唯一景點發現來源，不能用「加 attribution」宣稱此設計已解決。
+- PR #235 合併後，Canonical Trip 的新寫入、`get_trip` 回應、靜態 HTML 與 GitHub Pages publisher 都先套用 `durable_trip` 投影；Google Places 詳細欄位會被移除，Place ID 和自有行程／筆記保留。直接呼叫 `trip_to_public_bundle` 並傳入仍帶 Places 詳細欄位的未投影文件會拒絕，避免繞過 publisher 邊界。
+- 公開行程的 Google Maps 連結使用 Google 官方 logo；已用瀏覽器驗收原始 98×18 尺寸及至少 10px 水平、5px 垂直留白。MCP 即時詳細資料回應附 `Google Maps` 與 API 提供的第三方 attribution。
+- 歷史 Railway 檔案、歷史靜態 HTML、已發布 bundle 與 Git commit 均未刪除或改寫，並依維護者指示繼續保留。舊公開頁面仍可能包含合併前保存的 Places 詳細欄位；這是明確保留的歷史狀態，不宣稱舊內容已被移除。
+- 新建立資料的 Places 詳細欄位保存期限為 0 天，沒有快取或排程刪除工作；要重新呈現 Google 詳細資料時，必須依原始 Place ID 即時查詢並附 attribution。座標不落盤，因此不需啟動 30 日座標清除流程。
+- ChatGPT 規劃在需要 Places 名稱、地址或營業資料時，應以保存的原始 Place ID 呼叫 `get_place_details`，並附上回傳的 Google Maps 與第三方 attribution；查詢失敗時回報資料不可用，不讀取舊欄位或自行猜值。
 
-自動測試目前只保證 GitHub Pages 動態 publisher 會拒絕新的 Google Places provider provenance；尚未建立 Railway historical-data migration、座標期限刪除或靜態舊 bundle 處置驗證。Issue #199 在這些範圍完備前保持開啟。
+自動回歸測試涵蓋新 Canonical Trip 的安全投影、原樣保存 Place ID、保留使用者自有行程與筆記、Places 詳細資料不進入新 HTML／公開 bundle、發布器拒絕帶有 Google Places 詳細資料的行程、即時查詢的署名與第三方 attribution，以及查詢失敗時不使用舊資料。Places 詳細資料 TTL 為 0 天，30 日座標期限不適用於本實作的永久儲存，因座標不落盤。
+
+舊 Railway 檔案、現有公開 Pages 內容及 Git 歷史保持原樣。若未來要改變這項歷史保留狀態，需另行提出明確範圍與處置指示。
 
 ## 2026-10-08 OpenRouteService POI 替代來源唯讀試查
 

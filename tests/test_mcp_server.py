@@ -81,6 +81,9 @@ class MCPTravelServerTests(unittest.TestCase):
                 self.assertIn("一題一答", by_name["plan_trip"].description)
                 self.assertIn("不要把 parser JSON 原樣當成回答", by_name["plan_trip"].description)
                 self.assertIn("公開發布必須另行取得確認", by_name["plan_trip"].description)
+                self.assertIn("After a successful plan_trip, call get_trip", mcp.instructions)
+                self.assertIn("Google Maps and third-party attribution", mcp.instructions)
+                self.assertIn("google_place_id", by_name["get_place_details"].input_schema["properties"]["place_id"]["description"])
                 self.assertEqual(
                     by_name["parse_trip_request"].input_schema["properties"]["request"][
                         "maxLength"
@@ -124,6 +127,8 @@ class MCPTravelServerTests(unittest.TestCase):
                 self.assertIn(
                     "Use parse_trip_request before plan_trip", str(prompt.messages)
                 )
+                self.assertIn("After a successful plan_trip, call get_trip", str(prompt.messages))
+                self.assertIn("get_place_details", str(prompt.messages))
                 self.assertIn(
                     "then call plan_trip with confirm_write=true",
                     str(prompt.messages),
@@ -527,6 +532,63 @@ class MCPTravelServerTests(unittest.TestCase):
 
         html = build_site(fixture)
         self.assertIn("query_place_id", html)
+
+    def test_google_projection_preserves_user_trip_and_notes(self) -> None:
+        from src.google_places_storage import durable_trip
+
+        source = json.loads((Path(__file__).parent.parent / "fixtures/trips/japan-5-day-trip-v1.json").read_text(encoding="utf-8"))
+        source["title"] = "使用者自訂的九州旅行"
+        source["days"][0]["summary"] = "第一天：保留我的安排"
+        source["days"][0]["items"][0]["notes"] = "使用者備註：抵達後先休息"
+        source["traveler_profile"]["children"][0]["notes"] = "幼兒午睡時段不可排活動"
+        source["overrides"][0]["notes"] = "使用者核准的住宿選擇"
+        place = source["candidate_sets"]["places"][0]
+        place.update({
+            "google_place_id": "ChIJ-keep-exactly",
+            "name": "Google 暫時名稱",
+            "address": "Google 暫時地址",
+            "coordinates": {"latitude": 33.1, "longitude": 130.1},
+            "provenance": {"source_type": "provider", "provider": "Google Places API (New)"},
+            "field_provenance": {
+                "accessibility_notes": [{
+                    "source_type": "user_input", "provider": "traveler",
+                    "retrieved_at": "2026-10-08T00:00:00+09:00", "status": "confirmed",
+                }],
+            },
+            "accessibility_notes": "使用者補充：入口有階梯，需帶斜坡板",
+        })
+        original_place = json.loads(json.dumps(place, ensure_ascii=False))
+
+        stored = durable_trip(source)
+        stored_place = stored["candidate_sets"]["places"][0]
+        self.assertEqual("ChIJ-keep-exactly", stored_place["google_place_id"])
+        self.assertNotIn("name", stored_place)
+        self.assertNotIn("address", stored_place)
+        self.assertNotIn("coordinates", stored_place)
+        self.assertEqual("使用者補充：入口有階梯，需帶斜坡板", stored_place["accessibility_notes"])
+        self.assertEqual("使用者自訂的九州旅行", stored["title"])
+        self.assertEqual("第一天：保留我的安排", stored["days"][0]["summary"])
+        self.assertEqual("使用者備註：抵達後先休息", stored["days"][0]["items"][0]["notes"])
+        self.assertEqual("幼兒午睡時段不可排活動", stored["traveler_profile"]["children"][0]["notes"])
+        self.assertEqual("使用者核准的住宿選擇", stored["overrides"][0]["notes"])
+        self.assertEqual(original_place, source["candidate_sets"]["places"][0])
+
+    def test_place_details_returns_google_and_provider_attribution_without_storing(self) -> None:
+        detail_response = {
+            "status": "available",
+            "attribution": "Google Maps",
+            "third_party_attributions": [{"provider": "Example Data Provider", "text": "Map data"}],
+            "details": {"name": "Current place name"},
+        }
+        with patch.dict(os.environ, {"GOOGLE_MAPS_API_KEY": "test-key"}), patch(
+            "src.mcp_server.server.GooglePlacesAdapter.get_place_details",
+            return_value=detail_response,
+        ) as lookup:
+            result = get_place_details_tool("ChIJ-place")
+        self.assertEqual("available", result["status"])
+        self.assertEqual("Google Maps", result["attribution"])
+        self.assertEqual(detail_response["third_party_attributions"], result["third_party_attributions"])
+        lookup.assert_called_once_with("ChIJ-place")
 
     def test_tool_errors_are_structured_and_writes_need_confirmation(self) -> None:
         parsed = parse_trip_request_tool("")
