@@ -6,6 +6,9 @@
 
 - PR #243–#245 修改 runtime；PR #246–#252 均以一般 merge 合併。PR #250 修正入口行程卡片數量的固定測試，PR #252 更新 `get_trip` 與 `get_place_details` 工具說明和回歸測試。
 - Railway production runtime source 為 `08236f8cee5575bdad5d6930896fdb038cf9241e`，deployment `a28ae4e8-9811-4b3c-b108-3577390e3423` 狀態 `SUCCESS`，服務 Online，`/health` 回 HTTP 200、內文 `ok`；`/mcp` 的正式 `tools/list` 回 HTTP 200、共 7 個工具。部署使用 Dockerfile `/Dockerfile`，`/data` volume 仍掛載。
+- 2026-10-08 再次用 Railway CLI 注入既有 `BEARER_TOKEN` 呼叫正式 `tools/list`：HTTP 200，列出 7 個工具，包括 `get_place_details`。以倉敷已排定 Place ID 執行一次正式唯讀 `get_place_details`：HTTP 200、`status=available`、`attribution=Google Maps`、Place ID 相符；輸出只記錄回傳欄位名稱，沒有記錄地點詳細值或憑證。
+- 同日檢視此 Codex 對話的 AI Travel Planner connector 快照，僅顯示 6 個工具並缺少 `get_place_details`。這是 Codex connector 清單與 Railway 工具清單不同的證據，不能推論一般 ChatGPT Chat 顯示相同清單。OpenAI 自訂 MCP plugin 文件說明可在 app 詳細資料頁 Refresh apps，以取得新工具、描述與 server instructions；已將該步驟加入 [ChatGPT Chat 驗收流程](chatgpt-mcp-live-verification.md)。ChatGPT Chat 實際刷新與工具呼叫尚未驗收。
+- Sites 唯讀 `get_site(include_mcp_connection=true)` 確認私人 `AI Travel Planner MCP` Site 為 `active`、目前版本 7，MCP endpoint 結尾為 `/mcp`。此只證明 Site 設定與部署版本存在，不證明 ChatGPT plugin 已刷新工具清單或一般 Chat 可呼叫。
 - PR #243 避免 Google Places 候選名稱與地址經由 `validation[].message/context` 殘留於新持久化／發布 projection；保留 Place ID、自有行程與驗證代碼。MCP 指引要求具名呈現已排定地點時即時呼叫 `get_place_details` 並附 attribution。既有原始行程沒有改寫。
 - PR #244 不再讓未排入的額外 POI warning 阻止發布。PR #245 允許有已揭露 warning 的行程在明確同意後以 preview 發布；bundle 的 `warning` 與 registry 的 `incomplete` 狀態會保留。錯誤級驗證、沒有餐點的日期與硬性缺項仍阻止發布。
 - 本機全套測試：`PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 /tmp/ai-travel-mcp-current-venv/bin/python -m pytest -q`，375 passed、288 subtests passed。Railway `/health` 回 HTTP 200、body `ok`。

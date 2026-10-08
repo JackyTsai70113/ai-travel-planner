@@ -37,7 +37,7 @@ railway config apply
 - 健康檢查端點：`https://ai-traveller-production-732b.up.railway.app/health`
 - 後端 MCP endpoint：`https://ai-traveller-production-732b.up.railway.app/mcp`
 
-改名後因舊 deployment 的 Host allowlist 暫時回 HTTP 421；重新部署後已恢復。2026-10-08 核對 production deployment `a9a03231-37f2-46cc-8a15-4cdc379f7224` 為 `SUCCESS`，source commit 為 `62ae026ce9f55b2a7a39bc24f95ec7a4130c63b0`，服務設定含 DOCKERFILE `/Dockerfile`、`/health`（120 秒）、失敗重啟最多 10 次，`/data` volume 仍掛載。部署完成後 `/health` 回 HTTP 200 與 `ok`。移除 IaC 中明確重複的預設重啟政策後，`railway config plan` 回報 `Your Railway configuration is already up to date.`；這不改變 Railway 已使用的 On Failure、10 次重試預設。帶有效 `BEARER_TOKEN` 的 MCP 呼叫列出 6 個工具；私人 ChatGPT Site 中的 `parse_trip_request` 也已在部署後實際成功。
+改名後因舊 deployment 的 Host allowlist 暫時回 HTTP 421；重新部署後已恢復。2026-10-08 最新核對的 production deployment `a28ae4e8-9811-4b3c-b108-3577390e3423` 為 `SUCCESS`，source commit 為 `08236f8cee5575bdad5d6930896fdb038cf9241e`，服務設定含 DOCKERFILE `/Dockerfile`、`/health`（120 秒）、失敗重啟最多 10 次，`/data` volume 仍掛載。部署完成後 `/health` 回 HTTP 200 與 `ok`。移除 IaC 中明確重複的預設重啟政策後，`railway config plan` 回報 `Your Railway configuration is already up to date.`；這不改變 Railway 已使用的 On Failure、10 次重試預設。正式 `tools/list` 回 HTTP 200，列出 7 個工具；`get_place_details` 對已排定 Place ID 的唯讀查詢回 `available` 並附 `Google Maps` attribution。
 
 以下只讀 smoke test 透過 Railway CLI 將 `BEARER_TOKEN` 注入子程序，不會印出 token；測試用識別值只用來模擬 Sites Worker 的必要標頭：
 
@@ -45,7 +45,7 @@ railway config apply
 railway run --service ai-traveller --environment production -- node -e 'const r = await fetch("https://ai-traveller-production-732b.up.railway.app/mcp", {method:"POST", headers:{"Authorization":`Bearer ${process.env.BEARER_TOKEN}`, "oai-authenticated-user-id":"diagnostic-readonly-check", "Content-Type":"application/json", "Accept":"application/json, text/event-stream"}, body:JSON.stringify({jsonrpc:"2.0",id:1,method:"tools/list",params:{}})}); const body = await r.json(); console.log(JSON.stringify({httpStatus:r.status,tools:(body.result?.tools||[]).map(tool=>tool.name)}));'
 ```
 
-已於 2026-10-08 重驗：Railway deployment 狀態為 `SUCCESS`，`/health` 回 HTTP 200；先前的 `tools/list` 回 HTTP 200，列出 `parse_trip_request`、`validate_trip`、`get_trip`、`plan_trip`、`build_trip_site`、`publish_trip_site`。部署後再由 ChatGPT Chat 對私人 Site 呼叫 `parse_trip_request`，實際得到倉敷、5 天 4 夜的解析結果。此次沒有呼叫會寫入或公開行程的工具。實際 ChatGPT 使用者應透過私人 Site Worker 呼叫 MCP，不要把 Railway 後端網址當作公開的 Site Worker 網址。
+已於 2026-10-08 以最新 production runtime 重驗：Railway deployment `a28ae4e8-9811-4b3c-b108-3577390e3423` 狀態為 `SUCCESS`，source commit `08236f8cee5575bdad5d6930896fdb038cf9241e`，`/health` 回 HTTP 200；`tools/list` 回 HTTP 200，列出 `parse_trip_request`、`validate_trip`、`get_trip`、`get_place_details`、`plan_trip`、`build_trip_site`、`publish_trip_site`。`get_place_details` 單次唯讀查詢回 HTTP 200、`available`，署名 `Google Maps`，不保存回應內容。一般 ChatGPT Chat 的工具清單需在 app/plugin 詳細資料頁 Refresh apps 後實際核對；Railway 清單不能代替 UI 驗收。實際 ChatGPT 使用者應透過私人 Site Worker 呼叫 MCP，不要把 Railway 後端網址當作公開的 Site Worker 網址。
 
 也可直接透過後端唯讀測試 parser：
 
@@ -69,7 +69,7 @@ railway run --service ai-traveller --environment production -- node -e 'const r 
 
 `publish_trip_site` 已部署並出現在遠端 `tools/list`。發布前會要求 ChatGPT 使用者明確確認公開；每一天都必須有餐點，日期必須有效，Canonical Trip validation 不可有阻擋 finding。Places 詳細資料在新行程寫入或重新發布時會先移除，只保留原始 Place ID 及使用者自己的行程／筆記；歷史檔案不會自動改寫。住宿可以留空；未提供住宿時，`schedule.hotel_missing` 和 `schedule.origin_unknown` 會保留為未驗證警告，不會因缺住宿本身阻擋發布。相同 bundle 的 registry 缺項或過期時，工具只修復 registry。
 
-截至 2026-10-08，Railway production `GITHUB_TOKEN` 已存在；正式執行個體以 GitHub REST 唯讀查詢確認 repo 為 `JackyTsai70113/ai-travel-planner` 且回報 `permissions.push=true`，過程沒有輸出 token。PR #230 合併後，Railway deployment `522e831d-be9b-4dd4-aa75-d016b6ec058d` 使用 main commit `fe0ae02047c05488a2cafb03f37bc646add6cf67`，狀態 `SUCCESS`，service Online，health 回 HTTP 200。`railway config plan` 套用後為 no-op；MCP 後端唯讀 `tools/list` 列出六項工具，`parse_trip_request` 正確解析倉敷五天四夜。這些後端 smoke tests 不等於 ChatGPT Chat UI 驗收。尚未執行真實 Pages 發布；#179 仍待符合發布 readiness 的行程、ChatGPT 明確公開指令及正式網址驗收。若行程含 Google Places provenance，現有發布 guard 會回 `not_ready`，相關資料生命週期追蹤於 #199。
+（歷史紀錄）截至 2026-10-08 較早時點，PR #230 後的 MCP `tools/list` 當時列出六項工具；其後正式服務已更新至本節上述 runtime source。此段不代表目前工具清單或發布狀態。Places 資料保存規則與歷史資料範圍仍追蹤於 #199。
 
 2026-10-05 的歷史檢查當時尚無 `GITHUB_TOKEN`；其後的設定與權限驗證以本節 2026-10-08 狀態為準。
 
