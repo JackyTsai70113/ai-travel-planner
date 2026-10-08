@@ -2,6 +2,14 @@
 
 最後查證：2026-10-08。本文記錄本 repo MCP 部署與實際工具呼叫的觀察結果，不代表規劃品質已達可交付標準。
 
+## 2026-10-08 PR #225 部署後狀態
+
+- PR #225 以一般 merge commit 將 `main` 更新為 `941b8c5c4e1cfc66e539d43cff29c0f80b4fc908`；GitHub Actions 的 `python`、`pytest`、`mcp-site` 均成功。本機 Python 3.13 驗證：production composition 24 passed、完整 pytest 367 passed / 288 subtests passed、`python -m unittest discover -s tests -q` 252 tests OK，`git diff --check` 通過。
+- 此變更修正住宿自動搜尋已停用後的過時行程 provenance：住宿留空時只說明住宿欄位、未驗證的首段／返回交通，以及未納入預算的住宿與當地交通費；不再聲稱系統曾搜尋但找不到住宿。
+- Railway `ai-traveller` production deployment `7a6a3ad2-496e-4f9d-a148-332209be76a6` 使用上述 main commit，狀態 `SUCCESS`；正式 `/health` 回 HTTP 200、內文 `ok`。
+- 此次已驗證本機、CI、部署及 health；沒有在 ChatGPT Chat 執行新的 `plan_trip`。#180 的正式規劃驗收仍由維護者自行在一般 ChatGPT Chat 輸入倉敷 prompt，檢查新 Canonical Trip 的每日餐點與 warning 後才能關閉。
+- 目前開啟的服務能力 issues 仍為 #180、#179、#199；各自的未完成驗收範圍見下文。
+
 ## 2026-10-08 PR #223 合併後正式狀態
 
 - 長期目標已整理於 [`AI Travel Planner MCP 長期目標`](mcp-roadmap.md)：持續開發、測試、審查及合併，直到一般 ChatGPT Chat 可穩定完成有根據的旅行規劃；mock、healthcheck 或 CI 不能代替正式 ChatGPT 工具驗收。
