@@ -2,7 +2,17 @@
 
 最後查證：2026-10-08。本文記錄本 repo MCP 部署與實際工具呼叫的觀察結果，不代表規劃品質已達可交付標準。
 
-## 2026-10-08 PR #215、#216 合併後基線
+## 2026-10-08 PR #220 合併後正式狀態
+
+- 長期目標已整理於 [`AI Travel Planner MCP 長期目標`](mcp-roadmap.md)：持續開發、測試、審查及合併，直到一般 ChatGPT Chat 可穩定完成有根據的旅行規劃；mock、healthcheck 或 CI 不能代替正式 ChatGPT 工具驗收。
+- PR #220 已以一般 merge commit 將 `main` 更新為 `508d40c7d5ebb9e20d64d7ddfe9d75088065cbe9`。CI 的 `mcp-site`、`pytest`、`python` 均成功；完整本機測試為 365 passed、288 subtests passed。該版將 plan_trip 的逐題確認、明確寫入同意及公開發布同意分開寫入 MCP 工具說明。
+- Railway `ai-traveller` production deployment `50a9d4d1-36dd-4447-a973-317f8f024b73` 對應此 main 版本，狀態 `SUCCESS`，且沒有待套用設定。
+- 部署後以連線中的私人 MCP 對既有 `kurashiki-2026-11` 執行唯讀 `get_trip`。讀回仍是五天各一個 `visit`、沒有 `meal`；總預算狀態 `incomplete`，五個景點營業時間均有 `opening_hours.unverified`，並有兩筆 `research.provider_failed`。這是舊行程紀錄，不是新 `plan_trip` 執行，不能用來驗收 #180 的新規劃流程。
+- #180 正式驗收仍需維護者在一般 ChatGPT Chat 輸入新的倉敷 `plan_trip` prompt，之後檢查新 Canonical Trip 的每日餐點及警告。一般 ChatGPT Chat 的正式 prompt 由維護者自行輸入；本次沒有代送 prompt，也沒有執行會寫入正式行程的 `plan_trip`。
+- 住宿自動搜尋需求已由維護者放棄並關閉 #175。住宿可留空，也可由使用者提供；不得因缺少住宿而阻擋規劃，不得推測住宿費用或不存在的住宿接駁路線。
+- 目前仍開啟的服務能力 issues 為 #180（待一般 ChatGPT Chat 新規劃驗收）、#179（待明確授權公開行程並驗證 Pages URL）、#199（Places 資料保存、既有資料處置與公開再託管尚未完成）。
+
+## 2026-10-08 PR #215、#216 合併後基線（歷史）
 
 - 長期目標已整理於 [`AI Travel Planner MCP 長期目標`](mcp-roadmap.md)：持續開發、測試、審查及合併，直到一般 ChatGPT Chat 可穩定完成有根據的旅行規劃；mock、healthcheck 或 CI 不能代替正式 ChatGPT 工具驗收。
 - PR #215 的基線 commit `b0676515f62af85ee048bff94e82dc80319986be` 曾部署至 Railway deployment `cb92a197-1ff9-4ec8-a79f-6e499b0d0f75`，狀態 `SUCCESS`。PR #216 接著以一般 merge commit 將 `main` 更新為 `85e1ddd4891c753201db41730d2107e954746782`；CI 的 `mcp-site`、`pytest`、`python` 均成功，完整本機測試為 364 passed、288 subtests passed，production/planner 子集為 60 passed。
@@ -11,7 +21,7 @@
 - PR #218 已以一般 merge commit 更新 `main` 至 `a5d1609d560b7d6777b206ca6befda412faabacb`，修正倉敷 parser 的 destination provenance；Railway deployment `a50c0355-a5fc-45f8-93e4-b6b26047fda7` 對應此 commit 且狀態 `SUCCESS`。部署後以連線中的私人 MCP `parse_trip_request` 唯讀呼叫確認目的地／來源依據、縣市、日期、旅客、桃園出發、自駕與不限預算均正確；此呼叫未執行規劃，也不取代一般 ChatGPT Chat `plan_trip` 驗收。
 - Railway `GITHUB_TOKEN` 已由遮蔽變數清單確認存在；前次正式執行個體的 GitHub REST 唯讀檢查回報 `permissions.push=true`。尚未經 ChatGPT 確認行程公開、等待 Pages 部署及瀏覽器開啟該行程網址；#179 保持開啟。
 - GitHub Issue #175 已依維護者決定關閉；自動住宿搜尋不再是需求。住宿可留空；住宿若由使用者提供，未經驗證的地址、價格與交通仍須保持未驗證。
-- 目前開啟的服務能力 issues：#180（待正式 ChatGPT production rerun）、#179（待明確公開行程並驗證 Pages URL）、#199（Places 資料保存與既有公開內容處置）。
+- 當時開啟的服務能力 issues：#180、#179、#199；目前狀態見本文件最上方的 PR #220 後正式狀態。
 - PR #216 已加入動態 publisher guard 和欄位生命週期盤點文件。明確含 Google Places API (New) 候選／欄位 provenance 的發布會被阻擋；此防線只阻擋新 GitHub Pages 發布，沒有處理 Railway 私有持久資料與既有公開 bundle。
 
 ## 2026-10-08 過期行程封存修正部署
@@ -26,7 +36,7 @@
 - ChatGPT Chat 使用已連線的私人 `AI Travel Planner MCP` 呼叫 `parse_trip_request`，輸入「岡山縣倉敷五天四夜，6 位成人、1 位 2 歲幼兒，預算不設限制」。回應解析出目的地倉敷、區域岡山縣、5 天 4 夜、6 位成人、1 位 2 歲幼兒、`budget_status=unlimited`，`missing_fields=[]`。此為唯讀呼叫，未執行研究、寫入或公開行程。
 - Railway OAuth connector 對正式 project `ai-traveller` / `production` 以遮蔽值模式列出變數名稱。已存在 `BEARER_TOKEN`、`GITHUB_TOKEN`、`GOOGLE_MAPS_API_KEY`、`OPENROUTESERVICE_API_KEY`、`PUBLIC_URL`、`YOUTUBE_API_KEY`；清單僅提供名稱，沒有讀取任何 secret 值。
 - PR #204 已合併至 `8fbe0639d5fd341cbcc764979ff9e19cae30c6c2`，CI、Website CI、GitHub Pages deploy 均成功。首次檢視舊分頁仍顯示舊內容；強制重新載入後，GitHub Pages 首頁顯示新文案「頁面公開狀態與行程完成度分開呈現；公開預覽不代表行程已確認。」及「公開預覽」狀態。這只驗證公開目錄標籤，沒有改動或發布任何行程。
-- 四張仍開啟 issue 的最新狀態：#175 沒有已核准住宿庫存供應商；#179 已設定 Railway `GITHUB_TOKEN`，但尚未完成真實 Pages 發布驗收；#180 的真實倉敷紀錄沒有可選住宿，無法驗證每日餐點往返路線；#199 的 Places 資料生命週期與公開再託管仍未完成確認。四張均不能以本輪唯讀解析驗收當作完成。
+- 當時記錄的四張 issue 狀態已過期：#175 後續依維護者決定關閉自動住宿搜尋需求；#179、#180、#199 的目前狀態見本文件最上方。
 
 ## 2026-10-08 GitHub Pages 發布憑證更新
 
@@ -58,7 +68,7 @@
 
 - Google Places API (New)：Railway 正式環境以倉敷查詢回 HTTP 200，取得 18 筆 place ID。此前曾有 HTTP 403 `PERMISSION_DENIED`；2026-10-05 重測已可用。文件不保存 API key，也不宣稱取得的結果就是使用者 GCP 畫面中的完整 key 字串比對結果。
 - YouTube Data API：獨立 smoke test 曾回 HTTP 200、3 筆影片；實際 `plan_trip` 當次研究出現 TLS handshake timeout。因此，單次成功 smoke test 不代表每次 production research 都穩定。
-- 住宿搜尋：2026-10-05 production run 沒有住宿候選。2026-10-08 維護者決定放棄自動住宿搜尋；目前開發分支已改成住宿選填，無住宿時不推測房況、價格或住宿接駁路線。
+- 住宿搜尋：2026-10-05 production run 沒有住宿候選。2026-10-08 維護者決定放棄自動住宿搜尋；後續實作已進入 main，住宿為選填，無住宿時不推測房況、價格或住宿接駁路線。
 - Google Flights 僅提供搜尋連結、不擷取票價；倉敷輸出含「桃園 → 倉敷」的 Google Flights 搜尋連結。`candidate_sets.flights` 為空是目前設計，不代表行程沒有航班搜尋入口。
 
 ## 倉敷 production run 證據
@@ -85,8 +95,8 @@
 
 - [#153 遠端 ChatGPT MCP hosting 與連線](https://github.com/JackyTsai70113/ai-travel-planner/issues/153)：已關閉；Railway backend 與私人 ChatGPT Site 的工具呼叫已實際成功。這不代表完整行程規劃功能已全部驗收。
 - [#175 住宿供應來源](https://github.com/JackyTsai70113/ai-travel-planner/issues/175)：已依維護者決定關閉；不再尋找或呼叫自動住宿搜尋來源。住宿可以留空，未來由旅客提供住宿資料時也不可推測房況或費用。
-- [#180 餐廳候選沒有排入每日用餐行程](https://github.com/JackyTsai70113/ai-travel-planner/issues/180)：production run 曾有 20 筆餐廳候選，但無住宿且每日沒有餐點。開發分支新增無住宿的餐廳排程回歸案例；仍需以 production MCP 重跑倉敷案例，確認每日 Canonical Trip 內確實有餐點後才能關閉。
-- [#179 MCP 規劃結果沒有對應的 GitHub Pages 網址](https://github.com/JackyTsai70113/ai-travel-planner/issues/179)：PR #189、#191 已加入並部署 `publish_trip_site` 與發布 readiness gate。2026-10-08 後續已確認 Railway production 有 `GITHUB_TOKEN` 且新部署成功；尚未驗證 token 的 repo 寫入權限，也未經 ChatGPT 明確確認發布行程或驗證 Pages 網址，因此 issue 保持開啟。
+- [#180 餐廳候選沒有排入每日用餐行程](https://github.com/JackyTsai70113/ai-travel-planner/issues/180)：production run 曾有 20 筆餐廳候選，但每日沒有餐點。後續實作已支援住宿留空時安排可由景點間路線驗證的餐點；仍需由維護者在一般 ChatGPT Chat 執行新的正式 `plan_trip`，確認新 Canonical Trip 每日餐點與未完成警告後才能關閉。
+- [#179 MCP 規劃結果沒有對應的 GitHub Pages 網址](https://github.com/JackyTsai70113/ai-travel-planner/issues/179)：PR #189、#191 已加入並部署 `publish_trip_site` 與發布 readiness gate。Railway production 有 `GITHUB_TOKEN`，且 GitHub REST 唯讀 repo 查詢曾回報 `permissions.push=true`；尚未經 ChatGPT 明確確認發布行程或驗證 Pages 網址，因此 issue 保持開啟。
 - [#199 Google Places 資料保存與公開展示政策待確認](https://github.com/JackyTsai70113/ai-travel-planner/issues/199)：PR #208 已新增並部署可公開直達的使用條款與隱私權政策頁面，Chrome 已確認正式頁可載入；這完成公開揭露頁，不表示 Places 資料保存與公開重用已合規。Places provider facts 仍進入可持久化 Canonical Trip；各欄位資料生命週期、既有資料處置與公開再託管仍待盤點。
 
 #### #199 公開條款與隱私頁
@@ -110,4 +120,4 @@
 4. 工具回傳 `publish_accepted` 與 Pages URL 後，等待 Pages Actions 部署完成，實際開啟網址確認對應行程內容。僅工具接受寫入或回 `pending` 不算完成驗收。
 5. 將 deployment 結果、HTTP/瀏覽器可用證據與 commit SHA 記錄回 #179；驗收全部完成後才關閉 issue。
 
-以上只列已觀察問題與外部依賴，不宣稱 #175/#180 已解決；本次沒有以 fixture 代替正式資料，也沒有發布倉敷頁面。
+以上只列已觀察問題與外部依賴；#175 已關閉，#180 的正式 ChatGPT Chat 驗收仍待執行。本次沒有以 fixture 代替正式資料，也沒有發布倉敷頁面。
