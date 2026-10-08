@@ -22,6 +22,7 @@ from src.mcp_server.github_pages import PublishResult
 from src.renderer.build_site import build_site
 from src.mcp_server.server import (
     _consume_remote_request,
+    _place_details_needed,
     _public_trip_summary,
     _github_pages_origin,
     _consume_public_place_monthly_budget,
@@ -118,8 +119,8 @@ class MCPTravelServerTests(unittest.TestCase):
                     }.issubset(by_name)
                 )
                 self.assertTrue(all(tool.description for tool in by_name.values()))
-                self.assertIn("Google-sourced place names are intentionally omitted", by_name["get_trip"].description)
-                self.assertIn("call get_place_details once for each distinct scheduled Google Place ID", by_name["get_trip"].description)
+                self.assertIn("place_details_needed array is the authoritative list", by_name["get_trip"].description)
+                self.assertIn("call get_place_details once for each listed ID", by_name["get_trip"].description)
                 self.assertIn("Each detail call makes one live Places request", by_name["get_trip"].description)
                 self.assertIn("include Google Maps and third-party attribution", by_name["get_place_details"].description)
                 self.assertIn("may incur usage charges", by_name["get_place_details"].description)
@@ -127,6 +128,7 @@ class MCPTravelServerTests(unittest.TestCase):
                 self.assertIn("不要把 parser JSON 原樣當成回答", by_name["plan_trip"].description)
                 self.assertIn("公開發布必須另行取得確認", by_name["plan_trip"].description)
                 self.assertIn("After a successful plan_trip, call get_trip", mcp.instructions)
+                self.assertIn("Read get_trip.place_details_needed", mcp.instructions)
                 self.assertIn("Google Maps and third-party attribution", mcp.instructions)
                 self.assertIn("google_place_id", by_name["get_place_details"].input_schema["properties"]["place_id"]["description"])
                 self.assertEqual(
@@ -506,6 +508,25 @@ class MCPTravelServerTests(unittest.TestCase):
             missing = get_place_details_tool("ChIJ-place")
         self.assertEqual({"status": "configuration_missing", "missing": ["GOOGLE_MAPS_API_KEY"]}, missing)
 
+    def test_place_details_followups_include_only_distinct_scheduled_places_without_names(self) -> None:
+        summary = {
+            "days": [
+                {
+                    "items": [
+                        {"place": {"google_place_id": "ChIJ-scheduled"}},
+                        {"place": {"google_place_id": "ChIJ-scheduled"}},
+                        {"place": {"google_place_id": "ChIJ-named", "name": "Known name"}},
+                        {"place": {"google_place_id": "ChIJ-blank-name", "name": "   "}},
+                        {"place": {"google_place_id": "bad id"}},
+                    ]
+                }
+            ]
+        }
+        self.assertEqual(
+            ["ChIJ-scheduled", "ChIJ-blank-name"],
+            _place_details_needed(summary),
+        )
+
     def test_legacy_trip_reads_and_site_builds_sanitize_without_rewriting_history(self) -> None:
         fixture = json.loads((Path(__file__).parent.parent / "fixtures/trips/japan-5-day-trip-v1.json").read_text(encoding="utf-8"))
         place = fixture["candidate_sets"]["places"][0]
@@ -530,6 +551,7 @@ class MCPTravelServerTests(unittest.TestCase):
                 built = build_trip_site_tool(fixture["id"], confirm_write=True)
             html = (sites / fixture["id"] / "index.html").read_text(encoding="utf-8")
             self.assertEqual("ok", summary["status"])
+            self.assertEqual(["ChIJ-place"], summary["place_details_needed"])
             self.assertNotIn("name", summary["trip"]["days"][0]["items"][0]["place"])
             self.assertEqual("ChIJ-place", summary["trip"]["days"][0]["items"][0]["place"]["google_place_id"])
             self.assertEqual("built", built["status"])
