@@ -6,6 +6,8 @@
 
 ### 最新查證補充（2026-10-09）
 
+- PR #275 已一般 merge 至 `main`，merge commit `75d01ce3b084fe1abce79faf7138e93769139c88`，CI `python`、`pytest`、`mcp-site` 全部成功；本機 MCP server unittest 24 項通過。變更明確要求 ChatGPT 不把工具 JSON 當最終回答，並以繁中依日期、當地時間整理已排程景點／餐點，誠實列出驗證警告與未完成欄位。
+- Railway production deployment `25435d1b-489f-450f-a7e3-9a0dcab04ef6` 對應 merge commit `75d01ce3b084fe1abce79faf7138e93769139c88` 且為 `SUCCESS`。`/health` 回 HTTP 200／`ok`；正式 MCP `initialize` 回傳新 instructions，`tools/list` 回 HTTP 200、七項工具，`parse_trip_request` 與 `get_trip` 描述也包含可讀回覆規則。ChatGPT 外掛設定頁刷新工具按鈕載入後恢復可按，但無成功／失敗提示，不能推定新版快照已載入。一般 Chat 仍選取此外掛且輸入框空白，未由 Codex 代送 prompt；尚未驗收模型是否遵循新格式。
 - PR #272 已一般 merge 至 `main`，merge commit 為 `f587daf184f7ceb86e37cf26ad9fec4d948ac6b5`；`python`、`pytest`、`mcp-site` CI 全部通過。Railway production deployment `f4518767-1659-4ffb-a6cb-91f54aa56d6c` 對應此 SHA 並為 `SUCCESS`，服務 Online；正式 `/health` 回 HTTP 200／`ok`。之前 source `530144f` 的 deployment `aa3ef82c-f4ec-401d-9417-9d6e1aba59aa` 是此 MCP 變更前的 runtime。
 - 維護者提供的一般 ChatGPT Chat 對話紀錄證明 ChatGPT 實際呼叫 `parse_trip_request`、`plan_trip`、`get_trip`、`publish_trip_site`。該對話中的解析回覆將明確提供的桃園出發地顯示為 `null`。同一份完整需求在本機 parser 與目前連線的正式 MCP connector 重測均得到 `origin=桃園`、倉敷、2026-11-01 至 2026-11-05、6 位成人與 1 位 2 歲幼兒、無上限預算、自駕，且 `missing_fields=[]`。正式連線測試是 backend evidence，不能取代或抹除 ChatGPT 對話中不同的回覆；來源差異尚待查明。
 - 使用者提供的 ChatGPT 對話中，`publish_trip_site` 曾回 `not_ready`，包含候選景點、餐段與費用完整度訊息。後來以已確認的 `confirm_public_publish=true`、`confirm_overwrite=true` 對同一 `trip_id` 呼叫正式 MCP，結果為 `already_published`、`commit_sha=null`、`deployment_status=not_required`，沒有新的覆寫或部署。其後比對目前公開 bundle 與最新 `get_trip`，兩者同為 5 天、10 個景點、15 筆餐點；目前 `already_published` 與既有頁面內容相符。先前 `not_ready` 回覆當時採用的資料版本未記錄，故不把它當成目前仍需重新發布的阻塞。

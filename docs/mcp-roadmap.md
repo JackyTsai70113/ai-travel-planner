@@ -26,6 +26,8 @@
 
 ### 2026-10-09 後續核對
 
+- PR #275 已一般 merge，merge commit `75d01ce3b084fe1abce79faf7138e93769139c88`；CI `python`、`pytest`、`mcp-site` 全部成功。本機 `PYTHONPATH=. uv run --isolated --with-requirements requirements-mcp.txt python -m unittest tests.test_mcp_server -v` 通過 24 項。變更補強 server instructions、工具描述與 `plan_a_trip` prompt：最終回答不得直接貼 raw JSON，應以繁中按日期／當地時間整理景點與餐點，揭露未完成狀態且不捏造住宿或未知事實。
+- Railway production deployment `25435d1b-489f-450f-a7e3-9a0dcab04ef6` 使用上述 merge commit，狀態 `SUCCESS`；`/health` HTTP 200／`ok`，正式 MCP initialize 回傳新 server instructions，`tools/list` HTTP 200 並列出七項工具，`parse_trip_request` 與 `get_trip` 描述含新增可讀回覆規則。ChatGPT 外掛設定頁「重新整理工具」按鈕載入後恢復可按，但沒有成功／失敗提示；一般 Chat composer 仍選取 `AI Travel Planner MCP` 且空白，未代維護者送出 prompt，故新規則的 ChatGPT UI 行為尚未驗收。
 - PR #272 merge commit `f587daf184f7ceb86e37cf26ad9fec4d948ac6b5` 的 Railway production deployment `f4518767-1659-4ffb-a6cb-91f54aa56d6c` 為 `SUCCESS`，source SHA 相同；服務 Online，`/health` 回 HTTP 200／`ok`。GitHub CI 的 `python`、`pytest`、`mcp-site` 全部成功。
 - 部署後的正式 MCP `get_trip` 回應新增 `place_details_needed`，對倉敷已排程行程列出 25 個去重後的 Google Place ID；這次沒有呼叫詳情 API、寫入行程或產生 Google Places 詳情查詢。
 - 維護者提供的一般 ChatGPT Chat 紀錄包含真實 MCP 呼叫：`parse_trip_request`、`plan_trip`、`get_trip` 與 `publish_trip_site`；因此一般 Chat 的工具發現、認證與呼叫已有直接使用紀錄。ChatGPT 的解析結果曾將明確寫出的桃園出發地回傳為 null。以完全相同請求在本機 parser 與目前正式 MCP connector 重測，皆得到 `origin=桃園`、目的地倉敷、正確日期、人數、無上限預算、自駕與空的 `missing_fields`。差異仍需調查，不能用 backend 結果替代 ChatGPT 回覆。
