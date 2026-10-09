@@ -3,6 +3,7 @@ import HomePage from '../pages/HomePage'
 import TripApp from './TripApp'
 import type { TripCatalogEntry, TripRegistrySections } from '../contracts/trip-registry'
 import { buildCatalogSections, isCatalogEntry } from '../contracts/trip-registry'
+import { fetchFresh } from '../lib/fresh-fetch'
 import { sitePageUrl, siteRootUrl } from './site-links'
 export { sitePageUrl, siteRootUrl } from './site-links'
 
@@ -139,7 +140,7 @@ export default function SiteRouter() {
   useEffect(() => {
     if (route.kind === 'terms' || route.kind === 'privacy') return
     const registryUrl = new URL('trip-registry.json', siteRootFromPageUrl())
-    fetch(registryUrl)
+    fetchFresh(registryUrl)
       .then((response) => {
         if (!response.ok) throw new Error(`registry HTTP ${response.status}`)
         return response.json() as Promise<unknown>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Bundle, parseBundle } from '../contracts/trip'
+import { fetchFresh } from '../lib/fresh-fetch'
 
 type LoadStatus = 'loading' | 'ready' | 'error'
 
@@ -49,7 +50,7 @@ export function useBundleLoader(tripSlug?: string): BundleLoaderState {
     setError('')
     let response: Response
     try {
-      const registryResponse = await fetch(resolveRegistryUrl(baseUrl))
+      const registryResponse = await fetchFresh(resolveRegistryUrl(baseUrl))
       if (!registryResponse.ok) throw new Error(`registry HTTP ${registryResponse.status}`)
       const registry = await registryResponse.json() as unknown
       const entries = Array.isArray(registry) ? registry : []
@@ -58,7 +59,7 @@ export function useBundleLoader(tripSlug?: string): BundleLoaderState {
         return !tripSlug || (candidate as { slug?: unknown }).slug === tripSlug
       }) as { canonical_url?: unknown } | undefined
       if (!entry || typeof entry.canonical_url !== 'string') throw new Error('registry schema 不相容')
-      response = await fetch(resolveBundleUrl(baseUrl, entry.canonical_url))
+      response = await fetchFresh(resolveBundleUrl(baseUrl, entry.canonical_url))
       if (!response.ok) throw new Error(`bundle HTTP ${response.status}`)
     } catch (error) {
       const message = `載入不到行程資料（${error instanceof Error ? error.message : 'network error'}）`
