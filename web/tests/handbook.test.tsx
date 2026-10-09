@@ -210,6 +210,16 @@ describe('淡路島只讀旅遊助手', () => {
     expect(document.body.textContent).not.toMatch(/狀態正常|行前需確認|資料快照|Canonical Trip/)
   })
 
+  it('住宿留空時總覽省略住宿與空固定時間區塊', () => {
+    const trip = { title: '倉敷行程', destination_regions: ['倉敷'], date_range: { start_date: dates[0], end_date: dates[4] }, duration_days: 5, status: 'preview', readiness: 'incomplete', cover_media: { kind: 'gradient', gradient: 'linear-gradient(#123, #456)' } } as TripCatalogEntry
+    const blankLodging = { ...bundle, selected: { hotel_place_ids: [], flight_ids: [] }, reservations: [], days: bundle.days.map((day) => ({ ...day, items: day.items.filter((item) => !item.fixed && item.kind !== 'reservation' && item.kind !== 'flight') })) }
+    render(<OverviewPage bundle={blankLodging} trip={trip} />)
+    expect(screen.getByText('倉敷的每日行程、餐飲與導航資訊。')).toBeInTheDocument()
+    expect(screen.getByText('預覽行程仍有資料待確認，請出發前核對每日安排。')).toBeInTheDocument()
+    expect(screen.queryByText(/住宿首選|尚未訂房|住宿訂房|住宿安排/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/固定時間|沒有固定時間|預約與航班/)).not.toBeInTheDocument()
+  })
+
   it('預約頁名稱連官方網站，map pin 連 Google Maps', () => {
     render(<ReservationsPage bundle={{ ...bundle, reservations: [{ id: 'cruise', day: dates[3], time: `${dates[3]}T12:50:00+09:00`, name: 'うずしおクルーズ（福良港）', place_id: 'uzushio-cruise-fukura', kind: 'fixed-reservation' }] }} />)
     expect(screen.getByText('12:50')).toBeInTheDocument()

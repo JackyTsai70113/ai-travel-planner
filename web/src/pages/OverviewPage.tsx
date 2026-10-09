@@ -79,7 +79,7 @@ export function OverviewPage({ bundle, trip }: OverviewPageProps) {
     ? trip.destination_regions
     : bundle?.overview?.trip_scope || []
   const heroEyebrow = routeStops.length > 0 ? `${routeStops[0]}旅行` : '旅行行程'
-  const heroSummary = trip?.hero_summary || `${routeStops.join('、')}的每日行程、餐飲、住宿與導航資訊。`
+  const heroSummary = trip?.hero_summary || (routeStops.length ? `${routeStops.join('、')}的每日行程、餐飲與導航資訊。` : '每日行程、餐飲與導航資訊。')
   const dateText = trip
     ? `${trip.date_range.start_date} — ${trip.date_range.end_date} · ${trip.duration_days} 天`
     : bundle ? `${bundle.date_range.start_date} — ${bundle.date_range.end_date} · ${bundle.days.length} 天` : '行程資料載入中'
@@ -122,7 +122,7 @@ export function OverviewPage({ bundle, trip }: OverviewPageProps) {
           <p className="trip-hero-eyebrow">{heroEyebrow}</p>
           <h1>{title}</h1>
           <div className="trip-hero-meta"><span>{dateText}</span></div>
-          {trip?.status === 'preview' || trip?.readiness === 'incomplete' ? <p className="status-pill">{bundle?.presentation?.preview_notice || '預覽行程：住宿訂房與必要交通仍待確認，請完成下方覆核後再出發。'}</p> : null}
+          {trip?.status === 'preview' || trip?.readiness === 'incomplete' ? <p className="status-pill">{bundle.presentation?.preview_notice || '預覽行程仍有資料待確認，請出發前核對每日安排。'}</p> : null}
           <p className="hero-summary">{heroSummary}</p>
         </div>
         <aside className="hero-route-map" aria-label={`${dayCountLabel(dayCount)}移動路線：${routeStops.join('、')}`}>
@@ -153,9 +153,9 @@ export function OverviewPage({ bundle, trip }: OverviewPageProps) {
         </div>
       </section>
 
-      <div className="overview-columns">
-        <section className="overview-section">
-          <div className="section-heading"><div><p className="eyebrow">住宿首選</p><h2>尚未訂房的行程落點</h2></div></div>
+      {lodgingCards.length > 0 || fixedEntries.length > 0 ? <div className="overview-columns">
+        {lodgingCards.length > 0 ? <section className="overview-section">
+          <div className="section-heading"><div><p className="eyebrow">住宿</p><h2>住宿安排</h2></div></div>
           <div className="overview-stay-list">
             {lodgingCards.map(({ placeId, place, checkIn, checkOut }, index) => (
               <article key={placeId}>
@@ -164,9 +164,9 @@ export function OverviewPage({ bundle, trip }: OverviewPageProps) {
               </article>
             ))}
           </div>
-        </section>
+        </section> : null}
 
-        <section className="overview-section">
+        {fixedEntries.length > 0 ? <section className="overview-section">
           <div className="section-heading"><div><p className="eyebrow">固定時間</p><h2>不能錯過的預約與航班</h2></div></div>
           <div className="overview-alert-list">
             {fixedEntries.slice(0, 4).map(({ day, item, label }) => (
@@ -174,10 +174,9 @@ export function OverviewPage({ bundle, trip }: OverviewPageProps) {
                 <strong>{timeLabel(item.start_at)}</strong><span>{label}</span><small>{formatDay(day, bundle.local_timezone)}</small>
               </a>
             ))}
-            {fixedEntries.length === 0 ? <p className="honest-inline">這趟旅程沒有固定時間。</p> : null}
           </div>
-        </section>
-      </div>
+        </section> : null}
+      </div> : null}
 
       {hotelCandidates.length > 0 ? <section className="overview-section" aria-labelledby="hotel-candidates-title">
         <div className="section-heading"><div><p className="eyebrow">住宿評估</p><h2 id="hotel-candidates-title">住宿候選與查核狀態</h2></div></div>
