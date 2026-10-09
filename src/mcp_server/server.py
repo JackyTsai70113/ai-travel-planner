@@ -53,6 +53,9 @@ mcp = MCPServer(
     "ai-travel-planner",
     instructions=(
         "Use Canonical Trip V1 as the sole trip record and answer in Traditional Chinese. "
+        "Never present raw tool JSON, schemas, or opaque provider IDs as the final answer unless the traveler explicitly asks for them. "
+        "Summarize tool results in natural, concise Traditional Chinese. For a saved itinerary, organize scheduled items by local date and time, identify visits and meals by their current names when available, and state material validation warnings and incomplete fields. "
+        "Clearly distinguish planned items from verified facts; never describe unknown routes, opening hours, availability, or prices as verified. Omit absent lodging when the traveler chose to leave it blank; do not invent a hotel. "
         "For trip planning, ask one focused clarification question at a time, preserve prior answers, and never invent missing facts. "
         "Before plan_trip writes trip/site files, summarize the request and obtain explicit user confirmation; call it with confirm_write=true only after confirmation. "
         "After a successful plan_trip, call get_trip to read the saved itinerary. When presenting a readable or day-by-day itinerary, treat the request as asking for current names of scheduled places unless the traveler requests ID-only output or declines live lookups. Read get_trip.place_details_needed and call get_place_details once for each listed Place ID; include the returned Google Maps and third-party attribution. Do not stop at opaque Place IDs or query unselected candidates. Each lookup is a live Places request and may incur usage charges. "
@@ -299,7 +302,7 @@ def parse_trip_request_tool(
         ),
     ],
 ) -> dict[str, Any]:
-    """Parse an explicit natural-language travel request without researching or inventing missing facts."""
+    """Parse explicit travel facts without research or invention. Present the result as a concise Traditional Chinese summary, not raw JSON, unless the traveler asks for the structured payload."""
     if not request.strip():
         return {"status": "invalid_input", "message": "request must not be empty"}
     if len(request) > 20_000:
@@ -340,7 +343,7 @@ def get_trip_tool(
         ),
     ],
 ) -> dict[str, Any]:
-    """Read a bounded itinerary summary. The response's place_details_needed array is the authoritative list of distinct scheduled Google Place IDs lacking an independently sourced name. When presenting a readable or day-by-day itinerary, call get_place_details once for each listed ID and include attribution; do not stop at opaque IDs or query unselected candidates. Each detail call makes one live Places request and may incur usage charges."""
+    """Read a bounded itinerary summary. Do not present raw JSON as the final answer unless requested; summarize items by local date and time and distinguish visits from meals. The response's place_details_needed array is the authoritative list of distinct scheduled Google Place IDs lacking an independently sourced name. When presenting a readable or day-by-day itinerary, call get_place_details once for each listed ID and include attribution; do not stop at opaque IDs or query unselected candidates. Each detail call makes one live Places request and may incur usage charges. Report validation warnings and incomplete budget or lodging without implying they are complete."""
     try:
         path = _trip_path(trip_id)
         trip = durable_trip(json.loads(path.read_text(encoding="utf-8")))
@@ -721,6 +724,7 @@ def plan_a_trip(request: str) -> str:
     """Guide a one-question-at-a-time travel planning conversation."""
     return (
         "Help the traveler plan through a deliberate question-and-answer conversation. "
+        "Never paste raw tool JSON or schemas as the final answer unless explicitly requested; explain results in concise, natural Traditional Chinese. "
         "Preserve only facts the traveler stated; never fill gaps with assumptions. "
         "Use parse_trip_request before plan_trip on the accumulated request. If information is missing, "
         "ambiguous, or contradictory, ask exactly ONE concise, specific question in this turn, "
@@ -745,6 +749,8 @@ def plan_a_trip(request: str) -> str:
         "or query unselected candidates. Each lookup is a live Places request and may incur usage "
         "charges. If lookup fails, state that the detail is unavailable; do not "
         "reuse stale saved details or invent a value. "
+        "When presenting the saved trip, list scheduled visits and meals by date and local time, "
+        "include returned current place names and attribution, and state important validation warnings and incomplete budget or lodging. "
         "Never claim research, availability, opening hours, prices, routes, or validation succeeded "
         "without tool evidence. Planning does not book, pay, or publish the site. Publishing exposes trip details publicly; "
         "only call publish_trip_site after the traveler separately asks for public publication and confirms the action.\n\n"

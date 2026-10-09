@@ -119,6 +119,7 @@ class MCPTravelServerTests(unittest.TestCase):
                     }.issubset(by_name)
                 )
                 self.assertTrue(all(tool.description for tool in by_name.values()))
+                self.assertIn("Do not present raw JSON as the final answer", by_name["get_trip"].description)
                 self.assertIn("place_details_needed array is the authoritative list", by_name["get_trip"].description)
                 self.assertIn("call get_place_details once for each listed ID", by_name["get_trip"].description)
                 self.assertIn("Each detail call makes one live Places request", by_name["get_trip"].description)
@@ -130,6 +131,10 @@ class MCPTravelServerTests(unittest.TestCase):
                 self.assertIn("After a successful plan_trip, call get_trip", mcp.instructions)
                 self.assertIn("Read get_trip.place_details_needed", mcp.instructions)
                 self.assertIn("Google Maps and third-party attribution", mcp.instructions)
+                self.assertIn("Never present raw tool JSON", mcp.instructions)
+                self.assertIn("organize scheduled items by local date and time", mcp.instructions)
+                self.assertIn("Omit absent lodging when the traveler chose to leave it blank", mcp.instructions)
+                self.assertIn("not raw JSON", by_name["parse_trip_request"].description)
                 self.assertIn("google_place_id", by_name["get_place_details"].input_schema["properties"]["place_id"]["description"])
                 self.assertEqual(
                     by_name["parse_trip_request"].input_schema["properties"]["request"][
@@ -176,6 +181,8 @@ class MCPTravelServerTests(unittest.TestCase):
                 )
                 self.assertIn("After a successful plan_trip, call get_trip", str(prompt.messages))
                 self.assertIn("get_place_details", str(prompt.messages))
+                self.assertIn("Never paste raw tool JSON", str(prompt.messages))
+                self.assertIn("list scheduled visits and meals by date and local time", str(prompt.messages))
                 self.assertIn(
                     "then call plan_trip with confirm_write=true",
                     str(prompt.messages),
