@@ -1,8 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { parseBundle } from '../src/contracts/trip'
 import { buildRoutePath, parseRouteFromHash } from '../src/app/route-registry'
 import { resolveBundleUrl, resolveRegistryUrl } from '../src/hooks/useBundleLoader'
 import { googleMapsHrefForPlace } from '../src/lib/google-maps-links'
+import { fetchFresh } from '../src/lib/fresh-fetch'
 
 const validBundle = {
   trip_id: 'trip-a', title: 'Trip A', status: 'ok', local_timezone: 'Asia/Tokyo',
@@ -35,6 +36,16 @@ describe('canonical frontend contracts', () => {
     const deployedPage = 'https://example.github.io/ai-travel-planner/trips/awaji-2026/'
     expect(resolveRegistryUrl('./', deployedPage)).toBe('https://example.github.io/ai-travel-planner/trip-registry.json')
     expect(resolveBundleUrl('./', 'trips/awaji-2026', deployedPage)).toBe(`${deployedPage}public-bundle.json`)
+  })
+
+  it('bypasses browser caches for mutable public trip data', async () => {
+    const response = { ok: true } as Response
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(response)
+
+    await fetchFresh('https://example.github.io/ai-travel-planner/trip-registry.json')
+
+    expect(fetchSpy).toHaveBeenCalledWith('https://example.github.io/ai-travel-planner/trip-registry.json', { cache: 'no-store' })
+    fetchSpy.mockRestore()
   })
 
   it('builds a direct Google Maps place link from a retained Place ID without coordinates', () => {
