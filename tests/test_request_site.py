@@ -45,6 +45,11 @@ class RequestSiteTests(unittest.TestCase):
 
         self.assertEqual(entry["readiness"], "incomplete")
 
+    def test_generated_hero_summary_does_not_assume_lodging_is_provided(self):
+        entry = trip_to_registry_entry(_trip(), slug="nagoya-autumn-2027", source_slug="requested/nagoya-autumn-2027")
+
+        self.assertEqual(entry["hero_summary"], "名古屋賞楓的每日行程、餐飲與導航資訊。")
+
     def test_registry_marks_invalid_or_reversed_date_range_incomplete(self):
         for date_range in (
             {"start_date": "tomorrow", "end_date": "2027-10-22"},

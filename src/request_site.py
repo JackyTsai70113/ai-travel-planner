@@ -184,7 +184,7 @@ def trip_to_registry_entry(trip: Mapping[str, Any], *, slug: str, source_slug: s
         "last_verified": generated,
         "tags": ["generated-request", "needs-review"],
         "cover_media": {"kind": "gradient", "gradient": "linear-gradient(130deg, #334155 0%, #d97706 55%, #fbbf24 100%)", "fallback": "日本旅行規劃"},
-        "hero_summary": f"{('、'.join(destinations) or '日本')}的每日行程、餐飲、住宿與導航資訊。",
+        "hero_summary": f"{('、'.join(destinations) or '日本')}的每日行程、餐飲與導航資訊。",
         "key_messages": ["依即時研究資料產生，出發前請重新確認動態資訊。"],
         "critical_alert_count": sum(item["severity"] in {"error", "critical"} for item in validation),
     }
