@@ -31,6 +31,7 @@
 - 2026-10-10 在同一 Chrome 視窗的 ChatGPT 一般 Chat「解析旅遊請求」中，確認使用者訊息附有 `AI Travel Planner MCP`，實際唯讀呼叫 `parse_trip_request`。工具回 `status=parsed`；`origin=桃園國際機場`，`provenance.origin.text=出發地：桃園國際機場`，完整性驗證 PASS。倉敷、岡山縣、2026-11-01 至 2026-11-05、5 天 4 夜、6 位成人與 1 位 2 歲兒童、不限預算、自駕也正確。沒有呼叫其他工具，未規劃、寫入、修改或發布行程。
 - 同一測試 Chat 先前的舊回覆曾把機場名稱截為「桃園」；以上是修正合併並部署後的實際 ChatGPT MCP 工具結果，已確認缺陷修復生效。
 - 同一 Chat 的既有唯讀 `get_trip` 驗收仍以後續品質狀態為準：五天共 10 個景點及 15 餐，住宿留空符合目前需求；已知費用小計為 JPY 0、總費用狀態 `incomplete`，另有 10 項驗證警告。這些是行程內容／證據完整度的後續改善項目，不影響本次 parser 修正驗收，也不把未設定住宿視為缺陷。
+- 使用 Computer Use 在相同一般 ChatGPT 測試 Chat 執行只讀完整具名流程：`get_trip` 1 次取得行程與 `place_details_needed`，`get_place_details` 25 次查詢所有已排入且缺少獨立名稱來源的地點。25 筆均回 `status=available` 並帶 `Google Maps` attribution，第三方 attribution 皆為空陣列；查詢失敗 0、未遇月額度上限。ChatGPT 在一次回合呼叫限制後續查剩餘 4 筆，沒有重複前 21 筆。僅記錄狀態與數量，不將 Google Places 名稱或詳情持久化到 repo；全程未呼叫寫入／發布工具。
 
 ### 2026-10-10 parser 修正前的 ChatGPT Chat 驗收紀錄
 
