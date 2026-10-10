@@ -21,7 +21,7 @@ python3 -m src.cli plan-site \
 
 ## 從 ChatGPT MCP 發布
 
-本機 `build_trip_site` 不會公開行程。使用者若明確要求 MCP 規劃後公開網站並回傳網址，這項要求就是公開授權；MCP 應在規劃前的摘要確認中說明公開範圍，待使用者確認後規劃，並在成功後呼叫 `publish_trip_site`，傳入既有 `trip_id` 與 `confirm_public_publish=true`。這會把旅程日期、同行人數與行程內容提交至 GitHub repository。若使用者沒有明確要求公開，規劃完成後需另外詢問公開授權。
+本機 `build_trip_site` 不會公開行程。使用者若明確要求 MCP 規劃後公開網站並回傳網址，這項要求就是公開授權；MCP 應在規劃前的摘要確認中說明公開範圍，待使用者確認後，以 `confirm_write=true` 和 `confirm_public_publish=true` 呼叫 `plan_trip`。規劃成功後，工具會自動呼叫發布流程，並在同一個 `plan_trip` 回應中帶回發布結果與實際 URL。這會把旅程日期、同行人數與行程內容提交至 GitHub repository。若使用者沒有明確要求公開，規劃時須傳入 `confirm_public_publish=false`，規劃完成後再另外詢問公開授權。
 
 有錯誤級驗證或硬性缺項的 trip 會拒絕發布。只有已揭露的警告（例如未安排全部餐段、費用估算不完整、住宿未選或未排入候選地點）時，仍可在明確公開確認後發布為 preview；registry readiness 保留 `incomplete`，網站 bundle 保留警告，不會標成完整。公開 slug 已被其他 trip 使用時不覆寫；更新同一 trip 的現有網站還需使用者另行確認 `confirm_overwrite=true`。
 

@@ -60,10 +60,10 @@ mcp = MCPServer(
         "If a day has an unknown arrival/start or lodging/return route, explicitly say the displayed activity window excludes that unverified transfer; do not imply the day is fully connected. Clearly distinguish planned items from verified facts; never describe unknown routes, opening hours, availability, or prices as verified. Omit absent lodging when the traveler chose to leave it blank; do not invent a hotel. "
         "For trip planning, ask one focused clarification question at a time only for information required to proceed safely or produce a valid plan; preserve prior answers and never invent missing facts. Do not turn planning into a long optional-preference questionnaire: once required information is sufficient, summarize and wait for confirmation. "
         "Lodging is not an active search feature. Unless the traveler voluntarily supplies lodging details, do not ask lodging preference, room, location, or hotel questions, do not search or recommend lodging, and keep lodging fields empty. A displayed or preselected UI option is not a user answer; record a preference only after the traveler explicitly selects or states it. If the traveler has not decided, preserve it as unknown instead of choosing a default. "
-        "Before plan_trip writes trip/site files, summarize the request and obtain explicit user confirmation; call it with confirm_write=true only after confirmation. If the traveler explicitly asked for the completed trip to be published publicly and its URL returned, include publication in that confirmation summary; this is public-publishing consent, so after the confirmed plan succeeds call publish_trip_site with confirm_public_publish=true without asking for the same consent again. If public publication was not explicitly requested, ask separately after planning. "
+        "Before plan_trip writes trip/site files, summarize the request and obtain explicit user confirmation; call it with confirm_write=true only after confirmation. If the traveler explicitly asked for the completed trip to be published publicly and its URL returned, include publication in that confirmation summary; after the traveler confirms, call plan_trip with both confirm_write=true and confirm_public_publish=true. That plan_trip call publishes automatically after a successful plan and returns the actual website URL; do not rely on a later optional model tool call to publish. If public publication was not explicitly requested, call plan_trip with confirm_public_publish=false and ask separately after planning. "
         "After a successful plan_trip, call get_trip to read the saved itinerary. When presenting a readable or day-by-day itinerary, treat the request as asking for current names of scheduled places unless the traveler requests ID-only output or declines live lookups. Read get_trip.place_details_needed and call get_place_details once for each listed Place ID; include the returned Google Maps and third-party attribution. Do not stop at opaque Place IDs or query unselected candidates. Each lookup is a live Places request and may incur usage charges. MCP and public-page lookups share a 1,000-request monthly service budget; if a lookup returns monthly_limit_reached, stop further lookups and report remaining names as unavailable this month. "
         "Google Places details are request-scoped and must never be saved; only Place IDs may persist. If a detail lookup fails, say it is unavailable and do not substitute stale saved data or guess. "
-        "Preserve unknown facts. When showing a traveler the completed trip, publish completed trip details to GitHub Pages only when the traveler explicitly requested public publication or explicitly approves it. An explicit request to plan the trip, publish its website publicly, and return the URL is public-publishing consent; include it in the pre-planning confirmation summary, then after the confirmed plan succeeds call publish_trip_site with confirm_public_publish=true without asking for the same consent again. Planning consent and confirm_write alone do not grant publication consent. If public publication was not explicitly requested, ask separately after planning. If it returns overwrite_confirmation_required because a different version of this trip is already public, ask separately whether to replace that public page; only after explicit approval retry with both confirm_public_publish=true and confirm_overwrite=true. If publication succeeds or the identical page is already published, return the tool's url as a clickable link and explain deployment_status: pending means the new commit's Pages deployment is still running, and not_required means the identical public page already exists and this call started no deployment. These are the deployment_status values this tool returns; never claim a deployment finished while it is pending or not_required."
+        "Preserve unknown facts. When showing a traveler the completed trip, publish completed trip details to GitHub Pages only when the traveler explicitly requested public publication or explicitly approves it. An explicit request to plan the trip, publish its website publicly, and return the URL is public-publishing consent; include it in the pre-planning confirmation summary, then after confirmation call plan_trip with both confirm_write=true and confirm_public_publish=true. The plan_trip result includes the publication result and website URL after successful planning. Planning consent and confirm_write alone do not grant publication consent. If public publication was not explicitly requested, ask separately after planning. If publication returns overwrite_confirmation_required because a different version of this trip is already public, ask separately whether to replace that public page; only after explicit approval call publish_trip_site with both confirm_public_publish=true and confirm_overwrite=true. If publication succeeds or the identical page is already published, return its url as a clickable link and explain deployment_status: pending means the new commit's Pages deployment is still running, and not_required means the identical public page already exists and this call started no deployment. These are the deployment_status values this tool returns; never claim a deployment finished while it is pending or not_required."
     ),
 )
 
@@ -416,7 +416,7 @@ def get_place_details_tool(
     name="plan_trip",
     annotations=ToolAnnotations(
         read_only_hint=False,
-        destructive_hint=False,
+        destructive_hint=True,
         idempotent_hint=False,
         open_world_hint=True,
     ),
@@ -443,6 +443,16 @@ def plan_trip_tool(
             description="Must be true to run live planning and write Canonical Trip and site files."
         ),
     ] = False,
+    confirm_public_publish: Annotated[
+        bool,
+        Field(
+            description=(
+                "Must be true only after the traveler explicitly requested public publication "
+                "and confirmed the pre-planning summary that says the completed trip will be public. "
+                "When true, publish the successfully planned trip and return its website URL."
+            )
+        ),
+    ] = False,
 ) -> dict[str, Any]:
     """以繁體中文進行一題一答的規劃，不要把 parser JSON 原樣當成回答。
 
@@ -453,8 +463,10 @@ def plan_trip_tool(
     資料完整後，先摘要需求並取得使用者對私有檔案寫入的明確確認，再以
     confirm_write=true 呼叫本工具。這會建立或覆寫指定 trip_id 的 Canonical
     Trip 與靜態網站檔案。若使用者已明確要求規劃後公開網站並回傳網址，摘要須明確
-    說明公開發布；使用者確認後，規劃成功便接續 get_trip 與 publish_trip_site，
-    不必在規劃後重問相同公開授權。若沒有明確要求公開，仍須在規劃後另行詢問。
+    說明公開發布；使用者確認後，以 confirm_write=true 與
+    confirm_public_publish=true 呼叫本工具。規劃成功時本工具會接續發布，並回傳
+    publication.url；不完整或失敗的規劃不會發布。若使用者沒有明確要求公開，使用
+    confirm_public_publish=false；規劃完成後再另行詢問。
     """
     try:
         _trip_path(trip_id)
@@ -492,9 +504,15 @@ def plan_trip_tool(
     if missing:
         return {"status": "configuration_missing", "missing": missing}
     if not confirm_write:
+        message = "Call again with confirm_write=true to create trip and site files."
+        if confirm_public_publish:
+            message = (
+                "The traveler has also confirmed public publication. Call again with "
+                "confirm_write=true and confirm_public_publish=true to plan and publish the trip."
+            )
         return {
             "status": "confirmation_required",
-            "message": "Call again with confirm_write=true to create trip and site files.",
+            "message": message,
         }
     try:
         runner = create_production_orchestrator(
@@ -515,7 +533,7 @@ def plan_trip_tool(
         }
     canonical_trip = getattr(result, "trip", None)
     trip_budget = canonical_trip.get("budget") if isinstance(canonical_trip, dict) else None
-    return {
+    response = {
         "status": "complete" if _is_complete_plan_result(result) else "incomplete",
         "trip_id": trip_id,
         "budget": trip_budget,
@@ -538,6 +556,18 @@ def plan_trip_tool(
             for warning in result.warnings
         ],
     }
+    if confirm_public_publish:
+        if response["status"] == "complete":
+            response["publication"] = publish_trip_site_tool(
+                trip_id,
+                confirm_public_publish=True,
+            )
+        else:
+            response["publication"] = {
+                "status": "not_attempted",
+                "reason": "plan_incomplete",
+            }
+    return response
 
 
 def _next_clarification_question(missing, ambiguous, constraint_issues) -> str:
@@ -722,7 +752,7 @@ def capabilities() -> str:
                 "validate_trip": "read-only; validates supplied JSON",
                 "get_trip": "read-only; returns allowlisted trip fields and place_details_needed for scheduled places needing live names",
                 "get_place_details": "read-only live Google Places lookup; shares a persistent monthly request budget with public lookups and is never persisted",
-                "plan_trip": "requires confirm_write=true; performs live provider research and writes local trip/site files",
+                "plan_trip": "requires confirm_write=true; performs live provider research and writes local trip/site files; when confirm_public_publish=true, automatically publishes only after successful planning and returns the website URL",
                 "build_trip_site": "requires confirm_write=true; writes a local static site; never deploys",
                 "publish_trip_site": "requires explicit confirm_public_publish=true; publishes ready trips as previews and warning-only incomplete trips with incomplete readiness; blocking findings refuse publication; public overwrite requires confirm_overwrite=true",
             },
@@ -750,9 +780,13 @@ def plan_a_trip(request: str) -> str:
         "explain briefly why that detail is needed and offer clear choices where possible. "
         "Do not call plan_trip while required fields remain unresolved. Once the request is "
         "complete, show a concise summary of the understood trip and ask the traveler to confirm "
-        "that summary and the planning action. If the traveler explicitly requested public publication and a returned URL, state in this confirmation that the trip will be public; that request grants publication consent, so do not ask for the same consent again after planning. Only after explicit confirmation, explain that "
+        "that summary and the planning action. If the traveler explicitly requested public publication and a returned URL, state in this confirmation that the trip will be public; that request grants publication consent. Only after explicit confirmation, explain that "
         "plan_trip performs live research and writes/overwrites the named Canonical Trip and "
         "static site files on the MCP service; then call plan_trip with confirm_write=true. "
+        "When public publication was explicitly requested and included in that summary, also pass "
+        "confirm_public_publish=true; plan_trip publishes after successful planning and returns "
+        "publication.url in the same tool result. Do not depend on a separate follow-up publish tool "
+        "call for this requested flow. Otherwise pass confirm_public_publish=false. "
         "After a successful plan_trip, call get_trip to read the persisted itinerary. When "
         "presenting a readable or day-by-day itinerary, treat that as asking for current names "
         "of scheduled places unless the traveler requests ID-only output or declines live lookups. "
@@ -769,10 +803,10 @@ def plan_a_trip(request: str) -> str:
         "or lodging/return routing is unknown, explicitly say the shown activity window excludes "
         "that unverified transfer; do not describe the day as fully route-verified. "
         "Never claim research, availability, opening hours, prices, routes, or validation succeeded "
-        "without tool evidence. Planning does not book, pay, or publish the site. After a successful plan, "
+        "without tool evidence. Planning does not book or pay. After a successful plan, "
         "read the saved trip and present a concise preview. If public publication was explicitly "
-        "requested and included in the confirmation summary, immediately call publish_trip_site with "
-        "confirm_public_publish=true. Otherwise ask separately whether the traveler approves publishing "
+        "requested and included in the confirmation summary, plan_trip has already attempted publication "
+        "and returned its publication result. Otherwise ask separately whether the traveler approves publishing "
         "these trip details publicly to GitHub Pages and call the tool only after an explicit yes. On "
         "publish_accepted or already_published, "
         "return the tool's url as a clickable link and explain deployment_status accurately: pending "

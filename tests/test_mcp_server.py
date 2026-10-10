@@ -128,17 +128,20 @@ class MCPTravelServerTests(unittest.TestCase):
                 self.assertIn("share a persistent 1,000-request monthly service budget", by_name["get_trip"].description)
                 self.assertIn("include Google Maps and third-party attribution", by_name["get_place_details"].description)
                 self.assertIn("may incur usage charges", by_name["get_place_details"].description)
+                self.assertIn("confirm_public_publish", by_name["plan_trip"].input_schema["properties"])
+                self.assertIn("website URL", by_name["plan_trip"].input_schema["properties"]["confirm_public_publish"]["description"])
                 self.assertIn("monthly_limit_reached", by_name["get_place_details"].description)
                 self.assertIn("一題一答", by_name["plan_trip"].description)
                 self.assertIn("不要把 parser JSON 原樣當成回答", by_name["plan_trip"].description)
                 self.assertIn("使用者已明確要求規劃後公開網站並回傳網址", by_name["plan_trip"].description)
-                self.assertIn("不必在規劃後重問相同公開授權", by_name["plan_trip"].description)
+                self.assertIn("publication.url", by_name["plan_trip"].description)
                 self.assertIn("不要詢問住宿地點", by_name["plan_trip"].description)
                 self.assertIn("A displayed or preselected UI option is not a user answer", mcp.instructions)
                 self.assertIn("Do not turn planning into a long optional-preference questionnaire", mcp.instructions)
                 self.assertIn("After a successful plan_trip, call get_trip", mcp.instructions)
-                self.assertIn("call publish_trip_site with confirm_public_publish=true", mcp.instructions)
-                self.assertIn("return the tool's url as a clickable link", mcp.instructions)
+                self.assertIn("call plan_trip with both confirm_write=true and confirm_public_publish=true", mcp.instructions)
+                self.assertIn("returns the actual website URL", mcp.instructions)
+                self.assertIn("return its url as a clickable link", mcp.instructions)
                 self.assertIn("not_required means the identical public page already exists", mcp.instructions)
                 self.assertIn("ask separately whether to replace that public page", mcp.instructions)
                 self.assertIn("confirm_public_publish=true and confirm_overwrite=true", mcp.instructions)
@@ -200,7 +203,7 @@ class MCPTravelServerTests(unittest.TestCase):
                 )
                 self.assertIn("After a successful plan_trip, call get_trip", str(prompt.messages))
                 self.assertIn("If public publication was explicitly requested", str(prompt.messages))
-                self.assertIn("immediately call publish_trip_site", str(prompt.messages))
+                self.assertIn("plan_trip has already attempted publication", str(prompt.messages))
                 self.assertIn("return the tool's url as a clickable link", str(prompt.messages))
                 self.assertIn("not_required means the identical public page already exists", str(prompt.messages))
                 self.assertIn("ask separately whether to replace that page", str(prompt.messages))
@@ -910,6 +913,99 @@ class MCPTravelServerTests(unittest.TestCase):
             self.assertEqual(output["stages"][0]["status"], stage_status.value)
             self.assertEqual(output["warnings"][0]["message"], "每日首段路線尚未驗證。")
 
+    def test_plan_publishes_after_success_only_when_public_confirmation_is_explicit(self) -> None:
+        request = "2027/4/10到2027/4/14 台北出發德島五天四夜，2大，預算不限，自駕"
+        result = SimpleNamespace(
+            succeeded=True,
+            trip={"budget": {"currency": "JPY", "categories": {}, "total": {"amount": 0, "currency": "JPY"}, "total_status": "incomplete", "limit_status": "unlimited"}},
+            stages=tuple(StageReport(stage_name, StageStatus.SUCCEEDED) for stage_name in StageName),
+            warnings=(),
+        )
+
+        class Runner:
+            def run(self, _intent):
+                return result
+
+        publication = {
+            "status": "publish_accepted",
+            "url": "https://example.test/trips/mcp-plan-publish/",
+            "deployment_status": "pending",
+        }
+        with (
+            patch("src.mcp_server.server.missing_required_configuration", return_value=[]),
+            patch("src.mcp_server.server.create_production_orchestrator", return_value=Runner()),
+            patch("src.mcp_server.server.publish_trip_site_tool", return_value=publication) as publish,
+        ):
+            output = plan_trip_tool(
+                request,
+                "mcp-plan-publish",
+                confirm_write=True,
+                confirm_public_publish=True,
+            )
+
+        self.assertEqual(output["status"], "complete")
+        self.assertEqual(output["publication"], publication)
+        publish.assert_called_once_with("mcp-plan-publish", confirm_public_publish=True)
+
+    def test_plan_does_not_publish_when_public_confirmation_is_not_explicit(self) -> None:
+        request = "2027/4/10到2027/4/14 台北出發德島五天四夜，2大，預算不限，自駕"
+        result = SimpleNamespace(
+            succeeded=True,
+            trip={"budget": None},
+            stages=tuple(StageReport(stage_name, StageStatus.SUCCEEDED) for stage_name in StageName),
+            warnings=(),
+        )
+
+        class Runner:
+            def run(self, _intent):
+                return result
+
+        with (
+            patch("src.mcp_server.server.missing_required_configuration", return_value=[]),
+            patch("src.mcp_server.server.create_production_orchestrator", return_value=Runner()),
+            patch("src.mcp_server.server.publish_trip_site_tool") as publish,
+        ):
+            output = plan_trip_tool(request, "mcp-plan-private", confirm_write=True)
+
+        self.assertEqual(output["status"], "complete")
+        self.assertNotIn("publication", output)
+        publish.assert_not_called()
+
+    def test_plan_does_not_publish_an_incomplete_plan_even_with_public_confirmation(self) -> None:
+        request = "2027/4/10到2027/4/14 台北出發德島五天四夜，2大，預算不限，自駕"
+        result = SimpleNamespace(
+            succeeded=True,
+            trip={"budget": None},
+            stages=tuple(
+                StageReport(
+                    stage_name,
+                    StageStatus.INCOMPLETE if stage_name is StageName.RESEARCH else StageStatus.SUCCEEDED,
+                )
+                for stage_name in StageName
+            ),
+            warnings=(),
+        )
+
+        class Runner:
+            def run(self, _intent):
+                return result
+
+        with (
+            patch("src.mcp_server.server.missing_required_configuration", return_value=[]),
+            patch("src.mcp_server.server.create_production_orchestrator", return_value=Runner()),
+            patch("src.mcp_server.server.publish_trip_site_tool") as publish,
+        ):
+            output = plan_trip_tool(
+                request,
+                "mcp-plan-incomplete",
+                confirm_write=True,
+                confirm_public_publish=True,
+            )
+
+        self.assertEqual(output["status"], "incomplete")
+        self.assertEqual(output["publication"], {"status": "not_attempted", "reason": "plan_incomplete"})
+        publish.assert_not_called()
+
     def test_plan_returns_specific_production_incomplete_reason(self) -> None:
         request = "2026/4/10到2026/4/14 台北出發德島五天四夜，2大，預算不限，自駕"
         reason = "route-aware scheduling requires verified opening hours"
@@ -990,8 +1086,14 @@ class MCPTravelServerTests(unittest.TestCase):
                 "src.mcp_server.server.create_production_orchestrator"
             ) as create_runner,
         ):
-            result = plan_trip_tool(request, "mcp-test-trip", confirm_write=False)
+            result = plan_trip_tool(
+                request,
+                "mcp-test-trip",
+                confirm_write=False,
+                confirm_public_publish=True,
+            )
         self.assertEqual(result["status"], "confirmation_required")
+        self.assertIn("confirm_write=true and confirm_public_publish=true", result["message"])
         create_runner.assert_not_called()
 
 
