@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import re
 from collections import defaultdict
+from datetime import date
 
 from src.planner.contracts import HardConstraint, SoftPreference
 
@@ -33,8 +34,8 @@ _TAIWAN_DESTINATION_ALIASES = {
     "台北市": "台北", "臺北市": "台北", "台北": "台北", "臺北": "台北",
     "萬華": "萬華", "西門町": "西門町", "西門": "西門町",
 }
-_ORIGIN_NAMES = r"桃園國際機場|高雄國際機場|台北松山機場|桃園機場|松山機場|台灣|臺灣|台北|臺北|高雄|桃園|香港|東京|大阪"
-_ORIGIN_PATTERN = rf"(?:(?:從|由|出發地[：:]?)({_ORIGIN_NAMES})(?:出發|飛|去)?|({_ORIGIN_NAMES})出發)"
+_ORIGIN_NAMES = r"關西國際機場(?:\s*[（(]?\s*KIX\s*[）)]?)?|桃園國際機場|高雄國際機場|台北松山機場|桃園機場|松山機場|KIX|台灣|臺灣|台北|臺北|高雄|桃園|香港|東京|大阪"
+_ORIGIN_PATTERN = rf"(?:(?:從|由|出發地[：:]?)\s*({_ORIGIN_NAMES})(?:\s*出發|\s*飛|\s*去)?|({_ORIGIN_NAMES})\s*出發)"
 
 
 def parse_trip_request(text: str) -> TripRequest:
@@ -55,7 +56,7 @@ def parse_trip_request(text: str) -> TripRequest:
             provenance[field].extend(FieldProvenance(match.group(0), match.start(), match.end(), field) for match in matches)
         return matches
 
-    origin_matches = capture("origin", _ORIGIN_PATTERN, lambda m: m.group(1) or m.group(2))
+    origin_matches = capture("origin", _ORIGIN_PATTERN, lambda m: (m.group(1) or m.group(2)).strip())
     origin_spans = tuple(
         (match.start(1) if match.group(1) else match.start(2),
          match.end(1) if match.group(1) else match.end(2))
@@ -92,10 +93,13 @@ def parse_trip_request(text: str) -> TripRequest:
             FieldProvenance(match.group(0), match.start(), match.end(), "destinations")
         )
     places = (*places, *normalized_taiwan_places)
-    regions = tuple(region for region in _REGIONS if region in text)
+    region_matches = {
+        region: tuple(match for match in re.finditer(re.escape(region), text) if not is_origin(match))
+        for region in _REGIONS
+    }
+    regions = tuple(region for region, matches in region_matches.items() if matches)
     for region in regions:
-        match = re.search(re.escape(region), text)
-        assert match is not None
+        match = region_matches[region][0]
         provenance["regions"].append(FieldProvenance(region, match.start(), match.end(), "regions"))
     values["destinations"], values["regions"] = places, regions
 
@@ -104,12 +108,29 @@ def parse_trip_request(text: str) -> TripRequest:
         capture("duration", r"([\d一二三四五六七八九十兩]+)天", lambda m: (_number(m.group(1)), None))
     date_match = capture("date_range", r"(\d{4})[/-](\d{1,2})[/-](\d{1,2})\s*(?:到|至|[-~～〜])\s*(\d{4})?[/-]?(\d{1,2})[/-](\d{1,2})")
     start_date = end_date = None
+    invalid_date_range = False
     if date_match:
         m = date_match[0]
         year = m.group(1)
-        start_date = f"{year}-{int(m.group(2)):02d}-{int(m.group(3)):02d}"
         end_year = m.group(4) or year
-        end_date = f"{end_year}-{int(m.group(5)):02d}-{int(m.group(6)):02d}"
+        if not m.group(4) and (int(m.group(5)), int(m.group(6))) < (int(m.group(2)), int(m.group(3))):
+            end_year = str(int(year) + 1)
+        raw_start_date = f"{year}-{int(m.group(2)):02d}-{int(m.group(3)):02d}"
+        raw_end_date = f"{end_year}-{int(m.group(5)):02d}-{int(m.group(6)):02d}"
+        try:
+            start_value = date.fromisoformat(raw_start_date)
+            end_value = date.fromisoformat(raw_end_date)
+        except ValueError:
+            invalid_date_range = True
+        else:
+            start_date, end_date = start_value.isoformat(), end_value.isoformat()
+            if "duration" not in values:
+                nights = (end_value - start_value).days
+                if nights >= 0:
+                    values["duration"] = (nights + 1, nights)
+                    provenance["duration"].append(
+                        FieldProvenance(m.group(0), m.start(), m.end(), "duration")
+                    )
 
     adult_match = capture("adults", r"([\d一二三四五六七八九十]+)\s*(?:位\s*)?(?:大人|成人|大)", lambda m: _number(m.group(1)))
     child_match = capture("children", r"([\d一二三四五六七八九十]+)\s*(?:位\s*)?(?:小孩|兒童|幼兒|小)", lambda m: _number(m.group(1)))
@@ -126,7 +147,12 @@ def parse_trip_request(text: str) -> TripRequest:
     unlimited_budget = list(re.finditer(r"(?:預算|花費|總額)\s*(?:：|:)?\s*(?:暫不設(?:定)?限制|不設(?:定)?限制|不限(?:預算|金額)?|無上限|沒有上限)", text))
     for match in unlimited_budget:
         provenance["budget"].append(FieldProvenance(match.group(0), match.start(), match.end(), "budget"))
-    budget = [] if unlimited_budget else capture("budget", r"(?:預算|花費|總共)(?:約|最多)?\s*(\d+(?:\.\d+)?)\s*(萬|千)?\s*(台幣|NTD|日圓|JPY|元)?", lambda m: _budget(m.group(1), m.group(2), m.group(3)), re.I)
+    budget = [] if unlimited_budget else capture(
+        "budget",
+        r"(?:預算|花費|總額|總共)(?:上限)?\s*(?:[：:]?\s*)?(?:(?:為|是|兩人合計|合計|每人|每位|總計|全程|約|最多)\s*){0,4}(?:(NT\s*\$|NTD|TWD|新台幣|台幣|JPY|日圓|日幣)\s*)?(\d[\d,]*(?:\.\d+)?)\s*(萬|千)?\s*(新台幣|台幣|NTD|TWD|日圓|日幣|JPY|元)?",
+        lambda m: _budget(m.group(2), m.group(3), m.group(4), m.group(1)),
+        re.I,
+    )
     budget_amount = currency = None
     budget_status = "unlimited" if unlimited_budget else "unspecified"
     if budget:
@@ -142,7 +168,7 @@ def parse_trip_request(text: str) -> TripRequest:
         if source.field == "request_constraints"
     )
     required = _after_markers(text, ("一定要去", "必去", "想去"), provenance, "required_places", extension_spans)
-    forbidden = _after_markers(text, ("不要去", "不去", "避開"), provenance, "forbidden_places", extension_spans)
+    forbidden = _after_markers(text, ("不要去", "不想去", "不去", "避開"), provenance, "forbidden_places", extension_spans)
     constraint_issues = tuple(constraint_issues) + tuple(
         ConstraintIssue(
             "contradictory_strength", (item.id,), "request_constraints", item.subject or "",
@@ -174,12 +200,19 @@ def parse_trip_request(text: str) -> TripRequest:
     soft = [SoftPreference("low-fatigue", "low_fatigue")] if pace == "relaxed" else []
     missing = _missing(places, start_date, values.get("duration"), values.get("adults"), budget_status)
     ambiguous = []
+    if invalid_date_range:
+        ambiguous.append(AmbiguousField(
+            "date_range", date_match[0].group(0), "日期區間包含無效日曆日期，需由使用者釐清"
+        ))
+    if start_date and end_date and end_date < start_date:
+        ambiguous.append(AmbiguousField(
+            "date_range", f"{start_date} 至 {end_date}", "日期區間結束早於開始，需由使用者釐清"
+        ))
     if len(ages) and values.get("children") is not None and len(ages) != values["children"]:
         ambiguous.append(AmbiguousField("child_ages", ", ".join(map(str, ages)), "兒童人數與明確年齡數量不一致"))
     if len(transport) > 1 and "mixed" not in transport:
         ambiguous.append(AmbiguousField("transport", "、".join(transport), "同時提及多種交通方式，未說明分配方式"))
     if start_date and end_date and values.get("duration") is not None:
-        from datetime import date
         stated_days = values["duration"][0]  # type: ignore[index]
         date_days = (date.fromisoformat(end_date) - date.fromisoformat(start_date)).days + 1
         if stated_days != date_days:
@@ -459,10 +492,11 @@ def _number(value: str) -> int:
     return digits[value]
 
 
-def _budget(number: str, scale: str | None, denomination: str | None) -> tuple[int, str]:
+def _budget(number: str, scale: str | None, denomination: str | None, currency_prefix: str | None = None) -> tuple[int, str]:
     multiplier = 10000 if scale == "萬" else 1000 if scale == "千" else 1
-    currency = "JPY" if (denomination or "").lower() in {"jpy", "日圓"} else "TWD"
-    return int(float(number) * multiplier), currency
+    currency_text = f"{currency_prefix or ''}{denomination or ''}".lower()
+    currency = "JPY" if any(value in currency_text for value in ("jpy", "日圓", "日幣")) else "TWD"
+    return int(float(number.replace(",", "")) * multiplier), currency
 
 
 def _choices(text, vocabulary, provenance, field):
@@ -480,6 +514,13 @@ def _after_markers(text, markers, provenance, field, excluded_spans=()):
     for marker in markers:
         for match in re.finditer(re.escape(marker) + r"\s*([\u4e00-\u9fffA-Za-z0-9]+)", text):
             if any(start <= match.start() and match.end() <= end for start, end in excluded_spans):
+                continue
+            clause_start = max(
+                text.rfind(separator, 0, match.start())
+                for separator in ("，", "。", "；", ";", "!", "！", "?", "？", "\n")
+            ) + 1
+            prefix = text[max(clause_start, match.start() - 16):match.start()]
+            if re.search(r"(?:沒有|未|無|不)(?:曾|特別)?(?:指定|要求|安排)?\s*$", prefix):
                 continue
             name = match.group(1)
             provenance[field].append(FieldProvenance(match.group(0), match.start(), match.end(), field))

@@ -141,6 +141,32 @@ class TravelIntentParserTests(unittest.TestCase):
             for source in intent.provenance[field]:
                 self.assertEqual(text[source.start:source.end], source.text)
 
+    def test_chatgpt_full_request_parses_kix_budget_date_duration_and_negative_preferences(self):
+        text = (
+            "日本京都市，2027/04/05 至 2027/04/09，2 位成人、0 位小孩，"
+            "從關西國際機場 KIX 出發，總預算為兩人合計 NT$80,000，"
+            "大眾運輸，不租車，沒有指定必去景點或排除活動。"
+        )
+        intent = parse_trip_request(text)
+
+        self.assertEqual(intent.destinations, ("京都",))
+        self.assertEqual(intent.regions, ())
+        self.assertEqual((intent.start_date, intent.end_date), ("2027-04-05", "2027-04-09"))
+        self.assertEqual((intent.duration_days, intent.duration_nights), (5, 4))
+        duration_source = intent.provenance["duration"][0]
+        self.assertEqual(duration_source.text, "2027/04/05 至 2027/04/09")
+        self.assertEqual(text[duration_source.start:duration_source.end], duration_source.text)
+        self.assertEqual(intent.origin, "關西國際機場 KIX")
+        self.assertEqual((intent.travelers.adults, intent.travelers.children), (2, 0))
+        self.assertEqual((intent.budget_amount, intent.currency, intent.budget_status), (80000, "TWD", "limited"))
+        self.assertEqual(intent.transport, ("transit",))
+        self.assertEqual(intent.required_places, ())
+        self.assertEqual(intent.forbidden_places, ())
+        self.assertEqual(intent.missing_fields, ())
+        for field in ("origin", "budget", "date_range"):
+            for source in intent.provenance[field]:
+                self.assertEqual(text[source.start:source.end], source.text)
+
     def test_budget_missing_and_explicitly_unlimited_are_distinct(self):
         missing = parse_trip_request("東京三天，2大")
         unlimited = parse_trip_request("東京三天，2大，預算不限")
@@ -164,6 +190,27 @@ class TravelIntentParserTests(unittest.TestCase):
     def test_date_range_and_explicit_duration_conflict_is_ambiguous(self):
         intent = parse_trip_request("2026/10/20到2026/10/23，台北三天兩夜")
         self.assertTrue(any(item.field == "duration" for item in intent.ambiguous_fields))
+
+    def test_date_range_without_end_year_infers_cross_year_end_date(self):
+        text = "東京 2026/12/30 至 01/02，2大"
+        intent = parse_trip_request(text)
+        self.assertEqual((intent.start_date, intent.end_date), ("2026-12-30", "2027-01-02"))
+        self.assertEqual((intent.duration_days, intent.duration_nights), (4, 3))
+        self.assertFalse(any(item.field == "date_range" for item in intent.ambiguous_fields))
+        duration_source = intent.provenance["duration"][0]
+        self.assertEqual(text[duration_source.start:duration_source.end], duration_source.text)
+
+    def test_explicitly_reversed_date_range_is_ambiguous(self):
+        intent = parse_trip_request("東京 2026/12/30 至 2026/01/02，2大")
+        self.assertTrue(any(item.field == "date_range" for item in intent.ambiguous_fields))
+
+    def test_invalid_calendar_date_is_not_returned_as_a_usable_date(self):
+        intent = parse_trip_request("東京 2027/02/30 至 2027/03/02，2大")
+        self.assertIsNone(intent.start_date)
+        self.assertIsNone(intent.end_date)
+        self.assertIsNone(intent.duration_days)
+        self.assertTrue(any(item.field == "date_range" for item in intent.ambiguous_fields))
+        self.assertIn("dates_or_duration", {item.field for item in intent.missing_fields})
 
     def test_required_and_forbidden_places_and_soft_pace(self):
         intent = parse_trip_request(FIXTURES[4]["text"])
