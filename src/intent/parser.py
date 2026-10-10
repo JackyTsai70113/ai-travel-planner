@@ -108,24 +108,29 @@ def parse_trip_request(text: str) -> TripRequest:
         capture("duration", r"([\d一二三四五六七八九十兩]+)天", lambda m: (_number(m.group(1)), None))
     date_match = capture("date_range", r"(\d{4})[/-](\d{1,2})[/-](\d{1,2})\s*(?:到|至|[-~～〜])\s*(\d{4})?[/-]?(\d{1,2})[/-](\d{1,2})")
     start_date = end_date = None
+    invalid_date_range = False
     if date_match:
         m = date_match[0]
         year = m.group(1)
-        start_date = f"{year}-{int(m.group(2)):02d}-{int(m.group(3)):02d}"
         end_year = m.group(4) or year
         if not m.group(4) and (int(m.group(5)), int(m.group(6))) < (int(m.group(2)), int(m.group(3))):
             end_year = str(int(year) + 1)
-        end_date = f"{end_year}-{int(m.group(5)):02d}-{int(m.group(6)):02d}"
-        if "duration" not in values:
-            try:
-                nights = (date.fromisoformat(end_date) - date.fromisoformat(start_date)).days
-            except ValueError:
-                nights = -1
-            if nights >= 0:
-                values["duration"] = (nights + 1, nights)
-                provenance["duration"].append(
-                    FieldProvenance(m.group(0), m.start(), m.end(), "duration")
-                )
+        raw_start_date = f"{year}-{int(m.group(2)):02d}-{int(m.group(3)):02d}"
+        raw_end_date = f"{end_year}-{int(m.group(5)):02d}-{int(m.group(6)):02d}"
+        try:
+            start_value = date.fromisoformat(raw_start_date)
+            end_value = date.fromisoformat(raw_end_date)
+        except ValueError:
+            invalid_date_range = True
+        else:
+            start_date, end_date = start_value.isoformat(), end_value.isoformat()
+            if "duration" not in values:
+                nights = (end_value - start_value).days
+                if nights >= 0:
+                    values["duration"] = (nights + 1, nights)
+                    provenance["duration"].append(
+                        FieldProvenance(m.group(0), m.start(), m.end(), "duration")
+                    )
 
     adult_match = capture("adults", r"([\d一二三四五六七八九十]+)\s*(?:位\s*)?(?:大人|成人|大)", lambda m: _number(m.group(1)))
     child_match = capture("children", r"([\d一二三四五六七八九十]+)\s*(?:位\s*)?(?:小孩|兒童|幼兒|小)", lambda m: _number(m.group(1)))
@@ -195,6 +200,10 @@ def parse_trip_request(text: str) -> TripRequest:
     soft = [SoftPreference("low-fatigue", "low_fatigue")] if pace == "relaxed" else []
     missing = _missing(places, start_date, values.get("duration"), values.get("adults"), budget_status)
     ambiguous = []
+    if invalid_date_range:
+        ambiguous.append(AmbiguousField(
+            "date_range", date_match[0].group(0), "日期區間包含無效日曆日期，需由使用者釐清"
+        ))
     if start_date and end_date and end_date < start_date:
         ambiguous.append(AmbiguousField(
             "date_range", f"{start_date} 至 {end_date}", "日期區間結束早於開始，需由使用者釐清"

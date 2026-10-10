@@ -204,6 +204,14 @@ class TravelIntentParserTests(unittest.TestCase):
         intent = parse_trip_request("東京 2026/12/30 至 2026/01/02，2大")
         self.assertTrue(any(item.field == "date_range" for item in intent.ambiguous_fields))
 
+    def test_invalid_calendar_date_is_not_returned_as_a_usable_date(self):
+        intent = parse_trip_request("東京 2027/02/30 至 2027/03/02，2大")
+        self.assertIsNone(intent.start_date)
+        self.assertIsNone(intent.end_date)
+        self.assertIsNone(intent.duration_days)
+        self.assertTrue(any(item.field == "date_range" for item in intent.ambiguous_fields))
+        self.assertIn("dates_or_duration", {item.field for item in intent.missing_fields})
+
     def test_required_and_forbidden_places_and_soft_pace(self):
         intent = parse_trip_request(FIXTURES[4]["text"])
         self.assertEqual(intent.destinations, ("福岡",))
