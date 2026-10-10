@@ -28,9 +28,9 @@
 
 - PR #281 已一般 merge 至 `main`，merge commit `401435b6b9a050b2f306a681f19bda8dd57bf07f`；`python`、`pytest`、`mcp-site` CI 全部成功。本機 unittest 267 項、pytest 383 項（含 288 subtests）通過。Railway production deployment `a8c2a36a-02a8-4c0f-8168-6978f222a550` 對應此 merge commit 且為 `SUCCESS`；`/health` 回 HTTP 200／`ok`。
 - 部署後以正式 AI Travel Planner MCP connector 對完整倉敷需求唯讀呼叫 `parse_trip_request`。原始回傳包含 `status=parsed`、`intent.origin=桃園`、`intent.missing_fields=[]`、`intent.ambiguous_fields=[]`，並正確解析倉敷、岡山縣、日期、旅客、無上限預算與自駕。這是正式 backend 證據，不是一般 ChatGPT Chat 的工具卡片證據。
+- 2026-10-10 使用 Computer Use 在同一 Chrome 視窗找到一般 ChatGPT「解析倉敷行程」測試聊天，執行唯讀 `parse_trip_request` 診斷。ChatGPT 回覆的工具欄位為 `intent.origin="桃園"`、`intent.missing_fields=[]`，`intent.raw_text` 與完整請求完全相同；沒有呼叫其他工具，未規劃、寫入或發布行程。同一對話只輸入目的地和天數的短請求則回傳 `origin=null`，符合未提供出發地的輸入。
 - 維護者提供的一般 ChatGPT Chat `get_place_details` 實際呼叫結果為 `status=available`、`details.name=Nagayamon Coffee`、`attribution=Google Maps`、`third_party_attributions=[]`；完成該工具的 ChatGPT UI 驗收。此次唯讀呼叫未規劃、寫入或發布行程。
-- #179 是目前唯一開啟的 issue。已驗證 `get_place_details` 與公開行程頁；唯一未完成的驗收是釐清先前一般 ChatGPT Chat 將明確提供的桃園出發地回覆為 `null`，究竟出現在 MCP 工具卡片原始欄位，還是助理整理文字。正式 connector 與該歷史部署 commit 的 parser 測試均回傳 `桃園`，但不可取代 ChatGPT 工具卡片證據。Issue 內保留了只呼叫 `parse_trip_request` 的唯讀診斷 prompt；維護者要求由本人輸入 ChatGPT prompt。
-- 本次 Computer Use 讀到的唯一 Chrome 分頁仍是另一專案 `ai-investment` 的 GitHub 404 頁，未輸入或送出 prompt，亦未操作 repo 頁面。一般 Chat 診斷驗收因此仍待維護者在正確對話提供工具卡片結果。
+- #179 所追蹤的 ChatGPT Chat parse 差異已完成驗收：完整需求回傳 `桃園`，只含目的地與天數的短請求回傳 `null`。結合已完成的 `get_place_details` ChatGPT UI 呼叫及公開行程頁驗收，目前 repo 沒有其他開啟 issue。
 
 ### 2026-10-09 歷史核對
 

@@ -8,9 +8,9 @@
 
 - PR #281 已一般 merge 至 `main`，merge commit `401435b6b9a050b2f306a681f19bda8dd57bf07f`；`python`、`pytest`、`mcp-site` CI 全部成功，本機 unittest 267 項、pytest 383 項（含 288 subtests）通過。Railway production deployment `a8c2a36a-02a8-4c0f-8168-6978f222a550` 對應此 SHA 且為 `SUCCESS`；`/health` 回 HTTP 200／`ok`。
 - 以正式 MCP connector 對完整倉敷請求再次唯讀呼叫 `parse_trip_request`，實際回傳 `status=parsed`、`intent.origin=桃園`、`intent.missing_fields=[]`、`intent.ambiguous_fields=[]`，日期、人數、目的地、無上限預算及自駕均正確。這只確認正式 backend parser，不替代 ChatGPT 工具卡片證據。
+- 2026-10-10 在同一個 Chrome 視窗找到一般 ChatGPT「解析倉敷行程」測試聊天，確認使用者訊息連結 `AI Travel Planner MCP`，再送出 issue 所列的唯讀診斷。ChatGPT 實際回覆的欄位為 `intent.origin="桃園"`、`intent.missing_fields=[]`，`intent.raw_text` 與指定完整需求逐字一致；沒有呼叫其他工具，未規劃、寫入或發布行程。對照同一對話中只提供「我想安排倉敷五天四夜」的 MCP 呼叫，其 `origin=null` 是因該短請求沒有出發地。直接 UI 驗收的完整需求未重現 `origin=null`。
 - 維護者提供的一般 ChatGPT Chat `get_place_details` 工具卡片顯示 `status=available`、`details.name=Nagayamon Coffee`、`attribution=Google Maps`、`third_party_attributions=[]`。這完成 ChatGPT UI 地點詳情驗收，未規劃、寫入或發布行程。
-- #179 仍為唯一開啟 issue。公開行程頁和 `get_place_details` ChatGPT UI 呼叫已驗證。剩餘項目只有：用 issue 內的唯讀診斷 prompt，在一般 ChatGPT Chat 查看 `parse_trip_request` 工具卡片的 `intent.origin`、`intent.missing_fields`、`intent.raw_text`，釐清舊對話 `origin=null` 是工具原始回傳或助理整理回覆差異。正式 connector 與歷史部署 parser 測試回傳 `origin=桃園`，不能取代新的 ChatGPT 工具卡片證據；此 prompt 由維護者本人輸入。
-- 本次 Computer Use 唯一 Chrome 分頁仍位於 `ai-investment` GitHub 404 頁；未在錯誤 repo 操作或輸入任何 prompt。因此上述 parse 的一般 ChatGPT Chat 診斷仍未驗收。
+- #179 原追蹤的 `get_place_details`、公開行程頁與完整倉敷需求 parse 均已有直接驗收證據；完整需求的 ChatGPT MCP 呼叫回傳 `origin=桃園`、`missing_fields=[]`，而僅含目的地與天數的短請求回傳 `origin=null`。本次沒有在錯誤 repo 操作。
 
 ### 2026-10-09 歷史查證補充
 
