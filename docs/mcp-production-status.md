@@ -4,11 +4,19 @@
 
 ## 最新正式狀態與查證紀錄（2026-10-10）
 
-### 2026-10-10 後續一般 Chat 驗收與待部署 parser 修正
+### 2026-10-10 parser 修正已部署並通過 ChatGPT Chat 驗收
+
+- PR #287 已一般 merge；main merge commit `84062a346b12c156163001e2d82e658522f34d82`，`python`、`pytest`、`mcp-site` CI 全部成功。完整 pytest：386 passed、288 subtests passed。
+- Railway production deployment `5bfd4ae1-8402-4a24-8680-3df8486c1a80` 為 `SUCCESS`，部署 source SHA 與 main merge commit 相同；`/health` HTTP 200／`ok`。
+- 使用者要求的同一 Chrome 視窗、一般 ChatGPT 測試 Chat「解析旅遊請求」中，確認訊息附加 `AI Travel Planner MCP` 後，實際呼叫唯讀 `parse_trip_request`。工具回 `status=parsed`、`origin=桃園國際機場`、`provenance.origin.text=出發地：桃園國際機場`，完整性驗證 PASS；目的地倉敷、岡山縣、日期、5 天 4 夜、旅客數與年齡、不限預算、自駕均符合原始輸入。僅呼叫此工具一次，未規劃、寫入、修改或發布行程。
+- 此為先前「桃園國際機場被截成桃園」缺陷的正式 ChatGPT 一般 Chat 修復後驗收。此前回覆保留為歷史證據，現況以本段新 deployment 與 Chat 驗收結果為準。
+- 同一測試 Chat 的既有 `get_trip` 唯讀結果：5 天共 10 個景點、15 餐；住宿未設定是使用者目前的需求選擇。預算上限為 `unlimited`，已知小計 JPY 0 但 `total_status=incomplete`；共 10 項驗證警告，其中 `schedule.hotel_missing` 1、`schedule.origin_unknown` 5、`schedule.poi_candidate_unselected` 3、`budget.incomplete` 1。這些規劃證據完整度仍待改善，JPY 0 不代表旅程免費。
+
+### 2026-10-10 parser 修正部署前的 Chat 驗收與缺陷紀錄
 
 - 在同一 Chrome 視窗的既有 ChatGPT 一般 Chat「解析旅遊請求」中，確認外掛標籤後實際呼叫唯讀 `get_trip`。工具回 `status=ok`；五天每日各有 2 個景點與 3 餐，合計 10 個景點、15 餐。住宿未設定；預算上限 `unlimited`，費用 `total_status=incomplete`、已知小計 JPY 0。警告數量：`schedule.hotel_missing` 1、`schedule.origin_unknown` 5、`schedule.poi_candidate_unselected` 3、`budget.incomplete` 1。此次未呼叫 `get_place_details`，沒有進一步 Google Places 查詢，亦未改動或發布行程。
-- ChatGPT UI 的完整需求 parser 回覆將「桃園國際機場」縮成 `桃園`。檢查證實 deterministic parser 的 origin pattern 只列城市別名；本 PR 已改為辨識完整機場名稱並保留原字串與 provenance。尚未部署，需待 CI、merge、Railway 成功後，再用同一一般 Chat 的已附加 MCP 驗收修正後 `parse_trip_request` 回應。
-- 本機驗證命令 `uv run --isolated --with-requirements requirements-mcp.txt python -m unittest tests.test_travel_intent tests.test_mcp_server -v` 通過 66 項；完整 unittest `uv run --isolated --with-requirements requirements-mcp.txt python -m unittest discover -s tests -v` 通過 270 項；完整 pytest `uv run --isolated --with pytest --with-requirements requirements-mcp.txt python -m pytest -q` 通過 386 項與 288 subtests。前兩者對應 Python unittest，最後一項對應完整 pytest 測試集。
+- 當時 ChatGPT UI 的完整需求 parser 回覆將「桃園國際機場」縮成 `桃園`。檢查證實 deterministic parser 的 origin pattern 只列城市別名；PR #287 已改為辨識完整機場名稱並保留原字串與 provenance。此處是修正部署前紀錄，部署後驗收結果見本文最上方區段。
+- 本機驗證命令 `uv run --isolated --with-requirements requirements-mcp.txt python -m unittest tests.test_travel_intent tests.test_mcp_server -v` 通過 66 項；完整 unittest `uv run --isolated --with-requirements requirements-mcp.txt python -m unittest discover -s tests -v` 通過 270 項；完整 pytest `uv run --isolated --with pytest --with-requirements requirements-mcp.txt python -m pytest -q` 通過 386 項與 288 subtests。這些測試與待部署文字是當時紀錄；部署後的修正狀態見本文最上方最新區段。
 
 ### 最新查證補充（2026-10-10）
 

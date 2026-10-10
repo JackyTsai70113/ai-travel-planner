@@ -24,7 +24,15 @@
 
 ## 最新正式環境與一般 Chat 檢查（2026-10-10）
 
-### 2026-10-10 ChatGPT Chat 實際工具驗收補充
+### 2026-10-10 parser 修正部署與一般 Chat 驗收
+
+- PR #287「fix: preserve airport origin in trip requests」已一般 merge；main merge commit 為 `84062a346b12c156163001e2d82e658522f34d82`，`python`、`pytest`、`mcp-site` CI 全部成功。本機完整 pytest 為 386 passed、288 subtests passed。
+- Railway `ai-traveller` production deployment `5bfd4ae1-8402-4a24-8680-3df8486c1a80` 狀態 `SUCCESS`，source SHA 與 merge commit 相同；正式 `/health` 回 HTTP 200／`ok`。
+- 2026-10-10 在同一 Chrome 視窗的 ChatGPT 一般 Chat「解析旅遊請求」中，確認使用者訊息附有 `AI Travel Planner MCP`，實際唯讀呼叫 `parse_trip_request`。工具回 `status=parsed`；`origin=桃園國際機場`，`provenance.origin.text=出發地：桃園國際機場`，完整性驗證 PASS。倉敷、岡山縣、2026-11-01 至 2026-11-05、5 天 4 夜、6 位成人與 1 位 2 歲兒童、不限預算、自駕也正確。沒有呼叫其他工具，未規劃、寫入、修改或發布行程。
+- 同一測試 Chat 先前的舊回覆曾把機場名稱截為「桃園」；以上是修正合併並部署後的實際 ChatGPT MCP 工具結果，已確認缺陷修復生效。
+- 同一 Chat 的既有唯讀 `get_trip` 驗收仍以後續品質狀態為準：五天共 10 個景點及 15 餐，住宿留空符合目前需求；已知費用小計為 JPY 0、總費用狀態 `incomplete`，另有 10 項驗證警告。這些是行程內容／證據完整度的後續改善項目，不影響本次 parser 修正驗收，也不把未設定住宿視為缺陷。
+
+### 2026-10-10 parser 修正前的 ChatGPT Chat 驗收紀錄
 
 - 本機 `main`、`origin/main` 均為 `e76fb5e7e4ffdfcf883291dcdd9b4b8763c3c48b`。PR #285 已一般 merge，`python`、`pytest`、`mcp-site` CI 全部成功；Railway `ai-traveller` production deployment `938d0e9f-5a1b-4f8f-9c02-9938f2ea7e30` 為 `SUCCESS`，source SHA 與 `main` 相同，服務 Online，`/data` volume 掛載仍在。GitHub open Issues 查詢為空。
 - 在同一 Chrome 視窗找到既有測試 Chat「解析倉敷行程」。從其一般 composer 的「＋」選單點選外掛後，沒有外掛標籤；該 Chat 後續得到的 parser 文字回覆不列為 MCP 驗收證據。
@@ -32,7 +40,7 @@
 - 一般 Chat 測試對話：`https://chatgpt.com/c/6ac9f9c2-00cc-83e8-9619-f92441a513ab`（標題「解析旅遊需求」）。截圖核對到 MCP 實際結果表與 `status: parsed`。不把先前未附加外掛標籤的同類回答列作工具呼叫證據。
 - 使用此 ChatGPT 操作流程時，若需以中文送測試 prompt，先保留 composer 內的 MCP 標籤，再將文字貼上；覆寫整個 composer 的操作會移除標籤。每次送出前都重新確認標籤仍在。
 
-### 2026-10-10 `get_trip` 驗收與出發機場解析修正
+### 2026-10-10 `get_trip` 驗收與出發機場缺陷紀錄（修正前）
 
 - 在同一 Chrome 視窗找到一般 ChatGPT 測試 Chat「解析旅遊請求」，對 composer 內明確附加的 `AI Travel Planner MCP` 送出唯讀 `get_trip`。工具回應 `status=ok`；五天每天各回傳 2 個景點與 3 餐，共 10 個景點、15 餐。住宿狀態為未設定；預算上限 `unlimited`，但 `total_status=incomplete`、已知小計 JPY 0。驗證警告為 `schedule.hotel_missing` 1、`schedule.origin_unknown` 5、`schedule.poi_candidate_unselected` 3、`budget.incomplete` 1。未呼叫 `get_place_details`，未產生額外 Places 查詢、未寫入或發布行程。此結果不把住宿留空視為缺陷，也不把 JPY 0 說成總費用。
 - 同一 ChatGPT Chat 的 parse 結果把明確出發地「桃園國際機場」縮成「桃園」。根因是 `src/intent/parser.py` 的來源別名只涵蓋城市名稱。修正後保留完整機場名稱與來源 provenance，並以 parser 及 MCP server 測試鎖定此行為。
@@ -41,10 +49,10 @@
 ### 2026-10-10 驗收更新
 
 - PR #281 已一般 merge 至 `main`，merge commit `401435b6b9a050b2f306a681f19bda8dd57bf07f`；`python`、`pytest`、`mcp-site` CI 全部成功。本機 unittest 267 項、pytest 383 項（含 288 subtests）通過。Railway production deployment `a8c2a36a-02a8-4c0f-8168-6978f222a550` 對應此 merge commit 且為 `SUCCESS`；`/health` 回 HTTP 200／`ok`。
-- 部署後以正式 AI Travel Planner MCP connector 對完整倉敷需求唯讀呼叫 `parse_trip_request`。原始回傳包含 `status=parsed`、`intent.origin=桃園`、`intent.missing_fields=[]`、`intent.ambiguous_fields=[]`，並正確解析倉敷、岡山縣、日期、旅客、無上限預算與自駕。這是正式 backend 證據，不是一般 ChatGPT Chat 的工具卡片證據。
-- 2026-10-10 使用 Computer Use 在同一 Chrome 視窗找到一般 ChatGPT「解析倉敷行程」測試聊天，執行唯讀 `parse_trip_request` 診斷。ChatGPT 回覆的工具欄位為 `intent.origin="桃園"`、`intent.missing_fields=[]`，`intent.raw_text` 與完整請求完全相同；沒有呼叫其他工具，未規劃、寫入或發布行程。同一對話只輸入目的地和天數的短請求則回傳 `origin=null`，符合未提供出發地的輸入。
+- 修正部署前以正式 connector 執行的唯讀呼叫回傳 `intent.origin=桃園`；這是 defect baseline，不是目前部署狀態。
+- 修正部署前的 ChatGPT「解析倉敷行程」測試 Chat 也曾回 `intent.origin="桃園"`；後續修正部署後的 ChatGPT 一般 Chat 驗收已在上方區段確認回傳完整機場名稱。
 - 維護者提供的一般 ChatGPT Chat `get_place_details` 實際呼叫結果為 `status=available`、`details.name=Nagayamon Coffee`、`attribution=Google Maps`、`third_party_attributions=[]`；完成該工具的 ChatGPT UI 驗收。此次唯讀呼叫未規劃、寫入或發布行程。
-- #179 所追蹤的 ChatGPT Chat parse 差異已完成驗收：完整需求回傳 `桃園`，只含目的地與天數的短請求回傳 `null`。結合已完成的 `get_place_details` ChatGPT UI 呼叫及公開行程頁驗收，目前 repo 沒有其他開啟 issue。
+- 此段記錄當時 #179 的驗收結論；機場名稱截斷問題已由 PR #287 修正，修正後的一般 Chat 驗收見上方最新區段。
 
 ### 2026-10-09 歷史核對
 
