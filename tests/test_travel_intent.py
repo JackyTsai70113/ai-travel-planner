@@ -191,6 +191,19 @@ class TravelIntentParserTests(unittest.TestCase):
         intent = parse_trip_request("2026/10/20到2026/10/23，台北三天兩夜")
         self.assertTrue(any(item.field == "duration" for item in intent.ambiguous_fields))
 
+    def test_date_range_without_end_year_infers_cross_year_end_date(self):
+        text = "東京 2026/12/30 至 01/02，2大"
+        intent = parse_trip_request(text)
+        self.assertEqual((intent.start_date, intent.end_date), ("2026-12-30", "2027-01-02"))
+        self.assertEqual((intent.duration_days, intent.duration_nights), (4, 3))
+        self.assertFalse(any(item.field == "date_range" for item in intent.ambiguous_fields))
+        duration_source = intent.provenance["duration"][0]
+        self.assertEqual(text[duration_source.start:duration_source.end], duration_source.text)
+
+    def test_explicitly_reversed_date_range_is_ambiguous(self):
+        intent = parse_trip_request("東京 2026/12/30 至 2026/01/02，2大")
+        self.assertTrue(any(item.field == "date_range" for item in intent.ambiguous_fields))
+
     def test_required_and_forbidden_places_and_soft_pace(self):
         intent = parse_trip_request(FIXTURES[4]["text"])
         self.assertEqual(intent.destinations, ("福岡",))
