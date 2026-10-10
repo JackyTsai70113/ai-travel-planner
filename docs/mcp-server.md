@@ -51,8 +51,10 @@ Railway：
 | `GITHUB_PAGES_BRANCH` | `main` | 現有 Pages workflow 部署的分支。 |
 | `GITHUB_PAGES_BASE_URL` | `https://jackytsai70113.github.io/ai-travel-planner` | 工具回傳的 Pages 網址根目錄。 |
 
-只有獨立呼叫 `publish_trip_site` 並傳入 `confirm_public_publish=true` 才會
-把行程公開。沒有錯誤級驗證或硬性缺項的 Canonical Trip 可發布為網站預覽；
+公開行程須先取得使用者明確同意。已確認公開的規劃呼叫可在
+`plan_trip` 同時傳入 `confirm_write=true` 與 `confirm_public_publish=true`，
+規劃成功後會自動發布並回傳網址；已完成的行程也可獨立呼叫
+`publish_trip_site` 並傳入 `confirm_public_publish=true`。沒有錯誤級驗證或硬性缺項的 Canonical Trip 可發布為網站預覽；
 若仍有未安排餐段或費用估算不完整等已揭露警告，registry readiness 會保留
 `incomplete`，bundle 狀態保留 `warning`，不會標成完整行程。現有 slug
 若已屬於別的 trip 會拒絕；同一 trip 的內容更新還需
@@ -179,7 +181,7 @@ Production planning requires `GOOGLE_MAPS_API_KEY` and `OPENROUTESERVICE_API_KEY
 | `get_trip` | Returns an allowlisted summary for a safe trip ID, including scheduled items and persisted Google Place IDs; omits raw provider records, booking details, free-form notes, and arbitrary fields. Use `get_place_details` when a current Google-sourced display name or operational detail is needed. | None |
 | `get_place_details` | Fetches current Places details for one saved Google Place ID for this request only; returns `Google Maps` and supplied third-party attribution. The response is never written to trip storage or site files. | One live Google Places Details request per call; shares a persistent monthly cap of 1,000 service-routed requests with the public page lookup; none in repo storage. |
 | 公開行程地點名稱 API | 公開頁只對當前區段已排入行程且尚無自有名稱的地點呼叫 Railway 唯讀端點；端點再以 Places API 的 `id,displayName,attributions` 欄位遮罩查詢。 | 無 bearer token，但限制精確 GitHub Pages Origin、公開 registry、排定 Place ID、每來源頻率與共用每月 1,000 次上限；`no-store`，名稱僅留在頁面記憶體。每次會使用一次 Places Details API。 |
-| `plan_trip` | 以繁體中文一題一答補齊必要資訊；只依使用者已明確回答的內容規劃，不回傳 parser JSON 充當最終回答。 | 必要欄位未補齊時只回傳一個 `next_question` 且不啟動研究；完整後須先取得私有檔案寫入確認，再以 `confirm_write=true` 建立或覆寫 Canonical Trip 和靜態網站。若使用者明確要求規劃後公開網站並回傳網址，須在寫入前的摘要確認中說明公開發布；確認後規劃成功便呼叫 `publish_trip_site`，不重問相同公開授權。 |
+| `plan_trip` | 以繁體中文一題一答補齊必要資訊；只依使用者已明確回答的內容規劃，不回傳 parser JSON 充當最終回答。 | 必要欄位未補齊時只回傳一個 `next_question` 且不啟動研究；完整後須先取得私有檔案寫入確認，再以 `confirm_write=true` 建立或覆寫 Canonical Trip 和靜態網站。若使用者明確要求規劃後公開網站並回傳網址，須在寫入前的摘要確認中說明公開發布；確認後以 `confirm_public_publish=true` 一併呼叫 `plan_trip`，規劃成功後工具會自動發布並回傳 `publication.url`，避免依賴模型是否另行呼叫發布工具。規劃未成功時不發布；既有公開頁內容不同時仍須另行確認覆寫。 |
 | `build_trip_site` | Validates and renders an existing Canonical Trip. | Requires `confirm_write=true`; writes a local static site only. Never publishes. |
 | `publish_trip_site` | Publishes a Canonical Trip as a public preview. Warning-only incomplete trips keep `incomplete` readiness and visible warnings. | Requires explicit `confirm_public_publish=true`; hard validation errors and required missing sections still refuse publication. Existing-trip replacement separately requires `confirm_overwrite=true`. |
 
@@ -187,7 +189,7 @@ Production planning requires `GOOGLE_MAPS_API_KEY` and `OPENROUTESERVICE_API_KEY
 
 `plan_trip` returns the result status, stage outcomes, budget summary and warnings; it does not include the full itinerary. After a successful plan, call `get_trip` with the returned `trip_id` to read scheduled dates and items. The durable trip may contain only a Google Place ID for a Google-sourced place. When the chat response needs its current display name, address or opening details, call `get_place_details` with that raw `google_place_id`; include the returned `Google Maps` and any third-party attribution with the details. If the query is unavailable, say so and keep the place ID/map link; do not recover stale details from saved files or guess. These detail calls are read-only but each makes a live provider request.
 
-When a traveler explicitly asks to plan a trip, publish its website publicly, and return the URL, treat that request as public-publishing consent. Include the public release in the pre-planning summary and wait for confirmation before `plan_trip` writes private trip/site files. After a successful plan, call `get_trip`, then call `publish_trip_site` with `confirm_public_publish=true` without asking for the same public consent again. If publication was not explicitly requested, ask separately before publishing. `confirm_write=true` by itself is never public-publishing consent. If the result is `overwrite_confirmation_required`, ask separately whether to replace the existing public page because its contents differ. Only after an explicit yes, retry with both `confirm_public_publish=true` and `confirm_overwrite=true`. If the result is `publish_accepted` or `already_published`, return its `url` as a clickable link and explain `deployment_status`: `pending` means deployment of the new commit is still running, and `not_required` means the identical public page already exists and this call started no deployment. These are the deployment status values this tool returns. If publication is refused or fails, explain the returned status and do not invent a URL.
+When a traveler explicitly asks to plan a trip, publish its website publicly, and return the URL, treat that request as public-publishing consent. Include the public release in the pre-planning summary and wait for confirmation before `plan_trip` writes private trip/site files. After confirmation, call `plan_trip` with both `confirm_write=true` and `confirm_public_publish=true`; on successful planning it publishes and returns the publication result, including the actual `url`, in the same tool response. Then return that URL as a clickable link and explain `deployment_status`: `pending` means deployment of the new commit is still running, and `not_required` means the identical public page already exists and this call started no deployment. These are the deployment status values this tool returns. If publication was not explicitly requested, pass `confirm_public_publish=false` and ask separately before publishing. `confirm_write=true` by itself is never public-publishing consent. If the result is `overwrite_confirmation_required`, ask separately whether to replace the existing public page because its contents differ. Only after an explicit yes, call `publish_trip_site` with `confirm_public_publish=true` and `confirm_overwrite=true`, then return its URL. If publication is refused or fails, explain the returned status and do not invent a URL.
 
 ## Tool contract
 
@@ -254,19 +256,20 @@ Side effects and retries: consumes one unit from the persistent monthly service 
 
 ### `plan_trip`
 
-Input schema: `{ "type":"object", "required":["request","trip_id"], "properties":{"request":{"type":"string","minLength":1,"maxLength":20000},"trip_id":{"type":"string","pattern":"^[a-z0-9][a-z0-9-]{0,79}$"},"confirm_write":{"type":"boolean","default":false}} }`.
+Input schema: `{ "type":"object", "required":["request","trip_id"], "properties":{"request":{"type":"string","minLength":1,"maxLength":20000},"trip_id":{"type":"string","pattern":"^[a-z0-9][a-z0-9-]{0,79}$"},"confirm_write":{"type":"boolean","default":false},"confirm_public_publish":{"type":"boolean","default":false}} }`.
 
 Output statuses (checked in this order when the arguments pass the published JSON Schema):
 
 - `invalid_input`: unsafe `trip_id` passed directly to the tool function.
 - `needs_clarification`: includes parsed `intent`, `missing_fields`, `ambiguous_fields`, and `constraint_issues`; no provider calls or writes.
 - `configuration_missing`: lists missing environment variable names only; no provider call or fixture fallback.
-- `confirmation_required`: configuration is present but `confirm_write` is false; no provider call or write.
-- `complete`: returned only when the orchestrator produced trip and site outputs and every reported stage is `succeeded`; includes `trip_id`, stage names/statuses, and warning `code`/`stage`/`path` only.
-- `incomplete`: returned when the orchestrator cannot produce outputs or any reported stage is not `succeeded`. A produced but degraded trip still includes `trip_id`, stage statuses, and warning `code`/`stage`/`path`; provider exception text and warning message text are deliberately omitted.
-- MCP schema rejection (`isError=true`): missing/wrong argument types, empty or more than 20,000 character request, malformed `trip_id`, or non-boolean `confirm_write`. These inputs do not reach the tool function.
+- `confirmation_required`: configuration is present but `confirm_write` is false; no provider call or write. If public publication was also explicitly requested and confirmed, pass both confirmation flags as true in the confirmed call.
+- `complete`: returned only when the orchestrator produced trip and site outputs and every reported stage is `succeeded`; includes `trip_id`, stage names/statuses, and warning `code`/`stage`/`path` only. When `confirm_public_publish=true`, also includes `publication`, the result from `publish_trip_site`; `publish_accepted` and `already_published` include the actual `url` and `deployment_status`.
+- `incomplete`: returned when the orchestrator cannot produce outputs or any reported stage is not `succeeded`. A produced but degraded trip still includes `trip_id`, stage statuses, and warning `code`/`stage`/`path`; provider exception text and warning message text are deliberately omitted. When `confirm_public_publish=true`, publication is not attempted and `publication` is `{ "status":"not_attempted", "reason":"plan_incomplete" }`.
+- Nested `publication` statuses: publication configuration or validation errors are returned inside the otherwise successful planning result. `overwrite_confirmation_required` means the same trip's existing public page has different content; ask the traveler to confirm the public replacement separately, then call `publish_trip_site` with `confirm_public_publish=true` and `confirm_overwrite=true`. A pending deployment means GitHub accepted the commit but Pages may not yet serve the update.
+- MCP schema rejection (`isError=true`): missing/wrong argument types, empty or more than 20,000 character request, malformed `trip_id`, or non-boolean `confirm_write` or `confirm_public_publish`. These inputs do not reach the tool function.
 
-Side effects and retries: with `confirm_write=true`, performs live provider research and may create or replace `trips/<trip_id>/trip.json` and `site/<trip_id>/index.html`. Before either write, the storage projection retains exact Google Place IDs and the user's itinerary/notes while removing Google Places details. MCP adds no automatic retry. A client retry repeats live provider calls and can replace those files; the tool is non-idempotent. `confirm_write` is an explicit tool argument, not an authorization mechanism.
+Side effects and retries: with `confirm_write=true`, performs live provider research and may create or replace `trips/<trip_id>/trip.json` and `site/<trip_id>/index.html`. With both confirmation flags true and a complete plan, it also attempts the public GitHub Pages publication; publishing an existing changed page still requires separate `confirm_overwrite=true` approval through `publish_trip_site`. Before either local write, the storage projection retains exact Google Place IDs and the user's itinerary/notes while removing Google Places details. MCP adds no automatic retry. A client retry repeats live provider calls and can replace those files; the tool is non-idempotent. The confirmation flags are explicit tool arguments, not an authorization mechanism: the MCP host must obtain the corresponding user confirmation first.
 
 ### `build_trip_site`
 
