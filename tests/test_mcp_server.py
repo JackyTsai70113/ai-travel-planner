@@ -129,12 +129,14 @@ class MCPTravelServerTests(unittest.TestCase):
                 self.assertIn("不要把 parser JSON 原樣當成回答", by_name["plan_trip"].description)
                 self.assertIn("公開發布必須另行取得確認", by_name["plan_trip"].description)
                 self.assertIn("After a successful plan_trip, call get_trip", mcp.instructions)
+                self.assertIn("preserve intent.origin exactly as returned", mcp.instructions)
                 self.assertIn("Read get_trip.place_details_needed", mcp.instructions)
                 self.assertIn("Google Maps and third-party attribution", mcp.instructions)
                 self.assertIn("Never present raw tool JSON", mcp.instructions)
                 self.assertIn("organize scheduled items by local date and time", mcp.instructions)
                 self.assertIn("Omit absent lodging when the traveler chose to leave it blank", mcp.instructions)
                 self.assertIn("not raw JSON", by_name["parse_trip_request"].description)
+                self.assertIn("Preserve intent.origin exactly", by_name["parse_trip_request"].description)
                 self.assertIn("google_place_id", by_name["get_place_details"].input_schema["properties"]["place_id"]["description"])
                 self.assertEqual(
                     by_name["parse_trip_request"].input_schema["properties"]["request"][
@@ -389,13 +391,14 @@ class MCPTravelServerTests(unittest.TestCase):
                 self.assertEqual(payload["intent"]["start_date"], "2026-04-01")
                 kurashiki = await client.call_tool(
                     "parse_trip_request",
-                    {"request": "日本岡山縣倉敷五天四夜。日期：2026/11/01～2026/11/05。旅客：6位成人、1位2歲幼兒。預算：暫不設限制。"},
+                    {"request": "日本岡山縣倉敷五天四夜。日期：2026/11/01～2026/11/05。出發地：桃園國際機場。旅客：6位成人、1位2歲幼兒。預算：暫不設限制。"},
                 )
                 parsed_kurashiki = kurashiki.structured_content["intent"]
                 self.assertEqual(parsed_kurashiki["destinations"], ["倉敷"])
                 self.assertEqual(parsed_kurashiki["regions"], ["岡山縣"])
                 self.assertEqual(parsed_kurashiki["start_date"], "2026-11-01")
                 self.assertEqual(parsed_kurashiki["end_date"], "2026-11-05")
+                self.assertEqual(parsed_kurashiki["origin"], "桃園")
                 self.assertEqual(parsed_kurashiki["travelers"], {"adults": 6, "children": 1, "child_ages": [2]})
                 self.assertEqual(parsed_kurashiki["budget_status"], "unlimited")
                 self.assertEqual(parsed_kurashiki["missing_fields"], [])
