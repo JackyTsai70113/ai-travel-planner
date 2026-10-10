@@ -527,10 +527,16 @@ def plan_trip_tool(
             "missing": missing_required_configuration(),
         }
     except (ProductionIncompleteError, ValueError) as exc:
-        return {
+        response: dict[str, Any] = {
             "status": "incomplete",
             "message": str(exc),
         }
+        if confirm_public_publish:
+            response["publication"] = {
+                "status": "not_attempted",
+                "reason": "plan_incomplete",
+            }
+        return response
     canonical_trip = getattr(result, "trip", None)
     trip_budget = canonical_trip.get("budget") if isinstance(canonical_trip, dict) else None
     response = {

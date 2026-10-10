@@ -1012,10 +1012,21 @@ class MCPTravelServerTests(unittest.TestCase):
         with (
             patch("src.mcp_server.server.missing_required_configuration", return_value=[]),
             patch("src.mcp_server.server.create_production_orchestrator", side_effect=ProductionIncompleteError(reason)),
+            patch("src.mcp_server.server.publish_trip_site_tool") as publish,
         ):
-            output = plan_trip_tool(request, "mcp-incomplete-reason", confirm_write=True)
+            output = plan_trip_tool(
+                request,
+                "mcp-incomplete-reason",
+                confirm_write=True,
+                confirm_public_publish=True,
+            )
         self.assertEqual(output["status"], "incomplete")
         self.assertEqual(output["message"], reason)
+        self.assertEqual(
+            output["publication"],
+            {"status": "not_attempted", "reason": "plan_incomplete"},
+        )
+        publish.assert_not_called()
 
     def test_plan_clarification_returns_one_question_without_starting_research(self) -> None:
         with (
