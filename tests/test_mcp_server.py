@@ -400,7 +400,7 @@ class MCPTravelServerTests(unittest.TestCase):
                 self.assertEqual(parsed_kurashiki["regions"], ["岡山縣"])
                 self.assertEqual(parsed_kurashiki["start_date"], "2026-11-01")
                 self.assertEqual(parsed_kurashiki["end_date"], "2026-11-05")
-                self.assertEqual(parsed_kurashiki["origin"], "桃園")
+                self.assertEqual(parsed_kurashiki["origin"], "桃園國際機場")
                 self.assertEqual(parsed_kurashiki["travelers"], {"adults": 6, "children": 1, "child_ages": [2]})
                 self.assertEqual(parsed_kurashiki["budget_status"], "unlimited")
                 self.assertEqual(parsed_kurashiki["missing_fields"], [])

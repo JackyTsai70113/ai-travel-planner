@@ -4,6 +4,12 @@
 
 ## 最新正式狀態與查證紀錄（2026-10-10）
 
+### 2026-10-10 後續一般 Chat 驗收與待部署 parser 修正
+
+- 在同一 Chrome 視窗的既有 ChatGPT 一般 Chat「解析旅遊請求」中，確認外掛標籤後實際呼叫唯讀 `get_trip`。工具回 `status=ok`；五天每日各有 2 個景點與 3 餐，合計 10 個景點、15 餐。住宿未設定；預算上限 `unlimited`，費用 `total_status=incomplete`、已知小計 JPY 0。警告數量：`schedule.hotel_missing` 1、`schedule.origin_unknown` 5、`schedule.poi_candidate_unselected` 3、`budget.incomplete` 1。此次未呼叫 `get_place_details`，沒有進一步 Google Places 查詢，亦未改動或發布行程。
+- ChatGPT UI 的完整需求 parser 回覆將「桃園國際機場」縮成 `桃園`。檢查證實 deterministic parser 的 origin pattern 只列城市別名；本 PR 已改為辨識完整機場名稱並保留原字串與 provenance。尚未部署，需待 CI、merge、Railway 成功後，再用同一一般 Chat 的已附加 MCP 驗收修正後 `parse_trip_request` 回應。
+- 本機驗證命令 `uv run --isolated --with-requirements requirements-mcp.txt python -m unittest tests.test_travel_intent tests.test_mcp_server -v` 通過 66 項；完整 unittest `uv run --isolated --with-requirements requirements-mcp.txt python -m unittest discover -s tests -v` 通過 270 項；完整 pytest `uv run --isolated --with pytest --with-requirements requirements-mcp.txt python -m pytest -q` 通過 386 項與 288 subtests。前兩者對應 Python unittest，最後一項對應完整 pytest 測試集。
+
 ### 最新查證補充（2026-10-10）
 
 - 最新 `main` 為 `e76fb5e7e4ffdfcf883291dcdd9b4b8763c3c48b`，PR #285 一般 merge，CI 三項成功；Railway production deployment `938d0e9f-5a1b-4f8f-9c02-9938f2ea7e30` 狀態 `SUCCESS`，部署 source SHA 與 `main` 相同，服務 Online。GitHub open Issues 查詢為空。
