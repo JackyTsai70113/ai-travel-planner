@@ -6,7 +6,7 @@
 
 ### PR #297 公開網站自動流程已部署
 
-- PR #297 在 `7e71084577e90c9ad758c98674d6347cf8591ca3` 通過獨立 exact-head review（PASS）及 `python`、`pytest`、`mcp-site` CI，並合併至 main，merge commit `da43a74b7f8c6446be22697569899336345282e1`。
+- PR #297 head SHA 為 `7e71084577e90c9ad758c98674d6347cf8591ca3`，`python`、`pytest`、`mcp-site` CI 均成功；合併至 main 的 commit 為 `da43a74b7f8c6446be22697569899336345282e1`。
 - 本機驗證：`PYTHONPATH=. uv run --isolated --with-requirements requirements-mcp.txt python -m unittest tests.test_mcp_server -v` 通過 27 項；`uv run --isolated --with pytest --with-requirements requirements-mcp.txt python -m pytest -q` 通過 390 項及 288 subtests；`uv run --isolated --with-requirements requirements-mcp.txt python -m unittest discover -s tests -v` 通過 274 項；`git diff --check` 通過。
 - Railway production deployment `fdff33a1-7e0f-4437-ba58-2d8e6460003a` 為 `SUCCESS`，branch `main`、source SHA `da43a74b7f8c6446be22697569899336345282e1`。`/health` 回 HTTP 200／`ok`；MCP `initialize`、`tools/list` 與唯讀 `parse_trip_request` 均回 HTTP 200。工具清單包含七項工具；初始化指令包含明確要求公開時不重問同一授權的規則。唯讀 parse 將倉敷與五天四夜解析正確，仍回報旅客與預算缺漏；沒有呼叫規劃或發布工具。
 - 電腦使用驗收：目前 Chrome 最後開啟的對話為 AI Video「預覽查核回報」，不是旅行 MCP 測試 Chat，因此沒有在錯誤對話送入測試資料。待既有 AI Travel Planner MCP 一般 Chat 顯示在同一 Chrome 視窗後，再依 `docs/chatgpt-mcp-live-verification.md` 完成部署後唯讀驗收；不以 backend 證據代替 ChatGPT UI 證據。
