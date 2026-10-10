@@ -6,6 +6,11 @@
 
 ### 最新查證補充（2026-10-10）
 
+- 最新 `main` 為 `e76fb5e7e4ffdfcf883291dcdd9b4b8763c3c48b`，PR #285 一般 merge，CI 三項成功；Railway production deployment `938d0e9f-5a1b-4f8f-9c02-9938f2ea7e30` 狀態 `SUCCESS`，部署 source SHA 與 `main` 相同，服務 Online。GitHub open Issues 查詢為空。
+- 使用同一 Chrome 視窗在既有「解析倉敷行程」測試 Chat 檢查外掛選取方式。從 composer「＋」選單點選 MCP 後，輸入框沒有 `AI Travel Planner MCP` 標籤；因此該 Chat 裡沒有標籤的 parser 回答不作 MCP 工具驗收依據。
+- 從 ChatGPT 的 `AI Travel Planner MCP` 外掛詳情頁按「在對話中試用」後，composer 明確顯示該 MCP 標籤。於一般 Chat `https://chatgpt.com/c/6ac9f9c2-00cc-83e8-9619-f92441a513ab`（「解析旅遊需求」）貼上並送出唯讀倉敷請求。ChatGPT 回覆「AI Travel Planner MCP 實際解析結果」，`status=parsed`；目的地倉敷、區域岡山縣、日期 2026-11-01 至 2026-11-05、5 天 4 夜、6 位成人與 1 位 2 歲幼兒、不限預算、自駕均正確，`missing_fields=[]`、`ambiguous_fields=[]`、`constraint_issues=[]`。`origin` 回傳「桃園」，不是完整字串「桃園國際機場」。沒有呼叫其他工具、規劃、寫入或發布。Chat 畫面截圖已在此 Codex 對話回傳。
+- Composer 操作要點：從 MCP 詳情頁「在對話中試用」啟動可確認外掛標籤；以貼上填入中文 prompt 可保留標籤。整體覆寫 composer 內容會移除外掛標籤。下一次正式 ChatGPT 驗收照此流程操作，並以有明確 MCP 來源的工具回應作證。
+
 - PR #281 已一般 merge 至 `main`，merge commit `401435b6b9a050b2f306a681f19bda8dd57bf07f`；`python`、`pytest`、`mcp-site` CI 全部成功，本機 unittest 267 項、pytest 383 項（含 288 subtests）通過。Railway production deployment `a8c2a36a-02a8-4c0f-8168-6978f222a550` 對應此 SHA 且為 `SUCCESS`；`/health` 回 HTTP 200／`ok`。
 - 以正式 MCP connector 對完整倉敷請求再次唯讀呼叫 `parse_trip_request`，實際回傳 `status=parsed`、`intent.origin=桃園`、`intent.missing_fields=[]`、`intent.ambiguous_fields=[]`，日期、人數、目的地、無上限預算及自駕均正確。這只確認正式 backend parser，不替代 ChatGPT 工具卡片證據。
 - 2026-10-10 在同一個 Chrome 視窗找到一般 ChatGPT「解析倉敷行程」測試聊天，確認使用者訊息連結 `AI Travel Planner MCP`，再送出 issue 所列的唯讀診斷。ChatGPT 實際回覆的欄位為 `intent.origin="桃園"`、`intent.missing_fields=[]`，`intent.raw_text` 與指定完整需求逐字一致；沒有呼叫其他工具，未規劃、寫入或發布行程。對照同一對話中只提供「我想安排倉敷五天四夜」的 MCP 呼叫，其 `origin=null` 是因該短請求沒有出發地。直接 UI 驗收的完整需求未重現 `origin=null`。

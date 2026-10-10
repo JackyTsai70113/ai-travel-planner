@@ -19,10 +19,18 @@
 
 1. 單元／整合測試證明指定程式情境；recorded/mock provider 測試不得標成 live provider 或正式 ChatGPT 驗收。
 2. CI、服務 health、MCP `tools/list`、CLI 或 MCP Inspector 證明各自的基礎設施範圍，不能取代 ChatGPT 一般 Chat 實際呼叫。
-3. 涉及 MCP 部署、連線、工具或認證的變更，依 [`ChatGPT Chat MCP 上線驗收流程`](chatgpt-mcp-live-verification.md) 使用 Computer Use 在一般 ChatGPT Chat 驗收。維護者明確要求由使用者輸入 prompt 時，必須保持等待；不得改用 Work，也不得代替使用者送出 prompt。沒有這項證據時如實標記未驗收。
+3. 涉及 MCP 部署、連線、工具或認證的變更，依 [`ChatGPT Chat MCP 上線驗收流程`](chatgpt-mcp-live-verification.md) 使用 Computer Use 在一般 ChatGPT Chat 驗收。維護者已明確要求由 agent 使用同一個 Chrome 視窗直接處理，並找到 repo 的測試 Chat；不得改用 Work 或另開視窗。外掛未明確附加、沒有實際工具來源／回應證據時，不得把模型文字回答當作 MCP 通過。
 4. 涉及網站的外連、版型或互動時，依 repo `AGENTS.md` 的瀏覽器規格，以實際瀏覽器操作和畫面檢查驗收；靜態檢查或被攔截的 popup 不算目標網站可用證據。
 
 ## 最新正式環境與一般 Chat 檢查（2026-10-10）
+
+### 2026-10-10 ChatGPT Chat 實際工具驗收補充
+
+- 本機 `main`、`origin/main` 均為 `e76fb5e7e4ffdfcf883291dcdd9b4b8763c3c48b`。PR #285 已一般 merge，`python`、`pytest`、`mcp-site` CI 全部成功；Railway `ai-traveller` production deployment `938d0e9f-5a1b-4f8f-9c02-9938f2ea7e30` 為 `SUCCESS`，source SHA 與 `main` 相同，服務 Online，`/data` volume 掛載仍在。GitHub open Issues 查詢為空。
+- 在同一 Chrome 視窗找到既有測試 Chat「解析倉敷行程」。從其一般 composer 的「＋」選單點選外掛後，沒有外掛標籤；該 Chat 後續得到的 parser 文字回覆不列為 MCP 驗收證據。
+- 已驗證能明確附加外掛的流程：開啟私人 `AI Travel Planner MCP` 外掛詳情頁，按「在對話中試用」，新的一般 Chat composer 顯示 `AI Travel Planner MCP` 標籤。以貼上方式送出唯讀完整倉敷需求，ChatGPT 回覆標題為「AI Travel Planner MCP 實際解析結果」，並列出工具結果：`status=parsed`、倉敷／岡山縣、2026-11-01 至 2026-11-05、5 天 4 夜、6 位成人、1 位 2 歲兒童、`budget_status=unlimited`、`transport=drive`、`missing_fields=[]`、`ambiguous_fields=[]`、`constraint_issues=[]`。工具將「桃園國際機場」解析為 `origin=桃園`；未呼叫其他工具、未規劃、寫入或發布行程。
+- 一般 Chat 測試對話：`https://chatgpt.com/c/6ac9f9c2-00cc-83e8-9619-f92441a513ab`（標題「解析旅遊需求」）。截圖核對到 MCP 實際結果表與 `status: parsed`。不把先前未附加外掛標籤的同類回答列作工具呼叫證據。
+- 使用此 ChatGPT 操作流程時，若需以中文送測試 prompt，先保留 composer 內的 MCP 標籤，再將文字貼上；覆寫整個 composer 的操作會移除標籤。每次送出前都重新確認標籤仍在。
 
 ### 2026-10-10 驗收更新
 
