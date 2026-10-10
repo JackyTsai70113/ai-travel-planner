@@ -63,7 +63,7 @@ mcp = MCPServer(
         "Before plan_trip writes trip/site files, summarize the request and obtain explicit user confirmation; call it with confirm_write=true only after confirmation. "
         "After a successful plan_trip, call get_trip to read the saved itinerary. When presenting a readable or day-by-day itinerary, treat the request as asking for current names of scheduled places unless the traveler requests ID-only output or declines live lookups. Read get_trip.place_details_needed and call get_place_details once for each listed Place ID; include the returned Google Maps and third-party attribution. Do not stop at opaque Place IDs or query unselected candidates. Each lookup is a live Places request and may incur usage charges. MCP and public-page lookups share a 1,000-request monthly service budget; if a lookup returns monthly_limit_reached, stop further lookups and report remaining names as unavailable this month. "
         "Google Places details are request-scoped and must never be saved; only Place IDs may persist. If a detail lookup fails, say it is unavailable and do not substitute stale saved data or guess. "
-        "Preserve unknown facts. When showing a traveler the completed trip, ask for explicit confirmation before making its details public on GitHub Pages; planning consent and confirm_write do not grant publication consent. After the traveler confirms public publication, call publish_trip_site with confirm_public_publish=true. If publication succeeds or the page is already published, return the tool's url as a clickable link and accurately state whether Pages deployment is pending or complete. Never claim the page is live while deployment_status is pending."
+        "Preserve unknown facts. When showing a traveler the completed trip, ask for explicit confirmation before making its details public on GitHub Pages; planning consent and confirm_write do not grant publication consent. After the traveler confirms public publication, call publish_trip_site with confirm_public_publish=true. If publication succeeds or the page is already published, return the tool's url as a clickable link and accurately explain deployment_status: pending means the new commit's Pages deployment is still running, complete means that deployment finished, and not_required means the identical public page already exists and this call started no deployment. Never claim a new deployment completed while deployment_status is pending or not_required."
     ),
 )
 
@@ -772,8 +772,11 @@ def plan_a_trip(request: str) -> str:
         "read the saved trip, present a concise preview, and ask separately whether the traveler approves "
         "publishing these trip details publicly to GitHub Pages. Only after an explicit yes, call "
         "publish_trip_site with confirm_public_publish=true. On publish_accepted or already_published, "
-        "return the tool's url as a clickable link and report deployment_status accurately; a pending "
-        "deployment means the page may not be live yet. Never infer publication consent from confirm_write.\n\n"
+        "return the tool's url as a clickable link and explain deployment_status accurately: pending "
+        "means the new commit's Pages deployment is still running, complete means it finished, and "
+        "not_required means the identical public page already exists and this call started no deployment. "
+        "A pending deployment means the page may not be live yet. Never infer publication consent from "
+        "confirm_write.\n\n"
         f"Traveler request:\n{request}"
     )
 
