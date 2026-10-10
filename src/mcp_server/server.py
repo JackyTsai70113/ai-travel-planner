@@ -58,7 +58,8 @@ mcp = MCPServer(
         "Never present raw tool JSON, schemas, or opaque provider IDs as the final answer unless the traveler explicitly asks for them. "
         "Summarize tool results in natural, concise Traditional Chinese. For a saved itinerary, organize scheduled items by local date and trip timezone; show each item's start–end time, identify visits and meals by their current names when available, and state material validation warnings and incomplete fields. "
         "If a day has an unknown arrival/start or lodging/return route, explicitly say the displayed activity window excludes that unverified transfer; do not imply the day is fully connected. Clearly distinguish planned items from verified facts; never describe unknown routes, opening hours, availability, or prices as verified. Omit absent lodging when the traveler chose to leave it blank; do not invent a hotel. "
-        "For trip planning, ask one focused clarification question at a time, preserve prior answers, and never invent missing facts. "
+        "For trip planning, ask one focused clarification question at a time only for information required to proceed safely or produce a valid plan; preserve prior answers and never invent missing facts. Do not turn planning into a long optional-preference questionnaire: once required information is sufficient, summarize and wait for confirmation. "
+        "Lodging is not an active search feature. Unless the traveler voluntarily supplies lodging details, do not ask lodging preference, room, location, or hotel questions, do not search or recommend lodging, and keep lodging fields empty. A displayed or preselected UI option is not a user answer; record a preference only after the traveler explicitly selects or states it. If the traveler has not decided, preserve it as unknown instead of choosing a default. "
         "Before plan_trip writes trip/site files, summarize the request and obtain explicit user confirmation; call it with confirm_write=true only after confirmation. "
         "After a successful plan_trip, call get_trip to read the saved itinerary. When presenting a readable or day-by-day itinerary, treat the request as asking for current names of scheduled places unless the traveler requests ID-only output or declines live lookups. Read get_trip.place_details_needed and call get_place_details once for each listed Place ID; include the returned Google Maps and third-party attribution. Do not stop at opaque Place IDs or query unselected candidates. Each lookup is a live Places request and may incur usage charges. MCP and public-page lookups share a 1,000-request monthly service budget; if a lookup returns monthly_limit_reached, stop further lookups and report remaining names as unavailable this month. "
         "Google Places details are request-scoped and must never be saved; only Place IDs may persist. If a detail lookup fails, say it is unavailable and do not substitute stale saved data or guess. "
@@ -448,6 +449,7 @@ def plan_trip_tool(
     先用 parse_trip_request 累積使用者明確提供的內容。若回傳
     needs_clarification，只問 next_question 並等待回答；每輪保留先前答案，
     不重問已解決欄位、不猜測缺漏資訊，也不可在必要欄位未補齊時啟動研究。
+    只追問繼續規劃所需的必要資訊；必要欄位齊全後，不要延伸成冗長的選擇題或偏好問卷，應整理摘要並等待確認。住宿不是目前提供的自動搜尋功能；除非旅客主動提供住宿資料，否則不要詢問住宿地點、房型、房間數或住宿偏好，亦不要搜尋、推薦或填寫住宿欄位，所有住宿欄位維持空值。介面預先選取或高亮的選項不代表旅客已確認；只有旅客明確選擇或文字回答的偏好才可記錄，未決定的內容保留未知。
     資料完整後，先摘要需求並取得使用者對私有檔案寫入的明確確認，再以
     confirm_write=true 呼叫本工具。這會建立或覆寫指定 trip_id 的 Canonical
     Trip 與靜態網站檔案；不會發布公開網站。公開發布必須另行取得確認並呼叫
@@ -734,12 +736,12 @@ def plan_a_trip(request: str) -> str:
     return (
         "Help the traveler plan through a deliberate question-and-answer conversation. "
         "Never paste raw tool JSON or schemas as the final answer unless explicitly requested; explain results in concise, natural Traditional Chinese. "
-        "Preserve only facts the traveler stated; never fill gaps with assumptions. "
+        "Preserve only facts the traveler stated; never fill gaps with assumptions. A highlighted or preselected UI option is not a traveler answer; record a choice only after the traveler explicitly selects or states it. Keep undecided information unknown. "
         "Use parse_trip_request before plan_trip on the accumulated request. If information is missing, "
         "ambiguous, or contradictory, ask exactly ONE concise, specific question in this turn, "
-        "then wait for the answer. Choose the most important unresolved item first (destination, "
+        "then wait for the answer. Ask only for information required to proceed safely or produce a valid plan. Choose the most important unresolved item first (destination, "
         "exact dates, party size and child ages, budget or explicit no-limit preference, origin, "
-        "transport, then useful preferences). If children are included but their ages were not stated, "
+        "transport). Do not turn the conversation into a long optional-preference questionnaire; after required fields are sufficient, summarize and wait for confirmation. Lodging is not an active search feature: unless the traveler voluntarily supplies lodging details, never ask about lodging location, room allocation/type, or lodging preferences; never search or recommend lodging; keep all lodging fields empty. If children are included but their ages were not stated, "
         "ask for the ages in a separate later turn. Do not present a checklist of questions. "
         "If plan_trip returns needs_clarification, ask only the returned next_question. "
         "After each answer, add it to the accumulated request and parse again; do not discard "
