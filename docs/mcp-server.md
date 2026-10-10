@@ -51,8 +51,10 @@ Railway：
 | `GITHUB_PAGES_BRANCH` | `main` | 現有 Pages workflow 部署的分支。 |
 | `GITHUB_PAGES_BASE_URL` | `https://jackytsai70113.github.io/ai-travel-planner` | 工具回傳的 Pages 網址根目錄。 |
 
-只有獨立呼叫 `publish_trip_site` 並傳入 `confirm_public_publish=true` 才會
-把行程公開。沒有錯誤級驗證或硬性缺項的 Canonical Trip 可發布為網站預覽；
+公開行程須先取得使用者明確同意。已確認公開的規劃呼叫可在
+`plan_trip` 同時傳入 `confirm_write=true` 與 `confirm_public_publish=true`，
+規劃成功後會自動發布並回傳網址；已完成的行程也可獨立呼叫
+`publish_trip_site` 並傳入 `confirm_public_publish=true`。沒有錯誤級驗證或硬性缺項的 Canonical Trip 可發布為網站預覽；
 若仍有未安排餐段或費用估算不完整等已揭露警告，registry readiness 會保留
 `incomplete`，bundle 狀態保留 `warning`，不會標成完整行程。現有 slug
 若已屬於別的 trip 會拒絕；同一 trip 的內容更新還需
