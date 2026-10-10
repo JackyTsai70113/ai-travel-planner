@@ -46,6 +46,9 @@
 - 第 21 題在使用者作答前，選項「購物中心、Outlet、長時間逛街」已呈勾選狀態。測試取消該選項、改選保留未知後，ChatGPT 明確說明不會推斷旅客不喜歡購物、溫泉或遊樂設施。預選或高亮項目不可視為使用者已確認的偏好。
 - 最終回覆產生可讀摘要，標示「需求彙整完成・等待確認」，保留未決的航班時間、租車台數／車型、長輩行動能力、其他排除活動、每日結束時間及費用；並寫明住宿欄位空白、未開始規劃。未按最終確認，這次延續對話沒有呼叫 `plan_trip`、`get_trip` 或其他讀寫發布工具。
 - MCP server instructions 與 `plan_a_trip` prompt 現在要求只追問安全規劃所需資訊、必要欄位補齊後摘要並等待確認、未經使用者表達不得詢問或搜尋住宿，以及未經明確選擇不得採用 UI 預選偏好。此為對話指引修正，不改動既有行程資料，也不啟用住宿搜尋。
+- PR #293 已以一般 merge 合併至 `main`，merge commit `2b7c87a2b6e61cd2c14e311315fa44456c15eb07`；CI `python`、`pytest`、`mcp-site` 全部通過。Railway production deployment `970376ed-f57b-4818-9e63-7b13ebb7d5d8` 狀態 `SUCCESS`，source SHA 與 merge commit 相同。
+- 部署後回到同一 Chrome 視窗及既有測試 Chat，從工具選單明確附加 `AI Travel Planner MCP`，截圖確認標籤仍在 composer，再唯讀呼叫 `parse_trip_request` 一次。ChatGPT 實際工具卡顯示 `status=parsed`、目的地倉敷、5 天 4 夜、缺少旅客與預算，並只追問旅客人數；未呼叫 `plan_trip` 或其他工具，未規劃、寫入、修改或發布行程。此驗證證明部署後 ChatGPT Chat 可呼叫旅行 MCP；不宣稱本次單一 parser 呼叫已覆蓋所有多輪規劃分支。
+- 點擊旅行插件設定頁的「重新整理工具」後，按鈕轉為 disabled，但頁面沒有成功／失敗通知，因此不單以此按鈕狀態推定快照更新完成。部署後 ChatGPT Chat 的實際工具呼叫結果是可見證據；server instructions 的完整多輪新鮮對話行為仍需在後續一般 Chat 使用中持續驗收。
 
 ### 2026-10-10 parser 修正部署與一般 Chat 驗收
 
