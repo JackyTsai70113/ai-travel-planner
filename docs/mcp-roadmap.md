@@ -32,6 +32,13 @@
 - 回答也如實呈現住宿未設定、`budget.limit_status=unlimited`、`budget.total_status=incomplete` 與 `budget.incomplete`；明確說明 JPY 0 是已知費用小計，不是總旅費。另揭露 3 項 `schedule.poi_candidate_unselected`。住宿留空符合目前需求，不視為缺陷。
 - 本次只呼叫 `get_trip`；未呼叫 `get_place_details` 或其他工具，未寫入、修改或發布行程。此驗收證明 ChatGPT 能讀取並清楚呈現現有行程及其未知狀態，不代表交通、住宿、營業時間或旅費已完整驗證，也不代表此行程已達完整規劃目標。
 
+### 2026-10-10 一題一答規劃入口 Chat 驗收
+
+- 在同一 Chrome 視窗的既有一般 ChatGPT Chat「解析旅遊請求」中，確認訊息附有 `AI Travel Planner MCP`，送出不含日期、人數、預算、出發地與交通方式的「我想安排倉敷五天四夜」需求，要求先解析並一次只問一題。
+- ChatGPT 實際呼叫 `parse_trip_request`，回報倉敷及 5 天 4 夜，將未提供的欄位保留為未解析／未提供。第一題只詢問旅行日期，並提供沿用同一對話先前提過日期、更改日期或日期未定三個選項；未列出多題清單。
+- 在同一對話確認日期後，ChatGPT 保留已確認日期，接著只詢問旅客人數，並提供「仍是 6 位成人＋1 位 2 歲幼兒」或人數有變動的選項。這驗證兩輪答案累積與單題追問。
+- 目前只確認了日期與旅客人數，流程仍清楚表示尚未開始規劃或寫入行程；未呼叫 `plan_trip` 或其他寫入工具，未規劃、寫入、修改或發布行程。尚未驗證補齊所有必要欄位後的確認摘要及後續規劃流程。
+
 ### 2026-10-10 parser 修正部署與一般 Chat 驗收
 
 - PR #287「fix: preserve airport origin in trip requests」已一般 merge；main merge commit 為 `84062a346b12c156163001e2d82e658522f34d82`，`python`、`pytest`、`mcp-site` CI 全部成功。本機完整 pytest 為 386 passed、288 subtests passed。
