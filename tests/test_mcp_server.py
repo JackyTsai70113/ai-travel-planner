@@ -122,6 +122,8 @@ class MCPTravelServerTests(unittest.TestCase):
                 self.assertIn("Do not present raw JSON as the final answer", by_name["get_trip"].description)
                 self.assertIn("place_details_needed array is the authoritative list", by_name["get_trip"].description)
                 self.assertIn("call get_place_details once for each listed ID", by_name["get_trip"].description)
+                self.assertIn("show start and end times", by_name["get_trip"].description)
+                self.assertIn("state that the activity time range excludes that unverified transfer", by_name["get_trip"].description)
                 self.assertIn("Each detail call makes one live Places request", by_name["get_trip"].description)
                 self.assertIn("share a persistent 1,000-request monthly service budget", by_name["get_trip"].description)
                 self.assertIn("include Google Maps and third-party attribution", by_name["get_place_details"].description)
@@ -135,7 +137,9 @@ class MCPTravelServerTests(unittest.TestCase):
                 self.assertIn("Read get_trip.place_details_needed", mcp.instructions)
                 self.assertIn("Google Maps and third-party attribution", mcp.instructions)
                 self.assertIn("Never present raw tool JSON", mcp.instructions)
-                self.assertIn("organize scheduled items by local date and time", mcp.instructions)
+                self.assertIn("organize scheduled items by local date and trip timezone", mcp.instructions)
+                self.assertIn("show each item's start–end time", mcp.instructions)
+                self.assertIn("displayed activity window excludes that unverified transfer", mcp.instructions)
                 self.assertIn("Omit absent lodging when the traveler chose to leave it blank", mcp.instructions)
                 self.assertIn("not raw JSON", by_name["parse_trip_request"].description)
                 self.assertIn("Preserve intent.origin exactly", by_name["parse_trip_request"].description)
@@ -186,7 +190,9 @@ class MCPTravelServerTests(unittest.TestCase):
                 self.assertIn("After a successful plan_trip, call get_trip", str(prompt.messages))
                 self.assertIn("get_place_details", str(prompt.messages))
                 self.assertIn("Never paste raw tool JSON", str(prompt.messages))
-                self.assertIn("list scheduled visits and meals by date and local time", str(prompt.messages))
+                self.assertIn("list scheduled visits and meals by date and trip timezone", str(prompt.messages))
+                self.assertIn("show every item's start–end time", str(prompt.messages))
+                self.assertIn("activity window excludes that unverified transfer", str(prompt.messages))
                 self.assertIn(
                     "then call plan_trip with confirm_write=true",
                     str(prompt.messages),
