@@ -254,19 +254,20 @@ Side effects and retries: consumes one unit from the persistent monthly service 
 
 ### `plan_trip`
 
-Input schema: `{ "type":"object", "required":["request","trip_id"], "properties":{"request":{"type":"string","minLength":1,"maxLength":20000},"trip_id":{"type":"string","pattern":"^[a-z0-9][a-z0-9-]{0,79}$"},"confirm_write":{"type":"boolean","default":false}} }`.
+Input schema: `{ "type":"object", "required":["request","trip_id"], "properties":{"request":{"type":"string","minLength":1,"maxLength":20000},"trip_id":{"type":"string","pattern":"^[a-z0-9][a-z0-9-]{0,79}$"},"confirm_write":{"type":"boolean","default":false},"confirm_public_publish":{"type":"boolean","default":false}} }`.
 
 Output statuses (checked in this order when the arguments pass the published JSON Schema):
 
 - `invalid_input`: unsafe `trip_id` passed directly to the tool function.
 - `needs_clarification`: includes parsed `intent`, `missing_fields`, `ambiguous_fields`, and `constraint_issues`; no provider calls or writes.
 - `configuration_missing`: lists missing environment variable names only; no provider call or fixture fallback.
-- `confirmation_required`: configuration is present but `confirm_write` is false; no provider call or write.
-- `complete`: returned only when the orchestrator produced trip and site outputs and every reported stage is `succeeded`; includes `trip_id`, stage names/statuses, and warning `code`/`stage`/`path` only.
-- `incomplete`: returned when the orchestrator cannot produce outputs or any reported stage is not `succeeded`. A produced but degraded trip still includes `trip_id`, stage statuses, and warning `code`/`stage`/`path`; provider exception text and warning message text are deliberately omitted.
-- MCP schema rejection (`isError=true`): missing/wrong argument types, empty or more than 20,000 character request, malformed `trip_id`, or non-boolean `confirm_write`. These inputs do not reach the tool function.
+- `confirmation_required`: configuration is present but `confirm_write` is false; no provider call or write. If public publication was also explicitly requested and confirmed, pass both confirmation flags as true in the confirmed call.
+- `complete`: returned only when the orchestrator produced trip and site outputs and every reported stage is `succeeded`; includes `trip_id`, stage names/statuses, and warning `code`/`stage`/`path` only. When `confirm_public_publish=true`, also includes `publication`, the result from `publish_trip_site`; `publish_accepted` and `already_published` include the actual `url` and `deployment_status`.
+- `incomplete`: returned when the orchestrator cannot produce outputs or any reported stage is not `succeeded`. A produced but degraded trip still includes `trip_id`, stage statuses, and warning `code`/`stage`/`path`; provider exception text and warning message text are deliberately omitted. When `confirm_public_publish=true`, publication is not attempted and `publication` is `{ "status":"not_attempted", "reason":"plan_incomplete" }`.
+- Nested `publication` statuses: publication configuration or validation errors are returned inside the otherwise successful planning result. `overwrite_confirmation_required` means the same trip's existing public page has different content; ask the traveler to confirm the public replacement separately, then call `publish_trip_site` with `confirm_public_publish=true` and `confirm_overwrite=true`. A pending deployment means GitHub accepted the commit but Pages may not yet serve the update.
+- MCP schema rejection (`isError=true`): missing/wrong argument types, empty or more than 20,000 character request, malformed `trip_id`, or non-boolean `confirm_write` or `confirm_public_publish`. These inputs do not reach the tool function.
 
-Side effects and retries: with `confirm_write=true`, performs live provider research and may create or replace `trips/<trip_id>/trip.json` and `site/<trip_id>/index.html`. Before either write, the storage projection retains exact Google Place IDs and the user's itinerary/notes while removing Google Places details. MCP adds no automatic retry. A client retry repeats live provider calls and can replace those files; the tool is non-idempotent. `confirm_write` is an explicit tool argument, not an authorization mechanism.
+Side effects and retries: with `confirm_write=true`, performs live provider research and may create or replace `trips/<trip_id>/trip.json` and `site/<trip_id>/index.html`. With both confirmation flags true and a complete plan, it also attempts the public GitHub Pages publication; publishing an existing changed page still requires separate `confirm_overwrite=true` approval through `publish_trip_site`. Before either local write, the storage projection retains exact Google Place IDs and the user's itinerary/notes while removing Google Places details. MCP adds no automatic retry. A client retry repeats live provider calls and can replace those files; the tool is non-idempotent. The confirmation flags are explicit tool arguments, not an authorization mechanism: the MCP host must obtain the corresponding user confirmation first.
 
 ### `build_trip_site`
 
