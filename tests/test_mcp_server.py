@@ -132,6 +132,9 @@ class MCPTravelServerTests(unittest.TestCase):
                 self.assertIn("一題一答", by_name["plan_trip"].description)
                 self.assertIn("不要把 parser JSON 原樣當成回答", by_name["plan_trip"].description)
                 self.assertIn("公開發布必須另行取得確認", by_name["plan_trip"].description)
+                self.assertIn("不要詢問住宿地點", by_name["plan_trip"].description)
+                self.assertIn("A displayed or preselected UI option is not a user answer", mcp.instructions)
+                self.assertIn("Do not turn planning into a long optional-preference questionnaire", mcp.instructions)
                 self.assertIn("After a successful plan_trip, call get_trip", mcp.instructions)
                 self.assertIn("preserve intent.origin exactly as returned", mcp.instructions)
                 self.assertIn("Read get_trip.place_details_needed", mcp.instructions)
@@ -193,6 +196,9 @@ class MCPTravelServerTests(unittest.TestCase):
                 self.assertIn("list scheduled visits and meals by date and trip timezone", str(prompt.messages))
                 self.assertIn("show every item's start–end time", str(prompt.messages))
                 self.assertIn("activity window excludes that unverified transfer", str(prompt.messages))
+                self.assertIn("Lodging is not an active search feature", str(prompt.messages))
+                self.assertIn("Do not turn the conversation into a long optional-preference questionnaire", str(prompt.messages))
+                self.assertIn("A highlighted or preselected UI option is not a traveler answer", str(prompt.messages))
                 self.assertIn(
                     "then call plan_trip with confirm_write=true",
                     str(prompt.messages),
