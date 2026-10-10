@@ -22,7 +22,17 @@
 3. 涉及 MCP 部署、連線、工具或認證的變更，依 [`ChatGPT Chat MCP 上線驗收流程`](chatgpt-mcp-live-verification.md) 使用 Computer Use 在一般 ChatGPT Chat 驗收。維護者明確要求由使用者輸入 prompt 時，必須保持等待；不得改用 Work，也不得代替使用者送出 prompt。沒有這項證據時如實標記未驗收。
 4. 涉及網站的外連、版型或互動時，依 repo `AGENTS.md` 的瀏覽器規格，以實際瀏覽器操作和畫面檢查驗收；靜態檢查或被攔截的 popup 不算目標網站可用證據。
 
-## 最新正式環境與一般 Chat 檢查（2026-10-09）
+## 最新正式環境與一般 Chat 檢查（2026-10-10）
+
+### 2026-10-10 驗收更新
+
+- PR #281 已一般 merge 至 `main`，merge commit `401435b6b9a050b2f306a681f19bda8dd57bf07f`；`python`、`pytest`、`mcp-site` CI 全部成功。本機 unittest 267 項、pytest 383 項（含 288 subtests）通過。Railway production deployment `a8c2a36a-02a8-4c0f-8168-6978f222a550` 對應此 merge commit 且為 `SUCCESS`；`/health` 回 HTTP 200／`ok`。
+- 部署後以正式 AI Travel Planner MCP connector 對完整倉敷需求唯讀呼叫 `parse_trip_request`。原始回傳包含 `status=parsed`、`intent.origin=桃園`、`intent.missing_fields=[]`、`intent.ambiguous_fields=[]`，並正確解析倉敷、岡山縣、日期、旅客、無上限預算與自駕。這是正式 backend 證據，不是一般 ChatGPT Chat 的工具卡片證據。
+- 維護者提供的一般 ChatGPT Chat `get_place_details` 實際呼叫結果為 `status=available`、`details.name=Nagayamon Coffee`、`attribution=Google Maps`、`third_party_attributions=[]`；完成該工具的 ChatGPT UI 驗收。此次唯讀呼叫未規劃、寫入或發布行程。
+- #179 是目前唯一開啟的 issue。已驗證 `get_place_details` 與公開行程頁；唯一未完成的驗收是釐清先前一般 ChatGPT Chat 將明確提供的桃園出發地回覆為 `null`，究竟出現在 MCP 工具卡片原始欄位，還是助理整理文字。正式 connector 與該歷史部署 commit 的 parser 測試均回傳 `桃園`，但不可取代 ChatGPT 工具卡片證據。Issue 內保留了只呼叫 `parse_trip_request` 的唯讀診斷 prompt；維護者要求由本人輸入 ChatGPT prompt。
+- 本次 Computer Use 讀到的唯一 Chrome 分頁仍是另一專案 `ai-investment` 的 GitHub 404 頁，未輸入或送出 prompt，亦未操作 repo 頁面。一般 Chat 診斷驗收因此仍待維護者在正確對話提供工具卡片結果。
+
+### 2026-10-09 歷史核對
 
 ### 2026-10-09 後續核對
 
@@ -34,7 +44,7 @@
 - 維護者提供的較早 ChatGPT 對話中 `publish_trip_site` 回 `not_ready`。本次以已連線 MCP connector 對同一 trip ID 呼叫 `confirm_public_publish=true`、`confirm_overwrite=true`，結果是 `already_published`、沒有 commit SHA、沒有部署；未發生新覆寫。隨後讀取公開 bundle，確認五天、10 個景點、每天 3 餐共 15 餐，與最新 `get_trip` 相符。既有頁面目前已反映最新行程，沒有再次發布的需要；先前 `not_ready` 回覆所用行程版本未保存。
 - PR #272 部署後再次使用 Computer Use 刷新 ChatGPT 工具：按鈕載入約 12 秒後恢復可按，沒有結果提示，因此不能宣稱快照已刷新。同一 Chrome 視窗的一般「對話」composer 仍已選取 `AI Travel Planner MCP` 且保持空白；維護者尚未輸入或送出此次部署的驗收 prompt。
 - Computer Use 在單一 Chrome 視窗實際讀取既有倉敷公開頁首日，看到 `Nagayamon Coffee`、`大原美術館`、`Caty Cafe`、`大橋家住宅`、`Momiji-dō` 和 Google Maps 標示。該次 `already_published` 呼叫沒有建立新的 Pages 部署。
-- #179 現追蹤解析結果差異，以及一般 ChatGPT Chat 是否能呼叫 `get_place_details` 並提供即時具名地點；不再把目前公開行程的發布狀態列為阻塞。沒有要求維護者重做已提供的 prompt；需要新增 UI 測試時先說明新的驗證目標及最少輸入。
+- 當時 #179 追蹤解析結果差異與 `get_place_details` 的一般 ChatGPT Chat 驗收；後者已由維護者於 2026-10-10 提供成功工具呼叫結果，現況以本節「2026-10-10 驗收更新」為準。
 
 - Railway production deployment `aa3ef82c-f4ec-401d-9417-9d6e1aba59aa` 為 `SUCCESS`，source commit `530144f23546776088975f796e3cc2c18d1f8641`（PR #265 merge commit）。後續 main 只有倉敷公開行程投影與驗收文件變更，未改動 Railway 監看的 backend source。`/health` 回 HTTP 200／`ok`；透過 Railway CLI 注入環境變數但不輸出值，正式 `tools/list` 回 HTTP 200 並列出七項工具：`parse_trip_request`、`validate_trip`、`get_trip`、`get_place_details`、`plan_trip`、`build_trip_site`、`publish_trip_site`。
 - 2026-10-09 使用 AI Travel Planner MCP 明確覆寫既有倉敷公開行程。`publish_trip_site` 回 `publish_accepted`，commit `4380781d3cf91cd41656176769b2c2403feb03c6`；Pages workflow `37832158960` 成功。使用同一個 Chrome 視窗實際打開公開頁與 D1，看到即時載入的 `大原美術館`、`Caty Cafe`、`大橋家住宅` 等名稱，以及 Google Maps 標示。公開 bundle 有 `place_details_api_base_url` 和 Place ID，未持久化 Google 地點名稱。此次只更新公開投影，未改寫行程內容；行程仍標示住宿與費用未完成。
