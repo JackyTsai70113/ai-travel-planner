@@ -121,6 +121,9 @@ def parse_trip_request(text: str) -> TripRequest:
                 nights = -1
             if nights >= 0:
                 values["duration"] = (nights + 1, nights)
+                provenance["duration"].append(
+                    FieldProvenance(m.group(0), m.start(), m.end(), "duration")
+                )
 
     adult_match = capture("adults", r"([\d一二三四五六七八九十]+)\s*(?:位\s*)?(?:大人|成人|大)", lambda m: _number(m.group(1)))
     child_match = capture("children", r"([\d一二三四五六七八九十]+)\s*(?:位\s*)?(?:小孩|兒童|幼兒|小)", lambda m: _number(m.group(1)))
