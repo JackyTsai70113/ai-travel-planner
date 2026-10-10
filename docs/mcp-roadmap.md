@@ -24,6 +24,14 @@
 
 ## 最新正式環境與一般 Chat 檢查（2026-10-10）
 
+### 2026-10-10 PR #290 部署後 get_trip 一般 Chat 驗收
+
+- PR #290「fix: show itinerary time ranges and unknown transfers」已一般 merge；main commit 為 `af09ace9ba0137b97aa2f621398ac5a27a168547`。Railway `ai-traveller` production deployment `1b895e44-1d6d-4be2-98f0-fb10168797ee` 狀態 `SUCCESS`，來源 SHA 與 main 相同；部署時間為 `2026-10-10T08:58:41.404Z`。
+- 2026-10-10 在同一 Chrome 視窗、一般 ChatGPT Chat「解析旅遊請求」中，確認使用者訊息附有 `AI Travel Planner MCP`，實際唯讀呼叫 `get_trip` 一次。工具回傳 `status=ok`、時區 `Asia/Tokyo (UTC+09:00)`，五天共 25 個排程項目（10 個景點、15 餐）；回答逐日列出每項的當地開始／結束時間及 Place ID。
+- ChatGPT 明確解釋 `schedule.origin_unknown` 共 5 項，表示首段抵達／起點交通未驗證；活動時間不含未驗證的抵達交通或每日返回住宿交通，並指出不可視為已確認能由機場趕上首個活動，或可在最後活動結束時抵達住宿。此為 PR #290 的 ChatGPT UI 行為驗收通過。
+- 回答也如實呈現住宿未設定、`budget.limit_status=unlimited`、`budget.total_status=incomplete` 與 `budget.incomplete`；明確說明 JPY 0 是已知費用小計，不是總旅費。另揭露 3 項 `schedule.poi_candidate_unselected`。住宿留空符合目前需求，不視為缺陷。
+- 本次只呼叫 `get_trip`；未呼叫 `get_place_details` 或其他工具，未寫入、修改或發布行程。此驗收證明 ChatGPT 能讀取並清楚呈現現有行程及其未知狀態，不代表交通、住宿、營業時間或旅費已完整驗證，也不代表此行程已達完整規劃目標。
+
 ### 2026-10-10 parser 修正部署與一般 Chat 驗收
 
 - PR #287「fix: preserve airport origin in trip requests」已一般 merge；main merge commit 為 `84062a346b12c156163001e2d82e658522f34d82`，`python`、`pytest`、`mcp-site` CI 全部成功。本機完整 pytest 為 386 passed、288 subtests passed。
