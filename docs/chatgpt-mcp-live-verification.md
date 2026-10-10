@@ -26,9 +26,9 @@
 
 1. 確認 GitHub Actions 中此變更所需的 CI 全部通過，並記下預期部署的 `main` commit SHA。
 2. 在 Railway 確認最新正式環境 deployment 為成功狀態，記下 deployment ID、狀態、完成時間，以及 Railway 顯示的 deployed/source commit SHA。確認它與預期的 `main` SHA 完全一致。若 Railway 沒有提供 commit SHA，必須保存可稽核且能明確連結該 deployment 與該 `main` SHA 的部署紀錄或 workflow 證據；沒有此對應證據就標記「未驗收」。使用既有 Railway 驗證文件中的正式服務資訊；不要在紀錄中抄錄變數值或憑證。
-3. 使用 Computer Use 開啟 ChatGPT 的實際 Chat 介面，建立一個新對話，選取私人 `AI Travel Planner MCP` Site/plugin。
+3. 使用 Computer Use 在既有 Chrome 視窗開啟 ChatGPT 一般 Chat，優先使用 repo 已記錄的專案測試 Chat。若 composer 沒有明確顯示 `AI Travel Planner MCP` 標籤，從該 MCP 外掛詳情頁按「在對話中試用」啟動 Chat；只有 composer 可見外掛標籤才繼續。單從「＋」工具清單點選後，若 composer 沒有標籤，不可假設外掛已附加。輸入含中文的 prompt 時使用貼上，避免鍵盤輸入遺失字元；貼上後確認外掛標籤仍存在。
 4. 若本次新增或修改 MCP 工具，先到 ChatGPT app/plugin 的詳細資料頁執行 Refresh apps，讓 ChatGPT 重新取得工具、描述與 server instructions；這是 OpenAI 自訂 MCP plugin 文件記載的更新方式。之後回到新 Chat 對話確認工具清單。若沒有刷新選項或刷新後工具仍未出現，停止並記錄 discovery/authentication 失敗，不要把 HTTP 測試視作替代通過。參考：[OpenAI：Add a custom MCP server](https://developers.openai.com/api/docs/guides/custom-mcp-server#how-to-use)。
-5. 在 ChatGPT 介面確認 MCP 工具可用。本次 production backend 預期有七項工具，包括 `get_place_details`；Codex 或其他 connector 顯示的清單不能代替 ChatGPT Chat 的實際清單。
+5. 在 ChatGPT 介面確認 MCP 工具可用。本次 production backend 預期有七項工具，包括 `get_place_details`；Codex 或其他 connector 顯示的清單不能代替 ChatGPT Chat 的實際清單。若 ChatGPT 沒有顯示工具清單，實際工具呼叫卡片／應用程式回應需明確標示工具來源及成功結果。
 6. 在 Chat 中送出以下唯讀 smoke test，要求 ChatGPT 明確使用 `parse_trip_request`，不要改用模型自行解析：
 
    `請使用 AI Travel Planner MCP 的 parse_trip_request 工具解析「我想安排倉敷五天四夜」。請直接呼叫工具，不要自行回答或呼叫其他工具。`
@@ -44,7 +44,7 @@
 以下條件須全部成立：
 
 1. 目標 Railway deployment 是成功狀態，且有可稽核證據證明 deployed/source commit SHA 與此次待驗收的 `main` SHA 完全一致；若平台未提供 SHA，須有等價的明確部署對應證據。
-2. ChatGPT Chat 中的私人 Site/plugin 可被選取，MCP 工具可見。
+2. ChatGPT Chat 中的私人 Site/plugin 已明確附加於 composer，MCP 工具可見。
 3. ChatGPT Chat UI 顯示真實的 `parse_trip_request` 工具呼叫與成功回應。
 4. 工具回應的解析意圖符合 smoke test 中的倉敷與五天四夜需求。
 5. 驗收證據及阻塞狀態已記錄，沒有把 CLI 或 HTTP smoke test 誤報成 ChatGPT 驗收。
