@@ -37,6 +37,7 @@
 8. 若本次變更影響 `get_place_details`，額外在 ChatGPT Chat 呼叫一次已排定地點的 Place ID，確認回傳 `available` 和 `Google Maps` attribution。此為即時 Google Places API 請求，可能產生供應商費用；不要以未排入的候選或重複呼叫作驗收。
 9. 若此變更影響其他特定工具或資料路徑，再依變更範圍增加安全、唯讀的 ChatGPT Chat 呼叫；不得略過上述基本 smoke test，也不得用寫入型工具作部署健康檢查。若受影響行為只有寫入型工具可觀察，該項行為維持「未驗收」，直到能以無副作用方式驗證。使用者對另一項實際寫入工作的明確授權，只授權該項獨立操作；不能把寫入型呼叫轉作 smoke test，也不能滿足本驗收 gate。
    - 若變更涉及 `get_trip` 的 `place_details_needed`，可另用既有行程做零供應商呼叫的 ChatGPT 驗收：明確要求只呼叫 `get_trip`、只回報該陣列數量，並禁止呼叫 `get_place_details`、重新規劃、寫入或發布。例如：`請直接呼叫 AI Travel Planner MCP 的 get_trip，trip_id 使用 kurashiki-2026-11-live-20261008。只回報工具實際回傳的 place_details_needed 數量；不要呼叫 get_place_details，不要重新規劃，也不要寫入或發布行程。` 此測試只驗證 ChatGPT 是否實際呼叫新版 `get_trip` 並收到欄位；它不驗證即時地點查詢，也不取代第 8 點。
+   - 若變更涉及 request parser 的出發地擷取，額外呼叫 `parse_trip_request`，明確提供 `出發地：桃園國際機場`，並確認工具回傳完整 `origin=桃園國際機場`，不能把機場降成城市 `桃園`；同時確認目的地和日期／天數符合輸入。保留 MCP 標籤、只用唯讀 parser，不執行規劃或寫入。
 10. 保存足以核對結果的 ChatGPT Chat 截圖或短錄影，以及以下驗收紀錄。截圖需避免顯示帳戶敏感資訊、secret 或無關私人對話。
 
 ## 通過條件

@@ -32,6 +32,12 @@
 - 一般 Chat 測試對話：`https://chatgpt.com/c/6ac9f9c2-00cc-83e8-9619-f92441a513ab`（標題「解析旅遊需求」）。截圖核對到 MCP 實際結果表與 `status: parsed`。不把先前未附加外掛標籤的同類回答列作工具呼叫證據。
 - 使用此 ChatGPT 操作流程時，若需以中文送測試 prompt，先保留 composer 內的 MCP 標籤，再將文字貼上；覆寫整個 composer 的操作會移除標籤。每次送出前都重新確認標籤仍在。
 
+### 2026-10-10 `get_trip` 驗收與出發機場解析修正
+
+- 在同一 Chrome 視窗找到一般 ChatGPT 測試 Chat「解析旅遊請求」，對 composer 內明確附加的 `AI Travel Planner MCP` 送出唯讀 `get_trip`。工具回應 `status=ok`；五天每天各回傳 2 個景點與 3 餐，共 10 個景點、15 餐。住宿狀態為未設定；預算上限 `unlimited`，但 `total_status=incomplete`、已知小計 JPY 0。驗證警告為 `schedule.hotel_missing` 1、`schedule.origin_unknown` 5、`schedule.poi_candidate_unselected` 3、`budget.incomplete` 1。未呼叫 `get_place_details`，未產生額外 Places 查詢、未寫入或發布行程。此結果不把住宿留空視為缺陷，也不把 JPY 0 說成總費用。
+- 同一 ChatGPT Chat 的 parse 結果把明確出發地「桃園國際機場」縮成「桃園」。根因是 `src/intent/parser.py` 的來源別名只涵蓋城市名稱。修正後保留完整機場名稱與來源 provenance，並以 parser 及 MCP server 測試鎖定此行為。
+- 本機驗證：`uv run --isolated --with-requirements requirements-mcp.txt python -m unittest tests.test_travel_intent tests.test_mcp_server -v` 通過 66 項；`uv run --isolated --with-requirements requirements-mcp.txt python -m unittest discover -s tests -v` 通過 270 項；`uv run --isolated --with pytest --with-requirements requirements-mcp.txt python -m pytest -q` 通過 386 項與 288 subtests。完整 ChatGPT Chat parser 驗收須在修正部署後再做；目前正式端仍運行上一個已記錄版本。
+
 ### 2026-10-10 驗收更新
 
 - PR #281 已一般 merge 至 `main`，merge commit `401435b6b9a050b2f306a681f19bda8dd57bf07f`；`python`、`pytest`、`mcp-site` CI 全部成功。本機 unittest 267 項、pytest 383 項（含 288 subtests）通過。Railway production deployment `a8c2a36a-02a8-4c0f-8168-6978f222a550` 對應此 merge commit 且為 `SUCCESS`；`/health` 回 HTTP 200／`ok`。

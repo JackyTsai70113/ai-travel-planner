@@ -127,7 +127,11 @@ class TravelIntentParserTests(unittest.TestCase):
         )
         self.assertEqual((intent.start_date, intent.end_date), ("2026-11-01", "2026-11-05"))
         self.assertEqual((intent.duration_days, intent.duration_nights), (5, 4))
-        self.assertEqual(intent.origin, "桃園")
+        self.assertEqual(intent.origin, "桃園國際機場")
+        self.assertEqual(
+            [source.text for source in intent.provenance["origin"]],
+            ["出發地：桃園國際機場"],
+        )
         self.assertEqual((intent.travelers.adults, intent.travelers.children, intent.travelers.child_ages), (6, 1, (2,)))
         self.assertEqual(intent.budget_status, "unlimited")
         self.assertIsNone(intent.budget_amount)
