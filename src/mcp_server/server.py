@@ -56,8 +56,8 @@ mcp = MCPServer(
         "Use Canonical Trip V1 as the sole trip record and answer in Traditional Chinese. "
         "When using parse_trip_request, preserve intent.origin exactly as returned: repeat a non-null value verbatim, and if it is null say that no origin was parsed. Never infer, omit, or change this field. "
         "Never present raw tool JSON, schemas, or opaque provider IDs as the final answer unless the traveler explicitly asks for them. "
-        "Summarize tool results in natural, concise Traditional Chinese. For a saved itinerary, organize scheduled items by local date and time, identify visits and meals by their current names when available, and state material validation warnings and incomplete fields. "
-        "Clearly distinguish planned items from verified facts; never describe unknown routes, opening hours, availability, or prices as verified. Omit absent lodging when the traveler chose to leave it blank; do not invent a hotel. "
+        "Summarize tool results in natural, concise Traditional Chinese. For a saved itinerary, organize scheduled items by local date and trip timezone; show each item's start–end time, identify visits and meals by their current names when available, and state material validation warnings and incomplete fields. "
+        "If a day has an unknown arrival/start or lodging/return route, explicitly say the displayed activity window excludes that unverified transfer; do not imply the day is fully connected. Clearly distinguish planned items from verified facts; never describe unknown routes, opening hours, availability, or prices as verified. Omit absent lodging when the traveler chose to leave it blank; do not invent a hotel. "
         "For trip planning, ask one focused clarification question at a time, preserve prior answers, and never invent missing facts. "
         "Before plan_trip writes trip/site files, summarize the request and obtain explicit user confirmation; call it with confirm_write=true only after confirmation. "
         "After a successful plan_trip, call get_trip to read the saved itinerary. When presenting a readable or day-by-day itinerary, treat the request as asking for current names of scheduled places unless the traveler requests ID-only output or declines live lookups. Read get_trip.place_details_needed and call get_place_details once for each listed Place ID; include the returned Google Maps and third-party attribution. Do not stop at opaque Place IDs or query unselected candidates. Each lookup is a live Places request and may incur usage charges. MCP and public-page lookups share a 1,000-request monthly service budget; if a lookup returns monthly_limit_reached, stop further lookups and report remaining names as unavailable this month. "
@@ -347,7 +347,7 @@ def get_trip_tool(
         ),
     ],
 ) -> dict[str, Any]:
-    """Read a bounded itinerary summary. Do not present raw JSON as the final answer unless requested; summarize items by local date and time and distinguish visits from meals. The response's place_details_needed array is the authoritative list of distinct scheduled Google Place IDs lacking an independently sourced name. When presenting a readable or day-by-day itinerary, call get_place_details once for each listed ID and include attribution; do not stop at opaque IDs or query unselected candidates. Each detail call makes one live Places request and may incur usage charges. MCP and public-page lookups share a persistent 1,000-request monthly service budget; if the limit is reached, stop further lookups. Report validation warnings and incomplete budget or lodging without implying they are complete."""
+    """Read a bounded itinerary summary. Do not present raw JSON as the final answer unless requested; summarize items by local date and trip timezone, show start and end times, and distinguish visits from meals. The response's place_details_needed array is the authoritative list of distinct scheduled Google Place IDs lacking an independently sourced name. When presenting a readable or day-by-day itinerary, call get_place_details once for each listed ID and include attribution; do not stop at opaque IDs or query unselected candidates. Each detail call makes one live Places request and may incur usage charges. MCP and public-page lookups share a persistent 1,000-request monthly service budget; if the limit is reached, stop further lookups. If validation says an arrival/start or lodging/return route is unknown, state that the activity time range excludes that unverified transfer. Report validation warnings and incomplete budget or lodging without implying they are complete."""
     try:
         path = _trip_path(trip_id)
         trip = durable_trip(json.loads(path.read_text(encoding="utf-8")))
@@ -760,8 +760,11 @@ def plan_a_trip(request: str) -> str:
         "reached, stop additional detail lookups and report remaining names as unavailable this month. "
         "If lookup fails, state that the detail is unavailable; do not "
         "reuse stale saved details or invent a value. "
-        "When presenting the saved trip, list scheduled visits and meals by date and local time, "
-        "include returned current place names and attribution, and state important validation warnings and incomplete budget or lodging. "
+        "When presenting the saved trip, list scheduled visits and meals by date and trip timezone, "
+        "show every item's start–end time, include returned current place names and attribution, "
+        "and state important validation warnings and incomplete budget or lodging. If arrival/start "
+        "or lodging/return routing is unknown, explicitly say the shown activity window excludes "
+        "that unverified transfer; do not describe the day as fully route-verified. "
         "Never claim research, availability, opening hours, prices, routes, or validation succeeded "
         "without tool evidence. Planning does not book, pay, or publish the site. Publishing exposes trip details publicly; "
         "only call publish_trip_site after the traveler separately asks for public publication and confirms the action.\n\n"
