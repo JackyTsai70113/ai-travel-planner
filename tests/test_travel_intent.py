@@ -141,6 +141,29 @@ class TravelIntentParserTests(unittest.TestCase):
             for source in intent.provenance[field]:
                 self.assertEqual(text[source.start:source.end], source.text)
 
+    def test_chatgpt_full_request_parses_kix_budget_date_duration_and_negative_preferences(self):
+        text = (
+            "日本京都市，2027/04/05 至 2027/04/09，2 位成人、0 位小孩，"
+            "從關西國際機場 KIX 出發，總預算為兩人合計 NT$80,000，"
+            "大眾運輸，不租車，沒有指定必去景點或排除活動。"
+        )
+        intent = parse_trip_request(text)
+
+        self.assertEqual(intent.destinations, ("京都",))
+        self.assertEqual(intent.regions, ())
+        self.assertEqual((intent.start_date, intent.end_date), ("2027-04-05", "2027-04-09"))
+        self.assertEqual((intent.duration_days, intent.duration_nights), (5, 4))
+        self.assertEqual(intent.origin, "關西國際機場 KIX")
+        self.assertEqual((intent.travelers.adults, intent.travelers.children), (2, 0))
+        self.assertEqual((intent.budget_amount, intent.currency, intent.budget_status), (80000, "TWD", "limited"))
+        self.assertEqual(intent.transport, ("transit",))
+        self.assertEqual(intent.required_places, ())
+        self.assertEqual(intent.forbidden_places, ())
+        self.assertEqual(intent.missing_fields, ())
+        for field in ("origin", "budget", "date_range"):
+            for source in intent.provenance[field]:
+                self.assertEqual(text[source.start:source.end], source.text)
+
     def test_budget_missing_and_explicitly_unlimited_are_distinct(self):
         missing = parse_trip_request("東京三天，2大")
         unlimited = parse_trip_request("東京三天，2大，預算不限")
