@@ -41,12 +41,13 @@ _HTTP_REQUEST_LIMIT = 120
 _HTTP_WINDOW_SECONDS = 60
 _HTTP_MAX_BODY_BYTES = 4 * 1024 * 1024
 _PUBLIC_PLACE_REQUEST_LIMIT = 60
-_PUBLIC_PLACE_MONTHLY_LIMIT = 1_000
+_GOOGLE_PLACES_MONTHLY_LIMIT = 1_000
 _GOOGLE_PLACE_ID = re.compile(r"^[A-Za-z0-9_-]{5,255}$")
-_PUBLIC_PLACE_USAGE_PATH = Path(os.environ.get(
+_GOOGLE_PLACES_USAGE_PATH = Path(os.environ.get(
+    # Keep the existing env name and file path to preserve current Railway data.
     "PUBLIC_PLACE_DETAILS_USAGE_FILE", str(_TRIPS_DIR.parent / ".public-place-details-usage.json")
 ))
-_PUBLIC_PLACE_USAGE_LOCK = threading.Lock()
+_GOOGLE_PLACES_USAGE_LOCK = threading.Lock()
 _MCP_LOCAL_ALLOWED_HOSTS = ("127.0.0.1:*", "localhost:*", "[::1]:*")
 
 mcp = MCPServer(
@@ -59,7 +60,7 @@ mcp = MCPServer(
         "Clearly distinguish planned items from verified facts; never describe unknown routes, opening hours, availability, or prices as verified. Omit absent lodging when the traveler chose to leave it blank; do not invent a hotel. "
         "For trip planning, ask one focused clarification question at a time, preserve prior answers, and never invent missing facts. "
         "Before plan_trip writes trip/site files, summarize the request and obtain explicit user confirmation; call it with confirm_write=true only after confirmation. "
-        "After a successful plan_trip, call get_trip to read the saved itinerary. When presenting a readable or day-by-day itinerary, treat the request as asking for current names of scheduled places unless the traveler requests ID-only output or declines live lookups. Read get_trip.place_details_needed and call get_place_details once for each listed Place ID; include the returned Google Maps and third-party attribution. Do not stop at opaque Place IDs or query unselected candidates. Each lookup is a live Places request and may incur usage charges. "
+        "After a successful plan_trip, call get_trip to read the saved itinerary. When presenting a readable or day-by-day itinerary, treat the request as asking for current names of scheduled places unless the traveler requests ID-only output or declines live lookups. Read get_trip.place_details_needed and call get_place_details once for each listed Place ID; include the returned Google Maps and third-party attribution. Do not stop at opaque Place IDs or query unselected candidates. Each lookup is a live Places request and may incur usage charges. MCP and public-page lookups share a 1,000-request monthly service budget; if a lookup returns monthly_limit_reached, stop further lookups and report remaining names as unavailable this month. "
         "Google Places details are request-scoped and must never be saved; only Place IDs may persist. If a detail lookup fails, say it is unavailable and do not substitute stale saved data or guess. "
         "Preserve unknown facts. Publishing a trip to GitHub Pages is a separate public action and requires explicit user confirmation with confirm_public_publish=true."
     ),
@@ -150,15 +151,17 @@ def _published_scheduled_google_place_ids(slug: str, pages_base_url: str) -> set
     }
 
 
-def _consume_public_place_monthly_budget(
-    path: Path = _PUBLIC_PLACE_USAGE_PATH,
+def _consume_google_places_monthly_budget(
+    path: Path | None = None,
     *,
     month: str | None = None,
-    limit: int = _PUBLIC_PLACE_MONTHLY_LIMIT,
+    limit: int | None = None,
 ) -> bool:
-    """Persist an aggregate monthly call count; fail closed on corrupt or unwritable state."""
+    """Count Google Places requests across MCP and public lookup paths; fail closed."""
+    path = path or _GOOGLE_PLACES_USAGE_PATH
+    limit = _GOOGLE_PLACES_MONTHLY_LIMIT if limit is None else limit
     month = month or time.strftime("%Y-%m", time.gmtime())
-    with _PUBLIC_PLACE_USAGE_LOCK:
+    with _GOOGLE_PLACES_USAGE_LOCK:
         try:
             current = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
             count = current.get("count", 0) if current.get("month") == month else 0
@@ -344,7 +347,7 @@ def get_trip_tool(
         ),
     ],
 ) -> dict[str, Any]:
-    """Read a bounded itinerary summary. Do not present raw JSON as the final answer unless requested; summarize items by local date and time and distinguish visits from meals. The response's place_details_needed array is the authoritative list of distinct scheduled Google Place IDs lacking an independently sourced name. When presenting a readable or day-by-day itinerary, call get_place_details once for each listed ID and include attribution; do not stop at opaque IDs or query unselected candidates. Each detail call makes one live Places request and may incur usage charges. Report validation warnings and incomplete budget or lodging without implying they are complete."""
+    """Read a bounded itinerary summary. Do not present raw JSON as the final answer unless requested; summarize items by local date and time and distinguish visits from meals. The response's place_details_needed array is the authoritative list of distinct scheduled Google Place IDs lacking an independently sourced name. When presenting a readable or day-by-day itinerary, call get_place_details once for each listed ID and include attribution; do not stop at opaque IDs or query unselected candidates. Each detail call makes one live Places request and may incur usage charges. MCP and public-page lookups share a persistent 1,000-request monthly service budget; if the limit is reached, stop further lookups. Report validation warnings and incomplete budget or lodging without implying they are complete."""
     try:
         path = _trip_path(trip_id)
         trip = durable_trip(json.loads(path.read_text(encoding="utf-8")))
@@ -381,9 +384,14 @@ def get_place_details_tool(
         ),
     ],
 ) -> dict[str, Any]:
-    """Fetch current request-scoped details for one scheduled Google Place ID. When readable place names are requested, call once per distinct scheduled ID lacking an independently sourced name; include Google Maps and third-party attribution. Each call makes one live Places request and may incur usage charges. Never query unselected candidates or store the response."""
+    """Fetch request-scoped details for one scheduled Google Place ID. Calls share the service's persistent 1,000-request monthly Google Places budget with public-page lookups; monthly_limit_reached means no provider request was made and further detail lookups should stop. Each accepted call makes one live Places request and may incur usage charges; include Google Maps and third-party attribution. Never query unselected candidates or store the response."""
+    raw_place_id = place_id.removeprefix("places/")
+    if not _GOOGLE_PLACE_ID.fullmatch(raw_place_id):
+        return {"status": "invalid_input", "message": "place_id must be a Google Place ID"}
     if not os.environ.get("GOOGLE_MAPS_API_KEY"):
         return {"status": "configuration_missing", "missing": ["GOOGLE_MAPS_API_KEY"]}
+    if not _consume_google_places_monthly_budget():
+        return {"status": "monthly_limit_reached"}
     try:
         return GooglePlacesAdapter(api_key=os.environ["GOOGLE_MAPS_API_KEY"]).get_place_details(place_id)
     except ValueError:
@@ -710,7 +718,7 @@ def capabilities() -> str:
                 "parse_trip_request": "read-only; parses only explicit user facts",
                 "validate_trip": "read-only; validates supplied JSON",
                 "get_trip": "read-only; returns allowlisted trip fields and place_details_needed for scheduled places needing live names",
-                "get_place_details": "read-only live Google Places lookup; result is request-scoped and never persisted",
+                "get_place_details": "read-only live Google Places lookup; shares a persistent monthly request budget with public lookups and is never persisted",
                 "plan_trip": "requires confirm_write=true; performs live provider research and writes local trip/site files",
                 "build_trip_site": "requires confirm_write=true; writes a local static site; never deploys",
                 "publish_trip_site": "requires explicit confirm_public_publish=true; publishes ready trips as previews and warning-only incomplete trips with incomplete readiness; blocking findings refuse publication; public overwrite requires confirm_overwrite=true",
@@ -748,7 +756,9 @@ def plan_a_trip(request: str) -> str:
         "Read get_trip.place_details_needed and call get_place_details once for each listed ID; "
         "include the returned Google Maps and third-party attribution. Do not stop at opaque IDs "
         "or query unselected candidates. Each lookup is a live Places request and may incur usage "
-        "charges. If lookup fails, state that the detail is unavailable; do not "
+        "charges. Public and MCP lookups share a persistent monthly request budget; if the cap is "
+        "reached, stop additional detail lookups and report remaining names as unavailable this month. "
+        "If lookup fails, state that the detail is unavailable; do not "
         "reuse stale saved details or invent a value. "
         "When presenting the saved trip, list scheduled visits and meals by date and local time, "
         "include returned current place names and attribution, and state important validation warnings and incomplete budget or lodging. "
@@ -901,7 +911,7 @@ def run_http_server() -> None:
         api_key = os.environ.get("GOOGLE_MAPS_API_KEY", "")
         if not api_key:
             return JSONResponse({"status": "unavailable"}, status_code=503, headers=response_headers)
-        if not _consume_public_place_monthly_budget():
+        if not _consume_google_places_monthly_budget():
             return JSONResponse({"status": "monthly_limit_reached"}, status_code=429, headers=response_headers)
         try:
             details = GooglePlacesAdapter(api_key=api_key).get_place_display_name(place_id)

@@ -177,8 +177,8 @@ Production planning requires `GOOGLE_MAPS_API_KEY` and `OPENROUTESERVICE_API_KEY
 | `parse_trip_request` | Extracts only facts stated in the request, including missing and ambiguous fields. | None |
 | `validate_trip` | Runs Canonical Trip V1 schema validation and deterministic itinerary validation. | None |
 | `get_trip` | Returns an allowlisted summary for a safe trip ID, including scheduled items and persisted Google Place IDs; omits raw provider records, booking details, free-form notes, and arbitrary fields. Use `get_place_details` when a current Google-sourced display name or operational detail is needed. | None |
-| `get_place_details` | Fetches current Places details for one saved Google Place ID for this request only; returns `Google Maps` and supplied third-party attribution. The response is never written to trip storage or site files. | One live Google Places Details request per call; none in repo storage. |
-| 公開行程地點名稱 API | 公開頁只對當前區段已排入行程且尚無自有名稱的地點呼叫 Railway 唯讀端點；端點再以 Places API 的 `id,displayName,attributions` 欄位遮罩查詢。 | 無 bearer token，但限制精確 GitHub Pages Origin、公開 registry、排定 Place ID、每來源頻率與每月 1,000 次上限；`no-store`，名稱僅留在頁面記憶體。每次會使用一次 Places Details API。 |
+| `get_place_details` | Fetches current Places details for one saved Google Place ID for this request only; returns `Google Maps` and supplied third-party attribution. The response is never written to trip storage or site files. | One live Google Places Details request per call; shares a persistent monthly cap of 1,000 service-routed requests with the public page lookup; none in repo storage. |
+| 公開行程地點名稱 API | 公開頁只對當前區段已排入行程且尚無自有名稱的地點呼叫 Railway 唯讀端點；端點再以 Places API 的 `id,displayName,attributions` 欄位遮罩查詢。 | 無 bearer token，但限制精確 GitHub Pages Origin、公開 registry、排定 Place ID、每來源頻率與共用每月 1,000 次上限；`no-store`，名稱僅留在頁面記憶體。每次會使用一次 Places Details API。 |
 | `plan_trip` | 以繁體中文一題一答補齊必要資訊；只依使用者已明確回答的內容規劃，不回傳 parser JSON 充當最終回答。 | 必要欄位未補齊時只回傳一個 `next_question` 且不啟動研究；完整後仍須先取得私有檔案寫入確認，再以 `confirm_write=true` 建立或覆寫 Canonical Trip 和靜態網站。永不公開發布。 |
 | `build_trip_site` | Validates and renders an existing Canonical Trip. | Requires `confirm_write=true`; writes a local static site only. Never publishes. |
 | `publish_trip_site` | Publishes a Canonical Trip as a public preview. Warning-only incomplete trips keep `incomplete` readiness and visible warnings. | Requires explicit `confirm_public_publish=true`; hard validation errors and required missing sections still refuse publication. Existing-trip replacement separately requires `confirm_overwrite=true`. |
@@ -246,7 +246,9 @@ Output statuses:
 - `configuration_missing`: `GOOGLE_MAPS_API_KEY` is absent.
 - `invalid_input` or MCP schema rejection: the value is not a supported Place ID.
 
-Side effects and retries: performs one live Places Details request; response is request-scoped and is not written to logs, trip JSON, rendered HTML, or public bundle. Retries make a new provider request and may incur usage charges.
+Output statuses also include `monthly_limit_reached`: the shared monthly service budget of 1,000 Google Places requests has been reached; this result is returned before any provider request is made.
+
+Side effects and retries: consumes one unit from the persistent monthly service budget before making one live Places Details request; response is request-scoped and is not written to logs, trip JSON, rendered HTML, or public bundle. MCP details calls and public page lookups share the same counter. Failed provider calls also consume one unit because the provider may have received the request. Retries make a new provider request and may incur usage charges. The cap covers only requests routed through this Railway service, not other applications or services using the same Google Cloud project/key. The counter stores only UTC month and aggregate count.
 
 ### `plan_trip`
 

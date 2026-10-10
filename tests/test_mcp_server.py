@@ -25,7 +25,7 @@ from src.mcp_server.server import (
     _place_details_needed,
     _public_trip_summary,
     _github_pages_origin,
-    _consume_public_place_monthly_budget,
+    _consume_google_places_monthly_budget,
     _published_scheduled_google_place_ids,
     _read_limited_asgi_body,
     build_trip_site_tool,
@@ -41,14 +41,14 @@ from src.orchestrator import StageName, StageReport, StageStatus, WarningRecord
 
 
 class MCPTravelServerTests(unittest.TestCase):
-    def test_public_place_usage_budget_persists_only_month_and_count(self) -> None:
+    def test_google_places_usage_budget_persists_only_month_and_count(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             usage_path = Path(directory) / "usage.json"
-            self.assertTrue(_consume_public_place_monthly_budget(usage_path, month="2026-10", limit=2))
-            self.assertTrue(_consume_public_place_monthly_budget(usage_path, month="2026-10", limit=2))
-            self.assertFalse(_consume_public_place_monthly_budget(usage_path, month="2026-10", limit=2))
+            self.assertTrue(_consume_google_places_monthly_budget(usage_path, month="2026-10", limit=2))
+            self.assertTrue(_consume_google_places_monthly_budget(usage_path, month="2026-10", limit=2))
+            self.assertFalse(_consume_google_places_monthly_budget(usage_path, month="2026-10", limit=2))
             self.assertEqual({"month": "2026-10", "count": 2}, json.loads(usage_path.read_text()))
-            self.assertTrue(_consume_public_place_monthly_budget(usage_path, month="2026-11", limit=2))
+            self.assertTrue(_consume_google_places_monthly_budget(usage_path, month="2026-11", limit=2))
 
     def test_public_place_lookup_is_allowlisted_to_scheduled_published_bundle_places(self) -> None:
         bundle = {
@@ -123,8 +123,10 @@ class MCPTravelServerTests(unittest.TestCase):
                 self.assertIn("place_details_needed array is the authoritative list", by_name["get_trip"].description)
                 self.assertIn("call get_place_details once for each listed ID", by_name["get_trip"].description)
                 self.assertIn("Each detail call makes one live Places request", by_name["get_trip"].description)
+                self.assertIn("share a persistent 1,000-request monthly service budget", by_name["get_trip"].description)
                 self.assertIn("include Google Maps and third-party attribution", by_name["get_place_details"].description)
                 self.assertIn("may incur usage charges", by_name["get_place_details"].description)
+                self.assertIn("monthly_limit_reached", by_name["get_place_details"].description)
                 self.assertIn("一題一答", by_name["plan_trip"].description)
                 self.assertIn("不要把 parser JSON 原樣當成回答", by_name["plan_trip"].description)
                 self.assertIn("公開發布必須另行取得確認", by_name["plan_trip"].description)
@@ -502,6 +504,8 @@ class MCPTravelServerTests(unittest.TestCase):
 
     def test_get_place_details_is_transient_and_handles_provider_failure(self) -> None:
         with patch.dict(os.environ, {"GOOGLE_MAPS_API_KEY": "test-key"}), patch(
+            "src.mcp_server.server._consume_google_places_monthly_budget", return_value=True
+        ), patch(
             "src.mcp_server.server.GooglePlacesAdapter.get_place_details",
             return_value={"status": "available", "attribution": "Google Maps", "details": {"name": "Transient"}},
         ) as lookup:
@@ -509,6 +513,8 @@ class MCPTravelServerTests(unittest.TestCase):
         self.assertEqual("available", result["status"])
         lookup.assert_called_once_with("ChIJ-place")
         with patch.dict(os.environ, {"GOOGLE_MAPS_API_KEY": "test-key"}), patch(
+            "src.mcp_server.server._consume_google_places_monthly_budget", return_value=True
+        ), patch(
             "src.mcp_server.server.GooglePlacesAdapter.get_place_details",
             side_effect=RuntimeError("provider error"),
         ):
@@ -517,6 +523,35 @@ class MCPTravelServerTests(unittest.TestCase):
         with patch.dict(os.environ, {"GOOGLE_MAPS_API_KEY": ""}):
             missing = get_place_details_tool("ChIJ-place")
         self.assertEqual({"status": "configuration_missing", "missing": ["GOOGLE_MAPS_API_KEY"]}, missing)
+
+    def test_get_place_details_stops_before_provider_when_monthly_budget_is_exhausted(self) -> None:
+        with patch.dict(os.environ, {"GOOGLE_MAPS_API_KEY": "test-key"}), patch(
+            "src.mcp_server.server._consume_google_places_monthly_budget", return_value=False
+        ), patch("src.mcp_server.server.GooglePlacesAdapter.get_place_details") as lookup:
+            result = get_place_details_tool("ChIJ-place")
+        self.assertEqual({"status": "monthly_limit_reached"}, result)
+        lookup.assert_not_called()
+
+    def test_invalid_place_id_does_not_consume_monthly_budget(self) -> None:
+        with patch("src.mcp_server.server._consume_google_places_monthly_budget") as consume:
+            result = get_place_details_tool("not a place id")
+        self.assertEqual({"status": "invalid_input", "message": "place_id must be a Google Place ID"}, result)
+        consume.assert_not_called()
+
+    def test_direct_and_public_place_lookups_share_monthly_counter(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            usage_path = Path(directory) / "usage.json"
+            with patch("src.mcp_server.server._GOOGLE_PLACES_USAGE_PATH", usage_path), patch(
+                "src.mcp_server.server._GOOGLE_PLACES_MONTHLY_LIMIT", 1
+            ):
+                # The public page endpoint consumes this same counter helper.
+                self.assertTrue(_consume_google_places_monthly_budget())
+                with patch.dict(os.environ, {"GOOGLE_MAPS_API_KEY": "test-key"}), patch(
+                    "src.mcp_server.server.GooglePlacesAdapter.get_place_details"
+                ) as lookup:
+                    result = get_place_details_tool("ChIJ-place")
+                self.assertEqual({"status": "monthly_limit_reached"}, result)
+                lookup.assert_not_called()
 
     def test_place_details_followups_include_only_distinct_scheduled_places_without_names(self) -> None:
         summary = {
