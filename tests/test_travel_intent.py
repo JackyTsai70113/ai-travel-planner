@@ -131,6 +131,18 @@ class TravelIntentParserTests(unittest.TestCase):
         self.assertEqual(intent.transport, ("drive",))
         self.assertEqual(intent.missing_fields, ())
 
+    def test_transfer_city_with_area_descriptor_is_not_added_as_destination(self):
+        text = (
+            "目的地鎌倉；日期 2026/11/01 至 2026/11/06；桃園機場出發，"
+            "先搭飛機到東京地區再租車自駕；6 位成人、1 位 2 歲兒童；預算不限。"
+        )
+        intent = parse_trip_request(text)
+
+        self.assertEqual(intent.destinations, ("鎌倉",))
+        self.assertEqual(intent.origin, "桃園機場")
+        self.assertEqual((intent.start_date, intent.end_date), ("2026-11-01", "2026-11-06"))
+        self.assertEqual(intent.missing_fields, ())
+
     def test_japanese_kamakura_dates_region_and_family_counts(self):
         text = "日本神奈川県鎌倉市、2026年11月1日から2026年11月6日、成人6名、2歳児1名。"
         intent = parse_trip_request(text)
