@@ -10,8 +10,9 @@
 - Railway production deployment `7bf05301-2068-4d5f-b03e-44205fbe65f8` 為 `SUCCESS`，branch `main`、source SHA `2c0835522fd88d47c77ac09db84eea16ce8810b9`；instance 為 `RUNNING`。正式 `/health` 回 HTTP 200／`ok`。
 - 部署後唯讀呼叫正式 MCP `parse_trip_request`，輸入鎌倉與 2026-11-01 至 2026-11-06；回傳 `destinations=[鎌倉]`、`regions=[神奈川縣]`、日期正確、6 天 5 夜，並明確列出仍缺旅客人數與預算。這是 backend connector 證據，不是 ChatGPT Chat UI 驗收。
 - 根因是 parser 的 `_KNOWN_PLACES` 未包含「鎌倉」，且 production `_JAPAN_DESTINATIONS` 也未包含鎌倉／神奈川縣；前者造成目的地被回報缺漏，後者會在解析後阻擋日本 provider coverage。PR #300 同時補齊兩處與 regression tests。
-- 同一 Chrome 視窗的既有 ChatGPT Chat「解析倉敷行程」中，從 `AI Travel Planner MCP` 外掛詳情頁按「在對話中試用」後，composer 顯示 MCP 標籤；以新對話實際呼叫 `parse_trip_request` 一次。結果畫面標示 `AI Travel Planner MCP — parse_trip_request`、`parsed`，回傳目的地鎌倉、地區神奈川縣、2026-11-01 至 2026-11-06、6 天 5 夜，以及缺漏旅客人數與預算。ChatGPT Chat：`https://chatgpt.com/c/6acb4481-bf14-83ec-bac6-86930dc8d6bc`（標題「解析鎌倉行程」）。已擷取結果畫面；僅解析，未規劃、寫入或發布。
+- 同一 Chrome 視窗的既有 ChatGPT Chat「解析倉敷行程」中，從 `AI Travel Planner MCP` 外掛詳情頁按「在對話中試用」後，composer 顯示 MCP 標籤；以新對話實際呼叫 `parse_trip_request` 一次。結果畫面標示 `AI Travel Planner MCP — parse_trip_request`、`parsed`，回傳目的地鎌倉、地區神奈川縣、2026-11-01 至 2026-11-06、6 天 5 夜，以及缺漏旅客人數與預算。ChatGPT Chat：`https://chatgpt.com/c/6acb4481-bf14-83ec-bac6-86930dc8d6bc`（目前標題「解析行程請求」）。已擷取結果畫面；僅解析，未規劃、寫入或發布。
 - 正式 MCP `plan_trip` 另以 `confirm_write=false` 做無副作用缺項驗證，回 `needs_clarification`、目的地與日期正確，`next_question` 為「共有幾位成人、幾位兒童？」；沒有啟動研究或寫檔。完成真實旅程仍需使用者提供旅客人數與預算，待行程摘要確認後才可規劃及發布。
+- 後續再於同一 ChatGPT Chat 以 Computer Use 實際要求 `plan_trip` 唯讀驗收，畫面確認呼叫 `AI Travel Planner MCP` 並回 `needs_clarification`；目的地鎌倉／神奈川縣、日期 2026/11/01～2026/11/06、6 天 5 夜均正確。`travelers`、`budget` 缺漏，下一題為「共有幾位成人、幾位兒童？」；`confirm_write=false`、`confirm_public_publish=false`。回覆明確記錄沒有啟動研究、寫入或發布，也沒有猜測資料。Computer Use 結果畫面已擷取確認；實際行程仍待使用者補齊旅客人數與預算，並確認行程摘要。
 
 ### PR #297 公開網站自動流程已部署
 
