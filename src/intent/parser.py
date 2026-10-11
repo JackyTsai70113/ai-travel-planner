@@ -144,7 +144,13 @@ def parse_trip_request(text: str) -> TripRequest:
     for match in re.finditer(r"(\d{1,2})\s*歲", text):
         provenance["child_ages"].append(FieldProvenance(match.group(0), match.start(), match.end(), "child_ages"))
 
-    unlimited_budget = list(re.finditer(r"(?:預算|花費|總額)\s*(?:：|:)?\s*(?:暫不設(?:定)?限制|不設(?:定)?限制|不限(?:預算|金額)?|無上限|沒有上限)", text))
+    unlimited_budget = list(re.finditer(
+        r"(?:(?:預算|花費|總額)\s*(?:：|:)?\s*)?"
+        r"(?:明確\s*)?(?:暫不設(?:定)?(?:預算)?(?:上限|限制)|"
+        r"不設(?:定)?(?:預算)?(?:上限|限制)|不限(?:預算|金額)?|"
+        r"無(?:預算)?上限|沒有(?:預算)?上限)",
+        text,
+    ))
     for match in unlimited_budget:
         provenance["budget"].append(FieldProvenance(match.group(0), match.start(), match.end(), "budget"))
     budget = [] if unlimited_budget else capture(
