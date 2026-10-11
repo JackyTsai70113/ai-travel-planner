@@ -4,13 +4,14 @@
 
 ## 最新正式狀態與查證紀錄（2026-10-11）
 
-### 2026-10-11 鎌倉目的地解析修正已部署；ChatGPT UI 尚未驗收
+### 2026-10-11 鎌倉目的地解析修正已部署；ChatGPT UI 唯讀解析通過
 
 - PR #300 已合併；main merge commit `2c0835522fd88d47c77ac09db84eea16ce8810b9`。`python`、`pytest`、`mcp-site` CI 全部成功；完整 pytest 為 395 passed、288 subtests passed。
 - Railway production deployment `7bf05301-2068-4d5f-b03e-44205fbe65f8` 為 `SUCCESS`，branch `main`、source SHA `2c0835522fd88d47c77ac09db84eea16ce8810b9`；instance 為 `RUNNING`。正式 `/health` 回 HTTP 200／`ok`。
 - 部署後唯讀呼叫正式 MCP `parse_trip_request`，輸入鎌倉與 2026-11-01 至 2026-11-06；回傳 `destinations=[鎌倉]`、`regions=[神奈川縣]`、日期正確、6 天 5 夜，並明確列出仍缺旅客人數與預算。這是 backend connector 證據，不是 ChatGPT Chat UI 驗收。
 - 根因是 parser 的 `_KNOWN_PLACES` 未包含「鎌倉」，且 production `_JAPAN_DESTINATIONS` 也未包含鎌倉／神奈川縣；前者造成目的地被回報缺漏，後者會在解析後阻擋日本 provider coverage。PR #300 同時補齊兩處與 regression tests。
-- 電腦使用驗收未完成：目前 Chrome 既有分頁清單沒有 AI Travel Planner 測試對話，現有最後開啟對話屬於其他專案；依本機 Chrome 驗收規則，未在錯誤對話送入資料，也未建立或移動視窗／分頁。待正確的既有 AI Travel Planner Chat 出現在目前 Chrome 視窗後，依 `docs/chatgpt-mcp-live-verification.md` 實際呼叫唯讀 parser。尚未規劃、寫入或發布任何鎌倉行程。
+- 同一 Chrome 視窗的既有 ChatGPT Chat「解析倉敷行程」中，從 `AI Travel Planner MCP` 外掛詳情頁按「在對話中試用」後，composer 顯示 MCP 標籤；以新對話實際呼叫 `parse_trip_request` 一次。結果畫面標示 `AI Travel Planner MCP — parse_trip_request`、`parsed`，回傳目的地鎌倉、地區神奈川縣、2026-11-01 至 2026-11-06、6 天 5 夜，以及缺漏旅客人數與預算。ChatGPT Chat：`https://chatgpt.com/c/6acb4481-bf14-83ec-bac6-86930dc8d6bc`（標題「解析鎌倉行程」）。已擷取結果畫面；僅解析，未規劃、寫入或發布。
+- 正式 MCP `plan_trip` 另以 `confirm_write=false` 做無副作用缺項驗證，回 `needs_clarification`、目的地與日期正確，`next_question` 為「共有幾位成人、幾位兒童？」；沒有啟動研究或寫檔。完成真實旅程仍需使用者提供旅客人數與預算，待行程摘要確認後才可規劃及發布。
 
 ### PR #297 公開網站自動流程已部署
 
