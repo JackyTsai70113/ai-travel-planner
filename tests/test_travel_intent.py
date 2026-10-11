@@ -320,6 +320,20 @@ class TravelIntentParserTests(unittest.TestCase):
         self.assertEqual(intent.pace, "packed")
         self.assertEqual(intent.soft_preferences, ())
 
+    def test_low_fatigue_and_one_main_attraction_per_day_set_relaxed_pace(self):
+        text = (
+            "鎌倉六日，家庭低疲勞方向，每天最多一個主要景點，"
+            "午後留給幼兒午睡與休息。"
+        )
+        intent = parse_trip_request(text)
+
+        self.assertEqual(intent.pace, "relaxed")
+        self.assertEqual(
+            [(item.id, item.kind) for item in intent.soft_preferences],
+            [("low-fatigue", "low_fatigue")],
+        )
+        self.assertTrue(any(item.kind == "nap" for item in intent.request_constraints))
+
     def test_conflicting_transport_is_marked_ambiguous(self):
         intent = parse_trip_request("東京三天，2大，預算3萬，自駕又搭電車")
         self.assertTrue(any(item.field == "transport" for item in intent.ambiguous_fields))
