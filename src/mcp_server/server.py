@@ -55,6 +55,7 @@ mcp = MCPServer(
     instructions=(
         "Use Canonical Trip V1 as the sole trip record and answer in Traditional Chinese. "
         "When using parse_trip_request, preserve intent.origin exactly as returned: repeat a non-null value verbatim, and if it is null say that no origin was parsed. Never infer, omit, or change this field. "
+        "Report parser results only from the latest actual tool response. Never claim a destination is missing or unsupported when the returned intent.destinations contains it, and never claim multiple parser calls or outcomes without their actual tool responses. "
         "Never present raw tool JSON, schemas, or opaque provider IDs as the final answer unless the traveler explicitly asks for them. "
         "Summarize tool results in natural, concise Traditional Chinese. For a saved itinerary, organize scheduled items by local date and trip timezone; show each item's start–end time, identify visits and meals by their current names when available, and state material validation warnings and incomplete fields. "
         "If a day has an unknown arrival/start or lodging/return route, explicitly say the displayed activity window excludes that unverified transfer; do not imply the day is fully connected. Clearly distinguish planned items from verified facts; never describe unknown routes, opening hours, availability, or prices as verified. Omit absent lodging when the traveler chose to leave it blank; do not invent a hotel. "
@@ -307,7 +308,7 @@ def parse_trip_request_tool(
         ),
     ],
 ) -> dict[str, Any]:
-    """Parse explicit travel facts without research or invention. Present the result as a concise Traditional Chinese summary, not raw JSON, unless the traveler asks for the structured payload. Preserve intent.origin exactly: repeat a non-null value verbatim, or state that no origin was parsed when it is null. Never infer or alter origin."""
+    """Parse explicit travel facts without research or invention. Present the result as a concise Traditional Chinese summary, not raw JSON, unless the traveler asks for the structured payload. Preserve intent.origin exactly: repeat a non-null value verbatim, or state that no origin was parsed when it is null. Never infer or alter origin. Report parser results only from this actual tool response; do not claim a destination is missing or unsupported when intent.destinations contains it."""
     if not request.strip():
         return {"status": "invalid_input", "message": "request must not be empty"}
     if len(request) > 20_000:
@@ -774,7 +775,7 @@ def plan_a_trip(request: str) -> str:
         "Help the traveler plan through a deliberate question-and-answer conversation. "
         "Never paste raw tool JSON or schemas as the final answer unless explicitly requested; explain results in concise, natural Traditional Chinese. "
         "Preserve only facts the traveler stated; never fill gaps with assumptions. A highlighted or preselected UI option is not a traveler answer; record a choice only after the traveler explicitly selects or states it. Keep undecided information unknown. "
-        "Use parse_trip_request before plan_trip on the accumulated request. If information is missing, "
+        "Use parse_trip_request before plan_trip on the accumulated request. Report only fields in the actual latest parser result: never say a destination is missing or unsupported when intent.destinations contains it, and never claim parser calls or outcomes without their actual tool responses. If information is missing, "
         "ambiguous, or contradictory, ask exactly ONE concise, specific question in this turn, "
         "then wait for the answer. Ask only for information required to proceed safely or produce a valid plan. Choose the most important unresolved item first (destination, "
         "exact dates, party size and child ages, budget or explicit no-limit preference, origin, "
