@@ -186,6 +186,19 @@ class TravelIntentParserTests(unittest.TestCase):
         self.assertEqual(unlimited.budget_status, "unlimited")
         self.assertNotIn("budget", {item.field for item in unlimited.missing_fields})
 
+    def test_natural_unlimited_budget_answers_are_recognized(self):
+        for phrase in (
+            "預算：明確不設預算上限",
+            "明確不設預算上限",
+            "不設預算上限",
+            "預算不設限制",
+            "預算：暫不設限制",
+        ):
+            with self.subTest(phrase=phrase):
+                intent = parse_trip_request(f"東京三天，2大，{phrase}")
+                self.assertEqual(intent.budget_status, "unlimited")
+                self.assertNotIn("budget", {item.field for item in intent.missing_fields})
+
     def test_taiwan_aliases_and_traditional_night_counts(self):
         variants = (
             ("臺灣臺北市萬華西門町三天二夜", ("台灣", "台北", "萬華", "西門町"), (3, 2)),
