@@ -4,6 +4,14 @@
 
 ## 最新正式狀態與查證紀錄（2026-10-11）
 
+### 2026-10-11 日文鎌倉請求解析修正已部署並通過 ChatGPT Chat 唯讀驗收
+
+- PR #307 已合併；main merge commit `8d4f46081de960f85dcd4046faf066ed5893a8d1`。本機完整 pytest 為 397 passed、293 subtests passed；`python -m unittest discover -s tests -q` 為 280 tests OK；GitHub Actions 的 `python`、`pytest`、`mcp-site` 全部通過。
+- Railway production deployment `3a5091dc-3ac6-4830-8900-8ed2759ca7a8` 狀態 `SUCCESS`，branch `main`、source SHA 與 merge commit 相同。正式 `/health` 回 HTTP 200／`ok`。
+- 在 ChatGPT 一般 Chat「解析鎌倉行程」先以唯讀 `parse_trip_request` 重現問題：輸入「日本神奈川県鎌倉市，2026年11月1日から2026年11月6日，成人6名、2歳児1名」時只認出 `destinations=[鎌倉]`，但 `regions=[]`、日期與成人／兒童數皆為 null。根因是 parser 僅辨識中文縣名、數字日期分隔符與「數字在前」的人數格式。
+- PR #307 新增日文縣名、年月日日期區間、成人數、`歳児` 兒童數與年齡擷取，並保留來源 provenance。部署後在同一 ChatGPT Chat 重放完全相同輸入；實際 MCP 回 `status=parsed`、`destinations=[鎌倉]`、`regions=[神奈川縣]`、`start_date=2026-11-01`、`end_date=2026-11-06`、6 天 5 夜、6 位成人、1 位 2 歲兒童、`budget_status=unspecified`，且僅 `budget` 列於 `missing_fields`。結果畫面已擷取。
+- 本輪只呼叫 `parse_trip_request`，未呼叫其他工具、未研究、規劃、寫入或發布。六大一小（2 歲）與 2026-11-01 至 2026-11-06 仍是合成測試資料；真實行程旅客／預算資料尚未確認，未建立公開行程或 URL。
+
 ### 2026-10-11 鎌倉不限預算解析修正已部署並通過 ChatGPT Chat 唯讀驗收
 
 - PR #304 已合併；main merge commit `01e5ed823b1bef795909d26e8f3c2beb32d6eea5`。`python`、`pytest`、`mcp-site` CI 全部成功；本機完整 pytest 為 396 passed、293 subtests passed，`git diff --check` 通過。
