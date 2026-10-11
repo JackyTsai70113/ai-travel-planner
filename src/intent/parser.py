@@ -37,6 +37,19 @@ _TAIWAN_DESTINATION_ALIASES = {
 }
 _ORIGIN_NAMES = r"關西國際機場(?:\s*[（(]?\s*KIX\s*[）)]?)?|桃園國際機場|高雄國際機場|台北松山機場|桃園機場|松山機場|KIX|台灣|臺灣|台北|臺北|高雄|桃園|香港|東京|大阪"
 _ORIGIN_PATTERN = rf"(?:(?:從|由|出發地[：:]?)\s*({_ORIGIN_NAMES})(?:\s*出發|\s*飛|\s*去)?|({_ORIGIN_NAMES})\s*出發)"
+_TRANSFER_PLACE_PATTERN = re.compile(
+    r"(?:飛(?:往|到)?|搭(?:乘)?(?:飛機|飛機前往)|抵達|入境)\s*"
+    r"(?P<place>東京|大阪|京都|神戶|德島|福岡|札幌|沖繩|名古屋|奈良|熊本|由布院|北海道|淡路島|倉敷|岡山|鎌倉)"
+    r"\s*(?:後|再)\s*(?:租車|自駕|開車)"
+)
+
+
+def _is_transfer_place(match: re.Match[str], text: str) -> bool:
+    """Exclude a city used only as the arrival point before renting a car."""
+    return any(
+        transfer.start("place") <= match.start() and match.end() <= transfer.end("place")
+        for transfer in _TRANSFER_PLACE_PATTERN.finditer(text)
+    )
 
 
 def parse_trip_request(text: str) -> TripRequest:
@@ -69,7 +82,10 @@ def parse_trip_request(text: str) -> TripRequest:
 
     known_places: list[str] = []
     for place in _KNOWN_PLACES:
-        matches = [match for match in re.finditer(re.escape(place), text) if not is_origin(match)]
+        matches = [
+            match for match in re.finditer(re.escape(place), text)
+            if not is_origin(match) and not _is_transfer_place(match, text)
+        ]
         if matches:
             known_places.append(place)
             _record_matches(provenance, "destinations", matches)
@@ -114,11 +130,11 @@ def parse_trip_request(text: str) -> TripRequest:
         capture("duration", r"([\d一二三四五六七八九十兩]+)天", lambda m: (_number(m.group(1)), None))
     date_patterns = (
         (
-            re.compile(r"(\d{4})[/-](\d{1,2})[/-](\d{1,2})\s*(?:到|至|から|[-~～〜])\s*(\d{4})?[/-]?(\d{1,2})[/-](\d{1,2})"),
+            re.compile(r"(\d{4})[/-](\d{1,2})[/-](\d{1,2})\s*(?:到|至|から|[-~～〜–—])\s*(\d{4})?[/-]?(\d{1,2})[/-](\d{1,2})"),
             lambda m: (m.group(1), m.group(2), m.group(3), m.group(4), m.group(5), m.group(6)),
         ),
         (
-            re.compile(r"(\d{4})年(\d{1,2})月(\d{1,2})日\s*(?:から|到|至|[-~～〜])\s*(?:(\d{4})年)?(\d{1,2})月(\d{1,2})日"),
+            re.compile(r"(\d{4})年(\d{1,2})月(\d{1,2})日\s*(?:から|到|至|[-~～〜–—])\s*(?:(\d{4})年)?(\d{1,2})月(\d{1,2})日"),
             lambda m: (m.group(1), m.group(2), m.group(3), m.group(4), m.group(5), m.group(6)),
         ),
     )

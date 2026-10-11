@@ -117,6 +117,20 @@ class TravelIntentParserTests(unittest.TestCase):
             ["鎌倉"],
         )
 
+    def test_transfer_city_is_not_added_as_destination_and_en_dash_dates_parse(self):
+        text = (
+            "目的地鎌倉；日期 2026/11/01–2026/11/06；出發地桃園機場；"
+            "6 位成人、1 位 2 歲兒童；預算不限；先飛東京再租車自駕。"
+        )
+        intent = parse_trip_request(text)
+
+        self.assertEqual(intent.destinations, ("鎌倉",))
+        self.assertEqual((intent.start_date, intent.end_date), ("2026-11-01", "2026-11-06"))
+        self.assertEqual((intent.travelers.adults, intent.travelers.children, intent.travelers.child_ages), (6, 1, (2,)))
+        self.assertEqual(intent.budget_status, "unlimited")
+        self.assertEqual(intent.transport, ("drive",))
+        self.assertEqual(intent.missing_fields, ())
+
     def test_japanese_kamakura_dates_region_and_family_counts(self):
         text = "日本神奈川県鎌倉市、2026年11月1日から2026年11月6日、成人6名、2歳児1名。"
         intent = parse_trip_request(text)
