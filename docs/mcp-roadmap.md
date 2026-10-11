@@ -22,7 +22,15 @@
 3. 涉及 MCP 部署、連線、工具或認證的變更，依 [`ChatGPT Chat MCP 上線驗收流程`](chatgpt-mcp-live-verification.md) 使用 Computer Use 在一般 ChatGPT Chat 驗收。維護者已明確要求由 agent 使用同一個 Chrome 視窗直接處理，並找到 repo 的測試 Chat；不得改用 Work 或另開視窗。外掛未明確附加、沒有實際工具來源／回應證據時，不得把模型文字回答當作 MCP 通過。
 4. 涉及網站的外連、版型或互動時，依 repo `AGENTS.md` 的瀏覽器規格，以實際瀏覽器操作和畫面檢查驗收；靜態檢查或被攔截的 popup 不算目標網站可用證據。
 
-## 最新正式環境與一般 Chat 檢查（2026-10-10）
+## 最新正式環境與一般 Chat 檢查（2026-10-11）
+
+### 2026-10-11 PR #307 日文鎌倉 parser 修正與部署後 ChatGPT 驗收
+
+- PR #307 已合併；main merge commit `8d4f46081de960f85dcd4046faf066ed5893a8d1`。本機完整 pytest 為 397 passed、293 subtests passed；`python -m unittest discover -s tests -q` 為 280 tests OK；GitHub Actions `python`、`pytest`、`mcp-site` 全部通過。
+- Railway production deployment `3a5091dc-3ac6-4830-8900-8ed2759ca7a8` 為 `SUCCESS`，source SHA 與 main 完全一致；正式 `/health` 回 HTTP 200／`ok`。
+- Computer Use 在 ChatGPT 一般 Chat「解析鎌倉行程」以唯讀 `parse_trip_request` 重現日文輸入缺陷：`日本神奈川県鎌倉市，2026年11月1日から2026年11月6日，成人6名、2歳児1名` 只解析出鎌倉，縣、日期、成人／兒童數及年齡均錯誤或缺漏。PR #307 加入日文縣名別名、年月日日期格式、大人／成人數、`歳児` 兒童數與 `歳` 年齡解析。
+- 部署後同一 ChatGPT Chat 重放相同輸入，MCP 回傳鎌倉／神奈川縣、2026-11-01 至 2026-11-06、6 天 5 夜、6 位成人、1 位 2 歲兒童；預算仍為 `unspecified`，且 `missing_fields` 只含 `budget`。ChatGPT UI 實際工具結果畫面已擷取；僅呼叫 `parse_trip_request`，未研究、規劃、寫入或發布。
+- 這些旅客與日期仍是合成測試資料。實際旅程的旅客／預算資料尚未確認，未建立行程網站或公開網址。
 
 ### 2026-10-10 PR #290 部署後 get_trip 一般 Chat 驗收
 
