@@ -270,9 +270,10 @@ def parse_trip_request(text: str) -> TripRequest:
     )
     accommodation = _choices(text, {"溫泉旅館": "ryokan", "商務旅館": "business_hotel", "親子飯店": "family_hotel", "住市中心": "central"}, provenance, "accommodation_preferences")
     food = _choices(text, {"吃素": "vegetarian", "素食": "vegetarian", "海鮮": "seafood", "拉麵": "ramen", "和牛": "wagyu", "不吃牛": "no_beef"}, provenance, "food_preferences")
-    pace = "relaxed" if re.search(r"不要太累|慢慢玩|輕鬆", text) else ("packed" if re.search(r"行程緊湊|排滿", text) else None)
+    relaxed_pace_pattern = r"不要太累|慢慢玩|輕鬆|低疲勞|低負擔|每天最多一個(?:主要)?(?:景點|活動)|每日最多一個(?:主要)?(?:景點|活動)"
+    pace = "relaxed" if re.search(relaxed_pace_pattern, text) else ("packed" if re.search(r"行程緊湊|排滿", text) else None)
     if pace:
-        match = re.search(r"不要太累|慢慢玩|輕鬆|行程緊湊|排滿", text)
+        match = re.search(rf"{relaxed_pace_pattern}|行程緊湊|排滿", text)
         assert match is not None
         provenance["pace"].append(FieldProvenance(match.group(0), match.start(), match.end(), "pace"))
 
