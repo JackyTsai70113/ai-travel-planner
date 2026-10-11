@@ -110,6 +110,25 @@ def parse_trip_request(text: str) -> TripRequest:
             FieldProvenance(match.group(0), match.start(), match.end(), "destinations")
         )
     places = (*places, *normalized_taiwan_places)
+    explicit_only = re.search(
+        r"目的地\s*(?:只有|僅有|僅限|僅)\s*([^；;。！？\n]+)", text
+    )
+    if explicit_only:
+        scope_text = explicit_only.group(1)
+        allowed_places = {
+            place for place in _KNOWN_PLACES if place in scope_text
+        } | {
+            normalized
+            for alias, normalized in _TAIWAN_DESTINATION_ALIASES.items()
+            if alias in scope_text
+        }
+        places = tuple(place for place in places if place in allowed_places)
+        provenance["destinations"] = [
+            source
+            for source in provenance["destinations"]
+            if _TAIWAN_DESTINATION_ALIASES.get(source.text, source.text)
+            in allowed_places
+        ]
     region_matches = {
         region: tuple(
             match
