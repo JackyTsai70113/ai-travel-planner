@@ -72,6 +72,7 @@ def parse_trip_request(text: str) -> TripRequest:
         return matches
 
     origin_matches = capture("origin", _ORIGIN_PATTERN, lambda m: (m.group(1) or m.group(2)).strip())
+    capture("arrival_city", _TRANSFER_PLACE_PATTERN, lambda match: match.group("place"))
     origin_spans = tuple(
         (match.start(1) if match.group(1) else match.start(2),
          match.end(1) if match.group(1) else match.end(2))
@@ -309,6 +310,7 @@ def parse_trip_request(text: str) -> TripRequest:
         raw_text=text, destinations=places, regions=regions, start_date=start_date,
         end_date=end_date, duration_days=days, duration_nights=nights,
         origin=values.get("origin"),
+        arrival_city=values.get("arrival_city"),
         travelers=TravelerGroup(values.get("adults"), values.get("children"), ages),
         room_count=values.get("room_count"),
         budget_amount=budget_amount, currency=currency, budget_status=budget_status, transport=transport,

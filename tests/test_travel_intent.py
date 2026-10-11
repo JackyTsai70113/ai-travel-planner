@@ -125,6 +125,7 @@ class TravelIntentParserTests(unittest.TestCase):
         intent = parse_trip_request(text)
 
         self.assertEqual(intent.destinations, ("鎌倉",))
+        self.assertEqual(intent.arrival_city, "東京")
         self.assertEqual((intent.start_date, intent.end_date), ("2026-11-01", "2026-11-06"))
         self.assertEqual((intent.travelers.adults, intent.travelers.children, intent.travelers.child_ages), (6, 1, (2,)))
         self.assertEqual(intent.budget_status, "unlimited")
@@ -153,6 +154,7 @@ class TravelIntentParserTests(unittest.TestCase):
         self.assertEqual(intent.destinations, ("鎌倉",))
         self.assertEqual((intent.start_date, intent.end_date), ("2026-11-01", "2026-11-06"))
         self.assertEqual(intent.origin, "桃園機場")
+        self.assertEqual(intent.arrival_city, "東京")
         self.assertEqual((intent.travelers.adults, intent.travelers.children, intent.travelers.child_ages), (6, 1, (2,)))
         self.assertEqual(intent.budget_status, "unlimited")
         self.assertEqual(intent.missing_fields, ())

@@ -35,6 +35,11 @@ def schedule(request: SchedulingInput) -> SchedulingOutput:
 
     anchors_by_date = _anchors(trip, violations)
     days: list[dict] = []
+    low_fatigue = any(
+        preference.get("kind") in {"low_fatigue", "pace"}
+        and preference.get("value") in {True, "low"}
+        for preference in trip.get("preferences", {}).get("soft_preferences", [])
+    )
     unscheduled = {activity["id"] for activity in activities if activity["schedule"].get("day") is None}
     total_days = (end - start).days + 1
     used_meal_ids: set[str] = set()
@@ -45,7 +50,8 @@ def schedule(request: SchedulingInput) -> SchedulingOutput:
         )
         violations.extend(day_violations)
         unscheduled.difference_update(placed)
-        days.append({"date": current.isoformat(), "summary": "", "items": planned})
+        summary = "午後保留午睡與彈性休息時間" if low_fatigue else ""
+        days.append({"date": current.isoformat(), "summary": summary, "items": planned})
     for activity_id in unscheduled:
         activity = next((item for item in activities if item["id"] == activity_id), None)
         if activity and activity["kind"] == "meal" and not activity["schedule"].get("required", False):

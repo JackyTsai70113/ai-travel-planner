@@ -107,6 +107,7 @@ class TripRequest:
     duration_days: int | None = None
     duration_nights: int | None = None
     origin: str | None = None
+    arrival_city: str | None = None
     travelers: TravelerGroup = field(default_factory=TravelerGroup)
     room_count: int | None = None
     budget_amount: int | None = None
@@ -169,6 +170,7 @@ class TripRequest:
             "duration_days": self.duration_days,
             "duration_nights": self.duration_nights,
             "origin": self.origin,
+            "arrival_city": self.arrival_city,
             "travelers": {"adults": self.travelers.adults, "children": self.travelers.children, "child_ages": list(self.travelers.child_ages)},
             "room_count": self.room_count,
             "budget_amount": self.budget_amount,
