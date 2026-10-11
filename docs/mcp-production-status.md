@@ -4,6 +4,15 @@
 
 ## 最新正式狀態與查證紀錄（2026-10-11）
 
+### 2026-10-11 鎌倉不限預算解析修正已部署並通過 ChatGPT Chat 唯讀驗收
+
+- PR #304 已合併；main merge commit `01e5ed823b1bef795909d26e8f3c2beb32d6eea5`。`python`、`pytest`、`mcp-site` CI 全部成功；本機完整 pytest 為 396 passed、293 subtests passed，`git diff --check` 通過。
+- Railway production deployment `2edf5373-aaaf-4d10-bf26-d8a1900cbb0b` 狀態 `SUCCESS`，branch `main`、source SHA `01e5ed823b1bef795909d26e8f3c2beb32d6eea5`。正式 `/health` 回 HTTP 200／`ok`。
+- 初次 Computer Use 驗收以明確測試回答「預算不設上限」後，`plan_trip` 仍將 `budget_status` 回為 `unspecified`、`missing_fields=[budget]` 並重問預算。唯讀正式 MCP parser 重現相同缺陷：雖有「預算：明確不設預算上限」，仍回 `unspecified`。根因是不限預算 pattern 不接受「明確」及「預算上限」等自然回答形式，也要求出現預算欄位標籤。
+- PR #304 擴充 unlimited budget 解析，支援「預算：明確不設預算上限」、「明確不設預算上限」、「不設預算上限」、「預算不設限制」及既有「預算：暫不設限制」等說法，並新增 regression coverage。
+- 部署後正式 MCP 唯讀 `parse_trip_request` 對鎌倉、日期 2026-11-01 至 2026-11-06、2 位成人、0 位兒童及明確不限預算，回 `budget_status=unlimited`、`missing_fields=[]`。
+- 同一專用 ChatGPT Chat 以 Computer Use 再次實際呼叫 `parse_trip_request`，畫面確認目的地鎌倉、神奈川縣，日期正確、6 天 5 夜、旅客 2 位成人／0 位兒童、`budget_status=unlimited`、`missing_fields=[]`。唯讀 `plan_trip(confirm_write=false, confirm_public_publish=false)` 回 `confirmation_required`，未研究、寫入或發布。測試旅客數與預算皆為合成資料，非真實旅遊需求。
+
 ### 2026-10-11 鎌倉目的地解析修正已部署；ChatGPT UI 唯讀解析通過
 
 - PR #300 已合併；main merge commit `2c0835522fd88d47c77ac09db84eea16ce8810b9`。`python`、`pytest`、`mcp-site` CI 全部成功；完整 pytest 為 395 passed、288 subtests passed。
