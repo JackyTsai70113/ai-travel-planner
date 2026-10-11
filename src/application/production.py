@@ -254,7 +254,10 @@ def _candidate_trips(trip_id: str, intent: TravelIntent, records: Iterable[objec
         "flight_search_summary": _google_flights_search_summary(intent, start, end),
         "local_timezone": _local_timezone(intent), "date_range": {"start_date": start.isoformat(), "end_date": end.isoformat()},
         "traveler_profile": {"adults": _adults(intent), "children": [{"age": age} for age in intent.travelers.child_ages]},
-        "preferences": {"hard_constraints": _canonical_hard_constraints(intent), "soft_preferences": []},
+        "preferences": {
+            "hard_constraints": _canonical_hard_constraints(intent),
+            "soft_preferences": _canonical_soft_preferences(intent),
+        },
         "candidate_sets": {**collections, "places": canonical_places},
         "selected": {"hotel_place_ids": [selected_hotel["place"]["id"]] if selected_hotel else [], "flight_ids": [flight["id"] for flight in flights[:1]]},
         "days": [],
@@ -288,7 +291,7 @@ def _assign_route_aware_poi_schedule(
     places: Sequence[dict], days_count: int, start: date, timezone_name: str,
     hotel_id: str | None, routing: ValidationContext, *, low_fatigue: bool = False,
 ) -> set[str]:
-    """Assign two POIs per day and return candidates that can fit a day.
+    """Assign feasible POIs, keeping relaxed itineraries to one visit per day.
 
     Visit lengths are explicit planning estimates, never provider or opening-hour
     facts. A missing provider schedule receives a labeled estimate; missing
@@ -330,6 +333,12 @@ def _assign_route_aware_poi_schedule(
             unavailable.append(f"{place.get('name', place['id'])}: missing verified opening hours")
             continue
         eligible.append(place)
+
+    if low_fatigue:
+        return _assign_one_route_aware_poi_per_day(
+            eligible, days_count, start, timezone_name, hotel_id, routing,
+            selected_ids, anchored_days, unavailable,
+        )
 
     zone = ZoneInfo(timezone_name)
     failures = [
@@ -464,6 +473,103 @@ def _assign_route_aware_poi_schedule(
         raise ProductionIncompleteError(
             f"route-aware scheduling requires two feasible POIs per day; no feasible assignment for {', '.join(failures)}. Missing facts include: {missing}"
         )
+    return feasible_ids
+
+
+def _assign_one_route_aware_poi_per_day(
+    eligible: Sequence[dict], days_count: int, start: date, timezone_name: str,
+    hotel_id: str | None, routing: ValidationContext, selected_ids: set[str],
+    anchored_days: set[int], unavailable: Sequence[str],
+) -> set[str]:
+    """Choose one low-fatigue POI for each unanchored day using verified facts."""
+    zone = ZoneInfo(timezone_name)
+    free_days = [day for day in range(1, days_count + 1) if day not in anchored_days]
+    options_by_day: dict[int, list[tuple[float, int, int, datetime, datetime]]] = {}
+    for day_number in free_days:
+        current = start + timedelta(days=day_number - 1)
+        day_start = datetime.combine(current, time(9, 30) if hotel_id is None else time(9, 0), zone)
+        day_end = datetime.combine(current, time(20, 0), zone)
+        options: list[tuple[float, int, int, datetime, datetime]] = []
+        for index, place in enumerate(eligible):
+            place_id = place.get("id")
+            if not isinstance(place_id, str) or place_id in selected_ids:
+                continue
+            outbound = routing.travel_minutes.get((hotel_id, place_id)) if hotel_id is not None else None
+            returning = routing.travel_minutes.get((place_id, hotel_id)) if hotel_id is not None else None
+            if hotel_id is not None and (outbound is None or returning is None):
+                continue
+            details = place["schedule"]
+            duration = details["duration_minutes"]
+            buffers = details.get("parking_buffer_minutes", 0) + details.get("walking_buffer_minutes", 0)
+            arrival = _add_elapsed_minutes(day_start, outbound + buffers) if outbound is not None else day_start
+            for interval in routing.opening_hours.get(place_id, ()):
+                if (
+                    type(interval.weekday) is not int or interval.weekday not in range(7)
+                    or type(interval.closes_day_offset) is not int or interval.closes_day_offset not in (0, 1)
+                    or not isinstance(interval.opens_at, time) or not isinstance(interval.closes_at, time)
+                    or interval.weekday != current.weekday()
+                ):
+                    continue
+                opens = datetime.combine(current, interval.opens_at, zone)
+                closes = datetime.combine(current + timedelta(days=interval.closes_day_offset), interval.closes_at, zone)
+                visit_start = max(arrival, opens, key=lambda value: value.astimezone(timezone.utc))
+                visit_end = _add_elapsed_minutes(visit_start, duration)
+                if visit_end.astimezone(timezone.utc) > closes.astimezone(timezone.utc):
+                    continue
+                if returning is not None and _add_elapsed_minutes(visit_end, returning).astimezone(timezone.utc) > day_end.astimezone(timezone.utc):
+                    continue
+                # Rank only sourced route legs; an unknown lodging transfer is
+                # omitted from this score and is still reported as unverified.
+                route_minutes = sum(value for value in (outbound, returning) if value is not None)
+                options.append((float(details.get("fatigue", 0)), route_minutes, index, visit_start, visit_end))
+        options_by_day[day_number] = sorted(options, key=lambda item: (item[0], item[1], item[2], item[3]))
+
+    failures = [day for day, options in options_by_day.items() if not options]
+    assignment: dict[int, tuple[float, int, int, datetime, datetime]] = {}
+    ordered_days = sorted(options_by_day, key=lambda day: (len(options_by_day[day]), day))
+    searched_states: set[tuple[int, frozenset[str]]] = set()
+
+    def assign_day(position: int, used_ids: set[str]) -> bool:
+        state = (position, frozenset(used_ids))
+        if state in searched_states:
+            return False
+        searched_states.add(state)
+        if position == len(ordered_days):
+            return True
+        day_number = ordered_days[position]
+        for option in options_by_day[day_number]:
+            place_id = eligible[option[2]]["id"]
+            if place_id in used_ids:
+                continue
+            assignment[day_number] = option
+            if assign_day(position + 1, used_ids | {place_id}):
+                return True
+            assignment.pop(day_number, None)
+        return False
+
+    if not failures and not assign_day(0, set(selected_ids)):
+        failures = ordered_days
+    if failures:
+        missing = "; ".join(unavailable[:5]) or "verified routes and opening intervals"
+        dates = ", ".join((start + timedelta(days=day - 1)).isoformat() for day in failures)
+        raise ProductionIncompleteError(
+            f"relaxed route-aware scheduling requires one feasible POI per day; no feasible assignment for {dates}. Missing facts include: {missing}"
+        )
+
+    feasible_ids = set(selected_ids)
+    for options in options_by_day.values():
+        feasible_ids.update(eligible[option[2]]["id"] for option in options)
+    for day_number, option in assignment.items():
+        _, _, index, visit_start, visit_end = option
+        place = eligible[index]
+        place["schedule"].update({
+            "day": day_number,
+            "selected": True,
+            "required": True,
+            "fixed_start_at": visit_start.isoformat(),
+            "fixed_end_at": visit_end.isoformat(),
+        })
+        selected_ids.add(place["id"])
     return feasible_ids
 
 
@@ -643,6 +749,18 @@ def _canonical_hard_constraints(intent: TravelIntent) -> list[dict]:
                                 "description": source.text if source else "晚上看得到河流與夜景",
                                 "value": constraint.value})
     return constraints
+
+
+def _canonical_soft_preferences(intent: TravelIntent) -> list[dict]:
+    return [
+        {
+            "id": preference.id,
+            "kind": preference.kind,
+            "description": "旅客要求輕鬆、低疲勞的行程節奏" if preference.kind == "low_fatigue" else preference.kind,
+            "value": preference.value,
+        }
+        for preference in intent.soft_preferences
+    ]
 
 
 def _lodging_note(selected_hotel: Mapping[str, object] | None) -> str:
@@ -867,7 +985,11 @@ def _google_flights_search_url(intent: TravelIntent, start: date, end: date) -> 
 def _google_flights_search_summary(intent: TravelIntent, start: date, end: date) -> str:
     origin = intent.origin or "出發地未指定"
     destination = "、".join(intent.destinations) or "目的地未指定"
-    return f"{origin} → {destination}；{start.isoformat()} 至 {end.isoformat()}"
+    if intent.arrival_city:
+        route = f"{origin} → {intent.arrival_city}（抵達後自駕前往{destination}）"
+    else:
+        route = f"{origin} → {destination}"
+    return f"{route}；{start.isoformat()} 至 {end.isoformat()}"
 
 _TAIWAN_DESTINATIONS = {"台灣", "台北", "臺北", "萬華", "西門町", "西門"}
 _JAPAN_DESTINATIONS = {

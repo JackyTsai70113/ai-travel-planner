@@ -144,6 +144,19 @@ def test_recorded_kamakura_plan_reaches_japan_research_and_renders_itinerary(tmp
     assert result.render_path.exists()
 
 
+def test_transfer_city_is_used_for_flight_summary_without_becoming_a_trip_destination(tmp_path):
+    intent = parse_trip_request(
+        "目的地鎌倉；日期：2026/11/01 至 2026/11/06；出發地桃園機場；"
+        "6位成人、1位2歲兒童；預算不限；先搭飛機到東京再租車自駕前往鎌倉。"
+    )
+
+    result = _runner(tmp_path).run(intent)
+
+    assert result.succeeded
+    trip = json.loads(result.trip_path.read_text(encoding="utf-8"))
+    assert trip["flight_search_summary"].startswith("桃園機場 → 東京（抵達後自駕前往鎌倉）")
+
+
 def test_nested_provider_failure_is_visible_to_orchestrator_without_losing_trip(tmp_path):
     intent = parse_trip_request("2026/4/10到2026/4/14 台北出發德島五天四夜，2大，預算8萬日圓，自駕")
     result = _runner(tmp_path, youtube=BrokenYouTube()).run(intent)
@@ -581,6 +594,28 @@ def test_recorded_production_persists_three_meals_per_day_with_sources_and_selec
             meal_ids.append(item["place_id"])
     assert len(meal_ids) == len(set(meal_ids)) == 15
     assert not any(finding["code"] == "meal.period_unselected" for finding in trip["validation"])
+
+
+def test_relaxed_family_trip_schedules_one_visit_per_day_and_retains_rest_period(tmp_path):
+    intent = parse_trip_request(
+        "日本岡山縣倉敷五天四夜。日期：2026/11/01～2026/11/05。出發地：桃園國際機場。"
+        "旅客：6位成人、1位2歲幼兒。預算：暫不設限制。交通方式：自駕。行程輕鬆，孩子下午午睡。"
+    )
+    result = _runner(tmp_path, google=RecordedThreeMealGoogle()).run(intent)
+
+    assert result.succeeded
+    trip = json.loads(result.trip_path.read_text(encoding="utf-8"))
+    validate_trip(trip)
+    assert trip["preferences"]["soft_preferences"] == [
+        {
+            "id": "low-fatigue",
+            "kind": "low_fatigue",
+            "description": "旅客要求輕鬆、低疲勞的行程節奏",
+            "value": True,
+        }
+    ]
+    assert all(len([item for item in day["items"] if item["kind"] == "visit"]) == 1 for day in trip["days"])
+    assert all(day["summary"] == "午後保留午睡與彈性休息時間" for day in trip["days"])
 
 
 class RecordedMissingMealReturnRouting(RecordedCompleteRouting):
