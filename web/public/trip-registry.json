@@ -221,5 +221,40 @@
       "依即時研究資料產生，出發前請重新確認動態資訊。"
     ],
     "critical_alert_count": 0
+  },
+  {
+    "slug": "kamakura-family-2026-11",
+    "canonical_url": "trips/kamakura-family-2026-11",
+    "bundle_source_slug": "requested/kamakura-family-2026-11",
+    "title": "鎌倉 行程",
+    "short_title": "鎌倉 行程",
+    "destination_regions": [
+      "鎌倉"
+    ],
+    "date_range": {
+      "start_date": "2026-11-01",
+      "end_date": "2026-11-06"
+    },
+    "duration_days": 6,
+    "travelers_summary": "6 位大人、1 位小孩",
+    "theme_id": "generic-japan",
+    "status": "preview",
+    "readiness": "incomplete",
+    "last_generated": "2026-10-11",
+    "last_verified": "2026-10-11",
+    "tags": [
+      "generated-request",
+      "needs-review"
+    ],
+    "cover_media": {
+      "kind": "gradient",
+      "gradient": "linear-gradient(130deg, #334155 0%, #d97706 55%, #fbbf24 100%)",
+      "fallback": "日本旅行規劃"
+    },
+    "hero_summary": "鎌倉的每日行程、餐飲與導航資訊。",
+    "key_messages": [
+      "依即時研究資料產生，出發前請重新確認動態資訊。"
+    ],
+    "critical_alert_count": 0
   }
 ]
