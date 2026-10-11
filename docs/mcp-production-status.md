@@ -4,6 +4,17 @@
 
 ## 最新正式狀態與查證紀錄（2026-10-11）
 
+### 2026-10-11 鎌倉三方向字數與轉乘目的地回歸
+
+- PR #312 要求三個行程方向各自至少 200 個中文字（不含標題）。Merge commit `26d069f895a35cd5e132c002892722e6c8ee3d4f`；`python`、`pytest`、`mcp-site` CI 全部成功。Railway deployment `8ca6aea3-64f4-4a4f-9ece-33a30c5bda52` 為 `SUCCESS`，branch `main`、source SHA 相同。
+- PR #313 修正「東京地區再租車」未被轉乘排除規則辨識的問題。Merge commit `0ff2cd0662876bccf9233d5c3d990057b74f3eac`；CI 三項成功。Railway deployment `8e008c76-ac07-401c-8e0d-18eb09413c58` 為 `SUCCESS`，branch `main`、source SHA 相同。
+- PR #314 讓 parser 遵守「目的地只有鎌倉」等明確目的地範圍。Merge commit `babd07f6020263b1c5e18f7926c14d79f207eb93`；CI 三項成功。Railway deployment `4ba4ddd6-03fe-4e77-8932-acea2dcaef7d` 為 `SUCCESS`，branch `main`、source SHA 相同；部署後 `/health` 回 HTTP 200／`ok`。
+- `PYTHONPATH=. uv run --isolated --with-requirements requirements-mcp.txt --with pytest pytest -q` 在 PR #312、#313、#314 分別得到 399/293、400/293、401/293（passed/subtests passed）；各次 `git diff --check` 通過。
+- 在 ChatGPT 一般 Chat 的 `AI Travel Planner MCP` 專用測試對話中，三個方向均提供了超過 200 字的段落，涵蓋六天節奏、幼兒照顧、自駕用途與取捨；三方案皆保持未選取，未執行規劃或發布。對話網址：`https://chatgpt.com/c/6acb6984-bf60-83e8-8d9f-adcadce93d90`。
+- 後續明確要求只以原始需求呼叫 `parse_trip_request` 一次，ChatGPT 回覆的工具結果表列 `status=parsed`、`destinations=[鎌倉]`、2026-11-01 至 2026-11-06、`origin=桃園機場`、6 成人／1 位 2 歲兒童、`budget_status=unlimited`、`missing_fields=[]`。同一輸入另以唯讀 MCP connector 呼叫核對，結果一致。ChatGPT 對話中沒有可辨識的獨立工具呼叫卡；依 live-verification 規範，僅靠助手文字不能證明來源，因此 ChatGPT UI 的工具呼叫驗收仍列為未完成。
+- 2026-10-11 以累積後的自然語句重新呼叫正式 `parse_trip_request`，輸入「11/1-11/6；2026年；先搭飛機到東京，再在日本租車自駕前往鎌倉」。正式 parser 回 `destinations=[東京, 鎌倉]` 並將日期列為缺漏。根因是轉乘 pattern 不接受「東京，再在日本租車」中的逗號與「在日本」，日期 parser 也不會把同一請求中唯一明確的年份套用到 `11/1-11/6`。目前分支 regression 修正後，本機同一完整輸入回 `destinations=[鎌倉]`、日期 2026-11-01 至 2026-11-06、桃園機場、6 成人／1 位 2 歲兒童、無缺漏；完整 pytest 為 402 passed、293 subtests passed。修正尚未部署。
+- 唯讀 `get_trip(trip_id="kamakura-family-2026-11")` 回 `not_found`；沒有建立行程檔或公開網站。旅客與日期是使用者指定的測試資料。下一步需由使用者選 A、B 或 C，並釐清「三個網站」是要把三個方向各自發布，還是選一個方向發布一個網站；在此之前不呼叫寫入或發布工具。
+
 ### 2026-10-11 日文鎌倉請求解析修正已部署並通過 ChatGPT Chat 唯讀驗收
 
 - PR #307 已合併；main merge commit `8d4f46081de960f85dcd4046faf066ed5893a8d1`。本機完整 pytest 為 397 passed、293 subtests passed；`python -m unittest discover -s tests -q` 為 280 tests OK；GitHub Actions 的 `python`、`pytest`、`mcp-site` 全部通過。

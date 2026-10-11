@@ -143,6 +143,20 @@ class TravelIntentParserTests(unittest.TestCase):
         self.assertEqual((intent.start_date, intent.end_date), ("2026-11-01", "2026-11-06"))
         self.assertEqual(intent.missing_fields, ())
 
+    def test_flight_to_tokyo_then_renting_in_japan_is_a_transfer_with_separate_year(self):
+        text = (
+            "目的地鎌倉；日期11/1-11/6；出發地桃園機場；6大1小，2歲；"
+            "預算不限；2026年；先搭飛機到東京，再在日本租車自駕前往鎌倉。"
+        )
+        intent = parse_trip_request(text)
+
+        self.assertEqual(intent.destinations, ("鎌倉",))
+        self.assertEqual((intent.start_date, intent.end_date), ("2026-11-01", "2026-11-06"))
+        self.assertEqual(intent.origin, "桃園機場")
+        self.assertEqual((intent.travelers.adults, intent.travelers.children, intent.travelers.child_ages), (6, 1, (2,)))
+        self.assertEqual(intent.budget_status, "unlimited")
+        self.assertEqual(intent.missing_fields, ())
+
     def test_explicit_only_destination_excludes_other_mentioned_cities(self):
         text = (
             "目的地只有鎌倉；2026/11/01 至 2026/11/06；桃園機場出發，"

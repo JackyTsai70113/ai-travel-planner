@@ -40,7 +40,8 @@ _ORIGIN_PATTERN = rf"(?:(?:從|由|出發地[：:]?)\s*({_ORIGIN_NAMES})(?:\s*�
 _TRANSFER_PLACE_PATTERN = re.compile(
     r"(?:飛(?:往|到)?|搭(?:乘)?(?:飛機|機)(?:前往|到|往|至)?|抵達|入境)\s*"
     r"(?P<place>東京|大阪|京都|神戶|德島|福岡|札幌|沖繩|名古屋|奈良|熊本|由布院|北海道|淡路島|倉敷|岡山|鎌倉)"
-    r"\s*(?:地區)?\s*(?:後|再)\s*(?:租車|自駕|開車)"
+    r"\s*(?:地區)?\s*[,，]?\s*(?:(?:後|再)\s*)?"
+    r"(?:(?:在|於)(?:日本|當地)\s*)?(?:租車|自駕|開車)"
 )
 
 
@@ -156,6 +157,10 @@ def parse_trip_request(text: str) -> TripRequest:
             re.compile(r"(\d{4})年(\d{1,2})月(\d{1,2})日\s*(?:から|到|至|[-~～〜–—])\s*(?:(\d{4})年)?(\d{1,2})月(\d{1,2})日"),
             lambda m: (m.group(1), m.group(2), m.group(3), m.group(4), m.group(5), m.group(6)),
         ),
+        (
+            re.compile(r"(\d{1,2})[/-](\d{1,2})\s*(?:到|至|から|[-~～〜–—])\s*(\d{1,2})[/-](\d{1,2})"),
+            lambda m: (None, m.group(1), m.group(2), None, m.group(3), m.group(4)),
+        ),
     )
     date_candidates = [
         (match, extract(match))
@@ -174,25 +179,31 @@ def parse_trip_request(text: str) -> TripRequest:
     if date_match:
         m = date_match[0]
         year, month, day, explicit_end_year, end_month, end_day = date_candidates[0][1]
-        end_year = explicit_end_year or year
-        if not explicit_end_year and (int(end_month), int(end_day)) < (int(month), int(day)):
-            end_year = str(int(year) + 1)
-        raw_start_date = f"{year}-{int(month):02d}-{int(day):02d}"
-        raw_end_date = f"{end_year}-{int(end_month):02d}-{int(end_day):02d}"
-        try:
-            start_value = date.fromisoformat(raw_start_date)
-            end_value = date.fromisoformat(raw_end_date)
-        except ValueError:
-            invalid_date_range = True
+        if year is None:
+            year_mentions = set(re.findall(r"(?<!\d)(20\d{2})年?", text))
+            year = next(iter(year_mentions)) if len(year_mentions) == 1 else None
+        if year is None:
+            date_match = []
         else:
-            start_date, end_date = start_value.isoformat(), end_value.isoformat()
-            if "duration" not in values:
-                nights = (end_value - start_value).days
-                if nights >= 0:
-                    values["duration"] = (nights + 1, nights)
-                    provenance["duration"].append(
-                        FieldProvenance(m.group(0), m.start(), m.end(), "duration")
-                    )
+            end_year = explicit_end_year or year
+            if not explicit_end_year and (int(end_month), int(end_day)) < (int(month), int(day)):
+                end_year = str(int(year) + 1)
+            raw_start_date = f"{year}-{int(month):02d}-{int(day):02d}"
+            raw_end_date = f"{end_year}-{int(end_month):02d}-{int(end_day):02d}"
+            try:
+                start_value = date.fromisoformat(raw_start_date)
+                end_value = date.fromisoformat(raw_end_date)
+            except ValueError:
+                invalid_date_range = True
+            else:
+                start_date, end_date = start_value.isoformat(), end_value.isoformat()
+                if "duration" not in values:
+                    nights = (end_value - start_value).days
+                    if nights >= 0:
+                        values["duration"] = (nights + 1, nights)
+                        provenance["duration"].append(
+                            FieldProvenance(m.group(0), m.start(), m.end(), "duration")
+                        )
 
     adult_match = capture(
         "adults",
