@@ -138,6 +138,8 @@ class MCPTravelServerTests(unittest.TestCase):
                 self.assertIn("不要詢問住宿地點", by_name["plan_trip"].description)
                 self.assertIn("A displayed or preselected UI option is not a user answer", mcp.instructions)
                 self.assertIn("Do not turn planning into a long optional-preference questionnaire", mcp.instructions)
+                self.assertIn("present exactly three concise, materially distinct itinerary approaches", mcp.instructions)
+                self.assertIn("Origin and transport are optional", mcp.instructions)
                 self.assertIn("After a successful plan_trip, call get_trip", mcp.instructions)
                 self.assertIn("call plan_trip with both confirm_write=true and confirm_public_publish=true", mcp.instructions)
                 self.assertIn("returns the actual website URL", mcp.instructions)
@@ -218,6 +220,9 @@ class MCPTravelServerTests(unittest.TestCase):
                 self.assertIn("Lodging is not an active search feature", str(prompt.messages))
                 self.assertIn("Do not turn the conversation into a long optional-preference questionnaire", str(prompt.messages))
                 self.assertIn("A highlighted or preselected UI option is not a traveler answer", str(prompt.messages))
+                self.assertIn("present exactly THREE concise, materially distinct itinerary approaches", str(prompt.messages))
+                self.assertIn("After the traveler chooses, add that choice to the accumulated request", str(prompt.messages))
+                self.assertIn("Origin and transport are optional for planning", str(prompt.messages))
                 self.assertIn(
                     "then call plan_trip with confirm_write=true",
                     str(prompt.messages),
@@ -1105,6 +1110,26 @@ class MCPTravelServerTests(unittest.TestCase):
             )
         self.assertEqual(result["status"], "confirmation_required")
         self.assertIn("confirm_write=true and confirm_public_publish=true", result["message"])
+        create_runner.assert_not_called()
+
+    def test_plan_treats_missing_origin_and_transport_as_unknown_not_blocking(self) -> None:
+        request = "神奈川縣鎌倉，2026/11/01 到 2026/11/06，6 位成人、1 位 2 歲兒童，預算明確不設上限。"
+        with (
+            patch(
+                "src.mcp_server.server.missing_required_configuration", return_value=[]
+            ),
+            patch(
+                "src.mcp_server.server.create_production_orchestrator"
+            ) as create_runner,
+        ):
+            result = plan_trip_tool(
+                request,
+                "kamakura-options-test",
+                confirm_write=False,
+                confirm_public_publish=False,
+            )
+        self.assertEqual(result["status"], "confirmation_required")
+        self.assertNotIn("needs_clarification", result["status"])
         create_runner.assert_not_called()
 
 
