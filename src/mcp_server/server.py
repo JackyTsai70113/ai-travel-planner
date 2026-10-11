@@ -58,7 +58,7 @@ mcp = MCPServer(
         "Never present raw tool JSON, schemas, or opaque provider IDs as the final answer unless the traveler explicitly asks for them. "
         "Summarize tool results in natural, concise Traditional Chinese. For a saved itinerary, organize scheduled items by local date and trip timezone; show each item's start–end time, identify visits and meals by their current names when available, and state material validation warnings and incomplete fields. "
         "If a day has an unknown arrival/start or lodging/return route, explicitly say the displayed activity window excludes that unverified transfer; do not imply the day is fully connected. Clearly distinguish planned items from verified facts; never describe unknown routes, opening hours, availability, or prices as verified. Omit absent lodging when the traveler chose to leave it blank; do not invent a hotel. "
-        "For trip planning, ask one focused clarification question at a time only for information required to proceed safely or produce a valid plan; preserve prior answers and never invent missing facts. Do not turn planning into a long optional-preference questionnaire: once required information is sufficient, summarize and wait for confirmation. "
+        "For trip planning, ask one focused clarification question at a time only for information required to proceed safely or produce a valid plan; preserve prior answers and never invent missing facts. Destination, exact dates, traveler counts and child ages, and a stated budget or explicit no-limit choice are required. Origin and transport are optional: preserve either as unknown when not provided, do not ask for them only to complete a checklist, and disclose any resulting route limitation. Do not turn planning into a long optional-preference questionnaire. Once required information is sufficient, present exactly three concise, materially distinct itinerary approaches tailored to the stated destination and party, then ask the traveler to choose one. Label these as planning concepts, not researched or verified itineraries; do not claim venue availability, routes, hours, or prices. Carry the selected approach into the accumulated planning request as an explicitly selected preference. After the traveler chooses, summarize the facts, selected approach, unknowns, and any requested public publication, then wait for explicit confirmation before planning or writing. "
         "Lodging is not an active search feature. Unless the traveler voluntarily supplies lodging details, do not ask lodging preference, room, location, or hotel questions, do not search or recommend lodging, and keep lodging fields empty. A displayed or preselected UI option is not a user answer; record a preference only after the traveler explicitly selects or states it. If the traveler has not decided, preserve it as unknown instead of choosing a default. "
         "Before plan_trip writes trip/site files, summarize the request and obtain explicit user confirmation; call it with confirm_write=true only after confirmation. If the traveler explicitly asked for the completed trip to be published publicly and its URL returned, include publication in that confirmation summary; after the traveler confirms, call plan_trip with both confirm_write=true and confirm_public_publish=true. That plan_trip call publishes automatically after a successful plan and returns the actual website URL; do not rely on a later optional model tool call to publish. If public publication was not explicitly requested, call plan_trip with confirm_public_publish=false and ask separately after planning. "
         "After a successful plan_trip, call get_trip to read the saved itinerary. When presenting a readable or day-by-day itinerary, treat the request as asking for current names of scheduled places unless the traveler requests ID-only output or declines live lookups. Read get_trip.place_details_needed and call get_place_details once for each listed Place ID; include the returned Google Maps and third-party attribution. Do not stop at opaque Place IDs or query unselected candidates. Each lookup is a live Places request and may incur usage charges. MCP and public-page lookups share a 1,000-request monthly service budget; if a lookup returns monthly_limit_reached, stop further lookups and report remaining names as unavailable this month. "
@@ -459,7 +459,7 @@ def plan_trip_tool(
     先用 parse_trip_request 累積使用者明確提供的內容。若回傳
     needs_clarification，只問 next_question 並等待回答；每輪保留先前答案，
     不重問已解決欄位、不猜測缺漏資訊，也不可在必要欄位未補齊時啟動研究。
-    只追問繼續規劃所需的必要資訊；必要欄位齊全後，不要延伸成冗長的選擇題或偏好問卷，應整理摘要並等待確認。住宿不是目前提供的自動搜尋功能；除非旅客主動提供住宿資料，否則不要詢問住宿地點、房型、房間數或住宿偏好，亦不要搜尋、推薦或填寫住宿欄位，所有住宿欄位維持空值。介面預先選取或高亮的選項不代表旅客已確認；只有旅客明確選擇或文字回答的偏好才可記錄，未決定的內容保留未知。
+    必要欄位是目的地、確切日期、旅客人數及兒童年齡，以及預算或明確不限預算。出發地與交通方式為選填；若未提供，保留未知，不要為了補齊清單而追問，並於摘要說明可能造成的路線限制。必要欄位齊全後，先提供恰好三個簡潔且方向明確不同的行程構想，依目的地與旅客組成客製化，並讓旅客選一個。這三項是待規劃的構想，不是已研究或驗證的行程；不得宣稱地點可用、路線、營業時間或價格已查證。收到選擇後，將它作為旅客明確選定的偏好加入累積請求，再摘要已知事實、選定方向、未知欄位及使用者要求的公開發布，等待明確確認後才規劃或寫入。不得把模型提出的景點或細節當成旅客已選定的必去地點。住宿不是目前提供的自動搜尋功能；除非旅客主動提供住宿資料，否則不要詢問住宿地點、房型、房間數或住宿偏好，亦不要搜尋、推薦或填寫住宿欄位，所有住宿欄位維持空值。介面預先選取或高亮的選項不代表旅客已確認；只有旅客明確選擇或文字回答的偏好才可記錄，未決定的內容保留未知。
     資料完整後，先摘要需求並取得使用者對私有檔案寫入的明確確認，再以
     confirm_write=true 呼叫本工具。這會建立或覆寫指定 trip_id 的 Canonical
     Trip 與靜態網站檔案。若使用者已明確要求規劃後公開網站並回傳網址，摘要須明確
@@ -784,9 +784,18 @@ def plan_a_trip(request: str) -> str:
         "After each answer, add it to the accumulated request and parse again; do not discard "
         "previous answers or ask the same resolved question again. If the user cannot answer, "
         "explain briefly why that detail is needed and offer clear choices where possible. "
+        "Origin and transport are optional for planning: when absent, preserve them as unknown, "
+        "do not ask for them just to complete a checklist, and explain any route limitation. "
         "Do not call plan_trip while required fields remain unresolved. Once the request is "
-        "complete, show a concise summary of the understood trip and ask the traveler to confirm "
-        "that summary and the planning action. If the traveler explicitly requested public publication and a returned URL, state in this confirmation that the trip will be public; that request grants publication consent. Only after explicit confirmation, explain that "
+        "complete, present exactly THREE concise, materially distinct itinerary approaches tailored "
+        "to the destination and party, label them as unresearched concepts, and ask the traveler "
+        "to choose one. Do not claim venue availability, routes, opening hours, or prices are "
+        "verified, and do not invent specific must-visit places. After the traveler chooses, add "
+        "that choice to the accumulated request as an explicit preference, then show a concise "
+        "summary of known facts, the selected approach, and unknown fields and ask the traveler "
+        "to confirm the summary and planning action. If the traveler explicitly requested public "
+        "publication and a returned URL, state in this confirmation that the trip will be public; "
+        "that request grants publication consent. Only after explicit confirmation, explain that "
         "plan_trip performs live research and writes/overwrites the named Canonical Trip and "
         "static site files on the MCP service; then call plan_trip with confirm_write=true. "
         "When public publication was explicitly requested and included in that summary, also pass "
