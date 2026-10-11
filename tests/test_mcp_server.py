@@ -153,6 +153,9 @@ class MCPTravelServerTests(unittest.TestCase):
                 self.assertIn("preserve intent.origin exactly as returned", mcp.instructions)
                 self.assertIn("Never claim a destination is missing or unsupported when the returned intent.destinations contains it", mcp.instructions)
                 self.assertIn("never expand or normalize wording such as 桃園機場 into 桃園國際機場", mcp.instructions)
+                self.assertIn("normalize only explicitly stated calendar dates to YYYY/MM/DD 至 YYYY/MM/DD", mcp.instructions)
+                self.assertIn("2026 年 11 月 1 日至 11 月 6 日 becomes 2026/11/01 至 2026/11/06", mcp.instructions)
+                self.assertIn("If the year is absent, conflicting, or ambiguous, ask the traveler", mcp.instructions)
                 self.assertIn("Read get_trip.place_details_needed", mcp.instructions)
                 self.assertIn("Google Maps and third-party attribution", mcp.instructions)
                 self.assertIn("Never present raw tool JSON", mcp.instructions)
@@ -164,6 +167,8 @@ class MCPTravelServerTests(unittest.TestCase):
                 self.assertIn("Preserve intent.origin exactly", by_name["parse_trip_request"].description)
                 self.assertIn("do not claim a destination is missing or unsupported when intent.destinations contains it", by_name["parse_trip_request"].description)
                 self.assertIn("never expand or normalize location strings such as 桃園機場 into 桃園國際機場", by_name["parse_trip_request"].description)
+                self.assertIn("append an explicit date range normalized to YYYY/MM/DD 至 YYYY/MM/DD", by_name["parse_trip_request"].description)
+                self.assertIn("Ask if the year is absent, conflicting, or ambiguous", by_name["parse_trip_request"].description)
                 self.assertIn("google_place_id", by_name["get_place_details"].input_schema["properties"]["place_id"]["description"])
                 self.assertEqual(
                     by_name["parse_trip_request"].input_schema["properties"]["request"][
@@ -210,6 +215,8 @@ class MCPTravelServerTests(unittest.TestCase):
                 )
                 self.assertIn("never claim parser calls or outcomes without their actual tool responses", str(prompt.messages))
                 self.assertIn("preserving the user's location wording exactly", str(prompt.messages))
+                self.assertIn("retain the original date wording and append a normalized YYYY/MM/DD 至 YYYY/MM/DD range", str(prompt.messages))
+                self.assertIn("If the year is missing, conflicting, or ambiguous, ask instead of inferring it", str(prompt.messages))
                 self.assertIn("After a successful plan_trip, call get_trip", str(prompt.messages))
                 self.assertIn("If public publication was explicitly requested", str(prompt.messages))
                 self.assertIn("plan_trip has already attempted publication", str(prompt.messages))

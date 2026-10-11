@@ -40,6 +40,7 @@
    - 若變更涉及 `get_trip` 的 `place_details_needed`，可另用既有行程做零供應商呼叫的 ChatGPT 驗收：明確要求只呼叫 `get_trip`、只回報該陣列數量，並禁止呼叫 `get_place_details`、重新規劃、寫入或發布。例如：`請直接呼叫 AI Travel Planner MCP 的 get_trip，trip_id 使用 kurashiki-2026-11-live-20261008。只回報工具實際回傳的 place_details_needed 數量；不要呼叫 get_place_details，不要重新規劃，也不要寫入或發布行程。` 此測試只驗證 ChatGPT 是否實際呼叫新版 `get_trip` 並收到欄位；它不驗證即時地點查詢，也不取代第 8 點。
    - 若需驗收一份行程能否轉成完整具名日程，可在明確核准 Google Places 即時查詢及可能費用後，對既有行程只讀呼叫一次 `get_trip`，再對 `place_details_needed` 中每個已排定 ID 各呼叫一次 `get_place_details`。確認每筆名稱及 attribution 直接來自工具回傳、失敗時停止或如實標示、沒有重查已成功 ID；不得查未排入候選，也不得寫入或公開行程。此流程每個 Place ID 各消耗一筆即時供應商查詢，需將清單長度和服務端月上限納入驗收前評估。提示範例：`請使用 AI Travel Planner MCP 的 get_trip 讀取 trip_id「kurashiki-2026-11-live-20261008」，再只針對 get_trip 回傳的 place_details_needed 清單，每個已排程 Place ID 呼叫一次 get_place_details。依日期整理工具實際回傳的地點名稱與 Google Maps／第三方 attribution；若任一查詢失敗或達到服務上限，照實列出並停止後續查詢。只讀取，不要呼叫 parse_trip_request、plan_trip、validate_trip、build_trip_site 或 publish_trip_site；不要寫入、修改或發布行程。` 不要將 Google Places 名稱、地址、座標或其他詳情抄入 repo、Issue、PR 或長期驗收紀錄。
    - 若變更涉及 request parser 的出發地擷取，額外呼叫 `parse_trip_request`，明確提供 `出發地：桃園國際機場`，並確認工具回傳完整 `origin=桃園國際機場`，不能把機場降成城市 `桃園`；同時確認目的地和日期／天數符合輸入。保留 MCP 標籤、只用唯讀 parser，不執行規劃或寫入。
+   - 若變更涉及 AI agent 日期正規化，使用明確的自然語言日期（例如 `2026 年 11 月 1 日至 11 月 6 日`）呼叫 `parse_trip_request`，確認 agent 將原文保留並附加 `2026/11/01 至 2026/11/06`，工具卡片的原始請求含此格式且回傳日期正確；另用未提供年份的日期範圍確認 agent 先追問年份，不自行推斷。保留 MCP 標籤，只呼叫唯讀 parser，不執行規劃或寫入。
 10. 保存足以核對結果的 ChatGPT Chat 截圖或短錄影，以及以下驗收紀錄。截圖需避免顯示帳戶敏感資訊、secret 或無關私人對話。
 
 ## 通過條件
