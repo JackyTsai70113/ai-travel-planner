@@ -120,7 +120,7 @@ class TravelIntentParserTests(unittest.TestCase):
     def test_transfer_city_is_not_added_as_destination_and_en_dash_dates_parse(self):
         text = (
             "目的地鎌倉；日期 2026/11/01–2026/11/06；出發地桃園機場；"
-            "6 位成人、1 位 2 歲兒童；預算不限；先飛東京再租車自駕。"
+            "6 位成人、1 位 2 歲兒童；預算不限；先搭飛機到東京再租車自駕去鎌倉。"
         )
         intent = parse_trip_request(text)
 
