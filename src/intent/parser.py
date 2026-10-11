@@ -29,6 +29,7 @@ _KNOWN_PLACES = (
     "東京", "大阪", "京都", "神戶", "德島", "福岡", "札幌", "沖繩", "名古屋", "奈良", "熊本", "由布院", "北海道", "淡路島", "東京迪士尼", "環球影城", "倉敷", "岡山", "鎌倉",
 )
 _REGIONS = {"關西", "關東", "九州", "北海道", "四國", "岡山縣", "神奈川縣"}
+_REGION_ALIASES = {"岡山縣": ("岡山縣", "岡山県"), "神奈川縣": ("神奈川縣", "神奈川県")}
 _TAIWAN_DESTINATION_ALIASES = {
     "台灣": "台灣", "臺灣": "台灣",
     "台北市": "台北", "臺北市": "台北", "台北": "台北", "臺北": "台北",
@@ -94,29 +95,55 @@ def parse_trip_request(text: str) -> TripRequest:
         )
     places = (*places, *normalized_taiwan_places)
     region_matches = {
-        region: tuple(match for match in re.finditer(re.escape(region), text) if not is_origin(match))
+        region: tuple(
+            match
+            for alias in _REGION_ALIASES.get(region, (region,))
+            for match in re.finditer(re.escape(alias), text)
+            if not is_origin(match)
+        )
         for region in _REGIONS
     }
     regions = tuple(region for region, matches in region_matches.items() if matches)
     for region in regions:
         match = region_matches[region][0]
-        provenance["regions"].append(FieldProvenance(region, match.start(), match.end(), "regions"))
+        provenance["regions"].append(FieldProvenance(match.group(0), match.start(), match.end(), "regions"))
     values["destinations"], values["regions"] = places, regions
 
     capture("duration", r"([\d一二三四五六七八九十兩]+)天([\d一二三四五六七八九十兩]+)夜", lambda m: (_number(m.group(1)), _number(m.group(2))))
     if "duration" not in values:
         capture("duration", r"([\d一二三四五六七八九十兩]+)天", lambda m: (_number(m.group(1)), None))
-    date_match = capture("date_range", r"(\d{4})[/-](\d{1,2})[/-](\d{1,2})\s*(?:到|至|[-~～〜])\s*(\d{4})?[/-]?(\d{1,2})[/-](\d{1,2})")
+    date_patterns = (
+        (
+            re.compile(r"(\d{4})[/-](\d{1,2})[/-](\d{1,2})\s*(?:到|至|から|[-~～〜])\s*(\d{4})?[/-]?(\d{1,2})[/-](\d{1,2})"),
+            lambda m: (m.group(1), m.group(2), m.group(3), m.group(4), m.group(5), m.group(6)),
+        ),
+        (
+            re.compile(r"(\d{4})年(\d{1,2})月(\d{1,2})日\s*(?:から|到|至|[-~～〜])\s*(?:(\d{4})年)?(\d{1,2})月(\d{1,2})日"),
+            lambda m: (m.group(1), m.group(2), m.group(3), m.group(4), m.group(5), m.group(6)),
+        ),
+    )
+    date_candidates = [
+        (match, extract(match))
+        for pattern, extract in date_patterns
+        for match in pattern.finditer(text)
+    ]
+    date_candidates.sort(key=lambda item: item[0].start())
+    date_match = [item[0] for item in date_candidates]
+    if date_match:
+        provenance["date_range"].extend(
+            FieldProvenance(match.group(0), match.start(), match.end(), "date_range")
+            for match in date_match
+        )
     start_date = end_date = None
     invalid_date_range = False
     if date_match:
         m = date_match[0]
-        year = m.group(1)
-        end_year = m.group(4) or year
-        if not m.group(4) and (int(m.group(5)), int(m.group(6))) < (int(m.group(2)), int(m.group(3))):
+        year, month, day, explicit_end_year, end_month, end_day = date_candidates[0][1]
+        end_year = explicit_end_year or year
+        if not explicit_end_year and (int(end_month), int(end_day)) < (int(month), int(day)):
             end_year = str(int(year) + 1)
-        raw_start_date = f"{year}-{int(m.group(2)):02d}-{int(m.group(3)):02d}"
-        raw_end_date = f"{end_year}-{int(m.group(5)):02d}-{int(m.group(6)):02d}"
+        raw_start_date = f"{year}-{int(month):02d}-{int(day):02d}"
+        raw_end_date = f"{end_year}-{int(end_month):02d}-{int(end_day):02d}"
         try:
             start_value = date.fromisoformat(raw_start_date)
             end_value = date.fromisoformat(raw_end_date)
@@ -132,16 +159,24 @@ def parse_trip_request(text: str) -> TripRequest:
                         FieldProvenance(m.group(0), m.start(), m.end(), "duration")
                     )
 
-    adult_match = capture("adults", r"([\d一二三四五六七八九十]+)\s*(?:位\s*)?(?:大人|成人|大)", lambda m: _number(m.group(1)))
-    child_match = capture("children", r"([\d一二三四五六七八九十]+)\s*(?:位\s*)?(?:小孩|兒童|幼兒|小)", lambda m: _number(m.group(1)))
+    adult_match = capture(
+        "adults",
+        r"(?:(?P<count_before>[\d一二三四五六七八九十]+)\s*(?:位\s*)?(?:大人|成人|大)|(?:大人|成人)\s*(?P<count_after>[\d一二三四五六七八九十]+)\s*(?:名|人))",
+        lambda m: _number(m.group("count_before") or m.group("count_after")),
+    )
+    child_match = capture(
+        "children",
+        r"(?:(?P<count_before>[\d一二三四五六七八九十]+)\s*(?:位\s*)?(?:小孩|兒童|幼兒|小)|(?P<age>\d{1,2})\s*歳児\s*(?P<count_after>[\d一二三四五六七八九十]+)\s*(?:名|人))",
+        lambda m: _number(m.group("count_before") or m.group("count_after")),
+    )
     # In forms such as「1位2歲幼兒」the age interrupts the count and label.
     counted_young_children = list(re.finditer(r"([\d一二三四五六七八九十]+)\s*位\s*\d{1,2}\s*歲\s*(?:幼兒|小孩|兒童)", text))
     if counted_young_children and not child_match:
         values["children"] = sum(_number(match.group(1)) for match in counted_young_children)
         provenance["children"].extend(FieldProvenance(match.group(0), match.start(), match.end(), "children") for match in counted_young_children)
     capture("room_count", r"([\d一二兩三四五六七八九十]+)\s*(?:間\s*)?(?:房間|房)", lambda m: _number(m.group(1)))
-    ages = tuple(int(match.group(1)) for match in re.finditer(r"(\d{1,2})\s*歲", text))
-    for match in re.finditer(r"(\d{1,2})\s*歲", text):
+    ages = tuple(int(match.group(1)) for match in re.finditer(r"(\d{1,2})\s*(?:歲|歳)", text))
+    for match in re.finditer(r"(\d{1,2})\s*(?:歲|歳)", text):
         provenance["child_ages"].append(FieldProvenance(match.group(0), match.start(), match.end(), "child_ages"))
 
     unlimited_budget = list(re.finditer(

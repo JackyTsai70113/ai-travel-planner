@@ -117,6 +117,27 @@ class TravelIntentParserTests(unittest.TestCase):
             ["鎌倉"],
         )
 
+    def test_japanese_kamakura_dates_region_and_family_counts(self):
+        text = "日本神奈川県鎌倉市、2026年11月1日から2026年11月6日、成人6名、2歳児1名。"
+        intent = parse_trip_request(text)
+
+        self.assertEqual(intent.destinations, ("鎌倉",))
+        self.assertEqual(intent.regions, ("神奈川縣",))
+        self.assertEqual((intent.start_date, intent.end_date), ("2026-11-01", "2026-11-06"))
+        self.assertEqual((intent.duration_days, intent.duration_nights), (6, 5))
+        self.assertEqual((intent.travelers.adults, intent.travelers.children, intent.travelers.child_ages), (6, 1, (2,)))
+        self.assertEqual({item.field for item in intent.missing_fields}, {"budget"})
+        for field, expected_source in (
+            ("regions", "神奈川県"),
+            ("date_range", "2026年11月1日から2026年11月6日"),
+            ("adults", "成人6名"),
+            ("children", "2歳児1名"),
+            ("child_ages", "2歳"),
+        ):
+            source = intent.provenance[field][0]
+            self.assertEqual(source.text, expected_source)
+            self.assertEqual(text[source.start:source.end], source.text)
+
     def test_kurashiki_request_variants_parse_destination_without_fabrication(self):
         for text in ("倉敷五天四夜", "我想安排倉敷五天四夜"):
             with self.subTest(text=text):
