@@ -127,6 +127,23 @@ def test_recorded_production_composition_runs_pipeline_and_persists_canonical_ou
     assert result.render_path.exists()
 
 
+def test_recorded_kamakura_plan_reaches_japan_research_and_renders_itinerary(tmp_path):
+    google = RecordedGoogle()
+    intent = parse_trip_request(
+        "神奈川縣鎌倉。日期：2026/11/01 到 2026/11/06。旅客：2位成人。預算：不限。"
+    )
+
+    result = _runner(tmp_path, google=google).run(intent)
+
+    assert result.succeeded
+    assert google.queries[0].destination == "鎌倉"
+    trip = json.loads(result.trip_path.read_text(encoding="utf-8"))
+    assert trip["title"] == "鎌倉 行程"
+    assert trip["local_timezone"] == "Asia/Tokyo"
+    assert trip["days"]
+    assert result.render_path.exists()
+
+
 def test_nested_provider_failure_is_visible_to_orchestrator_without_losing_trip(tmp_path):
     intent = parse_trip_request("2026/4/10到2026/4/14 台北出發德島五天四夜，2大，預算8萬日圓，自駕")
     result = _runner(tmp_path, youtube=BrokenYouTube()).run(intent)

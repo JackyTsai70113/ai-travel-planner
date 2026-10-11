@@ -106,6 +106,17 @@ class TravelIntentParserTests(unittest.TestCase):
             with self.subTest(destination=destination):
                 self.assertEqual(parse_trip_request(destination).destinations, (destination,))
 
+    def test_kamakura_request_with_explicit_dates_keeps_destination_and_region(self):
+        text = "我想安排神奈川縣鎌倉，日期：2026/11/01 到 2026/11/06。"
+        intent = parse_trip_request(text)
+        self.assertEqual(intent.destinations, ("鎌倉",))
+        self.assertEqual(intent.regions, ("神奈川縣",))
+        self.assertEqual((intent.start_date, intent.end_date), ("2026-11-01", "2026-11-06"))
+        self.assertEqual(
+            [text[source.start:source.end] for source in intent.provenance["destinations"]],
+            ["鎌倉"],
+        )
+
     def test_kurashiki_request_variants_parse_destination_without_fabrication(self):
         for text in ("倉敷五天四夜", "我想安排倉敷五天四夜"):
             with self.subTest(text=text):
