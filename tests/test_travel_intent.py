@@ -445,6 +445,12 @@ class TravelIntentParserTests(unittest.TestCase):
         self.assertEqual((constraint.kind, constraint.strength, constraint.time_window),
                          ("nap", "required", TimeWindow(start="13:00", end="15:00")))
 
+    def test_negated_child_nap_is_not_a_required_window(self):
+        for phrase in ("不設定幼兒午睡條件", "不需要午睡", "不用孩子午睡", "無需幼兒午睡", "沒有午睡要求"):
+            with self.subTest(phrase=phrase):
+                intent = parse_trip_request(f"鎌倉六天，{phrase}")
+                self.assertFalse(any(item.kind == "nap" for item in intent.request_constraints))
+
     def test_day_specific_child_nap_keeps_scope_and_explicit_window(self):
         constraint = next(item for item in self._parse("day_specific_child_nap").request_constraints
                           if item.kind == "nap")

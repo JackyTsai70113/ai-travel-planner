@@ -470,8 +470,10 @@ def _request_constraints(text: str, trip_start_date: str | None):
                 TimeWindow(start=time) if relation == "start" else TimeWindow(end=time), relation)
 
     # Child nap and meal windows.
-    for match in re.finditer(r"(?:第[\d一二三四五六七八九十]+天\s*)?(?:小孩|兒童|孩子)?\s*(?:每天|每日)?\s*(?:(\d{1,2})[:：](\d{2})\s*(?:到|至|[-~])\s*(\d{1,2})[:：](\d{2})\s*)?(?:小孩|兒童|孩子)?\s*(?:要|需要)?午睡", text):
-        window = TimeWindow(f"{int(match.group(1)):02d}:{match.group(2)}", f"{int(match.group(3)):02d}:{match.group(4)}") if match.group(1) else TimeWindow(period="afternoon")
+    for match in re.finditer(r"(?P<negation>不(?:設定|需要|用|要|必|安排)|沒有(?:設定|要求)?|沒(?:有)?(?:設定|要求)?|無需|免)?\s*(?:第[\d一二三四五六七八九十]+天\s*)?(?:幼兒|小孩|兒童|孩子)?\s*(?:每天|每日)?\s*(?:(?P<start_hour>\d{1,2})[:：](?P<start_minute>\d{2})\s*(?:到|至|[-~])\s*(?P<end_hour>\d{1,2})[:：](?P<end_minute>\d{2})\s*)?(?:幼兒|小孩|兒童|孩子)?\s*(?:要|需要)?午睡", text):
+        if match.group("negation"):
+            continue
+        window = TimeWindow(f"{int(match.group('start_hour')):02d}:{match.group('start_minute')}", f"{int(match.group('end_hour')):02d}:{match.group('end_minute')}") if match.group("start_hour") else TimeWindow(period="afternoon")
         add("nap", "required", match, "child", _scope(match.group(0)), window)
     for match in re.finditer(r"(?:每天|每日)?\s*(午餐|晚餐|早餐)(?:要在)?\s*(\d{1,2})[:：](\d{2})\s*(?:到|至|[-~])\s*(\d{1,2})[:：](\d{2})", text):
         meal = {"早餐": "breakfast", "午餐": "lunch", "晚餐": "dinner"}.get(match.group(1), "meal")
