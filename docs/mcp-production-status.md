@@ -12,8 +12,9 @@
 - `PYTHONPATH=. uv run --isolated --with-requirements requirements-mcp.txt --with pytest pytest -q` 在 PR #312、#313、#314 分別得到 399/293、400/293、401/293（passed/subtests passed）；各次 `git diff --check` 通過。
 - 在 ChatGPT 一般 Chat 的 `AI Travel Planner MCP` 專用測試對話中，三個方向均提供了超過 200 字的段落，涵蓋六天節奏、幼兒照顧、自駕用途與取捨；三方案皆保持未選取，未執行規劃或發布。對話網址：`https://chatgpt.com/c/6acb6984-bf60-83e8-8d9f-adcadce93d90`。
 - 後續明確要求只以原始需求呼叫 `parse_trip_request` 一次，ChatGPT 回覆的工具結果表列 `status=parsed`、`destinations=[鎌倉]`、2026-11-01 至 2026-11-06、`origin=桃園機場`、6 成人／1 位 2 歲兒童、`budget_status=unlimited`、`missing_fields=[]`。同一輸入另以唯讀 MCP connector 呼叫核對，結果一致。ChatGPT 對話中沒有可辨識的獨立工具呼叫卡；依 live-verification 規範，僅靠助手文字不能證明來源，因此 ChatGPT UI 的工具呼叫驗收仍列為未完成。
-- 2026-10-11 以累積後的自然語句重新呼叫正式 `parse_trip_request`，輸入「11/1-11/6；2026年；先搭飛機到東京，再在日本租車自駕前往鎌倉」。正式 parser 回 `destinations=[東京, 鎌倉]` 並將日期列為缺漏。根因是轉乘 pattern 不接受「東京，再在日本租車」中的逗號與「在日本」，日期 parser 也不會把同一請求中唯一明確的年份套用到 `11/1-11/6`。目前分支 regression 修正後，本機同一完整輸入回 `destinations=[鎌倉]`、日期 2026-11-01 至 2026-11-06、桃園機場、6 成人／1 位 2 歲兒童、無缺漏；完整 pytest 為 402 passed、293 subtests passed。修正尚未部署。
-- 唯讀 `get_trip(trip_id="kamakura-family-2026-11")` 回 `not_found`；沒有建立行程檔或公開網站。旅客與日期是使用者指定的測試資料。下一步需由使用者選 A、B 或 C，並釐清「三個網站」是要把三個方向各自發布，還是選一個方向發布一個網站；在此之前不呼叫寫入或發布工具。
+- 2026-10-11 以累積後的自然語句重新呼叫正式 `parse_trip_request`，輸入「11/1-11/6；2026年；先搭飛機到東京，再在日本租車自駕前往鎌倉」。正式 parser 回 `destinations=[東京, 鎌倉]` 並將日期列為缺漏。根因是轉乘 pattern 不接受「東京，再在日本租車」中的逗號與「在日本」，日期 parser 也不會把同一請求中唯一明確的年份套用到 `11/1-11/6`。PR #315 已合併，commit `75bc5b21da0364593963a31d3ff2f9916cb04730`；CI 的 `python`、`pytest`、`mcp-site` 全部成功。Railway deployment `5ea5eca6-42aa-4aae-89d6-d8d79a3e2b3d` 狀態 `SUCCESS`，branch `main`、source SHA 相同。本機完整 pytest 為 402 passed、293 subtests passed。部署後正式 MCP connector 對同一完整輸入回 `destinations=[鎌倉]`、日期 2026-11-01 至 2026-11-06、桃園機場、6 成人／1 位 2 歲兒童、`budget_status=unlimited`、`missing_fields=[]`。
+- 同一 ChatGPT 測試對話以 Computer Use 再次送出完全相同的單次唯讀 parser 測試。畫面中測試訊息標記 `AI Travel Planner MCP`，回覆列明工具名稱並回傳相符的目的地、日期、出發地、旅客與缺漏欄位，且明示沒有研究、規劃、寫入或發布。畫面仍沒有獨立 MCP 工具呼叫卡；依本文件驗收規則，ChatGPT UI 實際工具呼叫仍列為未完成，不以回覆文字或 connector 結果代替。對話：`https://chatgpt.com/c/6acb6984-bf60-83e8-8d9f-adcadce93d90`。
+- 唯讀 `get_trip(trip_id="kamakura-family-2026-11")` 回 `not_found`；沒有建立行程檔或公開網站。三種行程方向已在同一對話顯示，各自超過 200 個中文字，但目前都未選取。發布前需要使用者選 A、B 或 C，並確認「三個網站」的意思是三個方向各自發布三個網站，或選一個方向發布一個網站；在此之前不呼叫寫入或發布工具。
 
 ### 2026-10-11 日文鎌倉請求解析修正已部署並通過 ChatGPT Chat 唯讀驗收
 
