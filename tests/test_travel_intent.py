@@ -334,6 +334,21 @@ class TravelIntentParserTests(unittest.TestCase):
         )
         self.assertTrue(any(item.kind == "nap" for item in intent.request_constraints))
 
+    def test_arrival_city_followed_by_rental_car_is_not_a_destination(self):
+        text = (
+            "2026/11/01 至 2026/11/06，鎌倉，從桃園機場出發，"
+            "6 位成人和 1 位 2 歲兒童，先飛東京、抵達後租車自駕到鎌倉，"
+            "預算不限，每天最多一個主要景點。"
+        )
+        intent = parse_trip_request(text)
+
+        self.assertEqual(intent.destinations, ("鎌倉",))
+        self.assertEqual(intent.arrival_city, "東京")
+        self.assertEqual(intent.origin, "桃園機場")
+        self.assertEqual((intent.start_date, intent.end_date), ("2026-11-01", "2026-11-06"))
+        self.assertEqual(intent.pace, "relaxed")
+        self.assertFalse(any(item.kind == "nap" for item in intent.request_constraints))
+
     def test_conflicting_transport_is_marked_ambiguous(self):
         intent = parse_trip_request("東京三天，2大，預算3萬，自駕又搭電車")
         self.assertTrue(any(item.field == "transport" for item in intent.ambiguous_fields))
